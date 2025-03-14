@@ -1,5 +1,3 @@
-
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Trash2, MousePointer, Users } from 'lucide-react';
 
@@ -33,6 +31,40 @@ const MindMap = () => {
     { id: 'ts', initials: 'TS', name: 'Taylor Smith', color: '#8B5CF6' }
   ];
   
+  // Click outside to close popups
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      // Add check if click target is inside any popup content
+      const isClickInsidePopupContent = e.target.closest('.popup-content');
+      
+      if (nodes.some(node => node.showEmojiPopup || node.showBgColorPopup || node.showFontColorPopup || 
+                         node.showAttachmentPopup || node.showNotesPopup || node.showDetailsPopup || 
+                         node.showDatePopup || node.showCollaboratorPopup)) {
+        const isClickInsidePopup = e.target.closest('.node-popup');
+        const isClickInsideButton = e.target.closest('.node-popup-button');
+        
+        if (!isClickInsidePopup && !isClickInsideButton && !isClickInsidePopupContent) {
+          setNodes(nodes.map(node => ({
+            ...node,
+            showEmojiPopup: false,
+            showBgColorPopup: false,
+            showFontColorPopup: false,
+            showAttachmentPopup: false,
+            showNotesPopup: false,
+            showDetailsPopup: false,
+            showDatePopup: false,
+            showCollaboratorPopup: false
+          })));
+        }
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [nodes]);
+
   // Set up wheel event for zooming
   useEffect(() => {
     const handleWheel = (e) => {
@@ -413,6 +445,29 @@ const MindMap = () => {
       );
     });
   };
+
+  // First, modify how attachments are stored in the node. Instead of a single attachment,
+  // we'll store an array of attachment objects
+  const handleAttachment = (e, nodeId) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const newAttachment = {
+        id: Date.now(),
+        name: file.name,
+        dateAdded: new Date().toISOString(),
+        addedBy: 'Current User', // This should be replaced with actual user info
+        type: file.name.split('.').pop().toLowerCase(),
+      };
+
+      setNodes(nodes.map(n => 
+        n.id === nodeId ? {
+          ...n,
+          attachments: [...(n.attachments || []), newAttachment],
+          showAttachmentPopup: false
+        } : n
+      ));
+    }
+  };
   
   return (
     <div className="relative w-full h-screen bg-slate-50 overflow-hidden" 
@@ -547,7 +602,7 @@ const MindMap = () => {
                   left: node.x - 75,
                   top: node.y - 25,
                   backgroundColor: node.color,
-                  zIndex: selectedNode === node.id ? 20 : 10, // Higher z-index for selected node but still below popup
+                  zIndex: selectedNode === node.id ? 20 : 10,
                   minWidth: '150px',
                   maxWidth: '200px',
                   textAlign: 'center',
@@ -578,53 +633,140 @@ const MindMap = () => {
                 }}
               >
                 {selectedNode === node.id && mode === 'cursor' && (
-                  <div className="absolute -right-8 top-1/2 transform -translate-y-1/2 flex flex-col gap-2">
-                    <button
-                      className="bg-indigo-100 rounded-full p-1 hover:bg-indigo-200 text-black"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addChildNode(node.id);
-                      }}
-                      title="Add connected child node"
-                    >
-                      <Plus size={16} />
-                    </button>
-                    
-                    {/* Delete button on node */}
-                    {node.id !== 'root' && (
+                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-3" style={{ marginTop: '-15px' }}>
+                    <div className="bg-white shadow-md rounded-full flex items-center p-1 gap-1 z-30">
+                      {/* Emoji Selector */}
                       <button
-                        className="bg-red-100 rounded-full p-1 hover:bg-red-200 text-red-600"
+                        className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
                         onClick={(e) => {
                           e.stopPropagation();
-                          deleteNode(node.id);
+                          setNodes(nodes.map(n => 
+                            n.id === node.id ? { ...n, showEmojiPopup: !n.showEmojiPopup, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
+                          ));
                         }}
-                        title="Delete this node"
+                        title="Add emoji or icon"
                       >
-                        <Trash2 size={16} />
+                        <span role="img" aria-label="emoji" className="text-lg">😊</span>
                       </button>
-                    )}
-                  </div>
-                )}
-                
-                {/* Node Options Popup */}
-                {selectedNode === node.id && mode === 'cursor' && (
-                  <div 
-                    className="absolute bg-white shadow-lg rounded-md p-3 flex flex-col gap-3"
-                    style={{ 
-                      top: '100%',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      marginTop: '20px',
-                      width: '250px',
-                      zIndex: 100 // Higher z-index to ensure it appears above all nodes
-                    }}
-                  >
-                    <div className="border-b pb-2 mb-1 flex justify-between items-center">
-                      <h3 className="font-medium text-sm text-gray-700">Node Options</h3>
+                      
+                      {/* Background Color */}
+                      <button
+                        className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setNodes(nodes.map(n => 
+                            n.id === node.id ? { ...n, showBgColorPopup: !n.showBgColorPopup, showEmojiPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
+                          ));
+                        }}
+                        title="Background color"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path></svg>
+                      </button>
+                      
+                      {/* Font Color */}
+                      <button
+                        className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setNodes(nodes.map(n => 
+                            n.id === node.id ? { ...n, showFontColorPopup: !n.showFontColorPopup, showEmojiPopup: false, showBgColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
+                          ));
+                        }}
+                        title="Font color"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 7h6"></path><path d="M9 17h6"></path><path d="m3 17 4-10"></path><path d="M21 7c-.3 1.9-2 3-4 3h-2"></path><path d="M21 17c-.3-1.9-2-3-4-3h-2"></path></svg>
+                      </button>
+                      
+                      {/* Attachment */}
+                      <button
+                        className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setNodes(nodes.map(n => 
+                            n.id === node.id ? { ...n, showAttachmentPopup: !n.showAttachmentPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
+                          ));
+                        }}
+                        title="Add attachment"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                      </button>
+                      
+                      {/* Notes */}
+                      <button
+                        className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setNodes(nodes.map(n => 
+                            n.id === node.id ? { ...n, showNotesPopup: !n.showNotesPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
+                          ));
+                        }}
+                        title="Add notes"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>
+                      </button>
+                      
+                      {/* Details (Priority/Status) */}
+                      <button
+                        className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setNodes(nodes.map(n => 
+                            n.id === node.id ? { ...n, showDetailsPopup: !n.showDetailsPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
+                          ));
+                        }}
+                        title="Details (Priority/Status)"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                      </button>
+                      
+                      {/* Due Date */}
+                      <button
+                        className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setNodes(nodes.map(n => 
+                            n.id === node.id ? { ...n, showDatePopup: !n.showDatePopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showCollaboratorPopup: false } : n
+                          ));
+                        }}
+                        title="Set due date"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                      </button>
+                      
+                      {/* Collaborator */}
+                      <button
+                        className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setNodes(nodes.map(n => 
+                            n.id === node.id ? { ...n, showCollaboratorPopup: !n.showCollaboratorPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false } : n
+                          ));
+                        }}
+                        title="Assign collaborator"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                      </button>
+                      
+                      {/* Add Node */}
+                      <button
+                        className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addChildNode(node.id);
+                        }}
+                        title="Add connected child node"
+                      >
+                        <Plus size={16} />
+                      </button>
+                      
+                      {/* Delete Node */}
                       {node.id !== 'root' && (
-                        <button 
-                          onClick={() => deleteNode(node.id)}
-                          className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50"
+                        <button
+                          className="p-1.5 rounded-full hover:bg-red-100 text-red-600"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteNode(node.id);
+                          }}
                           title="Delete this node"
                         >
                           <Trash2 size={16} />
@@ -632,121 +774,389 @@ const MindMap = () => {
                       )}
                     </div>
                     
-                    <div className="grid gap-3">
-                      {/* Background color picker */}
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Background Color</label>
+                    {/* Emoji popup */}
+                    {node.showEmojiPopup && (
+                      <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 w-80 popup-content">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Select Emoji or Icon</h4>
+                        <div className="grid grid-cols-8 gap-2">
+                          {['😊', '😂', '❤️', '👍', '🎉', '✅', '⭐', '🔥', '💡', '📌', '⚠️', '❓', '📝', '🔍', '🗓️', '📊'].map(emoji => (
+                            <button 
+                              key={emoji}
+                              className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded text-xl"
+                              onClick={() => {
+                                setNodes(nodes.map(n => 
+                                  n.id === node.id ? { ...n, emoji, showEmojiPopup: false } : n
+                                ));
+                              }}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Background color popup */}
+                    {node.showBgColorPopup && (
+                      <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 popup-content">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Background Color</h4>
                         <div className="flex flex-wrap gap-2">
-                          {['#EEF2FF', '#FEF3C7', '#DCFCE7', '#FEE2E2', '#E0E7FF', '#FDE68A'].map(color => (
+                          {['#EEF2FF', '#FEF3C7', '#DCFCE7', '#FEE2E2', '#E0E7FF', '#FDE68A', '#F5F5F5', '#D1FAE5', '#FFE4E6', '#EDE9FE', '#FEF9C3', '#DBEAFE'].map(color => (
                             <div 
                               key={color}
-                              className="w-6 h-6 rounded-full cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-all"
+                              className="w-8 h-8 rounded-full cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-all"
                               style={{ 
                                 backgroundColor: color, 
                                 border: node.color === color ? '2px solid #4F46E5' : '1px solid #E5E7EB' 
                               }}
-                              onClick={() => setNodes(nodes.map(n => 
-                                n.id === node.id ? { ...n, color } : n
-                              ))}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setNodes(nodes.map(n => 
+                                  n.id === node.id ? { ...n, color, showBgColorPopup: false } : n
+                                ));
+                              }}
                             />
                           ))}
                         </div>
                       </div>
-                      
-                      {/* Due Date selector */}
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Due Date</label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="date"
-                            className="p-1 text-sm border rounded w-full text-black"
-                            value={node.dueDate || ''}
-                            onChange={(e) => {
-                              setNodes(nodes.map(n => 
-                                n.id === node.id ? { ...n, dueDate: e.target.value } : n
-                              ));
-                            }}
-                          />
-                          {node.dueDate && (
-                            <button 
+                    )}
+                    
+                    {/* Font color popup */}
+                    {node.showFontColorPopup && (
+                      <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 popup-content">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Font Color</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {['#000000', '#4B5563', '#1F2937', '#7C3AED', '#2563EB', '#059669', '#D97706', '#DC2626', '#71717A'].map(color => (
+                            <div 
+                              key={color}
+                              className="w-8 h-8 rounded-full cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-all"
+                              style={{ 
+                                backgroundColor: color, 
+                                border: node.fontColor === color ? '2px solid #4F46E5' : '1px solid #E5E7EB' 
+                              }}
                               onClick={() => {
                                 setNodes(nodes.map(n => 
-                                  n.id === node.id ? { ...n, dueDate: null } : n
+                                  n.id === node.id ? { ...n, fontColor: color, showFontColorPopup: false } : n
                                 ));
                               }}
-                              className="p-1 rounded hover:bg-red-50 text-red-500 text-xs whitespace-nowrap"
-                            >
-                              Clear
-                            </button>
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Attachment popup */}
+                    {node.showAttachmentPopup && (
+                      <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 w-96 popup-content">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Attachments</h4>
+                        
+                        {/* Filters */}
+                        <div className="mb-3 grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            placeholder="Search by name..."
+                            className="p-2 text-sm border rounded-md"
+                            onChange={(e) => {/* Add filter logic */}}
+                          />
+                          <select className="p-2 text-sm border rounded-md">
+                            <option value="">All file types</option>
+                            <option value="pdf">PDF</option>
+                            <option value="doc">Word</option>
+                            <option value="xls">Excel</option>
+                          </select>
+                        </div>
+
+                        {/* File input */}
+                        <input 
+                          type="file" 
+                          accept=".xlsx,.xls,.doc,.docx,.pdf"
+                          className="text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 mb-3"
+                          onChange={(e) => handleAttachment(e, node.id)}
+                        />
+
+                        {/* Attachments list */}
+                        <div className="max-h-64 overflow-y-auto">
+                          {node.attachments && node.attachments.length > 0 ? (
+                            <div className="divide-y">
+                              {node.attachments.map(attachment => (
+                                <div key={attachment.id} className="py-2 flex items-center justify-between">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="text-gray-500">
+                                      {attachment.type === 'pdf' && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>}
+                                      {(attachment.type === 'doc' || attachment.type === 'docx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
+                                      {(attachment.type === 'xls' || attachment.type === 'xlsx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 13v-1m4 1v-3m4 3V8M8 21l4-4 4 4M4 3h16a2 2 0 012 2v14a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2z" /></svg>}
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <span className="text-sm font-medium">{attachment.name}</span>
+                                      <span className="text-xs text-gray-500">
+                                        Added by {attachment.addedBy} on {new Date(attachment.dateAdded).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <button 
+                                    className="text-red-500 hover:text-red-700 p-1"
+                                    onClick={() => setNodes(nodes.map(n => 
+                                      n.id === node.id ? {
+                                        ...n,
+                                        attachments: n.attachments.filter(a => a.id !== attachment.id)
+                                      } : n
+                                    ))}
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-500 text-center py-4">
+                              No attachments yet
+                            </div>
                           )}
                         </div>
-                        {/* Show date status */}
-                        {node.dueDate && (() => {
-                          const dueDate = new Date(node.dueDate);
-                          const today = new Date();
-                          today.setHours(0, 0, 0, 0);
-                          dueDate.setHours(0, 0, 0, 0);
-                          
-                          const diffTime = dueDate.getTime() - today.getTime();
-                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                          
-                          let statusText = '';
-                          let statusClass = '';
-                          
-                          if (diffDays < 0) {
-                            statusText = `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''}`;
-                            statusClass = 'bg-red-200 text-red-800 font-medium';
-                          } else if (diffDays === 0) {
-                            statusText = 'Due today';
-                            statusClass = 'bg-red-200 text-red-800 font-medium';
-                          } else if (diffDays <= 3) {
-                            statusText = `Due in ${diffDays} day${diffDays !== 1 ? 's' : ''}`;
-                            statusClass = 'bg-orange-200 text-orange-800 font-medium';
-                          } else {
-                            statusText = `Due in ${diffDays} days`;
-                            statusClass = 'bg-green-200 text-green-800 font-medium';
-                          }
-                          
-                          return (
-                            <div className="mt-1 text-xs">
-                              <span className={`px-2 py-0.5 rounded-full ${statusClass}`}>
-                                {statusText}
-                              </span>
-                            </div>
-                          );
-                        })()}
                       </div>
-                      
-                      {/* Assign collaborator */}
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Assign to</label>
-                        <div className="flex items-center gap-2">
+                    )}
+                    
+                    {/* Notes popup */}
+                    {node.showNotesPopup && (
+                      <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 w-80 popup-content">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Notes</h4>
+                        <textarea
+                          className="w-full p-2 border rounded-md text-sm h-24 resize-none text-black"
+                          placeholder="Add notes about this node..."
+                          value={node.notes || ''}
+                          onChange={(e) => setNodes(nodes.map(n => 
+                            n.id === node.id ? { ...n, notes: e.target.value } : n
+                          ))}
+                        />
+                        <div className="flex justify-end mt-2">
                           <button 
-                            className="px-3 py-1 text-sm rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
-                            onClick={() => {
-                              setSelectedNodes([node.id]);
-                              setShowCollaboratorDialog(true);
-                            }}
+                            className="px-3 py-1 text-sm bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100"
+                            onClick={() => setNodes(nodes.map(n => 
+                              n.id === node.id ? { ...n, showNotesPopup: false } : n
+                            ))}
                           >
-                            Select Collaborator
+                            Done
                           </button>
                         </div>
                       </div>
-                    </div>
+                    )}
+                    
+                    {/* Details popup */}
+                    {node.showDetailsPopup && (
+                      <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 w-80 popup-content">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Details</h4>
+                        <div className="flex flex-col gap-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Priority</label>
+                            <select 
+                              className="w-full p-2 border rounded-md text-sm text-black"
+                              value={node.priority || 'medium'}
+                              onChange={(e) => setNodes(nodes.map(n => 
+                                n.id === node.id ? { ...n, priority: e.target.value } : n
+                              ))}
+                            >
+                              <option value="low">Low</option>
+                              <option value="medium">Medium</option>
+                              <option value="high">High</option>
+                              <option value="urgent">Urgent</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                            <select 
+                              className="w-full p-2 border rounded-md text-sm text-black"
+                              value={node.status || 'not-started'}
+                              onChange={(e) => setNodes(nodes.map(n => 
+                                n.id === node.id ? { ...n, status: e.target.value } : n
+                              ))}
+                            >
+                              <option value="not-started">Not Started</option>
+                              <option value="in-progress">In Progress</option>
+                              <option value="review">Review</option>
+                              <option value="completed">Completed</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
+                            <textarea
+                              className="w-full p-2 border rounded-md text-sm h-24 resize-none text-black"
+                              placeholder="Additional details..."
+                              value={node.description || ''}
+                              onChange={(e) => setNodes(nodes.map(n => 
+                                n.id === node.id ? { ...n, description: e.target.value } : n
+                              ))}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex justify-end mt-2">
+                          <button 
+                            className="px-3 py-1 text-sm bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100"
+                            onClick={() => setNodes(nodes.map(n => 
+                              n.id === node.id ? { ...n, showDetailsPopup: false } : n
+                            ))}
+                          >
+                            Done
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Date popup */}
+                    {node.showDatePopup && (
+                      <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 w-64 popup-content">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Due Date</h4>
+                        <div>
+                          <input
+                            type="date"
+                            className="w-full p-2 border rounded-md text-sm text-black"
+                            value={node.dueDate || ''}
+                            onChange={(e) => setNodes(nodes.map(n => 
+                              n.id === node.id ? { ...n, dueDate: e.target.value } : n
+                            ))}
+                          />
+                          {node.dueDate && (
+                            <div className="mt-2 flex justify-between items-center">
+                              {(() => {
+                                const dueDate = new Date(node.dueDate);
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                dueDate.setHours(0, 0, 0, 0);
+                                
+                                const diffTime = dueDate.getTime() - today.getTime();
+                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                
+                                let statusText = '';
+                                let statusClass = '';
+                                
+                                if (diffDays < 0) {
+                                  statusText = `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''}`;
+                                  statusClass = 'bg-red-200 text-red-800 font-medium';
+                                } else if (diffDays === 0) {
+                                  statusText = 'Due today';
+                                  statusClass = 'bg-red-200 text-red-800 font-medium';
+                                } else if (diffDays <= 3) {
+                                  statusText = `Due in ${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+                                  statusClass = 'bg-orange-200 text-orange-800 font-medium';
+                                } else {
+                                  statusText = `Due in ${diffDays} days`;
+                                  statusClass = 'bg-green-200 text-green-800 font-medium';
+                                }
+                                
+                                return (
+                                  <span className={`px-2 py-0.5 rounded-full ${statusClass}`}>
+                                    {statusText}
+                                  </span>
+                                );
+                              })()}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
                 
+                {/* Node emoji if present */}
+                {node.emoji && (
+                  <div className="text-2xl mb-1">{node.emoji}</div>
+                )}
+                
+                {/* Node attachment indicator */}
+                {node.attachment && (
+                  <div className="text-xs text-gray-500 mb-1 flex items-center justify-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                    </svg>
+                    {node.attachment.length > 15 ? node.attachment.substring(0, 12) + '...' : node.attachment}
+                  </div>
+                )}
+                
+                {/* Status & priority badges if set */}
+                {(node.status || node.priority) && (
+                  <div className="flex gap-1 justify-center mb-1">
+                    {node.priority && (
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                        node.priority === 'low' ? 'bg-blue-100 text-blue-800' :
+                        node.priority === 'medium' ? 'bg-green-100 text-green-800' :
+                        node.priority === 'high' ? 'bg-orange-100 text-orange-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {node.priority.charAt(0).toUpperCase() + node.priority.slice(1)}
+                      </span>
+                    )}
+                    {node.status && (
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                        node.status === 'not-started' ? 'bg-gray-100 text-gray-800' :
+                        node.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
+                        node.status === 'review' ? 'bg-purple-100 text-purple-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {node.status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                      </span>
+                    )}
+                  </div>
+                )}
+                
+                {/* Due date badge if set */}
+                {node.dueDate && (
+                  <div className="flex justify-center mb-1">
+                    <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-800 flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                      </svg>
+                      {new Date(node.dueDate).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+                
+                {/* Node text content */}
                 {selectedNode === node.id && mode === 'cursor' ? (
                   <input
                     type="text"
                     value={node.text}
                     onChange={(e) => updateNodeText(node.id, e.target.value)}
-                    className="bg-transparent outline-none w-full text-center text-black"
+                    className="bg-transparent outline-none w-full text-center"
+                    style={{ color: node.fontColor || 'black' }}
                     onClick={(e) => e.stopPropagation()}
                     autoFocus
                   />
                 ) : (
-                  <div className='text-black'>{node.text}</div>
+                  <div style={{ color: node.fontColor || 'black' }}>{node.text}</div>
+                )}
+                
+                {/* Notes indicator if present */}
+                {node.notes && (
+                  <div className="mt-1 text-xs text-gray-500 flex items-center justify-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="16" y1="13" x2="8" y2="13"></line>
+                      <line x1="16" y1="17" x2="8" y2="17"></line>
+                      <line x1="10" y1="9" x2="8" y2="9"></line>
+                    </svg>
+                    Has notes
+                  </div>
+                )}
+
+                {/* Attachment indicator */}
+                {node.attachments && node.attachments.length > 0 && (
+                  <div 
+                    className="mt-1 text-xs text-gray-500 flex items-center justify-center gap-1 cursor-pointer hover:text-gray-700"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setNodes(nodes.map(n => 
+                        n.id === node.id ? { ...n, showAttachmentPopup: true } : n
+                      ));
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                    </svg>
+                    <span>{node.attachments.length}</span>
+                  </div>
                 )}
               </div>
             ))}
