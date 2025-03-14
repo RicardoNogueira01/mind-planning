@@ -230,19 +230,59 @@ const MindMap = () => {
     setShowNewMapPrompt(false);
   };
 
-  // Add a standalone node
+  // Add this helper function at the top of the component
+  const findAvailablePosition = (nodes, centerX, centerY, radius = 200) => {
+    const angleStep = (2 * Math.PI) / 8; // Divide circle into 8 positions
+    let currentAngle = Math.random() * 2 * Math.PI; // Start at random angle
+    let currentRadius = radius;
+    let attempts = 0;
+    const maxAttempts = 16; // Try different positions before increasing radius
+  
+    while (attempts < maxAttempts) {
+      const x = centerX + Math.cos(currentAngle) * currentRadius;
+      const y = centerY + Math.sin(currentAngle) * currentRadius;
+  
+      // Check if position is far enough from all other nodes
+      const isFarEnough = nodes.every(node => {
+        const distance = Math.sqrt(
+          Math.pow(node.x - x, 2) + Math.pow(node.y - y, 2)
+        );
+        return distance > 200; // Minimum distance between nodes
+      });
+  
+      if (isFarEnough) {
+        return { x, y };
+      }
+  
+      currentAngle += angleStep;
+      attempts++;
+  
+      // If we've tried all angles at current radius, increase radius and try again
+      if (attempts % 8 === 0) {
+        currentRadius += 100;
+      }
+    }
+  
+    // If all else fails, return a position with increased radius
+    return {
+      x: centerX + Math.cos(currentAngle) * (currentRadius + 200),
+      y: centerY + Math.sin(currentAngle) * (currentRadius + 200)
+    };
+  };
+  
+  // Update the addStandaloneNode function
   const addStandaloneNode = () => {
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
-    const offsetX = Math.random() * 300 - 150;
-    const offsetY = Math.random() * 300 - 150;
+    
+    const { x, y } = findAvailablePosition(nodes, centerX, centerY);
     
     const newId = `node-${Date.now()}`;
     const newNode = {
       id: newId,
       text: 'New Idea',
-      x: centerX + offsetX,
-      y: centerY + offsetY,
+      x: x,
+      y: y,
       color: '#EEF2FF'
     };
     
@@ -250,21 +290,21 @@ const MindMap = () => {
     setSelectedNode(newId);
   };
   
-  // Add a child node connected to a parent
+  // Update the addChildNode function to use similar logic
   const addChildNode = (parentId) => {
     const parent = nodes.find(n => n.id === parentId);
     if (!parent) return;
-
+  
     const newId = `node-${Date.now()}`;
     
-    const newX = parent.x + 200;
-    const newY = parent.y;
+    // Find available position starting from parent's position
+    const { x, y } = findAvailablePosition(nodes, parent.x, parent.y, 250);
     
     const newNode = {
       id: newId,
       text: 'New Idea',
-      x: newX,
-      y: newY,
+      x: x,
+      y: y,
       color: parent.color
     };
     
