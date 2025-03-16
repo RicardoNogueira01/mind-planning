@@ -1,5 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Trash2, MousePointer, Users } from 'lucide-react';
+import { Plus, Trash2, MousePointer, Hand, Users } from 'lucide-react';
+
+const layoutOptions = [
+  { id: 'tree', name: 'Tree Layout', icon: 'diagram-tree' },
+  { id: 'radial', name: 'Radial Layout', icon: 'circle-dot' },
+  { id: 'hierarchy', name: 'Hierarchy Layout', icon: 'git-merge' },
+  { id: 'mindmap', name: 'Mind Map Layout', icon: 'network' },
+  { id: 'horizontal', name: 'Horizontal Layout', icon: 'arrow-right' },
+  { id: 'vertical', name: 'Vertical Layout', icon: 'arrow-down' }
+];
 
 const MindMap = () => {
   const [nodes, setNodes] = useState([]);
@@ -39,7 +48,7 @@ const MindMap = () => {
       
       if (nodes.some(node => node.showEmojiPopup || node.showBgColorPopup || node.showFontColorPopup || 
                          node.showAttachmentPopup || node.showNotesPopup || node.showDetailsPopup || 
-                         node.showDatePopup || node.showCollaboratorPopup)) {
+                         node.showDatePopup || node.showCollaboratorPopup || node.showLayoutPopup)) {  // Add this condition
         const isClickInsidePopup = e.target.closest('.node-popup');
         const isClickInsideButton = e.target.closest('.node-popup-button');
         
@@ -53,7 +62,8 @@ const MindMap = () => {
             showNotesPopup: false,
             showDetailsPopup: false,
             showDatePopup: false,
-            showCollaboratorPopup: false
+            showCollaboratorPopup: false,
+            showLayoutPopup: false  // Add this line
           })));
         }
       }
@@ -88,35 +98,29 @@ const MindMap = () => {
     };
   }, []);
   
-  // Handle starting the panning or selection
+  // Update the startPanning function
   const startPanning = (e) => {
-    if (mode === 'selection') {
-      if (e.button === 0 && !e.target.closest('.node')) {
-        if (e.shiftKey) {
-          // Shift + left-click for panning in selection mode
-          setIsPanning(true);
-          lastMousePosRef.current = { x: e.clientX, y: e.clientY };
-        } else {
-          // Regular left-click for selection rectangle in selection mode
-          const rect = canvasRef.current.getBoundingClientRect();
-          const x = (e.clientX - rect.left - pan.x) / zoom;
-          const y = (e.clientY - rect.top - pan.y) / zoom;
-          
-          setSelectionStart({ x, y });
-          setSelectionRect({ x, y, width: 0, height: 0 });
-          setIsSelecting(true);
-        }
+    if (e.button === 0) { // Left mouse button
+      if (mode === 'pan' && !e.target.closest('.node')) {
+        // Only allow panning in pan mode
+        setIsPanning(true);
+        lastMousePosRef.current = { x: e.clientX, y: e.clientY };
+      } else if (mode === 'cursor' && !e.target.closest('.node')) {
+        // Start selection box in cursor mode
+        const rect = canvasRef.current.getBoundingClientRect();
+        const x = (e.clientX - rect.left - pan.x) / zoom;
+        const y = (e.clientY - rect.top - pan.y) / zoom;
+        
+        setSelectionStart({ x, y });
+        setSelectionRect({ x, y, width: 0, height: 0 });
+        setIsSelecting(true);
       }
-    } else if (e.button === 0 && !e.target.closest('.node')) {
-      // In cursor mode, handle normal panning
-      setIsPanning(true);
-      lastMousePosRef.current = { x: e.clientX, y: e.clientY };
     }
   };
   
-  // Handle the panning motion or selection rectangle resizing
+  // Update the handlePanning function
   const handlePanning = (e) => {
-    if (isSelecting && mode === 'selection') {
+    if (mode === 'cursor' && isSelecting) {
       // Update selection rectangle size
       const rect = canvasRef.current.getBoundingClientRect();
       const currentX = (e.clientX - rect.left - pan.x) / zoom;
@@ -125,18 +129,14 @@ const MindMap = () => {
       const width = currentX - selectionStart.x;
       const height = currentY - selectionStart.y;
       
-      // Calculate the normalized rectangle (handling negative width/height)
-      const x = width < 0 ? selectionStart.x + width : selectionStart.x;
-      const y = height < 0 ? selectionStart.y + height : selectionStart.y;
-      
       setSelectionRect({
-        x,
-        y,
+        x: width < 0 ? selectionStart.x + width : selectionStart.x,
+        y: height < 0 ? selectionStart.y + height : selectionStart.y,
         width: Math.abs(width),
         height: Math.abs(height)
       });
-    } else if (isPanning) {
-      // Handle normal panning
+    } else if (mode === 'pan' && isPanning) {
+      // Handle panning only in pan mode
       const dx = e.clientX - lastMousePosRef.current.x;
       const dy = e.clientY - lastMousePosRef.current.y;
       
@@ -151,34 +151,38 @@ const MindMap = () => {
   
   // Handle the end of panning or selection
   const stopPanning = () => {
-    if (isSelecting) {
-      // Finish selection and find nodes within the selection rectangle
-      if (selectionRect) {
-        const selected = nodes.filter(node => {
-          const nodeLeft = node.x - 75;
-          const nodeRight = node.x + 75;
-          const nodeTop = node.y - 25;
-          const nodeBottom = node.y + 25;
-          
-          // Check if node overlaps with selection rectangle
-          return (
-            nodeRight >= selectionRect.x &&
-            nodeLeft <= selectionRect.x + selectionRect.width &&
-            nodeBottom >= selectionRect.y &&
-            nodeTop <= selectionRect.y + selectionRect.height
-          );
-        });
-        
-        if (selected.length > 0) {
-          setSelectedNodes(selected.map(node => node.id));
+    if (isSelecting && selectionRect) {
+      // Find nodes within the selection rectangle
+      const selectedIds = nodes.filter(node => {
+        // Calculate node bounds
+        const nodeLeft = node.x - 75;
+        const nodeRight = node.x + 75;
+        const nodeTop = node.y - 25;
+        const nodeBottom = node.y + 25;
+  
+        // Check if node overlaps with selection rectangle
+        const isInside = (
+          nodeRight >= selectionRect.x &&
+          nodeLeft <= selectionRect.x + selectionRect.width &&
+          nodeBottom >= selectionRect.y &&
+          nodeTop <= selectionRect.y + selectionRect.height
+        );
+  
+        return isInside;
+      }).map(node => node.id);
+  
+      // Update selected nodes
+      if (selectedIds.length > 0) {
+        setSelectedNodes(selectedIds);
+        // Only show collaborator dialog in collaborator selection mode
+        if (selectionType === 'collaborator') {
           setShowCollaboratorDialog(true);
         }
       }
-      
-      setIsSelecting(false);
-      setSelectionRect(null);
     }
-    
+  
+    setIsSelecting(false);
+    setSelectionRect(null);
     setIsPanning(false);
   };
   
@@ -327,39 +331,74 @@ const MindMap = () => {
   };
   
   // Handle node click
-  const handleNodeClick = (nodeId) => {
+  const handleNodeClick = (nodeId, e) => {
     if (mode === 'cursor') {
+      if (selectionType === 'simple') {
+        if (e.ctrlKey || e.metaKey) {
+          // Add to selection if Ctrl/Cmd is pressed
+          setSelectedNodes(prev => 
+            prev.includes(nodeId) 
+              ? prev.filter(id => id !== nodeId)
+              : [...prev, nodeId]
+          );
+        } else {
+          // Replace selection if no modifier key
+          setSelectedNodes([nodeId]);
+        }
+      }
       setSelectedNode(nodeId);
     }
   };
   
   // Handle node dragging
   const handleNodeDrag = (nodeId, newX, newY) => {
-    // Update the node position
-    setNodes(nodes.map(node => 
-      node.id === nodeId ? { ...node, x: newX, y: newY } : node
-    ));
-    
-    // Update any group bounding boxes that contain this node
+    if (selectedNodes.includes(nodeId)) {
+      // Get the displacement
+      const targetNode = nodes.find(n => n.id === nodeId);
+      const dx = newX - targetNode.x;
+      const dy = newY - targetNode.y;
+  
+      // Move all selected nodes by the same displacement
+      setNodes(nodes.map(node => {
+        if (selectedNodes.includes(node.id)) {
+          return {
+            ...node,
+            x: node.x + dx,
+            y: node.y + dy
+          };
+        }
+        return node;
+      }));
+  
+      // Update group bounding boxes
+      updateGroupBoundingBoxes(selectedNodes, dx, dy);
+    }
+  };
+  
+  // Helper function to update group bounding boxes
+  const updateGroupBoundingBoxes = (affectedNodeIds, dx, dy) => {
     setNodeGroups(nodeGroups.map(group => {
-      if (group.nodeIds.includes(nodeId)) {
-        // Recalculate the bounding box
-        const groupNodes = nodes.map(node => 
-          node.id === nodeId ? { ...node, x: newX, y: newY } : node
-        ).filter(node => group.nodeIds.includes(node.id));
-        
+      if (group.nodeIds.some(id => affectedNodeIds.includes(id))) {
+        const groupNodes = nodes
+          .filter(node => group.nodeIds.includes(node.id))
+          .map(node => ({
+            ...node,
+            x: affectedNodeIds.includes(node.id) ? node.x + dx : node.x,
+            y: affectedNodeIds.includes(node.id) ? node.y + dy : node.y
+          }));
+  
         const minX = Math.min(...groupNodes.map(node => node.x - 75));
         const maxX = Math.max(...groupNodes.map(node => node.x + 75));
         const minY = Math.min(...groupNodes.map(node => node.y - 25));
         const maxY = Math.max(...groupNodes.map(node => node.y + 25));
-        
+  
         const boundingBox = {
           x: minX - 10,
           y: minY - 10,
           width: (maxX - minX) + 20,
           height: (maxY - minY) + 20
         };
-        
+  
         return { ...group, boundingBox };
       }
       return group;
@@ -417,6 +456,58 @@ const MindMap = () => {
     setNodes(updatedNodes);
     setConnections(updatedConnections);
     setNodeGroups(updatedGroups);
+    setSelectedNode(null);
+  };
+
+  // Add new deleteNodes function
+  const deleteNodes = (nodeIds) => {
+    // Don't allow deleting the root node
+    if (nodeIds.includes('root')) {
+      alert("Cannot delete the central idea node");
+      return;
+    }
+    
+    // Remove connections
+    const updatedConnections = connections.filter(
+      conn => !nodeIds.includes(conn.from) && !nodeIds.includes(conn.to)
+    );
+    
+    // Remove nodes
+    const updatedNodes = nodes.filter(node => !nodeIds.includes(node.id));
+    
+    // Update groups
+    const updatedGroups = nodeGroups.filter(group => {
+      // Remove deleted nodes from group
+      const updatedNodeIds = group.nodeIds.filter(id => !nodeIds.includes(id));
+      
+      // If fewer than 2 nodes remain, remove the group
+      if (updatedNodeIds.length < 2) return false;
+      
+      // Update group with remaining nodes
+      group.nodeIds = updatedNodeIds;
+      
+      // Recalculate bounding box
+      const groupNodes = updatedNodes.filter(node => updatedNodeIds.includes(node.id));
+      const minX = Math.min(...groupNodes.map(node => node.x - 75));
+      const maxX = Math.max(...groupNodes.map(node => node.x + 75));
+      const minY = Math.min(...groupNodes.map(node => node.y - 25));
+      const maxY = Math.max(...groupNodes.map(node => node.y + 25));
+      
+      group.boundingBox = {
+        x: minX - 10,
+        y: minY - 10,
+        width: (maxX - minX) + 20,
+        height: (maxY - minY) + 20
+      };
+      
+      return true;
+    });
+    
+    // Update state
+    setNodes(updatedNodes);
+    setConnections(updatedConnections);
+    setNodeGroups(updatedGroups);
+    setSelectedNodes([]);
     setSelectedNode(null);
   };
 
@@ -543,6 +634,142 @@ const MindMap = () => {
   // Add near the other state declarations
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchList, setShowSearchList] = useState('');
+
+  const applyLayout = (nodeId, layoutType) => {
+    const parentNode = nodes.find(n => n.id === nodeId);
+    if (!parentNode) return;
+  
+    // Get all child nodes and connections for this parent
+    const childConnections = connections.filter(conn => conn.from === nodeId);
+    const childNodes = childConnections.map(conn => 
+      nodes.find(n => n.id === conn.to)
+    ).filter(Boolean);
+  
+    const updatedNodes = [...nodes];
+    
+    switch (layoutType) {
+      case 'tree':
+        // Vertical tree layout
+        childNodes.forEach((child, index) => {
+          const totalWidth = childNodes.length * 200;
+          const startX = parentNode.x - totalWidth / 2 + 100;
+          const level = getNodeLevel(child.id);
+          
+          const nodeIndex = updatedNodes.findIndex(n => n.id === child.id);
+          if (nodeIndex !== -1) {
+            updatedNodes[nodeIndex] = {
+              ...child,
+              x: startX + (index * 200),
+              y: parentNode.y + (level * 150)
+            };
+          }
+        });
+        break;
+  
+      case 'radial':
+        // Radial layout
+        const radius = 250;
+        const angleStep = (2 * Math.PI) / childNodes.length;
+        
+        childNodes.forEach((child, index) => {
+          const angle = index * angleStep;
+          const nodeIndex = updatedNodes.findIndex(n => n.id === child.id);
+          
+          if (nodeIndex !== -1) {
+            updatedNodes[nodeIndex] = {
+              ...child,
+              x: parentNode.x + radius * Math.cos(angle),
+              y: parentNode.y + radius * Math.sin(angle)
+            };
+          }
+        });
+        break;
+  
+      case 'hierarchy':
+        // Hierarchical layout
+        childNodes.forEach((child, index) => {
+          const level = getNodeLevel(child.id);
+          const offset = index % 2 === 0 ? -1 : 1;
+          const spacing = 200 * offset * Math.ceil(index / 2);
+          
+          const nodeIndex = updatedNodes.findIndex(n => n.id === child.id);
+          if (nodeIndex !== -1) {
+            updatedNodes[nodeIndex] = {
+              ...child,
+              x: parentNode.x + spacing,
+              y: parentNode.y + (level * 150)
+            };
+          }
+        });
+        break;
+  
+      case 'horizontal':
+        // Horizontal layout
+        childNodes.forEach((child, index) => {
+          const nodeIndex = updatedNodes.findIndex(n => n.id === child.id);
+          if (nodeIndex !== -1) {
+            updatedNodes[nodeIndex] = {
+              ...child,
+              x: parentNode.x + ((index + 1) * 250),
+              y: parentNode.y
+            };
+          }
+        });
+        break;
+  
+      case 'vertical':
+        // Vertical layout
+        childNodes.forEach((child, index) => {
+          const nodeIndex = updatedNodes.findIndex(n => n.id === child.id);
+          if (nodeIndex !== -1) {
+            updatedNodes[nodeIndex] = {
+              ...child,
+              x: parentNode.x,
+              y: parentNode.y + ((index + 1) * 150)
+            };
+          }
+        });
+        break;
+  
+      case 'mindmap':
+        // Mind map layout (organic)
+        childNodes.forEach((child, index) => {
+          const angle = (index * (2 * Math.PI)) / childNodes.length;
+          const radius = 200 + (Math.random() * 100);
+          
+          const nodeIndex = updatedNodes.findIndex(n => n.id === child.id);
+          if (nodeIndex !== -1) {
+            updatedNodes[nodeIndex] = {
+              ...child,
+              x: parentNode.x + radius * Math.cos(angle),
+              y: parentNode.y + radius * Math.sin(angle)
+            };
+          }
+        });
+        break;
+    }
+  
+    setNodes(updatedNodes);
+  };
+  
+  // Helper function to get node level in the hierarchy
+  const getNodeLevel = (nodeId) => {
+    let level = 1;
+    let currentId = nodeId;
+    
+    while (true) {
+      const connection = connections.find(conn => conn.to === currentId);
+      if (!connection) break;
+      
+      currentId = connection.from;
+      level++;
+    }
+    
+    return level;
+  };
+
+  // Add this state to manage selection type
+  const [selectionType, setSelectionType] = useState('simple'); // 'simple' or 'collaborator'
   
   return (
     <div className="relative w-full h-screen bg-slate-50 overflow-hidden" 
@@ -567,16 +794,36 @@ const MindMap = () => {
           {/* Toolbar */}
           <div className="absolute top-4 left-4 z-20 bg-white shadow rounded-lg p-2">
             <div className="flex gap-2">
-              {/* Mode toggle */}
+              {/* Selection modes side by side */}
               <button 
-                onClick={() => setMode(mode === 'cursor' ? 'selection' : 'cursor')}
-                className={`p-2 rounded ${mode === 'cursor' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}
-                title={mode === 'cursor' ? "Switch to selection mode" : "Switch to cursor mode"}
+                onClick={() => {
+                  setMode('cursor');
+                  setSelectionType('simple');
+                }}
+                className={`p-2 rounded text-black ${mode === 'cursor' && selectionType === 'simple' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100'}`}
+                title="Simple select mode"
               >
-                {mode === 'cursor' ? <MousePointer size={20} /> : <Users size={20} />}
+                <MousePointer size={20} />
+              </button>
+              <button 
+                onClick={() => {
+                  setMode('cursor');
+                  setSelectionType('collaborator');
+                }}
+                className={`p-2 rounded text-black ${mode === 'cursor' && selectionType === 'collaborator' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100'}`}
+                title="Collaborator select mode"
+              >
+                <Users size={20} />
+              </button>
+              <button 
+                onClick={() => setMode('pan')}
+                className={`p-2 rounded text-black ${mode === 'pan' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100'}`}
+                title="Pan mode"
+              >
+                <Hand size={20} />
               </button>
               
-              {/* Add node button */}
+              {/* Rest of the toolbar buttons */}
               <button 
                 onClick={addStandaloneNode} 
                 className="p-2 hover:bg-gray-100 rounded text-black"
@@ -585,12 +832,11 @@ const MindMap = () => {
                 <Plus size={20} />
               </button>
               
-              {/* Delete node button */}
               <button 
-                onClick={() => selectedNode && deleteNode(selectedNode)}
-                className={`p-2 rounded ${selectedNode ? 'hover:bg-red-100 text-red-600' : 'text-gray-400'}`}
-                title="Delete selected node"
-                disabled={!selectedNode}
+                onClick={() => selectedNodes.length > 0 && deleteNodes(selectedNodes)}
+                className={`p-2 rounded ${selectedNodes.length > 0 ? 'hover:bg-red-100 text-red-600' : 'text-gray-400'}`}
+                title="Delete selected nodes"
+                disabled={selectedNodes.length === 0}
               >
                 <Trash2 size={20} />
               </button>
@@ -598,59 +844,8 @@ const MindMap = () => {
           </div>
           
           {/* Zoom controls */}
-          <div className="absolute top-4 right-4 z-20 bg-white shadow rounded-lg p-2 text-black">
-            <div className="flex flex-col gap-2">
-              <button 
-                onClick={() => setZoom(z => Math.min(z * 1.2, 3))} 
-                className="p-2 hover:bg-gray-100 rounded"
-                title="Zoom in"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                  <line x1="11" y1="8" x2="11" y2="14"></line>
-                  <line x1="8" y1="11" x2="14" y2="11"></line>
-                </svg>
-              </button>
-              <button 
-                onClick={() => setZoom(1)} 
-                className="p-2 hover:bg-gray-100 rounded"
-                title="Reset zoom"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <rect x="9" y="9" width="6" height="6"></rect>
-                </svg>
-              </button>
-              <button 
-                onClick={() => setZoom(z => Math.max(z / 1.2, 0.2))} 
-                className="p-2 hover:bg-gray-100 rounded"
-                title="Zoom out"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                  <line x1="8" y1="11" x2="14" y2="11"></line>
-                </svg>
-              </button>
-            </div>
-          </div>
-          
-          {/* Search Bar */}
-          <div className="absolute top-20 left-4 z-20 flex items-center gap-2">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search nodes..."
-                className="w-64 px-3 py-2 bg-white shadow rounded-lg text-sm"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <button
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded"
-                onClick={() => setShowSearchList(!showSearchList)}
-                title="Show matching nodes list"
-              >
+            <div>
+              <button>
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
                   width="16" 
@@ -718,7 +913,6 @@ const MindMap = () => {
                   })}
               </div>
             )}
-          </div>
           
           {/* Wrapper for panned and zoomed content */}
           <div 
@@ -760,7 +954,7 @@ const MindMap = () => {
                 <div
                   key={node.id}
                   className={`absolute p-3 rounded-lg shadow cursor-move node
-                    ${selectedNode === node.id ? 'ring-2 ring-indigo-500' : ''}`}
+                    ${selectedNodes.includes(node.id) ? 'ring-2 ring-indigo-500' : ''}`}
                   style={{
                     left: node.x - 75,
                     top: node.y - 25,
@@ -774,7 +968,7 @@ const MindMap = () => {
                     backdropFilter: 'blur(2px)',  // Add blur effect to hide lines
                     background: isNodeMatching ? node.color : `${node.color}ee`  // Add semi-transparent background
                   }}
-                  onClick={() => handleNodeClick(node.id)}
+                  onClick={(e) => handleNodeClick(node.id, e)}
                   onMouseDown={(e) => {
                     if (mode === 'cursor' && e.button === 0) {
                       const startX = e.clientX;
@@ -939,6 +1133,26 @@ const MindMap = () => {
                             <Trash2 size={16} />
                           </button>
                         )}
+
+                        {/* Add this inside the node options toolbar, only for root node */}
+                        {node.id === 'root' && (
+                          <button
+                            className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setNodes(nodes.map(n => 
+                                n.id === node.id ? { ...n, showLayoutPopup: !n.showLayoutPopup } : n
+                              ));
+                            }}
+                            title="Change layout"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                              <line x1="3" y1="9" x2="21" y2="9"></line>
+                              <line x1="9" y1="21" x2="9" y2="9"></line>
+                            </svg>
+                          </button>
+                        )}
                       </div>
                       
                       {/* Emoji popup */}
@@ -1079,7 +1293,7 @@ const MindMap = () => {
                                       attachment.type === attachmentFilters.fileType;
                                     const matchesUser = !attachmentFilters.addedBy || 
                                       attachment.addedBy === attachmentFilters.addedBy;
-                                    return matchesSearch && matchesType && matchesUser;
+                                    return matchesSearch, matchesType, matchesUser;
                                   })
                                   .map(attachment => (
                                     <div key={attachment.id} className="py-2 flex items-center justify-between">
@@ -1253,6 +1467,32 @@ const MindMap = () => {
                                 })()}
                               </div>
                             )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Add this with the other popups */}
+                      {node.showLayoutPopup && node.id === 'root' && (
+                        <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 w-64 popup-content">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">Choose Layout</h4>
+                          <div className="grid grid-cols-2 gap-2">
+                            {layoutOptions.map(layout => (
+                              <button
+                                key={layout.id}
+                                className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-md text-sm"
+                                onClick={() => {
+                                  applyLayout(node.id, layout.id);
+                                  setNodes(nodes.map(n => 
+                                    n.id === node.id ? { ...n, showLayoutPopup: false } : n
+                                  ));
+                                }}
+                              >
+                                <span className="text-gray-500">
+                                  <i className={`lucide lucide-${layout.icon}`}></i>
+                                </span>
+                                {layout.name}
+                              </button>
+                            ))}
                           </div>
                         </div>
                       )}
