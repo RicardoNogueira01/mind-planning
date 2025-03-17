@@ -870,6 +870,36 @@ const MindMap = () => {
     );
   };
   
+  // Add this useEffect near your other useEffect hooks in MindMap.jsx
+  useEffect(() => {
+    const handleKeyDown = (e) => {  // Remove the : KeyboardEvent type annotation
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        // Check if we have any selected nodes
+        if (selectedNodes.length > 0) {
+          // Don't delete if any selected node is the root node
+          if (selectedNodes.includes('root')) {
+            alert("Cannot delete the central idea node");
+            return;
+          }
+          
+          // Call deleteNodes function with selected nodes
+          deleteNodes(selectedNodes);
+        } else if (selectedNode && selectedNode !== 'root') {
+          // If no multi-selection but single node is selected
+          deleteNode(selectedNode);
+        }
+      }
+    };
+
+    // Add event listener
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup on unmount
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedNodes, selectedNode]); // Add dependencies for the nodes you're tracking
+  
   return (
     <div 
       className="relative w-full h-screen bg-slate-50 overflow-hidden" 
