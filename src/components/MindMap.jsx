@@ -524,10 +524,43 @@ const MindMap = () => {
       
       if (!fromNode || !toNode) return null;
       
-      const isFromNodeMatching = searchQuery ? 
-        fromNode.text.toLowerCase().includes(searchQuery.toLowerCase()) : true;
-      const isToNodeMatching = searchQuery ? 
-        toNode.text.toLowerCase().includes(searchQuery.toLowerCase()) : true;
+      // Calculate actual connection points on the nodes
+      const x1 = fromNode.x; // Start with node center
+      const y1 = fromNode.y;
+      const x2 = toNode.x;
+      const y2 = toNode.y;
+      
+      // Calculate the angle between nodes
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      
+      // Node dimensions
+      const nodeWidth = 150;
+      const nodeHeight = 50;
+      
+      // Calculate intersection points with node boundaries
+      let startX = x1, startY = y1, endX = x2, endY = y2;
+      
+      // From node intersection
+      if (Math.abs(Math.cos(angle)) > Math.abs(Math.sin(angle))) {
+        // Horizontal intersection
+        startX = x1 + (Math.sign(x2 - x1) * nodeWidth / 2);
+        startY = y1 + Math.tan(angle) * (startX - x1);
+      } else {
+        // Vertical intersection
+        startY = y1 + (Math.sign(y2 - y1) * nodeHeight / 2);
+        startX = x1 + (startY - y1) / Math.tan(angle);
+      }
+      
+      // To node intersection
+      if (Math.abs(Math.cos(angle)) > Math.abs(Math.sin(angle))) {
+        // Horizontal intersection
+        endX = x2 - (Math.sign(x2 - x1) * nodeWidth / 2);
+        endY = y2 - Math.tan(angle) * (x2 - endX);
+      } else {
+        // Vertical intersection
+        endY = y2 - (Math.sign(y2 - y1) * nodeHeight / 2);
+        endX = x2 - ((y2 - endY) / Math.tan(angle));
+      }
       
       return (
         <div key={conn.id} style={{ 
@@ -537,19 +570,21 @@ const MindMap = () => {
           right: 0, 
           bottom: 0, 
           pointerEvents: 'none', 
-          zIndex: 1  // Always keep connections at bottom
+          zIndex: 1
         }}>
           <svg width="100%" height="100%" style={{ overflow: 'visible' }}>
             <line 
-              x1={fromNode.x} 
-              y1={fromNode.y} 
-              x2={toNode.x} 
-              y2={toNode.y} 
+              x1={startX} 
+              y1={startY} 
+              x2={endX} 
+              y2={endY} 
               stroke="#000000" 
-              strokeWidth={3}
+              strokeWidth={2}
               style={{
                 opacity: searchQuery ? 
-                  (isFromNodeMatching && isToNodeMatching ? 1 : 0.2) : 1
+                  (fromNode.text.toLowerCase().includes(searchQuery.toLowerCase()) && 
+                   toNode.text.toLowerCase().includes(searchQuery.toLowerCase()) ? 1 : 0.2) 
+                  : 1
               }}
             />
           </svg>
@@ -823,26 +858,24 @@ const MindMap = () => {
       switch (position) {
         case 'top':
           return { 
-            x: nodeWidth / 2,   // Center of the node
-            y: 0                // Top border
+            x: nodeWidth / 2,   // Center of node
+            y: 0                // Top edge
           };
         case 'right':
           return { 
-            x: nodeWidth,       // Right border
+            x: nodeWidth,       // Right edge
             y: nodeHeight / 2   // Vertical center
           };
         case 'bottom':
           return { 
-            x: nodeWidth / 2,   // Center of the node
-            y: nodeHeight       // Bottom border
+            x: nodeWidth / 2,   // Center of node
+            y: nodeHeight       // Bottom edge
           };
         case 'left':
           return { 
-            x: 0,               // Left border
+            x: 0,               // Left edge
             y: nodeHeight / 2   // Vertical center
           };
-        default:
-          return { x: 0, y: 0 };
       }
     };
   
@@ -862,7 +895,7 @@ const MindMap = () => {
           setConnectionLine({
             fromNode: nodeId,
             fromPosition: position,
-            fromPoint: { x: nodeX + point.x - 75, y: nodeY + point.y - 25 },
+            fromPoint: { x: nodeX + point.x, y: nodeY + point.y },
             toPoint: { x: e.clientX - pan.x, y: e.clientY - pan.y }
           });
         }}
@@ -904,7 +937,14 @@ const MindMap = () => {
     <div 
       className="relative w-full h-screen bg-slate-50 overflow-hidden" 
       ref={canvasRef}
-      onMouseDown={startPanning}
+      onMouseDown={(e) => {
+        // Only deselect if clicking directly on the background
+        if (e.target === e.currentTarget) {
+          setSelectedNode(null);
+          setSelectedNodes([]);
+        }
+        startPanning(e);
+      }}
       onMouseMove={(e) => {
         if (isDraggingConnection) {
           setConnectionLine(prev => ({
@@ -921,10 +961,10 @@ const MindMap = () => {
         if (isDraggingConnection) {
           const targetNode = nodes.find(node => {
             const bounds = {
-              left: node.x - 75,
-              right: node.x + 75,
-              top: node.y - 25,
-              bottom: node.y + 25
+              left: node.x,         // Remove the -75 offset
+              right: node.x + 150,  // Use full node width
+              top: node.y,          // Remove the -25 offset
+              bottom: node.y + 50   // Use full node height
             };
             const point = {
               x: (e.clientX - pan.x) / zoom,
@@ -1049,6 +1089,57 @@ const MindMap = () => {
             </div>
           </div>
           
+          {/* Add this right after the toolbar div in the return statement */}
+          {/* After the closing </div> of the toolbar and before the zoom controls */}
+          {/* Search input with results container */}
+          <div className="absolute top-20 left-4 z-20 w-80">
+            {/* Search input */}
+            <input
+              type="text"
+              placeholder="Search nodes..."
+              className="w-full px-4 py-2 bg-white shadow rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowSearchList(true);
+              }}
+              onFocus={() => setShowSearchList(true)}
+            />
+            
+            {/* Search results list - positioned relative to the container */}
+            {showSearchList && searchQuery && (
+              <div className="absolute left-0 right-0 mt-2 bg-white shadow-lg rounded-lg p-2 max-h-96 overflow-y-auto">
+                {nodes
+                  .filter(node => node.text.toLowerCase().includes(searchQuery.toLowerCase()))
+                  .map(node => (
+                    <div 
+                      key={node.id}
+                      className="p-2 hover:bg-gray-50 rounded-md cursor-pointer flex items-center justify-between"
+                      onClick={() => {
+                        setSelectedNode(node.id);
+                        setShowSearchList(false);
+                        setPan({
+                          x: window.innerWidth/2 - node.x,
+                          y: window.innerHeight/2 - node.y
+                        });
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        {/* Show node emoji if it exists */}
+                        {node.emoji && <span>{node.emoji}</span>}
+                        {/* Show node text */}
+                        <span className="text-sm text-gray-700">{node.text}</span>
+                      </div>
+                      {/* Show node type/role */}
+                      <span className="text-xs text-gray-500">
+                        {node.id === 'root' ? 'Central Idea' : 'Sub-topic'}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+          
           {/* Zoom controls */}
             <div>
               <button>
@@ -1072,53 +1163,6 @@ const MindMap = () => {
                 </svg>
               </button>
             </div>
-
-            {/* Search Results List */}
-            {showSearchList && searchQuery && (
-              <div className="absolute top-12 left-0 w-80 bg-white shadow-lg rounded-lg p-2 max-h-96 overflow-y-auto">
-                {nodes
-                  .filter(node => node.text.toLowerCase().includes(searchQuery.toLowerCase()))
-                  .map(node => {
-                    const nodeGroup = nodeGroups.find(group => 
-                      group.nodeIds.includes(node.id)
-                    );
-                    const collaborator = nodeGroup?.collaborator;
-
-                    return (
-                      <div 
-                        key={node.id}
-                        className="p-2 hover:bg-gray-50 rounded-md cursor-pointer"
-                        onClick={() => {
-                          setSelectedNode(node.id);
-                          setShowSearchList(false);
-                          // Optional: Scroll/pan to the node
-                          setPan({
-                            x: window.innerWidth/2 - node.x,
-                            y: window.innerHeight/2 - node.y
-                          });
-                        }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">{node.text}</span>
-                          {collaborator && (
-                            <div 
-                              className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs"
-                              style={{ backgroundColor: collaborator.color }}
-                            >
-                              {collaborator.initials}
-                            </div>
-                          )}
-                        </div>
-                        {node.dueDate && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            Due: {new Date(node.dueDate).toLocaleDateString()}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
-            )}
           
           {/* Wrapper for panned and zoomed content */}
           <div 
