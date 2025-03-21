@@ -529,82 +529,84 @@ const MindMap = () => {
     setSelectedNode(null);
   };
 
-  // Render the connections between nodes
-  const renderConnections = () => {
-    return connections.map(conn => {
-      const fromNode = nodes.find(n => n.id === conn.from);
-      const toNode = nodes.find(n => n.id === conn.to);
-      
-      if (!fromNode || !toNode) return null;
-      
-      // Calculate actual connection points on the nodes
-      const x1 = fromNode.x; // Start with node center
-      const y1 = fromNode.y;
-      const x2 = toNode.x;
-      const y2 = toNode.y;
-      
-      // Calculate the angle between nodes
-      const angle = Math.atan2(y2 - y1, x2 - x1);
-      
-      // Node dimensions
-      const nodeWidth = 150;
-      const nodeHeight = 50;
-      
-      // Calculate intersection points with node boundaries
-      let startX = x1, startY = y1, endX = x2, endY = y2;
-      
-      // From node intersection
-      if (Math.abs(Math.cos(angle)) > Math.abs(Math.sin(angle))) {
-        // Horizontal intersection
-        startX = x1 + (Math.sign(x2 - x1) * nodeWidth / 2);
-        startY = y1 + Math.tan(angle) * (startX - x1);
-      } else {
-        // Vertical intersection
-        startY = y1 + (Math.sign(y2 - y1) * nodeHeight / 2);
-        startX = x1 + (startY - y1) / Math.tan(angle);
-      }
-      
-      // To node intersection
-      if (Math.abs(Math.cos(angle)) > Math.abs(Math.sin(angle))) {
-        // Horizontal intersection
-        endX = x2 - (Math.sign(x2 - x1) * nodeWidth / 2);
-        endY = y2 - Math.tan(angle) * (x2 - endX);
-      } else {
-        // Vertical intersection
-        endY = y2 - (Math.sign(y2 - y1) * nodeHeight / 2);
-        endX = x2 - ((y2 - endY) / Math.tan(angle));
-      }
-      
-      return (
-        <div key={conn.id} style={{ 
-          position: 'absolute', 
-          top: 0, 
-          left: 0, 
-          right: 0, 
-          bottom: 0, 
-          pointerEvents: 'none', 
-          zIndex: 1
-        }}>
-          <svg width="100%" height="100%" style={{ overflow: 'visible' }}>
-            <line 
-              x1={startX} 
-              y1={startY} 
-              x2={endX} 
-              y2={endY} 
-              stroke="#000000" 
-              strokeWidth={2}
-              style={{
-                opacity: searchQuery ? 
-                  (fromNode.text.toLowerCase().includes(searchQuery.toLowerCase()) && 
-                   toNode.text.toLowerCase().includes(searchQuery.toLowerCase()) ? 1 : 0.2) 
-                  : 1
-              }}
-            />
-          </svg>
-        </div>
-      );
-    });
-  };
+  // Update the connection line calculation in renderConnections
+const renderConnections = () => {
+  return connections.map(conn => {
+    const fromNode = nodes.find(n => n.id === conn.from);
+    const toNode = nodes.find(n => n.id === conn.to);
+    
+    if (!fromNode || !toNode) return null;
+
+    // Node dimensions
+    const nodeWidth = 150;
+    const nodeHeight = 50;
+    
+    // Calculate actual node positions (not including toolbar offsets)
+    const fromCenter = {
+      x: fromNode.x,
+      y: fromNode.y + nodeHeight/2 // Center vertically within the node
+    };
+    
+    const toCenter = {
+      x: toNode.x,
+      y: toNode.y + nodeHeight/2 // Center vertically within the node
+    };
+
+    // Calculate intersection points with node boundaries
+    let startX, startY, endX, endY;
+
+    // For the starting node (parent)
+    if (toCenter.x > fromCenter.x) {
+      // Connection goes right
+      startX = fromCenter.x + nodeWidth/2;
+      startY = fromCenter.y;
+    } else {
+      // Connection goes left
+      startX = fromCenter.x - nodeWidth/2;
+      startY = fromCenter.y;
+    }
+
+    // For the ending node (child)
+    if (toCenter.x > fromCenter.x) {
+      // Connection comes from left
+      endX = toCenter.x - nodeWidth/2;
+      endY = toCenter.y;
+    } else {
+      // Connection comes from right
+      endX = toCenter.x + nodeWidth/2;
+      endY = toCenter.y;
+    }
+
+    return (
+      <div key={conn.id} style={{ 
+        position: 'absolute', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        bottom: 0, 
+        pointerEvents: 'none', 
+        zIndex: 1
+      }}>
+        <svg width="100%" height="100%" style={{ overflow: 'visible' }}>
+          <line 
+            x1={startX} 
+            y1={startY} 
+            x2={endX} 
+            y2={endY} 
+            stroke="#000000" 
+            strokeWidth={2}
+            style={{
+              opacity: searchQuery ? 
+                (fromNode.text.toLowerCase().includes(searchQuery.toLowerCase()) && 
+                 toNode.text.toLowerCase().includes(searchQuery.toLowerCase()) ? 1 : 0.2) 
+                : 1
+            }}
+          />
+        </svg>
+      </div>
+    );
+  });
+};
 
   // Render the group bounding boxes and collaborator icons
   const renderNodeGroups = () => {
