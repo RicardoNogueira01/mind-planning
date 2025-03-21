@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Trash2, MousePointer, Hand, Users, Link } from 'lucide-react';
+import { Plus, Trash2, MousePointer, Hand, Users, Link, Home } from 'lucide-react';
 
 const layoutOptions = [
   { id: 'tree', name: 'Tree Layout', icon: 'diagram-tree' },
@@ -1068,7 +1068,16 @@ const renderConnections = () => {
           {/* Toolbar */}
           <div className="absolute top-4 left-4 z-20 bg-white shadow rounded-lg p-2">
             <div className="flex gap-2">
-              {/* Selection modes side by side */}
+              <button 
+                onClick={() => window.location.href = '/dashboard'}
+                className="p-2 rounded text-black hover:bg-gray-100"
+                title="Back to Dashboard"
+              >
+                <Home size={20} />
+              </button>
+
+              <div className="w-px h-6 bg-gray-200 my-auto" /> {/* Divider */}
+              
               <button 
                 onClick={() => {
                   setMode('cursor');
