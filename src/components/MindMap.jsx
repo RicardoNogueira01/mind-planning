@@ -330,7 +330,10 @@ const MindMap = () => {
     ));
   };
   
-  // Handle node click
+  // Add this state to track whether a node is in edit mode
+  const [editingNode, setEditingNode] = useState(null);
+
+  // Update the handleNodeClick function
   const handleNodeClick = (nodeId, e) => {
     if (isConnectingNodes) {
       handleNodeConnectionClick(nodeId);
@@ -351,7 +354,17 @@ const MindMap = () => {
           setSelectedNodes([nodeId]);
         }
       }
-      setSelectedNode(nodeId);
+      
+      // If the node is already selected and clicked again, enable editing
+      if (selectedNode === nodeId) {
+        setEditingNode(nodeId);
+        setIsEditing(true);
+      } else {
+        // First click just selects the node
+        setSelectedNode(nodeId);
+        setEditingNode(null);
+        setIsEditing(false);
+      }
     }
   };
   
@@ -932,6 +945,44 @@ const MindMap = () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [selectedNodes, selectedNode]); // Add dependencies for the nodes you're tracking
+
+  // Add a new state to track text editing
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Update the useEffect for keyboard events
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        // Don't delete node if we're editing text
+        if (isEditing) {
+          return;
+        }
+
+        // Check if we have any selected nodes
+        if (selectedNodes.length > 0) {
+          // Don't delete if any selected node is the root node
+          if (selectedNodes.includes('root')) {
+            alert("Cannot delete the central idea node");
+            return;
+          }
+          
+          // Call deleteNodes function with selected nodes
+          deleteNodes(selectedNodes);
+        } else if (selectedNode && selectedNode !== 'root') {
+          // If no multi-selection but single node is selected
+          deleteNode(selectedNode);
+        }
+      }
+    };
+
+    // Add event listener
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup on unmount
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedNodes, selectedNode, isEditing]); // Add isEditing to dependencies
   
   return (
     <div 
@@ -1817,15 +1868,32 @@ const MindMap = () => {
                   
                   {/* Node text content */}
                   {selectedNode === node.id && mode === 'cursor' ? (
-                    <input
-                      type="text"
-                      value={node.text}
-                      onChange={(e) => updateNodeText(node.id, e.target.value)}
-                      className="bg-transparent outline-none w-full text-center"
-                      style={{ color: node.fontColor || 'black' }}
-                      onClick={(e) => e.stopPropagation()}
-                      autoFocus
-                    />
+                    editingNode === node.id ? (
+                      <input
+                        type="text"
+                        value={node.text}
+                        onChange={(e) => updateNodeText(node.id, e.target.value)}
+                        className="bg-transparent outline-none w-full text-center"
+                        style={{ color: node.fontColor || 'black' }}
+                        onClick={(e) => e.stopPropagation()}
+                        onFocus={() => setIsEditing(true)}
+                        onBlur={() => {
+                          setEditingNode(null);
+                          setIsEditing(false);
+                        }}
+                        onKeyDown={(e) => {
+                          e.stopPropagation(); // Prevent event from bubbling up
+                        }}
+                        autoFocus
+                      />
+                    ) : (
+                      <div 
+                        className="w-full text-center cursor-text"
+                        style={{ color: node.fontColor || 'black' }}
+                      >
+                        {node.text}
+                      </div>
+                    )
                   ) : (
                     <div style={{ color: node.fontColor || 'black' }}>{node.text}</div>
                   )}
