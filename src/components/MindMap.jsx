@@ -335,11 +335,6 @@ const MindMap = () => {
 
   // Update the handleNodeClick function
   const handleNodeClick = (nodeId, e) => {
-    if (isConnectingNodes) {
-      handleNodeConnectionClick(nodeId);
-      return;
-    }
-  
     if (mode === 'cursor') {
       if (selectionType === 'simple') {
         if (e.ctrlKey || e.metaKey) {
@@ -826,98 +821,6 @@ const renderConnections = () => {
   // Add this state to manage selection type
   const [selectionType, setSelectionType] = useState('simple'); // 'simple' or 'collaborator'
 
-  // Add these new state variables at the top of the component
-  const [isConnectingNodes, setIsConnectingNodes] = useState(false);
-  const [connectionStartNode, setConnectionStartNode] = useState(null);
-
-  // Add these new state variables
-  const [isDraggingConnection, setIsDraggingConnection] = useState(false);
-  const [connectionLine, setConnectionLine] = useState(null);
-  const [hoveredNode, setHoveredNode] = useState(null);
-
-  // Add this new function to handle node connections
-  const handleNodeConnectionClick = (nodeId) => {
-    if (!isConnectingNodes) return;
-    
-    if (!connectionStartNode) {
-      setConnectionStartNode(nodeId);
-    } else {
-      // Don't allow self-connections
-      if (connectionStartNode === nodeId) {
-        setConnectionStartNode(null);
-        return;
-      }
-      
-      // Create the new connection
-      const newConnection = {
-        id: `conn-${Date.now()}`,
-        from: connectionStartNode,
-        to: nodeId
-      };
-      
-      setConnections([...connections, newConnection]);
-      
-      // Reset connection state
-      setConnectionStartNode(null);
-      setIsConnectingNodes(false);
-      setMode('cursor');
-    }
-  };
-
-  // Update the ConnectionPoint component
-  const ConnectionPoint = ({ position, nodeId, nodeX, nodeY }) => {
-    const getPointPosition = () => {
-      const nodeWidth = 150;  // Width of node
-      const nodeHeight = 50;  // Height of node
-  
-      switch (position) {
-        case 'top':
-          return { 
-            x: nodeWidth / 2,   // Center of node
-            y: 0                // Top edge
-          };
-        case 'right':
-          return { 
-            x: nodeWidth,       // Right edge
-            y: nodeHeight / 2   // Vertical center
-          };
-        case 'bottom':
-          return { 
-            x: nodeWidth / 2,   // Center of node
-            y: nodeHeight       // Bottom edge
-          };
-        case 'left':
-          return { 
-            x: 0,               // Left edge
-            y: nodeHeight / 2   // Vertical center
-          };
-      }
-    };
-  
-    const point = getPointPosition();
-  
-    return (
-      <div
-        className="absolute w-[10px] h-[10px] bg-black rounded-full cursor-pointer transform -translate-x-1/2 -translate-y-1/2 hover:scale-125 transition-transform"
-        style={{
-          left: point.x,
-          top: point.y,
-          zIndex: 15
-        }}
-        onMouseDown={(e) => {
-          e.stopPropagation();
-          setIsDraggingConnection(true);
-          setConnectionLine({
-            fromNode: nodeId,
-            fromPosition: position,
-            fromPoint: { x: nodeX + point.x, y: nodeY + point.y },
-            toPoint: { x: e.clientX - pan.x, y: e.clientY - pan.y }
-          });
-        }}
-      />
-    );
-  };
-  
   // Add this useEffect near your other useEffect hooks in MindMap.jsx
   useEffect(() => {
     const handleKeyDown = (e) => {  // Remove the : KeyboardEvent type annotation
@@ -999,48 +902,9 @@ const renderConnections = () => {
         startPanning(e);
       }}
       onMouseMove={(e) => {
-        if (isDraggingConnection) {
-          setConnectionLine(prev => ({
-            ...prev,
-            toPoint: {
-              x: (e.clientX - pan.x) / zoom,
-              y: (e.clientY - pan.y) / zoom
-            }
-          }));
-        }
         handlePanning(e);
       }}
       onMouseUp={(e) => {
-        if (isDraggingConnection) {
-          const targetNode = nodes.find(node => {
-            const bounds = {
-              left: node.x,         // Remove the -75 offset
-              right: node.x + 150,  // Use full node width
-              top: node.y,          // Remove the -25 offset
-              bottom: node.y + 50   // Use full node height
-            };
-            const point = {
-              x: (e.clientX - pan.x) / zoom,
-              y: (e.clientY - pan.y) / zoom
-            };
-            return point.x >= bounds.left && 
-                   point.x <= bounds.right && 
-                   point.y >= bounds.top && 
-                   point.y <= bounds.bottom;
-          });
-    
-          if (targetNode && targetNode.id !== connectionLine.fromNode) {
-            const newConnection = {
-              id: `conn-${Date.now()}`,
-              from: connectionLine.fromNode,
-              to: targetNode.id,
-              fromPosition: connectionLine.fromPosition
-            };
-            setConnections([...connections, newConnection]);
-          }
-          setIsDraggingConnection(false);
-          setConnectionLine(null);
-        }
         stopPanning();
       }}
       onMouseLeave={stopPanning}
@@ -1106,19 +970,6 @@ const renderConnections = () => {
                 <Hand size={20} />
               </button>
               
-              {/* Add this after the Hand button in the toolbar */}
-              <button 
-                onClick={() => {
-                  setMode('connect');
-                  setIsConnectingNodes(true);
-                  setConnectionStartNode(null);
-                }}
-                className={`p-2 rounded text-black ${mode === 'connect' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100'}`}
-                title="Connect nodes mode"
-              >
-                <Link size={20} />
-              </button>
-              
               {/* Rest of the toolbar buttons */}
               <button 
                 onClick={addStandaloneNode} 
@@ -1135,18 +986,6 @@ const renderConnections = () => {
                 disabled={selectedNodes.length === 0}
               >
                 <Trash2 size={20} />
-              </button>
-
-              {/* Add the new button to the toolbar after the other mode buttons */}
-              <button 
-                onClick={() => {
-                  setIsConnectingNodes(true);
-                  setMode('cursor');
-                }}
-                className={`p-2 rounded text-black ${isConnectingNodes ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100'}`}
-                title="Connect nodes"
-              >
-                <Link size={20} />
               </button>
             </div>
           </div>
@@ -1279,8 +1118,6 @@ const renderConnections = () => {
                     transition: 'opacity 0.2s ease-in-out',
                     position: 'relative'  // Ensure the node container is relative
                   }}
-                  onMouseEnter={() => setHoveredNode(node.id)}
-                  onMouseLeave={() => setHoveredNode(null)}
                   onClick={(e) => handleNodeClick(node.id, e)}
                   onMouseDown={(e) => {
                     if (mode === 'cursor' && e.button === 0) {
@@ -1306,15 +1143,6 @@ const renderConnections = () => {
                     }
                   }}
                 >
-                  {/* Connection points - only show when node is hovered */}
-                  {hoveredNode === node.id && !isDraggingConnection && (
-                    <>
-                      <ConnectionPoint position="top" nodeId={node.id} nodeX={node.x} nodeY={node.y} />
-                      <ConnectionPoint position="right" nodeId={node.id} nodeX={node.x} nodeY={node.y} />
-                      <ConnectionPoint position="bottom" nodeId={node.id} nodeX={node.x} nodeY={node.y} />
-                      <ConnectionPoint position="left" nodeId={node.id} nodeX={node.x} nodeY={node.y} />
-                    </>
-                  )}
                   {selectedNode === node.id && mode === 'cursor' && (
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-3" style={{ marginTop: '-15px' }}>
                       <div className="bg-white shadow-md rounded-full flex items-center p-1 gap-1 z-30">
@@ -1940,31 +1768,6 @@ const renderConnections = () => {
                 </div>
               );
             })}
-
-            {/* Add the temporary connection line when dragging */}
-            {isDraggingConnection && connectionLine && (
-              <svg 
-                style={{ 
-                  position: 'absolute', 
-                  top: 0, 
-                  left: 0, 
-                  width: '100%', 
-                  height: '100%', 
-                  pointerEvents: 'none',
-                  zIndex: 5 
-                }}
-              >
-                <line
-                  x1={connectionLine.fromPoint.x}
-                  y1={connectionLine.fromPoint.y}
-                  x2={connectionLine.toPoint.x}
-                  y2={connectionLine.toPoint.y}
-                  stroke="#000"
-                  strokeWidth="2"
-                  strokeDasharray="5,5"
-                />
-              </svg>
-            )}
           </div>
           
           {/* Collaborator selection dialog */}
