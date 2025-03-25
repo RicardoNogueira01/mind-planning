@@ -823,32 +823,80 @@ const renderConnections = () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [selectedNodes, selectedNode, isEditing]); // Add isEditing to dependencies
+
+  // Add these to your existing mouse event handlers in MindMap.jsx
+const startSelection = (e) => {
+  if (mode === 'cursor' && selectionType === 'collaborator') {
+    setIsSelecting(true);
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left - pan.x) / zoom;
+    const y = (e.clientY - rect.top - pan.y) / zoom;
+    setSelectionStart({ x, y });
+    setSelectionRect({ x, y, width: 0, height: 0 });
+  }
+};
+
+const updateSelection = (e) => {
+  if (isSelecting) {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const currentX = (e.clientX - rect.left - pan.x) / zoom;
+    const currentY = (e.clientY - rect.top - pan.y) / zoom;
+    
+    // Calculate width and height before deciding position
+    const width = Math.abs(currentX - selectionStart.x);
+    const height = Math.abs(currentY - selectionStart.y);
+    
+    // Set rectangle position and size to ensure it covers the selection area
+    setSelectionRect({
+      x: Math.min(currentX, selectionStart.x),
+      y: Math.min(currentY, selectionStart.y),
+      width: width,
+      height: height
+    });
+  }
+};
   
   return (
     <div 
       className="relative w-full h-screen bg-slate-50 overflow-hidden" 
       ref={canvasRef}
       onMouseDown={(e) => {
-        // Only deselect if clicking directly on the background
         if (e.target === e.currentTarget) {
-          setSelectedNode(null);
-          setSelectedNodes([]);
+          if (mode === 'cursor' && selectionType === 'collaborator') {
+            startSelection(e);
+          } else {
+            setSelectedNode(null);
+            setSelectedNodes([]);
+            startPanning(e);
+          }
         }
-        startPanning(e);
       }}
-      onMouseMove={handlePanning}
+      onMouseMove={(e) => {
+        if (isSelecting) {
+          updateSelection(e);
+        } else {
+          handlePanning(e);
+        }
+      }}
       onMouseUp={() => {
+        if (isSelecting) {
+          stopPanning(); // This already handles selection logic
+        }
         setIsPanning(false);
+        setIsSelecting(false);
       }}
       onMouseLeave={() => {
         setIsPanning(false);
+        setIsSelecting(false);
       }}
       style={{ 
         cursor: isPanning 
           ? 'grabbing' 
           : selectedNode 
             ? 'default'
-            : 'grab'
+            : mode === 'cursor' && selectionType === 'collaborator'
+              ? 'crosshair'
+              : 'grab'
       }}
     >
       {showNewMapPrompt ? (
