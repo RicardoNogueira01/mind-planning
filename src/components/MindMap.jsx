@@ -101,42 +101,22 @@ const MindMap = () => {
   // Update the startPanning function
   const startPanning = (e) => {
     if (e.button === 0) { // Left mouse button
-      if (mode === 'pan' && !e.target.closest('.node')) {
-        // Only allow panning in pan mode
+      const clickedOnNode = e.target.closest('.node');
+      const clickedOnPopup = e.target.closest('.popup-content');
+      
+      // Only start panning if:
+      // 1. Click is on background (not on node or popup)
+      // 2. No node is currently selected
+      if (!clickedOnNode && !clickedOnPopup && !selectedNode) {
         setIsPanning(true);
         lastMousePosRef.current = { x: e.clientX, y: e.clientY };
-      } else if (mode === 'cursor' && !e.target.closest('.node')) {
-        // Start selection box in cursor mode
-        const rect = canvasRef.current.getBoundingClientRect();
-        const x = (e.clientX - rect.left - pan.x) / zoom;
-        const y = (e.clientY - rect.top - pan.y) / zoom;
-        
-        setSelectionStart({ x, y });
-        setSelectionRect({ x, y, width: 0, height: 0 });
-        setIsSelecting(true);
       }
     }
   };
   
   // Update the handlePanning function
   const handlePanning = (e) => {
-    if (mode === 'cursor' && isSelecting) {
-      // Update selection rectangle size
-      const rect = canvasRef.current.getBoundingClientRect();
-      const currentX = (e.clientX - rect.left - pan.x) / zoom;
-      const currentY = (e.clientY - rect.top - pan.y) / zoom;
-      
-      const width = currentX - selectionStart.x;
-      const height = currentY - selectionStart.y;
-      
-      setSelectionRect({
-        x: width < 0 ? selectionStart.x + width : selectionStart.x,
-        y: height < 0 ? selectionStart.y + height : selectionStart.y,
-        width: Math.abs(width),
-        height: Math.abs(height)
-      });
-    } else if (mode === 'pan' && isPanning) {
-      // Handle panning only in pan mode
+    if (isPanning) {
       const dx = e.clientX - lastMousePosRef.current.x;
       const dy = e.clientY - lastMousePosRef.current.y;
       
@@ -301,14 +281,14 @@ const MindMap = () => {
   
     const newId = `node-${Date.now()}`;
     
-    // Find available position starting from parent's position
-    const { x, y } = findAvailablePosition(nodes, parent.x, parent.y, 250);
+    const newX = parent.x + 200; // Fixed distance to the right
+    const newY = parent.y;      // Same vertical level as parent
     
     const newNode = {
       id: newId,
       text: 'New Idea',
-      x: x,
-      y: y,
+      x: newX,
+      y: newY,
       color: parent.color
     };
     
@@ -532,46 +512,7 @@ const renderConnections = () => {
     
     if (!fromNode || !toNode) return null;
 
-    // Node dimensions
-    const nodeWidth = 150;
-    const nodeHeight = 50;
-    
-    // Calculate actual node positions (not including toolbar offsets)
-    const fromCenter = {
-      x: fromNode.x,
-      y: fromNode.y + nodeHeight/2 // Center vertically within the node
-    };
-    
-    const toCenter = {
-      x: toNode.x,
-      y: toNode.y + nodeHeight/2 // Center vertically within the node
-    };
-
-    // Calculate intersection points with node boundaries
-    let startX, startY, endX, endY;
-
-    // For the starting node (parent)
-    if (toCenter.x > fromCenter.x) {
-      // Connection goes right
-      startX = fromCenter.x + nodeWidth/2;
-      startY = fromCenter.y;
-    } else {
-      // Connection goes left
-      startX = fromCenter.x - nodeWidth/2;
-      startY = fromCenter.y;
-    }
-
-    // For the ending node (child)
-    if (toCenter.x > fromCenter.x) {
-      // Connection comes from left
-      endX = toCenter.x - nodeWidth/2;
-      endY = toCenter.y;
-    } else {
-      // Connection comes from right
-      endX = toCenter.x + nodeWidth/2;
-      endY = toCenter.y;
-    }
-
+    // Just connect center to center - no calculations
     return (
       <div key={conn.id} style={{ 
         position: 'absolute', 
@@ -584,18 +525,12 @@ const renderConnections = () => {
       }}>
         <svg width="100%" height="100%" style={{ overflow: 'visible' }}>
           <line 
-            x1={startX} 
-            y1={startY} 
-            x2={endX} 
-            y2={endY} 
+            x1={fromNode.x} 
+            y1={fromNode.y} 
+            x2={toNode.x} 
+            y2={toNode.y} 
             stroke="#000000" 
             strokeWidth={2}
-            style={{
-              opacity: searchQuery ? 
-                (fromNode.text.toLowerCase().includes(searchQuery.toLowerCase()) && 
-                 toNode.text.toLowerCase().includes(searchQuery.toLowerCase()) ? 1 : 0.2) 
-                : 1
-            }}
           />
         </svg>
       </div>
@@ -901,21 +836,19 @@ const renderConnections = () => {
         }
         startPanning(e);
       }}
-      onMouseMove={(e) => {
-        handlePanning(e);
+      onMouseMove={handlePanning}
+      onMouseUp={() => {
+        setIsPanning(false);
       }}
-      onMouseUp={(e) => {
-        stopPanning();
+      onMouseLeave={() => {
+        setIsPanning(false);
       }}
-      onMouseLeave={stopPanning}
       style={{ 
         cursor: isPanning 
           ? 'grabbing' 
-          : mode === 'selection' 
-            ? 'crosshair' 
-            : mode === 'connect' 
-              ? 'crosshair' 
-              : 'default' 
+          : selectedNode 
+            ? 'default'
+            : 'grab'
       }}
     >
       {showNewMapPrompt ? (
