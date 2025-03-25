@@ -1034,16 +1034,20 @@ const renderConnections = () => {
               const isNodeMatching = searchQuery ? 
                 node.text.toLowerCase().includes(searchQuery.toLowerCase()) : true;
               
+              // Calculate dynamic width based on text length
+              const textLength = node.text.length;
+              const nodeWidth = Math.min(450, Math.max(150, textLength * 10));
+
               return (
                 <div
                   key={node.id}
                   className={`absolute p-3 rounded-lg shadow cursor-move node
                     ${selectedNodes.includes(node.id) ? 'ring-2 ring-indigo-500' : ''}`}
                   style={{
-                    left: node.x - 75,
+                    left: node.x - nodeWidth / 2,
                     top: node.y - 25,
-                    width: 150,
-                    height: 50,
+                    width: nodeWidth,
+                    height: 'auto',
                     backgroundColor: node.color,
                     zIndex: searchQuery ? (isNodeMatching ? 20 : 10) : 10,
                     textAlign: 'center',
@@ -1641,11 +1645,10 @@ const renderConnections = () => {
                   {/* Node text content */}
                   {selectedNode === node.id && mode === 'cursor' ? (
                     editingNode === node.id ? (
-                      <input
-                        type="text"
+                      <textarea
                         value={node.text}
                         onChange={(e) => updateNodeText(node.id, e.target.value)}
-                        className="bg-transparent outline-none w-full text-center"
+                        className="bg-transparent outline-none w-full text-center resize-none"
                         style={{ color: node.fontColor || 'black' }}
                         onClick={(e) => e.stopPropagation()}
                         onFocus={() => setIsEditing(true)}
