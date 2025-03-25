@@ -197,6 +197,10 @@ const MindMap = () => {
     // Reset selection state
     setSelectedNodes([]);
     setShowCollaboratorDialog(false);
+    
+    // Switch back to simple selection mode
+    setMode('cursor');
+    setSelectionType('simple');
   };
   
   // Create a new mind map
