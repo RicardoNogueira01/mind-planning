@@ -516,7 +516,51 @@ const renderConnections = () => {
     
     if (!fromNode || !toNode) return null;
 
-    // Just connect center to center - no calculations
+    // Calculate connection points
+    const fromNodeWidth = Math.min(450, Math.max(150, fromNode.text.length * 10));
+    const toNodeWidth = Math.min(450, Math.max(150, toNode.text.length * 10));
+    
+    // Calculate node boundaries
+    const from = {
+      x: fromNode.x,
+      y: fromNode.y,
+      left: fromNode.x - fromNodeWidth / 2,
+      right: fromNode.x + fromNodeWidth / 2,
+      top: fromNode.y - 25,
+      bottom: fromNode.y + 25
+    };
+    
+    const to = {
+      x: toNode.x,
+      y: toNode.y,
+      left: toNode.x - toNodeWidth / 2,
+      right: toNode.x + toNodeWidth / 2,
+      top: toNode.y - 25,
+      bottom: toNode.y + 25
+    };
+
+    // Calculate connection points based on relative positions
+    let startX, startY, endX, endY;
+
+    // Determine if connection should be horizontal or vertical
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const isHorizontal = Math.abs(dx) > Math.abs(dy);
+
+    if (isHorizontal) {
+      // Horizontal connection
+      startX = dx > 0 ? from.right : from.left;
+      endX = dx > 0 ? to.left : to.right;
+      startY = from.y;
+      endY = to.y;
+    } else {
+      // Vertical connection
+      startX = from.x;
+      endX = to.x;
+      startY = dy > 0 ? from.bottom : from.top;
+      endY = dy > 0 ? to.top : to.bottom;
+    }
+
     return (
       <div key={conn.id} style={{ 
         position: 'absolute', 
@@ -528,13 +572,11 @@ const renderConnections = () => {
         zIndex: 1
       }}>
         <svg width="100%" height="100%" style={{ overflow: 'visible' }}>
-          <line 
-            x1={fromNode.x} 
-            y1={fromNode.y} 
-            x2={toNode.x} 
-            y2={toNode.y} 
-            stroke="#000000" 
+          <path
+            d={`M ${startX} ${startY} C ${startX + dx/2} ${startY}, ${endX - dx/2} ${endY}, ${endX} ${endY}`}
+            stroke="#CBD5E1"
             strokeWidth={2}
+            fill="none"
           />
         </svg>
       </div>
@@ -1440,7 +1482,7 @@ const updateSelection = (e) => {
                                         <div className="text-gray-500">
                                           {attachment.type === 'pdf' && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>}
                                           {(attachment.type === 'doc' || attachment.type === 'docx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
-                                          {(attachment.type === 'xls' || attachment.type === 'xlsx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 13v-1m4 1v-3m4 3V8M8 21l4-4 4 4M4 3h16a2 2 0 012 2v14a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2z" /></svg>}
+                                          {(attachment.type === 'xls' || attachment.type === 'xlsx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 13v-1m4 1v-3m4 3V8M8 21l4-4 4 4M4 3h16a2 2 0 012 2v14a2 2 0 01-2 2H4a2 2 0 01-2-2z" /></svg>}
                                         </div>
                                         <div className="flex flex-col">
                                           <span className="text-sm font-medium">{attachment.name}</span>
@@ -1774,8 +1816,10 @@ const updateSelection = (e) => {
                       className="flex flex-col items-center justify-center p-3 border rounded-lg hover:bg-gray-50"
                       onClick={() => assignCollaborator(collab)}
                     >
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-white mb-2"
-                        style={{ backgroundColor: collab.color }}>
+                      <div 
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-white mb-2"
+                        style={{ backgroundColor: collab.color }}
+                      >
                         {collab.initials}
                       </div>
                       <span className="text-sm">{collab.name}</span>
