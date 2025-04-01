@@ -285,7 +285,12 @@ const MindMap = () => {
   
     const newId = `node-${Date.now()}`;
     
-    const newX = parent.x + 200; // Fixed distance to the right
+    // Calculate dynamic parent width
+    const parentWidth = Math.min(450, Math.max(150, parent.text.length * 10));
+    
+    // Position child to the right of parent with proper spacing
+    // Make sure to account for the parent's width
+    const newX = parent.x + parentWidth/2 + 100; // Parent right edge + spacing
     const newY = parent.y;      // Same vertical level as parent
     
     const newNode = {
@@ -509,80 +514,47 @@ const MindMap = () => {
   };
 
   // Update the connection line calculation in renderConnections
-const renderConnections = () => {
-  return connections.map(conn => {
-    const fromNode = nodes.find(n => n.id === conn.from);
-    const toNode = nodes.find(n => n.id === conn.to);
-    
-    if (!fromNode || !toNode) return null;
-
-    // Calculate connection points
-    const fromNodeWidth = Math.min(450, Math.max(150, fromNode.text.length * 10));
-    const toNodeWidth = Math.min(450, Math.max(150, toNode.text.length * 10));
-    
-    // Calculate node boundaries
-    const from = {
-      x: fromNode.x,
-      y: fromNode.y,
-      left: fromNode.x - fromNodeWidth / 2,
-      right: fromNode.x + fromNodeWidth / 2,
-      top: fromNode.y - 25,
-      bottom: fromNode.y + 25
-    };
-    
-    const to = {
-      x: toNode.x,
-      y: toNode.y,
-      left: toNode.x - toNodeWidth / 2,
-      right: toNode.x + toNodeWidth / 2,
-      top: toNode.y - 25,
-      bottom: toNode.y + 25
-    };
-
-    // Calculate connection points based on relative positions
-    let startX, startY, endX, endY;
-
-    // Determine if connection should be horizontal or vertical
-    const dx = to.x - from.x;
-    const dy = to.y - from.y;
-    const isHorizontal = Math.abs(dx) > Math.abs(dy);
-
-    if (isHorizontal) {
-      // Horizontal connection
-      startX = dx > 0 ? from.right : from.left;
-      endX = dx > 0 ? to.left : to.right;
-      startY = from.y;
-      endY = to.y;
-    } else {
-      // Vertical connection
-      startX = from.x;
-      endX = to.x;
-      startY = dy > 0 ? from.bottom : from.top;
-      endY = dy > 0 ? to.top : to.bottom;
-    }
-
-    return (
-      <div key={conn.id} style={{ 
-        position: 'absolute', 
-        top: 0, 
-        left: 0, 
-        right: 0, 
-        bottom: 0, 
-        pointerEvents: 'none', 
-        zIndex: 1
-      }}>
-        <svg width="100%" height="100%" style={{ overflow: 'visible' }}>
-          <path
-            d={`M ${startX} ${startY} C ${startX + dx/2} ${startY}, ${endX - dx/2} ${endY}, ${endX} ${endY}`}
-            stroke="#CBD5E1"
-            strokeWidth={2}
-            fill="none"
-          />
-        </svg>
-      </div>
-    );
-  });
-};
+  const renderConnections = () => {
+    return connections.map(conn => {
+      const fromNode = nodes.find(n => n.id === conn.from);
+      const toNode = nodes.find(n => n.id === conn.to);
+      
+      if (!fromNode || !toNode) return null;
+  
+      // Starting point (parent node)
+      const startX = fromNode.x;
+      const startY = fromNode.y;
+      
+      // End point (child node) with 50px vertical offset
+      const endX = toNode.x;
+      const endY = toNode.y + 50; // Add 50px to move connection point down
+  
+      // Calculate control points for the curve
+      const dx = endX - startX;
+      const dy = endY - startY;
+      
+      return (
+        <div key={conn.id} style={{ 
+          position: 'absolute', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          bottom: 0, 
+          pointerEvents: 'none', 
+          zIndex: 1
+        }}>
+          <svg width="100%" height="100%" style={{ overflow: 'visible' }}>
+            <path
+              d={`M ${startX} ${startY} C ${startX + dx/3} ${startY}, ${endX - dx/3} ${endY}, ${endX} ${endY}`}
+              stroke="#CBD5E1"
+              strokeWidth={2}
+              fill="none"
+            />
+          </svg>
+        </div>
+      );
+    });
+  };
 
   // Render the group bounding boxes and collaborator icons
   const renderNodeGroups = () => {
@@ -1130,7 +1102,7 @@ const updateSelection = (e) => {
               
               // Calculate dynamic width based on text length
               const textLength = node.text.length;
-              const nodeWidth = Math.min(450, Math.max(150, textLength * 10));
+              const nodeWidth = Math.min(350, Math.max(150, textLength * 10));
 
               return (
                 <div
@@ -1138,10 +1110,10 @@ const updateSelection = (e) => {
                   className={`absolute p-3 rounded-lg shadow cursor-move node
                     ${selectedNodes.includes(node.id) ? 'ring-2 ring-indigo-500' : ''}`}
                   style={{
-                    left: node.x - nodeWidth / 2,
-                    top: node.y - 25,
+                    left: node.x - nodeWidth / 2, // Center the node horizontally
+                    top: node.y - 25, // Adjust vertical position
                     width: nodeWidth,
-                    height: 'auto',
+                    minHeight: 50, // Ensure minimum height for consistent connection points
                     backgroundColor: node.color,
                     zIndex: searchQuery ? (isNodeMatching ? 20 : 10) : 10,
                     textAlign: 'center',
