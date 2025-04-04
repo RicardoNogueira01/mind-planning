@@ -75,6 +75,46 @@ const MindMap = () => {
     };
   }, [nodes]);
 
+  // Update the global click handler to properly detect clicks inside popups
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const popupElements = document.querySelectorAll('.popup-content');
+      let clickedInsidePopup = false;
+  
+      popupElements.forEach(popup => {
+        if (popup.contains(event.target)) {
+          clickedInsidePopup = true;
+        }
+      });
+  
+      if (!clickedInsidePopup) {
+        setNodes(nodes.map(node => ({
+          ...node,
+          showEmojiPopup: false,
+          showBgColorPopup: false,
+          showFontColorPopup: false,
+          showAttachmentPopup: false,
+          showNotesPopup: false,
+          showDetailsPopup: false,
+          showDatePopup: false,
+          showCollaboratorPopup: false,
+          showLayoutPopup: false
+        })));
+      }
+    };
+  
+    document.addEventListener('mousedown', handleClickOutside);
+  
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [nodes]);
+
+  // Ensure event propagation is stopped for inputs and dropdowns inside popups
+  const stopPropagation = (event) => {
+    event.stopPropagation();
+  };
+
   // Set up wheel event for zooming
   useEffect(() => {
     const handleWheel = (e) => {
@@ -322,35 +362,40 @@ const MindMap = () => {
   // Add this state to track whether a node is in edit mode
   const [editingNode, setEditingNode] = useState(null);
 
-  // Update the handleNodeClick function
-  const handleNodeClick = (nodeId, e) => {
-    if (mode === 'cursor') {
-      if (selectionType === 'simple') {
-        if (e.ctrlKey || e.metaKey) {
-          // Add to selection if Ctrl/Cmd is pressed
-          setSelectedNodes(prev => 
-            prev.includes(nodeId) 
-              ? prev.filter(id => id !== nodeId)
-              : [...prev, nodeId]
-          );
-        } else {
-          // Replace selection if no modifier key
-          setSelectedNodes([nodeId]);
-        }
-      }
-      
-      // If the node is already selected and clicked again, enable editing
-      if (selectedNode === nodeId) {
-        setEditingNode(nodeId);
-        setIsEditing(true);
+  // Update the handleNodeClick function to prevent focusing on the node when clicking inside a popup or input
+const handleNodeClick = (nodeId, e) => {
+  // Prevent focusing on the node if the click is inside a popup or input
+  if (e.target.closest('.popup-content') || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
+    return;
+  }
+
+  if (mode === 'cursor') {
+    if (selectionType === 'simple') {
+      if (e.ctrlKey || e.metaKey) {
+        // Add to selection if Ctrl/Cmd is pressed
+        setSelectedNodes(prev => 
+          prev.includes(nodeId) 
+            ? prev.filter(id => id !== nodeId)
+            : [...prev, nodeId]
+        );
       } else {
-        // First click just selects the node
-        setSelectedNode(nodeId);
-        setEditingNode(null);
-        setIsEditing(false);
+        // Replace selection if no modifier key
+        setSelectedNodes([nodeId]);
       }
     }
-  };
+
+    // If the node is already selected and clicked again, enable editing
+    if (selectedNode === nodeId) {
+      setEditingNode(nodeId);
+      setIsEditing(true);
+    } else {
+      // First click just selects the node
+      setSelectedNode(nodeId);
+      setEditingNode(null);
+      setIsEditing(false);
+    }
+  }
+};
   
   // Handle node dragging
   const handleNodeDrag = (nodeId, newX, newY) => {
