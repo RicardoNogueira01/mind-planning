@@ -518,34 +518,46 @@ const MindMap = () => {
     return connections.map(conn => {
       const fromNode = nodes.find(n => n.id === conn.from);
       const toNode = nodes.find(n => n.id === conn.to);
-      
+  
       if (!fromNode || !toNode) return null;
   
-      // Starting point (parent node)
-      const startX = fromNode.x;
-      const startY = fromNode.y;
-      
-      // End point (child node) with 50px vertical offset
-      const endX = toNode.x;
-      const endY = toNode.y + 50; // Add 50px to move connection point down
+      // Calculate the bounding box of each node, including padding and margins
+      const fromNodeElement = document.querySelector(`[data-node-id="${fromNode.id}"]`);
+      const toNodeElement = document.querySelector(`[data-node-id="${toNode.id}"]`);
   
-      // Calculate control points for the curve
+      if (!fromNodeElement || !toNodeElement) return null;
+  
+      const fromRect = fromNodeElement.getBoundingClientRect();
+      const toRect = toNodeElement.getBoundingClientRect();
+  
+      // Calculate start and end points based on the text area of the nodes
+      const startX = fromRect.right;
+      const startY = fromRect.top + fromRect.height / 2;
+  
+      const endX = toRect.left;
+      const endY = toRect.top + toRect.height / 2;
+  
+      // Dynamically calculate control points for smoother curves
       const dx = endX - startX;
       const dy = endY - startY;
-      
+      const controlPoint1X = startX + dx * 0.25;
+      const controlPoint1Y = startY + dy * 0.1;
+      const controlPoint2X = endX - dx * 0.25;
+      const controlPoint2Y = endY - dy * 0.1;
+  
       return (
-        <div key={conn.id} style={{ 
-          position: 'absolute', 
-          top: 0, 
-          left: 0, 
-          right: 0, 
-          bottom: 0, 
-          pointerEvents: 'none', 
+        <div key={conn.id} style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          pointerEvents: 'none',
           zIndex: 1
         }}>
           <svg width="100%" height="100%" style={{ overflow: 'visible' }}>
             <path
-              d={`M ${startX} ${startY} C ${startX + dx/3} ${startY}, ${endX - dx/3} ${endY}, ${endX} ${endY}`}
+              d={`M ${startX} ${startY} C ${controlPoint1X} ${controlPoint1Y}, ${controlPoint2X} ${controlPoint2Y}, ${endX} ${endY}`}
               stroke="#CBD5E1"
               strokeWidth={2}
               fill="none"
@@ -1083,6 +1095,7 @@ const updateSelection = (e) => {
               return (
                 <div
                   key={node.id}
+                  data-node-id={node.id} // Add this attribute
                   className={`absolute p-3 rounded-lg shadow cursor-move node
                     ${selectedNodes.includes(node.id) ? 'ring-2 ring-indigo-500' : ''}`}
                   style={{
@@ -1637,7 +1650,8 @@ const updateSelection = (e) => {
                   {node.attachment && (
                     <div className="text-xs text-gray-500 mb-1 flex items-center justify-center gap-1">
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line>
                       </svg>
                       {node.attachment.length > 15 ? node.attachment.substring(0, 12) + '...' : node.attachment}
                     </div>
