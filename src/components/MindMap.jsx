@@ -1745,13 +1745,18 @@ const updateSelection = (e) => {
                   {/* Node text content */}
                   {selectedNode === node.id && mode === 'cursor' ? (
                     editingNode === node.id ? (
+                      // Update the textarea to dynamically adjust its height and preserve line breaks on initial focus
                       <textarea
                         value={node.text}
                         onChange={(e) => updateNodeText(node.id, e.target.value)}
-                        className="bg-transparent outline-none w-full text-center resize-none"
-                        style={{ color: node.fontColor || 'black' }}
+                        className="bg-transparent outline-none w-full text-center resize-none overflow-hidden whitespace-pre-wrap"
+                        style={{ color: node.fontColor || 'black', whiteSpace: 'pre-wrap' }}
                         onClick={(e) => e.stopPropagation()}
-                        onFocus={() => setIsEditing(true)}
+                        onFocus={(e) => {
+                          setIsEditing(true);
+                          e.target.style.height = 'auto'; // Reset height to auto
+                          e.target.style.height = `${e.target.scrollHeight}px`; // Adjust height to fit content
+                        }}
                         onBlur={() => {
                           setEditingNode(null);
                           setIsEditing(false);
@@ -1760,6 +1765,11 @@ const updateSelection = (e) => {
                           e.stopPropagation(); // Prevent event from bubbling up
                         }}
                         autoFocus
+                        rows={1} // Start with a single row
+                        onInput={(e) => {
+                          e.target.style.height = 'auto'; // Reset height to auto
+                          e.target.style.height = `${e.target.scrollHeight}px`; // Adjust height to fit content
+                        }}
                       />
                     ) : (
                       <div 
@@ -1814,12 +1824,12 @@ const updateSelection = (e) => {
                   {/* Attachment indicator */}
                   {node.attachments && node.attachments.length > 0 && (
                     <div 
-                      className="mt-1 text-xs text-gray-500 flex items-center justify-center gap-1 cursor-pointer hover:text-gray-700"
+                      className="absolute top-1 right-11 text-xs text-gray-500 flex items-center justify-center gap-1 cursor-pointer hover:text-gray-700"
                       onClick={(e) => {
                         e.stopPropagation();
                         setNodes(nodes.map(n => 
                           n.id === node.id ? { ...n, showAttachmentPopup: true } : n
-                         ));
+                        ));
                       }}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
