@@ -1149,7 +1149,7 @@ const updateSelection = (e) => {
                           }}
                           title="Add emoji or icon"
                         >
-                          <span role="img" aria-label="emoji" className="text-lg">😊</span>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
                         </button>
                         
                         {/* Background Color */}
@@ -1163,7 +1163,7 @@ const updateSelection = (e) => {
                           }}
                           title="Background color"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M3 9h18"></path></svg>
                         </button>
                         
                         {/* Font Color */}
@@ -1177,7 +1177,7 @@ const updateSelection = (e) => {
                           }}
                           title="Font color"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 7h6"></path><path d="M9 17h6"></path><path d="m3 17 4-10"></path><path d="M21 7c-.3 1.9-2 3-4 3h-2"></path><path d="M21 17c-.3-1.9-2-3-4-3h-2"></path></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h16"></path><path d="M9 4h6l-3 9z"></path></svg>
                         </button>
                         
                         {/* Attachment */}
@@ -1191,7 +1191,7 @@ const updateSelection = (e) => {
                           }}
                           title="Add attachment"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
                         </button>
                         
                         {/* Notes */}
@@ -1259,7 +1259,7 @@ const updateSelection = (e) => {
                           }}
                           title="Add connected child node"
                         >
-                          <Plus size={16} />
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         </button>
                         
                         {/* Delete Node */}
@@ -1272,7 +1272,7 @@ const updateSelection = (e) => {
                             }}
                             title="Delete this node"
                           >
-                            <Trash2 size={16} />
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-2 14H7L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
                           </button>
                         )}
 
@@ -1435,7 +1435,7 @@ const updateSelection = (e) => {
                                       attachment.type === attachmentFilters.fileType;
                                     const matchesUser = !attachmentFilters.addedBy || 
                                       attachment.addedBy === attachmentFilters.addedBy;
-                                    return matchesSearch, matchesType, matchesUser;
+                                    return matchesSearch && matchesType && matchesUser;
                                   })
                                   .map(attachment => (
                                     <div key={attachment.id} className="py-2 flex items-center justify-between">
