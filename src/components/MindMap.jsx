@@ -253,8 +253,8 @@ const MindMap = () => {
       color: '#EEF2FF'
     };
     
-    setNodes([rootNode]);
-    setConnections([]);
+    wrappedSetNodes([rootNode]);
+    wrappedSetConnections([]);
     setShowNewMapPrompt(false);
   };
 
@@ -314,7 +314,7 @@ const MindMap = () => {
       color: '#EEF2FF'
     };
     
-    setNodes([...nodes, newNode]);
+    wrappedSetNodes([...nodes, newNode]);
     setSelectedNode(newId);
   };
   
@@ -347,14 +347,14 @@ const MindMap = () => {
       to: newId
     };
     
-    setNodes([...nodes, newNode]);
-    setConnections([...connections, newConnection]);
+    wrappedSetNodes([...nodes, newNode]);
+    wrappedSetConnections([...connections, newConnection]);
     setSelectedNode(newId);
   };
   
   // Update node text
   const updateNodeText = (nodeId, text) => {
-    setNodes(nodes.map(node => 
+    wrappedSetNodes(nodes.map(node => 
       node.id === nodeId ? { ...node, text } : node
     ));
   };
@@ -406,7 +406,7 @@ const handleNodeClick = (nodeId, e) => {
       const dy = newY - targetNode.y;
   
       // Move all selected nodes by the same displacement
-      setNodes(nodes.map(node => {
+      wrappedSetNodes(nodes.map(node => {
         if (selectedNodes.includes(node.id)) {
           return {
             ...node,
@@ -500,8 +500,8 @@ const handleNodeClick = (nodeId, e) => {
     });
     
     // Update state
-    setNodes(updatedNodes);
-    setConnections(updatedConnections);
+    wrappedSetNodes(updatedNodes);
+    wrappedSetConnections(updatedConnections);
     setNodeGroups(updatedGroups);
     setSelectedNode(null);
   };
@@ -551,8 +551,8 @@ const handleNodeClick = (nodeId, e) => {
     });
     
     // Update state
-    setNodes(updatedNodes);
-    setConnections(updatedConnections);
+    wrappedSetNodes(updatedNodes);
+    wrappedSetConnections(updatedConnections);
     setNodeGroups(updatedGroups);
     setSelectedNodes([]);
     setSelectedNode(null);
@@ -667,7 +667,7 @@ const handleNodeClick = (nodeId, e) => {
         type: file.name.split('.').pop().toLowerCase(),
       };
 
-      setNodes(nodes.map(n => 
+      wrappedSetNodes(nodes.map(n => 
         n.id === nodeId ? {
           ...n,
           attachments: [...(n.attachments || []), newAttachment]
@@ -808,7 +808,7 @@ const handleNodeClick = (nodeId, e) => {
         break;
     }
   
-    setNodes(updatedNodes);
+    wrappedSetNodes(updatedNodes);
   };
   
   // Helper function to get node level in the hierarchy
@@ -929,7 +929,50 @@ const updateSelection = (e) => {
     });
   }
 };
-  
+
+// Add state for history and current history index
+const [history, setHistory] = useState([]);
+const [historyIndex, setHistoryIndex] = useState(-1);
+
+// Function to save the current state to history
+const saveToHistory = () => {
+  const currentState = { nodes, connections };
+  const newHistory = history.slice(0, historyIndex + 1); // Remove future states if any
+  setHistory([...newHistory, currentState]);
+  setHistoryIndex(newHistory.length);
+};
+
+// Undo function
+const undo = () => {
+  if (historyIndex > 0) {
+    const previousState = history[historyIndex - 1];
+    setNodes(previousState.nodes);
+    setConnections(previousState.connections);
+    setHistoryIndex(historyIndex - 1);
+  }
+};
+
+// Redo function
+const redo = () => {
+  if (historyIndex < history.length - 1) {
+    const nextState = history[historyIndex + 1];
+    setNodes(nextState.nodes);
+    setConnections(nextState.connections);
+    setHistoryIndex(historyIndex + 1);
+  }
+};
+
+// Wrap state-modifying functions to save to history
+const wrappedSetNodes = (newNodes) => {
+  setNodes(newNodes);
+  saveToHistory();
+};
+
+const wrappedSetConnections = (newConnections) => {
+  setConnections(newConnections);
+  saveToHistory();
+};
+
   return (
     <div 
       className="relative w-full h-screen bg-slate-50 overflow-hidden" 
@@ -1041,6 +1084,24 @@ const updateSelection = (e) => {
                 disabled={selectedNodes.length === 0}
               >
                 <Trash2 size={20} />
+              </button>
+
+              {/* Add undo and redo buttons to the toolbar */}
+              <button 
+                onClick={undo}
+                className="p-2 rounded text-black hover:bg-gray-100"
+                title="Undo"
+                disabled={historyIndex <= 0}
+              >
+                Undo
+              </button>
+              <button 
+                onClick={redo}
+                className="p-2 rounded text-black hover:bg-gray-100"
+                title="Redo"
+                disabled={historyIndex >= history.length - 1}
+              >
+                Redo
               </button>
             </div>
           </div>
@@ -1187,7 +1248,7 @@ const updateSelection = (e) => {
                           className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setNodes(nodes.map(n => 
+                            wrappedSetNodes(nodes.map(n => 
                               n.id === node.id ? { ...n, showEmojiPopup: !n.showEmojiPopup, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
                             ));
                           }}
@@ -1201,7 +1262,7 @@ const updateSelection = (e) => {
                           className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setNodes(nodes.map(n => 
+                            wrappedSetNodes(nodes.map(n => 
                               n.id === node.id ? { ...n, showBgColorPopup: !n.showBgColorPopup, showEmojiPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
                             ));
                           }}
@@ -1215,7 +1276,7 @@ const updateSelection = (e) => {
                           className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setNodes(nodes.map(n => 
+                            wrappedSetNodes(nodes.map(n => 
                               n.id === node.id ? { ...n, showFontColorPopup: !n.showFontColorPopup, showEmojiPopup: false, showBgColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
                             ));
                           }}
@@ -1229,7 +1290,7 @@ const updateSelection = (e) => {
                           className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setNodes(nodes.map(n => 
+                            wrappedSetNodes(nodes.map(n => 
                               n.id === node.id ? { ...n, showAttachmentPopup: !n.showAttachmentPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
                             ));
                           }}
@@ -1243,7 +1304,7 @@ const updateSelection = (e) => {
                           className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setNodes(nodes.map(n => 
+                            wrappedSetNodes(nodes.map(n => 
                               n.id === node.id ? { ...n, showNotesPopup: !n.showNotesPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
                             ));
                           }}
@@ -1257,7 +1318,7 @@ const updateSelection = (e) => {
                           className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setNodes(nodes.map(n => 
+                            wrappedSetNodes(nodes.map(n => 
                               n.id === node.id ? { ...n, showDetailsPopup: !n.showDetailsPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
                             ));
                           }}
@@ -1271,7 +1332,7 @@ const updateSelection = (e) => {
                           className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setNodes(nodes.map(n => 
+                            wrappedSetNodes(nodes.map(n => 
                               n.id === node.id ? { ...n, showDatePopup: !n.showDatePopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showCollaboratorPopup: false } : n
                             ));
                           }}
@@ -1285,7 +1346,7 @@ const updateSelection = (e) => {
                           className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setNodes(nodes.map(n => 
+                            wrappedSetNodes(nodes.map(n => 
                               n.id === node.id ? { ...n, showCollaboratorPopup: !n.showCollaboratorPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false } : n
                             ));
                           }}
@@ -1326,7 +1387,7 @@ const updateSelection = (e) => {
                             className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setNodes(nodes.map(n => 
+                              wrappedSetNodes(nodes.map(n => 
                                 n.id === node.id ? { ...n, showLayoutPopup: !n.showLayoutPopup } : n
                               ));
                             }}
@@ -1351,7 +1412,7 @@ const updateSelection = (e) => {
                                 key={emoji}
                                 className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded text-xl"
                                 onClick={() => {
-                                  setNodes(nodes.map(n => 
+                                  wrappedSetNodes(nodes.map(n => 
                                     n.id === node.id ? { ...n, emoji, showEmojiPopup: false } : n
                                   ));
                                 }}
@@ -1378,7 +1439,7 @@ const updateSelection = (e) => {
                                 }}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setNodes(nodes.map(n => 
+                                  wrappedSetNodes(nodes.map(n => 
                                     n.id === node.id ? { ...n, color, showBgColorPopup: false } : n
                                   ));
                                 }}
@@ -1402,7 +1463,7 @@ const updateSelection = (e) => {
                                   border: node.fontColor === color ? '2px solid #4F46E5' : '1px solid #E5E7EB' 
                                 }}
                                 onClick={() => {
-                                  setNodes(nodes.map(n => 
+                                  wrappedSetNodes(nodes.map(n => 
                                     n.id === node.id ? { ...n, fontColor: color, showFontColorPopup: false } : n
                                   ));
                                 }}
@@ -1498,7 +1559,7 @@ const updateSelection = (e) => {
                                       </div>
                                       <button 
                                         className="text-red-500 hover:text-red-700 p-1"
-                                        onClick={() => setNodes(nodes.map(n => 
+                                        onClick={() => wrappedSetNodes(nodes.map(n => 
                                           n.id === node.id ? {
                                             ...n,
                                             attachments: n.attachments.filter(a => a.id !== attachment.id)
@@ -1527,14 +1588,14 @@ const updateSelection = (e) => {
                             className="w-full p-2 border rounded-md text-sm h-24 resize-none text-black"
                             placeholder="Add notes about this node..."
                             value={node.notes || ''}
-                            onChange={(e) => setNodes(nodes.map(n => 
+                            onChange={(e) => wrappedSetNodes(nodes.map(n => 
                               n.id === node.id ? { ...n, notes: e.target.value } : n
                             ))}
                           />
                           <div className="flex justify-end mt-2">
                             <button 
                               className="px-3 py-1 text-sm bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100"
-                              onClick={() => setNodes(nodes.map(n => 
+                              onClick={() => wrappedSetNodes(nodes.map(n => 
                                 n.id === node.id ? { ...n, showNotesPopup: false } : n
                               ))}
                             >
@@ -1554,7 +1615,7 @@ const updateSelection = (e) => {
                               <select 
                                 className="w-full p-2 border rounded-md text-sm text-black"
                                 value={node.priority || 'medium'}
-                                onChange={(e) => setNodes(nodes.map(n => 
+                                onChange={(e) => wrappedSetNodes(nodes.map(n => 
                                   n.id === node.id ? { ...n, priority: e.target.value } : n
                                 ))}
                               >
@@ -1569,7 +1630,7 @@ const updateSelection = (e) => {
                               <select 
                                 className="w-full p-2 border rounded-md text-sm text-black"
                                 value={node.status || 'not-started'}
-                                onChange={(e) => setNodes(nodes.map(n => 
+                                onChange={(e) => wrappedSetNodes(nodes.map(n => 
                                   n.id === node.id ? { ...n, status: e.target.value } : n
                                 ))}
                               >
@@ -1585,7 +1646,7 @@ const updateSelection = (e) => {
                                 className="w-full p-2 border rounded-md text-sm h-24 resize-none text-black"
                                 placeholder="Additional details..."
                                 value={node.description || ''}
-                                onChange={(e) => setNodes(nodes.map(n => 
+                                onChange={(e) => wrappedSetNodes(nodes.map(n => 
                                   n.id === node.id ? { ...n, description: e.target.value } : n
                                 ))}
                               />
@@ -1594,7 +1655,7 @@ const updateSelection = (e) => {
                           <div className="flex justify-end mt-2">
                             <button 
                               className="px-3 py-1 text-sm bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100"
-                              onClick={() => setNodes(nodes.map(n => 
+                              onClick={() => wrappedSetNodes(nodes.map(n => 
                                 n.id === node.id ? { ...n, showDetailsPopup: false } : n
                               ))}
                             >
@@ -1613,7 +1674,7 @@ const updateSelection = (e) => {
                               type="date"
                               className="w-full p-2 border rounded-md text-sm text-black"
                               value={node.dueDate || ''}
-                              onChange={(e) => setNodes(nodes.map(n => 
+                              onChange={(e) => wrappedSetNodes(nodes.map(n => 
                                 n.id === node.id ? { ...n, dueDate: e.target.value } : n
                               ))}
                             />
@@ -1668,7 +1729,7 @@ const updateSelection = (e) => {
                                 className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-md text-sm"
                                 onClick={() => {
                                   applyLayout(node.id, layout.id);
-                                  setNodes(nodes.map(n => 
+                                  wrappedSetNodes(nodes.map(n => 
                                     n.id === node.id ? { ...n, showLayoutPopup: false } : n
                                   ));
                                 }}
@@ -1789,7 +1850,7 @@ const updateSelection = (e) => {
                       className="absolute top-1 right-1 text-xs text-gray-500 flex items-center justify-center gap-1 cursor-pointer hover:text-gray-700"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setNodes(nodes.map(n => 
+                        wrappedSetNodes(nodes.map(n => 
                           n.id === node.id ? { ...n, showNotesPopup: true } : n
                         ));
                       }}
@@ -1807,7 +1868,7 @@ const updateSelection = (e) => {
                       className="absolute top-1 right-6 text-xs text-gray-500 flex items-center justify-center gap-1 cursor-pointer hover:text-gray-700"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setNodes(nodes.map(n => 
+                        wrappedSetNodes(nodes.map(n => 
                           n.id === node.id ? { ...n, showDatePopup: true } : n
                         ));
                       }}
@@ -1827,7 +1888,7 @@ const updateSelection = (e) => {
                       className="absolute top-1 right-11 text-xs text-gray-500 flex items-center justify-center gap-1 cursor-pointer hover:text-gray-700"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setNodes(nodes.map(n => 
+                        wrappedSetNodes(nodes.map(n => 
                           n.id === node.id ? { ...n, showAttachmentPopup: true } : n
                         ));
                       }}
