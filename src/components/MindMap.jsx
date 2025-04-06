@@ -1093,7 +1093,10 @@ const wrappedSetConnections = (newConnections) => {
                 title="Undo"
                 disabled={historyIndex <= 0}
               >
-                Undo
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 17L4 12l5-5" />
+                  <path d="M20 18v-1a4 4 0 0 0-4-4H4" />
+                </svg>
               </button>
               <button 
                 onClick={redo}
@@ -1101,7 +1104,10 @@ const wrappedSetConnections = (newConnections) => {
                 title="Redo"
                 disabled={historyIndex >= history.length - 1}
               >
-                Redo
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 7l5 5-5 5" />
+                  <path d="M4 6v1a4 4 0 0 0 4 4h12" />
+                </svg>
               </button>
             </div>
           </div>
