@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { Plus, Trash2, MousePointer, Hand, Users, Link, Home } from 'lucide-react';
 
 const layoutOptions = [
@@ -314,7 +314,7 @@ const MindMap = () => {
       color: '#EEF2FF'
     };
     
-    wrappedSetNodes([...nodes, newNode]);
+    wrappedSetNodesAndConnections([...nodes, newNode], connections);
     setSelectedNode(newId);
   };
   
@@ -322,7 +322,7 @@ const MindMap = () => {
   const addChildNode = (parentId) => {
     const parent = nodes.find(n => n.id === parentId);
     if (!parent) return;
-  
+
     const newId = `node-${Date.now()}`;
     
     // Calculate dynamic parent width
@@ -347,8 +347,7 @@ const MindMap = () => {
       to: newId
     };
     
-    wrappedSetNodes([...nodes, newNode]);
-    wrappedSetConnections([...connections, newConnection]);
+    wrappedSetNodesAndConnections([...nodes, newNode], [...connections, newConnection]);
     setSelectedNode(newId);
   };
   
@@ -561,49 +560,25 @@ const handleNodeClick = (nodeId, e) => {
   // Update the connection line calculation in renderConnections
   const renderConnections = () => {
     return connections.map(conn => {
-      const fromNode = nodes.find(n => n.id === conn.from);
-      const toNode = nodes.find(n => n.id === conn.to);
-
-      if (!fromNode || !toNode) return null;
-
-      // Get DOM elements
-      const fromNodeElement = document.querySelector(`[data-node-id="${fromNode.id}"]`);
-      const toNodeElement = document.querySelector(`[data-node-id="${toNode.id}"]`);
-      if (!fromNodeElement || !toNodeElement) return null;
-
-      const fromRect = fromNodeElement.getBoundingClientRect();
-      const toRect = toNodeElement.getBoundingClientRect();
+      const fromPos = nodePositions[conn.from];
+      const toPos = nodePositions[conn.to];
+      if (!fromPos || !toPos) return null;
 
       // Calculate centers
-      const fromCenter = {
-        x: fromRect.left + fromRect.width / 2,
-        y: fromRect.top + fromRect.height / 2
-      };
-      const toCenter = {
-        x: toRect.left + toRect.width / 2,
-        y: toRect.top + toRect.height / 2
-      };
-
-      // Calculate direction vector
-      const dx = toCenter.x - fromCenter.x;
-      const dy = toCenter.y - fromCenter.y;
-      const absDx = Math.abs(dx);
-      const absDy = Math.abs(dy);
+      const fromCenter = { x: fromPos.centerX, y: fromPos.centerY };
+      const toCenter = { x: toPos.centerX, y: toPos.centerY };
 
       // Helper to get edge point
       function getEdgePoint(rect, center, toward) {
         const w = rect.width / 2;
         const h = rect.height / 2;
         const angle = Math.atan2(toward.y - center.y, toward.x - center.x);
-        // Find intersection with rectangle edge
         const tanTheta = Math.abs(Math.tan(angle));
         let x = center.x, y = center.y;
         if (tanTheta <= h / w) {
-          // Hits left or right edge
           x += (toward.x > center.x ? w : -w);
           y += (toward.x > center.x ? w : -w) * Math.tan(angle);
         } else {
-          // Hits top or bottom edge
           y += (toward.y > center.y ? h : -h);
           x += (toward.y > center.y ? h : -h) / Math.tan(angle);
         }
@@ -611,6 +586,8 @@ const handleNodeClick = (nodeId, e) => {
       }
 
       // Get edge points for both nodes
+      const fromRect = { ...fromPos, width: fromPos.width, height: fromPos.height };
+      const toRect = { ...toPos, width: toPos.width, height: toPos.height };
       const start = getEdgePoint(fromRect, fromCenter, toCenter);
       const end = getEdgePoint(toRect, toCenter, fromCenter);
 
@@ -1003,6 +980,36 @@ const wrappedSetConnections = (newConnections) => {
   saveToHistory();
 };
 
+// New: wrap both nodes and connections in a single update
+const wrappedSetNodesAndConnections = (newNodes, newConnections) => {
+  setNodes(newNodes);
+  setConnections(newConnections);
+  saveToHistory();
+};
+
+const nodeRefs = useRef({});
+const [nodePositions, setNodePositions] = useState({});
+
+// Measure node positions after nodes/connections change
+useLayoutEffect(() => {
+  const positions = {};
+  nodes.forEach(node => {
+    const el = nodeRefs.current[node.id];
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      positions[node.id] = {
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+        centerX: rect.left + rect.width / 2,
+        centerY: rect.top + rect.height / 2
+      };
+    }
+  });
+  setNodePositions(positions);
+}, [nodes, connections]);
+
   return (
     <div 
       className="relative w-full h-screen bg-slate-50 overflow-hidden" 
@@ -1195,6 +1202,7 @@ const wrappedSetConnections = (newConnections) => {
                  
           {/* Wrapper for panned and zoomed content */}
           <div 
+            key={nodes.length + '-' + connections.length}
             className="absolute"
             style={{
               transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
@@ -1236,7 +1244,8 @@ const wrappedSetConnections = (newConnections) => {
               return (
                 <div
                   key={node.id}
-                  data-node-id={node.id} // Add this attribute
+                  data-node-id={node.id}
+                  ref={el => { nodeRefs.current[node.id] = el; }}
                   className={`absolute p-3 rounded-lg shadow cursor-move node
                     ${selectedNodes.includes(node.id) ? 'ring-2 ring-indigo-500' : ''}`}
                   style={{
@@ -1289,7 +1298,12 @@ const wrappedSetConnections = (newConnections) => {
                           }}
                           title="Add emoji or icon"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                            <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                            <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                          </svg>
                         </button>
                         
                         {/* Background Color */}
@@ -1303,7 +1317,10 @@ const wrappedSetConnections = (newConnections) => {
                           }}
                           title="Background color"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M3 9h18"></path></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <path d="M3 9h18"></path>
+                          </svg>
                         </button>
                         
                         {/* Font Color */}
@@ -1317,7 +1334,10 @@ const wrappedSetConnections = (newConnections) => {
                           }}
                           title="Font color"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h16"></path><path d="M9 4h6l-3 9z"></path></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 20h16"></path>
+                            <path d="M9 4h6l-3 9z"></path>
+                          </svg>
                         </button>
                         
                         {/* Attachment */}
@@ -1331,7 +1351,9 @@ const wrappedSetConnections = (newConnections) => {
                           }}
                           title="Add attachment"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                          </svg>
                         </button>
                         
                         {/* Notes */}
@@ -1345,7 +1367,13 @@ const wrappedSetConnections = (newConnections) => {
                           }}
                           title="Add notes"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <line x1="10" y1="9" x2="8" y2="9"></line>
+                          </svg>
                         </button>
                         
                         {/* Details (Priority/Status) */}
@@ -1359,7 +1387,11 @@ const wrappedSetConnections = (newConnections) => {
                           }}
                           title="Details (Priority/Status)"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                          </svg>
                         </button>
                         
                         {/* Due Date */}
@@ -1373,7 +1405,12 @@ const wrappedSetConnections = (newConnections) => {
                           }}
                           title="Set due date"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                          </svg>
                         </button>
                         
                         {/* Collaborator */}
@@ -1387,7 +1424,12 @@ const wrappedSetConnections = (newConnections) => {
                           }}
                           title="Assign collaborator"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                          </svg>
                         </button>
                         
                         {/* Add Node */}
@@ -1399,7 +1441,10 @@ const wrappedSetConnections = (newConnections) => {
                           }}
                           title="Add connected child node"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                          </svg>
                         </button>
                         
                         {/* Delete Node */}
@@ -1412,7 +1457,12 @@ const wrappedSetConnections = (newConnections) => {
                             }}
                             title="Delete this node"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-2 14H7L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="3 6 5 6 21 6"></polyline>
+                              <path d="M19 6l-2 14H7L5 6"></path>
+                              <path d="M10 11v6"></path>
+                              <path d="M14 11v6"></path>
+                            </svg>
                           </button>
                         )}
 
@@ -1583,7 +1633,7 @@ const wrappedSetConnections = (newConnections) => {
                                         <div className="text-gray-500">
                                           {attachment.type === 'pdf' && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 0 0 2-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 00 2 2z" /></svg>}
                                           {(attachment.type === 'doc' || attachment.type === 'docx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
-                                          {(attachment.type === 'xls' || attachment.type === 'xlsx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 13v-1m4 1v-3m4 3V8M8 21l4-4 4 4M4 3h16a2 2 0 012 2v14a2 2 0 01-2 2H4a2 2 0 01-2-2z" /></svg>}
+                                          {(attachment.type === 'xls' || attachment.type === 'xlsx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 13v-1m4 1v-3m4 3V8M8 21l4-4 4 4M4 3h16a2 2 0 0 0 2 2v14a2 2 0 0 0-2 2H4a2 2 0 0 0-2-2z" /></svg>}
                                         </div>
                                         <div className="flex flex-col">
                                           <span className="text-sm font-medium text-black">{attachment.name}</span> {/* Added text-black here */}
