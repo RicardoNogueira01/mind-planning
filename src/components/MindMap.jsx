@@ -1888,10 +1888,87 @@ useLayoutEffect(() => {
                     </div>
                   )}
                   
-                  {/* Node text content */}
+                  {/* Collaborator popup */}
+                  {node.showCollaboratorPopup && (
+                    <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 w-72 popup-content" onClick={e => e.stopPropagation()}>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Assign Collaborators</h4>
+                      <input
+                        type="text"
+                        className="w-full p-2 mb-2 border rounded-md text-sm text-black"
+                        placeholder="Search collaborators..."
+                        value={node.collaboratorSearch || ''}
+                        onChange={e => wrappedSetNodes(nodes.map(n =>
+                          n.id === node.id ? { ...n, collaboratorSearch: e.target.value } : n
+                        ))}
+                        autoFocus
+                      />
+                      <div className="max-h-48 overflow-y-auto flex flex-col gap-1">
+                        {collaborators.filter(c =>
+                          !node.collaboratorSearch || c.name.toLowerCase().includes(node.collaboratorSearch.toLowerCase()) || c.initials.toLowerCase().includes(node.collaboratorSearch.toLowerCase())
+                        ).map(collab => (
+                          <label key={collab.id} className="flex items-center gap-2 cursor-pointer p-1 rounded hover:bg-gray-50">
+                            <input
+                              type="checkbox"
+                              checked={Array.isArray(node.collaborators) && node.collaborators.includes(collab.id)}
+                              onChange={e => {
+                                wrappedSetNodes(nodes.map(n => {
+                                  if (n.id !== node.id) return n;
+                                  let newCollabs = Array.isArray(n.collaborators) ? [...n.collaborators] : [];
+                                  if (e.target.checked) {
+                                    if (!newCollabs.includes(collab.id)) newCollabs.push(collab.id);
+                                  } else {
+                                    newCollabs = newCollabs.filter(id => id !== collab.id);
+                                  }
+                                  return { ...n, collaborators: newCollabs };
+                                }));
+                              }}
+                            />
+                            <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: collab.color, color: 'white' }}>{collab.initials}</span>
+                            <span className="text-sm text-gray-700">{collab.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <div className="flex justify-end mt-2">
+                        <button
+                          className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                          onClick={() => {
+                            setSelectedNodes([]);
+                            setShowCollaboratorDialog(false);
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Collaborator avatars on node (OUTSIDE, close to node) */}
+                  {Array.isArray(node.collaborators) && node.collaborators.length > 0 && (
+                    <div
+                      className="flex gap-1 z-30"
+                      style={{
+                        position: 'absolute',
+                        top: '-18px', // 18px above the node content
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      {node.collaborators.map(cid => {
+                        const collab = collaborators.find(c => c.id === cid);
+                        if (!collab) return null;
+                        return (
+                          <span key={cid} className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border-2 border-white shadow" style={{ backgroundColor: collab.color, color: 'white' }} title={collab.name}>
+                            {collab.initials}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Node text content (editable) */}
                   {selectedNode === node.id && mode === 'cursor' ? (
                     editingNode === node.id ? (
-                      // Update the textarea to dynamically adjust its height and preserve line breaks on initial focus
                       <textarea
                         value={node.text}
                         onChange={(e) => updateNodeText(node.id, e.target.value)}
@@ -1900,21 +1977,21 @@ useLayoutEffect(() => {
                         onClick={(e) => e.stopPropagation()}
                         onFocus={(e) => {
                           setIsEditing(true);
-                          e.target.style.height = 'auto'; // Reset height to auto
-                          e.target.style.height = `${e.target.scrollHeight}px`; // Adjust height to fit content
+                          e.target.style.height = 'auto';
+                          e.target.style.height = `${e.target.scrollHeight}px`;
                         }}
                         onBlur={() => {
                           setEditingNode(null);
                           setIsEditing(false);
                         }}
                         onKeyDown={(e) => {
-                          e.stopPropagation(); // Prevent event from bubbling up
+                          e.stopPropagation();
                         }}
                         autoFocus
-                        rows={1} // Start with a single row
+                        rows={1}
                         onInput={(e) => {
-                          e.target.style.height = 'auto'; // Reset height to auto
-                          e.target.style.height = `${e.target.scrollHeight}px`; // Adjust height to fit content
+                          e.target.style.height = 'auto';
+                          e.target.style.height = `${e.target.scrollHeight}px`;
                         }}
                       />
                     ) : (
@@ -1927,62 +2004,6 @@ useLayoutEffect(() => {
                     )
                   ) : (
                     <div style={{ color: node.fontColor || 'black' }}>{node.text}</div>
-                  )}
-                  
-                  {/* Notes indicator if present */}
-                  {node.notes && (
-                    <div 
-                      className="absolute top-1 right-1 text-xs text-gray-500 flex items-center justify-center gap-1 cursor-pointer hover:text-gray-700"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        wrappedSetNodes(nodes.map(n => 
-                          n.id === node.id ? { ...n, showNotesPopup: true } : n
-                        ));
-                      }}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line>
-                      </svg>
-                    </div>
-                  )}
-
-                  {/* Due date badge if set */}
-                  {node.dueDate && (
-                    <div 
-                      className="absolute top-1 right-6 text-xs text-gray-500 flex items-center justify-center gap-1 cursor-pointer hover:text-gray-700"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        wrappedSetNodes(nodes.map(n => 
-                          n.id === node.id ? { ...n, showDatePopup: true } : n
-                        ));
-                      }}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
-                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                      </svg>
-                    </div>
-                  )}
-                  
-                  {/* Attachment indicator */}
-                  {node.attachments && node.attachments.length > 0 && (
-                    <div 
-                      className="absolute top-1 right-11 text-xs text-gray-500 flex items-center justify-center gap-1 cursor-pointer hover:text-gray-700"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        wrappedSetNodes(nodes.map(n => 
-                          n.id === node.id ? { ...n, showAttachmentPopup: true } : n
-                        ));
-                      }}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
-                      </svg>
-                      <span>{node.attachments.length}</span>
-                    </div>
                   )}
                 </div>
               );
