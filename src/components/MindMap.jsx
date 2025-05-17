@@ -923,7 +923,7 @@ const updateSelection = (e) => {
     // Set rectangle position and size to ensure it covers the selection area
     setSelectionRect({
       x: Math.min(currentX, selectionStart.x),
-      y: Math.min(currentY, selectionStart.y),
+      y: Math.min(currentY, selectionStart.x),
       width: width,
       height: height
     });
@@ -1223,24 +1223,23 @@ const wrappedSetConnections = (newConnections) => {
                   }}
                   onClick={(e) => handleNodeClick(node.id, e)}
                   onMouseDown={(e) => {
+                    // Prevent moving the node if it is being edited
+                    if (editingNode === node.id) return;
                     if (mode === 'cursor' && e.button === 0) {
                       const startX = e.clientX;
                       const startY = e.clientY;
                       const startNodeX = node.x;
                       const startNodeY = node.y;
-                      
                       const handleMouseMove = (moveEvent) => {
                         if (isPanning) return;
                         const dx = (moveEvent.clientX - startX) / zoom;
                         const dy = (moveEvent.clientY - startY) / zoom;
                         handleNodeDrag(node.id, startNodeX + dx, startNodeY + dy);
                       };
-                      
                       const handleMouseUp = () => {
                         document.removeEventListener('mousemove', handleMouseMove);
                         document.removeEventListener('mouseup', handleMouseUp);
                       };
-                      
                       document.addEventListener('mousemove', handleMouseMove);
                       document.addEventListener('mouseup', handleMouseUp);
                     }
