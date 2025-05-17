@@ -563,33 +563,63 @@ const handleNodeClick = (nodeId, e) => {
     return connections.map(conn => {
       const fromNode = nodes.find(n => n.id === conn.from);
       const toNode = nodes.find(n => n.id === conn.to);
-  
+
       if (!fromNode || !toNode) return null;
-  
-      // Calculate the bounding box of each node, including padding and margins
+
+      // Get DOM elements
       const fromNodeElement = document.querySelector(`[data-node-id="${fromNode.id}"]`);
       const toNodeElement = document.querySelector(`[data-node-id="${toNode.id}"]`);
-  
       if (!fromNodeElement || !toNodeElement) return null;
-  
+
       const fromRect = fromNodeElement.getBoundingClientRect();
       const toRect = toNodeElement.getBoundingClientRect();
-  
-      // Calculate start and end points based on the text area of the nodes
-      const startX = fromRect.right;
-      const startY = fromRect.top + fromRect.height / 2;
-  
-      const endX = toRect.left;
-      const endY = toRect.top + toRect.height / 2;
-  
-      // Dynamically calculate control points for smoother curves
-      const dx = endX - startX;
-      const dy = endY - startY;
-      const controlPoint1X = startX + dx * 0.25;
-      const controlPoint1Y = startY + dy * 0.1;
-      const controlPoint2X = endX - dx * 0.25;
-      const controlPoint2Y = endY - dy * 0.1;
-  
+
+      // Calculate centers
+      const fromCenter = {
+        x: fromRect.left + fromRect.width / 2,
+        y: fromRect.top + fromRect.height / 2
+      };
+      const toCenter = {
+        x: toRect.left + toRect.width / 2,
+        y: toRect.top + toRect.height / 2
+      };
+
+      // Calculate direction vector
+      const dx = toCenter.x - fromCenter.x;
+      const dy = toCenter.y - fromCenter.y;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+
+      // Helper to get edge point
+      function getEdgePoint(rect, center, toward) {
+        const w = rect.width / 2;
+        const h = rect.height / 2;
+        const angle = Math.atan2(toward.y - center.y, toward.x - center.x);
+        // Find intersection with rectangle edge
+        const tanTheta = Math.abs(Math.tan(angle));
+        let x = center.x, y = center.y;
+        if (tanTheta <= h / w) {
+          // Hits left or right edge
+          x += (toward.x > center.x ? w : -w);
+          y += (toward.x > center.x ? w : -w) * Math.tan(angle);
+        } else {
+          // Hits top or bottom edge
+          y += (toward.y > center.y ? h : -h);
+          x += (toward.y > center.y ? h : -h) / Math.tan(angle);
+        }
+        return { x, y };
+      }
+
+      // Get edge points for both nodes
+      const start = getEdgePoint(fromRect, fromCenter, toCenter);
+      const end = getEdgePoint(toRect, toCenter, fromCenter);
+
+      // Control points for smooth curve
+      const controlPoint1X = start.x + (end.x - start.x) * 0.25;
+      const controlPoint1Y = start.y + (end.y - start.y) * 0.1;
+      const controlPoint2X = end.x - (end.x - start.x) * 0.25;
+      const controlPoint2Y = end.y - (end.y - start.y) * 0.1;
+
       return (
         <div key={conn.id} style={{
           position: 'absolute',
@@ -600,9 +630,9 @@ const handleNodeClick = (nodeId, e) => {
           pointerEvents: 'none',
           zIndex: 1
         }}>
-          <svg width="100%" height="100%" style={{ overflow: 'visible' }}>
+          <svg width="100%" height="100%" style={{ overflow: 'visible', position: 'absolute', top: 0, left: 0 }}>
             <path
-              d={`M ${startX} ${startY} C ${controlPoint1X} ${controlPoint1Y}, ${controlPoint2X} ${controlPoint2Y}, ${endX} ${endY}`}
+              d={`M ${start.x} ${start.y} C ${controlPoint1X} ${controlPoint1Y}, ${controlPoint2X} ${controlPoint2Y}, ${end.x} ${end.y}`}
               stroke="#CBD5E1"
               strokeWidth={2}
               fill="none"
@@ -1551,7 +1581,7 @@ const wrappedSetConnections = (newConnections) => {
                                     <div key={attachment.id} className="py-2 flex items-center justify-between">
                                       <div className="flex items-center space-x-3">
                                         <div className="text-gray-500">
-                                          {attachment.type === 'pdf' && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>}
+                                          {attachment.type === 'pdf' && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 0 0 2-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 00 2 2z" /></svg>}
                                           {(attachment.type === 'doc' || attachment.type === 'docx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
                                           {(attachment.type === 'xls' || attachment.type === 'xlsx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 13v-1m4 1v-3m4 3V8M8 21l4-4 4 4M4 3h16a2 2 0 012 2v14a2 2 0 01-2 2H4a2 2 0 01-2-2z" /></svg>}
                                         </div>
