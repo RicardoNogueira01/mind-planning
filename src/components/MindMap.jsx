@@ -324,15 +324,13 @@ const MindMap = () => {
     if (!parent) return;
 
     const newId = `node-${Date.now()}`;
-    
     // Calculate dynamic parent width
     const parentWidth = Math.min(450, Math.max(150, parent.text.length * 10));
-    
     // Position child to the right of parent with at least 150px spacing
     const minSpacing = 150; // Minimum spacing between parent and child
     const newX = parent.x + parentWidth/2 + minSpacing; // Parent right edge + minimum spacing
     const newY = parent.y; // Same vertical level as parent
-    
+
     const newNode = {
       id: newId,
       text: 'New Idea',
@@ -340,15 +338,15 @@ const MindMap = () => {
       y: newY,
       color: parent.color
     };
-    
+
     const newConnection = {
       id: `conn-${Date.now()}`,
       from: parentId,
       to: newId
     };
-    
+
     wrappedSetNodesAndConnections([...nodes, newNode], [...connections, newConnection]);
-    setSelectedNode(newId);
+    // setSelectedNode(newId); // Do NOT select the new child node, keep focus on parent
   };
   
   // Update node text
