@@ -906,6 +906,7 @@ const handleNodeClick = (nodeId, e) => {
   // Add these to your existing mouse event handlers in MindMap.jsx
 const startSelection = (e) => {
   if (mode === 'cursor' && selectionType === 'collaborator') {
+    e.preventDefault(); // Prevent page scrolling or text selection
     setIsSelecting(true);
     const rect = canvasRef.current.getBoundingClientRect();
     const x = (e.clientX - rect.left - pan.x) / zoom;
@@ -917,18 +918,17 @@ const startSelection = (e) => {
 
 const updateSelection = (e) => {
   if (isSelecting) {
+    e.preventDefault(); // Prevent page scrolling or text selection
     const rect = canvasRef.current.getBoundingClientRect();
     const currentX = (e.clientX - rect.left - pan.x) / zoom;
     const currentY = (e.clientY - rect.top - pan.y) / zoom;
-    
     // Calculate width and height before deciding position
     const width = Math.abs(currentX - selectionStart.x);
     const height = Math.abs(currentY - selectionStart.y);
-    
     // Set rectangle position and size to ensure it covers the selection area
     setSelectionRect({
       x: Math.min(currentX, selectionStart.x),
-      y: Math.min(currentY, selectionStart.x),
+      y: Math.min(currentY, selectionStart.y),
       width: width,
       height: height
     });
