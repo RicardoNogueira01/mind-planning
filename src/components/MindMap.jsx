@@ -25,6 +25,7 @@ const MindMap = () => {
   const [selectedNodes, setSelectedNodes] = useState([]);
   const [showCollaboratorDialog, setShowCollaboratorDialog] = useState(false);
   const [nodeGroups, setNodeGroups] = useState([]);
+  const [lastSelectionRect, setLastSelectionRect] = useState(null);
   
   // Canvas pan and zoom state
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -169,44 +170,67 @@ const MindMap = () => {
     }
   };
   
+  // Helper to get all descendant node IDs for a given node
+const getDescendantNodeIds = (parentId) => {
+  const descendants = new Set();
+  const stack = [parentId];
+  while (stack.length > 0) {
+    const currentId = stack.pop();
+    // Find all direct children
+    const childConnections = connections.filter(conn => conn.from === currentId);
+    for (const conn of childConnections) {
+      if (!descendants.has(conn.to)) {
+        descendants.add(conn.to);
+        stack.push(conn.to);
+      }
+    }
+  }
+  return Array.from(descendants);
+};
+
   // Handle the end of panning or selection
   const stopPanning = () => {
     if (isSelecting && selectionRect) {
-      // Find nodes within the selection rectangle
-      const selectedIds = nodes.filter(node => {
-        // Calculate node bounds
+      // Find nodes fully inside the selection rectangle
+      const selectedIdsSet = new Set();
+      nodes.forEach(node => {
         const nodeLeft = node.x - 75;
         const nodeRight = node.x + 75;
         const nodeTop = node.y - 25;
         const nodeBottom = node.y + 25;
-  
-        // Check if node overlaps with selection rectangle
         const isInside = (
-          nodeRight >= selectionRect.x &&
-          nodeLeft <= selectionRect.x + selectionRect.width &&
-          nodeBottom >= selectionRect.y &&
-          nodeTop <= selectionRect.y + selectionRect.height
+          nodeLeft >= selectionRect.x &&
+          nodeRight <= selectionRect.x + selectionRect.width &&
+          nodeTop >= selectionRect.y &&
+          nodeBottom <= selectionRect.y + selectionRect.height
         );
-  
-        return isInside;
-      }).map(node => node.id);
-  
+        if (isInside) {
+          selectedIdsSet.add(node.id);
+          // Add all descendants
+          getDescendantNodeIds(node.id).forEach(id => selectedIdsSet.add(id));
+        }
+      });
+      const selectedIds = Array.from(selectedIdsSet);
       // Update selected nodes
       if (selectedIds.length > 0) {
         setSelectedNodes(selectedIds);
+        // Save the selection rectangle for later use
+        setLastSelectionRect(selectionRect);
         // Only show collaborator dialog in collaborator selection mode
         if (selectionType === 'collaborator') {
           setShowCollaboratorDialog(true);
         }
       }
     }
-  
     setIsSelecting(false);
     setSelectionRect(null);
     setIsPanning(false);
   };
   
-  // Handle assigning a collaborator to selected nodes
+  // Collaborator selection mode
+  const [selectionType, setSelectionType] = useState('simple'); // 'simple' or 'collaborator'
+
+  // Assigning collaborator to selected nodes
   const assignCollaborator = (collaborator) => {
     // Create a new group with the selected nodes and collaborator
     const newGroup = {
@@ -214,30 +238,38 @@ const MindMap = () => {
       nodeIds: [...selectedNodes],
       collaborator
     };
-    
-    // Calculate bounding box for the group
-    const groupNodes = nodes.filter(node => selectedNodes.includes(node.id));
-    const minX = Math.min(...groupNodes.map(node => node.x - 75));
-    const maxX = Math.max(...groupNodes.map(node => node.x + 75));
-    const minY = Math.min(...groupNodes.map(node => node.y - 25));
-    const maxY = Math.max(...groupNodes.map(node => node.y + 25));
-    
-    const boundingBox = {
-      x: minX - 10,
-      y: minY - 10,
-      width: (maxX - minX) + 20,
-      height: (maxY - minY) + 20
-    };
-    
-    newGroup.boundingBox = boundingBox;
-    
+
+    // Use the last selection rectangle as the bounding box if available
+    if (lastSelectionRect) {
+      newGroup.boundingBox = {
+        x: lastSelectionRect.x,
+        y: lastSelectionRect.y,
+        width: lastSelectionRect.width,
+        height: lastSelectionRect.height
+      };
+    } else {
+      // Fallback: calculate bounding box from nodes
+      const groupNodes = nodes.filter(node => selectedNodes.includes(node.id));
+      const minX = Math.min(...groupNodes.map(node => node.x - 75));
+      const maxX = Math.max(...groupNodes.map(node => node.x + 75));
+      const minY = Math.min(...groupNodes.map(node => node.y - 25));
+      const maxY = Math.max(...groupNodes.map(node => node.y + 25));
+      newGroup.boundingBox = {
+        x: minX - 10,
+        y: minY - 10,
+        width: (maxX - minX) + 20,
+        height: (maxY - minY) + 20
+      };
+    }
+
     // Add the new group
     setNodeGroups([...nodeGroups, newGroup]);
     
     // Reset selection state
     setSelectedNodes([]);
     setShowCollaboratorDialog(false);
-    
+    setLastSelectionRect(null); // Clear after use
+
     // Switch back to simple selection mode
     setMode('cursor');
     setSelectionType('simple');
@@ -392,57 +424,114 @@ const handleNodeClick = (nodeId, e) => {
       setIsEditing(false);
     }
   }
-};
-  
-  // Handle node dragging
+};    // Handle node dragging
   const handleNodeDrag = (nodeId, newX, newY) => {
+    const targetNode = nodes.find(n => n.id === nodeId);
+    
+    // Check if this node belongs to any collaborator group
+    const nodeGroup = nodeGroups.find(group => group.nodeIds.includes(nodeId));
+    
+    // If node is in a group, constrain its movement to the group's bounding box
+    if (nodeGroup) {
+      const { boundingBox } = nodeGroup;
+      const nodeWidth = 150; // Approximate node width (75px on each side)
+      const nodeHeight = 50;  // Approximate node height (25px on each side)
+      
+      // Constrain the new position to stay within the group's bounding box
+      const constrainedX = Math.max(
+        boundingBox.x + nodeWidth / 2, 
+        Math.min(newX, boundingBox.x + boundingBox.width - nodeWidth / 2)
+      );
+      const constrainedY = Math.max(
+        boundingBox.y + nodeHeight / 2,
+        Math.min(newY, boundingBox.y + boundingBox.height - nodeHeight / 2)
+      );
+      
+      newX = constrainedX;
+      newY = constrainedY;
+    }
+
+    const dx = newX - targetNode.x;
+    const dy = newY - targetNode.y;
+
     if (selectedNodes.includes(nodeId)) {
-      // Get the displacement
-      const targetNode = nodes.find(n => n.id === nodeId);
-      const dx = newX - targetNode.x;
-      const dy = newY - targetNode.y;
-  
-      // Move all selected nodes by the same displacement
+      // Move all selected nodes by the same displacement, but constrain each one individually
       wrappedSetNodes(nodes.map(node => {
         if (selectedNodes.includes(node.id)) {
+          let finalX = node.x + dx;
+          let finalY = node.y + dy;
+          
+          // Check if this node is also in a group and constrain it
+          const selectedNodeGroup = nodeGroups.find(group => group.nodeIds.includes(node.id));
+          if (selectedNodeGroup) {
+            const { boundingBox } = selectedNodeGroup;
+            const nodeWidth = 150;
+            const nodeHeight = 50;
+            
+            finalX = Math.max(
+              boundingBox.x + nodeWidth / 2,
+              Math.min(finalX, boundingBox.x + boundingBox.width - nodeWidth / 2)
+            );
+            finalY = Math.max(
+              boundingBox.y + nodeHeight / 2,
+              Math.min(finalY, boundingBox.y + boundingBox.height - nodeHeight / 2)
+            );
+          }
+          
           return {
             ...node,
-            x: node.x + dx,
-            y: node.y + dy
+            x: finalX,
+            y: finalY
           };
         }
         return node;
       }));
   
-      // Update group bounding boxes
+      // Update group bounding boxes for all selected nodes
       updateGroupBoundingBoxes(selectedNodes, dx, dy);
+    } else {
+      // Move only the single node with constraints already applied
+      wrappedSetNodes(nodes.map(node => 
+        node.id === nodeId ? { ...node, x: newX, y: newY } : node
+      ));
+      
+      // No need to update group bounding box since node stays within bounds
+      // The group bounding box should remain the same when nodes move within it
     }
   };
-  
   // Helper function to update group bounding boxes
   const updateGroupBoundingBoxes = (affectedNodeIds, dx, dy) => {
+    // For constrained groups, we don't update the bounding box
+    // The nodes should stay within the original bounds set during collaborator assignment
+    // The bounding box remains fixed to maintain the grouping constraint
+  };
+  
+  // Helper function to update group bounding boxes for a single moved node
+  const updateSingleNodeGroupBoundingBoxes = (movedNodeId, newX, newY) => {
     setNodeGroups(nodeGroups.map(group => {
-      if (group.nodeIds.some(id => affectedNodeIds.includes(id))) {
+      if (group.nodeIds.includes(movedNodeId)) {
+        // Get all nodes in this group with updated position for the moved node
         const groupNodes = nodes
           .filter(node => group.nodeIds.includes(node.id))
           .map(node => ({
             ...node,
-            x: affectedNodeIds.includes(node.id) ? node.x + dx : node.x,
-            y: affectedNodeIds.includes(node.id) ? node.y + dy : node.y
+            x: node.id === movedNodeId ? newX : node.x,
+            y: node.id === movedNodeId ? newY : node.y
           }));
-  
+
+        // Recalculate bounding box based on current positions
         const minX = Math.min(...groupNodes.map(node => node.x - 75));
         const maxX = Math.max(...groupNodes.map(node => node.x + 75));
         const minY = Math.min(...groupNodes.map(node => node.y - 25));
         const maxY = Math.max(...groupNodes.map(node => node.y + 25));
-  
+
         const boundingBox = {
           x: minX - 10,
           y: minY - 10,
           width: (maxX - minX) + 20,
           height: (maxY - minY) + 20
         };
-  
+
         return { ...group, boundingBox };
       }
       return group;
@@ -617,7 +706,6 @@ const handleNodeClick = (nodeId, e) => {
       );
     });
   };
-
   // Render the group bounding boxes and collaborator icons
   const renderNodeGroups = () => {
     return nodeGroups.map(group => {
@@ -630,10 +718,12 @@ const handleNodeClick = (nodeId, e) => {
           top: boundingBox.y,
           width: boundingBox.width,
           height: boundingBox.height,
-          border: `2px dashed ${collaborator.color}`,
-          borderRadius: '8px',
+          border: `3px dashed ${collaborator.color}`,
+          borderRadius: '12px',
+          backgroundColor: `${collaborator.color}10`, // Very subtle background tint
           pointerEvents: 'none',
-          zIndex: 4
+          zIndex: 4,
+          boxShadow: `0 0 0 1px ${collaborator.color}20` // Subtle outer glow
         }}>
           {/* Collaborator badge in top-right corner */}
           <div style={{
@@ -650,9 +740,28 @@ const handleNodeClick = (nodeId, e) => {
             justifyContent: 'center',
             fontWeight: 'bold',
             fontSize: '0.75rem',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            border: '2px solid white'
           }}>
             {collaborator.initials}
+          </div>
+          
+          {/* Add a subtle label at the bottom to indicate this is a constraint area */}
+          <div style={{
+            position: 'absolute',
+            bottom: -25,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            fontSize: '0.7rem',
+            color: collaborator.color,
+            fontWeight: 'bold',
+            backgroundColor: 'white',
+            padding: '2px 8px',
+            borderRadius: '4px',
+            border: `1px solid ${collaborator.color}`,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+          }}>
+            {collaborator.name}'s Group
           </div>
         </div>
       );
@@ -833,7 +942,7 @@ const handleNodeClick = (nodeId, e) => {
   };
 
   // Add this state to manage selection type
-  const [selectionType, setSelectionType] = useState('simple'); // 'simple' or 'collaborator'
+  // const [selectionType, setSelectionType] = useState('simple'); // 'simple' or 'collaborator'
 
   // Add this useEffect near your other useEffect hooks in MindMap.jsx
   useEffect(() => {
@@ -1630,8 +1739,8 @@ useLayoutEffect(() => {
                                       <div className="flex items-center space-x-3">
                                         <div className="text-gray-500">
                                           {attachment.type === 'pdf' && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 0 0 2-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 00 2 2z" /></svg>}
-                                          {(attachment.type === 'doc' || attachment.type === 'docx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
-                                          {(attachment.type === 'xls' || attachment.type === 'xlsx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 13v-1m4 1v-3m4 3V8M8 21l4-4 4 4M4 3h16a2 2 0 0 0 2 2v14a2 2 0 0 0-2 2H4a2 2 0 0 0-2-2z" /></svg>}
+                                          {(attachment.type === 'doc' || attachment.type === 'docx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 01 2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
+                                          {(attachment.type === 'xls' || attachment.type === 'xlsx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24  24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 13v-1m4 1v-3m4 3V8M8 21l4-4 4 4M4 3h16a2 2 0 0 0 2 2v14a2 2 0 0 0-2 2H4a2 2 0 0 0-2-2z" /></svg>}
                                         </div>
                                         <div className="flex flex-col">
                                           <span className="text-sm font-medium text-black">{attachment.name}</span> {/* Added text-black here */}
