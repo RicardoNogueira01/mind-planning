@@ -2186,9 +2186,8 @@ useLayoutEffect(() => {
                                 ></div>
                                 <span className="flex-1 text-sm text-gray-700">
                                   {tag.title || `Color ${globalTags.findIndex(t => t.id === tag.id) + 1}`}
-                                </span>
-                                <button
-                                  className="p-1 hover:bg-gray-200 rounded"
+                                </span>                                <button
+                                  className="p-1 hover:bg-gray-200 rounded text-black"
                                   onClick={() => setEditingTag({ ...tag })}
                                   title="Edit tag"
                                 >
