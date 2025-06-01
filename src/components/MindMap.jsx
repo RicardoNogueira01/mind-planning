@@ -39,17 +39,29 @@ const MindMap = () => {
     { id: 'mr', initials: 'MR', name: 'Maria Rodriguez', color: '#F59E0B' },
     { id: 'ts', initials: 'TS', name: 'Taylor Smith', color: '#8B5CF6' }
   ];
-
   // Global tags state
   const [globalTags, setGlobalTags] = useState([
-    { id: 'tag-1', title: 'Important', color: '#DC2626' },
-    { id: 'tag-2', title: 'In Progress', color: '#2563EB' },
-    { id: 'tag-3', title: 'Review', color: '#7C3AED' },
-    { id: 'tag-4', title: 'Completed', color: '#059669' }
+    { id: 'tag-1', title: '', color: '#DC2626' },
+    { id: 'tag-2', title: '', color: '#2563EB' },
+    { id: 'tag-3', title: '', color: '#7C3AED' },
+    { id: 'tag-4', title: '', color: '#059669' },
+    { id: 'tag-5', title: '', color: '#D97706' },
+    { id: 'tag-6', title: '', color: '#DB2777' }
   ]);
-  
-  // Tag editing state
+    // Tag editing state
   const [editingTag, setEditingTag] = useState(null);
+  
+  // Function to delete a tag and remove it from all nodes
+  const deleteTag = (tagId) => {
+    // Remove tag from all nodes
+    wrappedSetNodes(nodes.map(node => ({
+      ...node,
+      tags: Array.isArray(node.tags) ? node.tags.filter(id => id !== tagId) : []
+    })));
+    
+    // Remove tag from global tags
+    setGlobalTags(globalTags.filter(tag => tag.id !== tagId));
+  };
   
   // Click outside to close popups
   useEffect(() => {
@@ -2011,20 +2023,20 @@ useLayoutEffect(() => {
                     </div>
                   )}
                   
-                  {/* Tags display */}
-                  {Array.isArray(node.tags) && node.tags.length > 0 && (
+                  {/* Tags display */}                  {Array.isArray(node.tags) && node.tags.length > 0 && (
                     <div className="flex flex-wrap justify-center gap-1 mb-1">
                       {node.tags.map(tagId => {
                         const tag = globalTags.find(t => t.id === tagId);
                         if (!tag) return null;
+                        const displayText = tag.title || `Color ${globalTags.findIndex(t => t.id === tag.id) + 1}`;
                         return (
                           <span
                             key={tagId}
                             className="text-xs px-2 py-0.5 rounded-full text-white font-medium"
                             style={{ backgroundColor: tag.color }}
-                            title={tag.title}
+                            title={displayText}
                           >
-                            {tag.title}
+                            {displayText}
                           </span>
                         );
                       })}
@@ -2166,14 +2178,15 @@ useLayoutEffect(() => {
                                   }}
                                   autoFocus
                                 />
-                              </>
-                            ): (
+                              </>                            ): (
                               <>
                                 <div
                                   className="w-4 h-4 rounded-full"
                                   style={{ backgroundColor: tag.color }}
                                 ></div>
-                                <span className="flex-1 text-sm text-gray-700">{tag.title}</span>
+                                <span className="flex-1 text-sm text-gray-700">
+                                  {tag.title || `Color ${globalTags.findIndex(t => t.id === tag.id) + 1}`}
+                                </span>
                                 <button
                                   className="p-1 hover:bg-gray-200 rounded"
                                   onClick={() => setEditingTag({ ...tag })}
@@ -2181,6 +2194,18 @@ useLayoutEffect(() => {
                                 >
                                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                                  </svg>
+                                </button>
+                                <button
+                                  className="p-1 hover:bg-red-200 rounded text-red-600"
+                                  onClick={() => deleteTag(tag.id)}
+                                  title="Delete tag"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6l-2 14H7L5 6"></path>
+                                    <path d="M10 11v6"></path>
+                                    <path d="M14 11v6"></path>
                                   </svg>
                                 </button>
                               </>
