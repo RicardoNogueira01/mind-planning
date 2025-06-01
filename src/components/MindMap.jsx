@@ -32,24 +32,32 @@ const MindMap = () => {
   const [zoom, setZoom] = useState(1);
   const [isPanning, setIsPanning] = useState(false);
   const lastMousePosRef = useRef({ x: 0, y: 0 });
-  
-  // Collaborator options
+    // Collaborator options
   const collaborators = [
     { id: 'jd', initials: 'JD', name: 'John Doe', color: '#3B82F6' },
     { id: 'ak', initials: 'AK', name: 'Alex Kim', color: '#10B981' },
     { id: 'mr', initials: 'MR', name: 'Maria Rodriguez', color: '#F59E0B' },
     { id: 'ts', initials: 'TS', name: 'Taylor Smith', color: '#8B5CF6' }
   ];
+
+  // Global tags state
+  const [globalTags, setGlobalTags] = useState([
+    { id: 'tag-1', title: 'Important', color: '#DC2626' },
+    { id: 'tag-2', title: 'In Progress', color: '#2563EB' },
+    { id: 'tag-3', title: 'Review', color: '#7C3AED' },
+    { id: 'tag-4', title: 'Completed', color: '#059669' }
+  ]);
+  
+  // Tag editing state
+  const [editingTag, setEditingTag] = useState(null);
   
   // Click outside to close popups
   useEffect(() => {
     const handleClickOutside = (e) => {
       // Add check if click target is inside any popup content
-      const isClickInsidePopupContent = e.target.closest('.popup-content');
-      
-      if (nodes.some(node => node.showEmojiPopup || node.showBgColorPopup || node.showFontColorPopup || 
+      const isClickInsidePopupContent = e.target.closest('.popup-content');      if (nodes.some(node => node.showEmojiPopup || node.showBgColorPopup || node.showFontColorPopup || 
                          node.showAttachmentPopup || node.showNotesPopup || node.showDetailsPopup || 
-                         node.showDatePopup || node.showCollaboratorPopup || node.showLayoutPopup)) {  // Add this condition
+                         node.showDatePopup || node.showCollaboratorPopup || node.showLayoutPopup || node.showTagsPopup)) {
         const isClickInsidePopup = e.target.closest('.node-popup');
         const isClickInsideButton = e.target.closest('.node-popup-button');
         
@@ -88,8 +96,7 @@ const MindMap = () => {
         }
       });
   
-      if (!clickedInsidePopup) {
-        setNodes(nodes.map(node => ({
+      if (!clickedInsidePopup) {        setNodes(nodes.map(node => ({
           ...node,
           showEmojiPopup: false,
           showBgColorPopup: false,
@@ -99,7 +106,8 @@ const MindMap = () => {
           showDetailsPopup: false,
           showDatePopup: false,
           showCollaboratorPopup: false,
-          showLayoutPopup: false
+          showLayoutPopup: false,
+          showTagsPopup: false
         })));
       }
     };
@@ -1393,14 +1401,13 @@ useLayoutEffect(() => {
                 >
                   {selectedNode === node.id && mode === 'cursor' && (
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-3" style={{ marginTop: '-15px' }}>
-                      <div className="bg-white shadow-md rounded-full flex items-center p-1 gap-1 z-30">
-                        {/* Emoji Selector */}
+                      <div className="bg-white shadow-md rounded-full flex items-center p-1 gap-1 z-30">                        {/* Emoji Selector */}
                         <button
                           className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
                           onClick={(e) => {
                             e.stopPropagation();
                             wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, showEmojiPopup: !n.showEmojiPopup, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
+                              n.id === node.id ? { ...n, showEmojiPopup: !n.showEmojiPopup, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
                             ));
                           }}
                           title="Add emoji or icon"
@@ -1412,14 +1419,13 @@ useLayoutEffect(() => {
                             <line x1="15" y1="9" x2="15.01" y2="9"></line>
                           </svg>
                         </button>
-                        
-                        {/* Background Color */}
+                          {/* Background Color */}
                         <button
                           className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
                           onClick={(e) => {
                             e.stopPropagation();
                             wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, showBgColorPopup: !n.showBgColorPopup, showEmojiPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
+                              n.id === node.id ? { ...n, showBgColorPopup: !n.showBgColorPopup, showEmojiPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
                             ));
                           }}
                           title="Background color"
@@ -1429,14 +1435,13 @@ useLayoutEffect(() => {
                             <path d="M3 9h18"></path>
                           </svg>
                         </button>
-                        
-                        {/* Font Color */}
+                          {/* Font Color */}
                         <button
                           className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
                           onClick={(e) => {
                             e.stopPropagation();
                             wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, showFontColorPopup: !n.showFontColorPopup, showEmojiPopup: false, showBgColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
+                              n.id === node.id ? { ...n, showFontColorPopup: !n.showFontColorPopup, showEmojiPopup: false, showBgColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
                             ));
                           }}
                           title="Font color"
@@ -1446,14 +1451,13 @@ useLayoutEffect(() => {
                             <path d="M9 4h6l-3 9z"></path>
                           </svg>
                         </button>
-                        
-                        {/* Attachment */}
+                          {/* Attachment */}
                         <button
                           className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
                           onClick={(e) => {
                             e.stopPropagation();
                             wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, showAttachmentPopup: !n.showAttachmentPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
+                              n.id === node.id ? { ...n, showAttachmentPopup: !n.showAttachmentPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
                             ));
                           }}
                           title="Add attachment"
@@ -1462,14 +1466,13 @@ useLayoutEffect(() => {
                             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
                           </svg>
                         </button>
-                        
-                        {/* Notes */}
+                          {/* Notes */}
                         <button
                           className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
                           onClick={(e) => {
                             e.stopPropagation();
                             wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, showNotesPopup: !n.showNotesPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
+                              n.id === node.id ? { ...n, showNotesPopup: !n.showNotesPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
                             ));
                           }}
                           title="Add notes"
@@ -1482,14 +1485,13 @@ useLayoutEffect(() => {
                             <line x1="10" y1="9" x2="8" y2="9"></line>
                           </svg>
                         </button>
-                        
-                        {/* Details (Priority/Status) */}
+                          {/* Details (Priority/Status) */}
                         <button
                           className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
                           onClick={(e) => {
                             e.stopPropagation();
                             wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, showDetailsPopup: !n.showDetailsPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
+                              n.id === node.id ? { ...n, showDetailsPopup: !n.showDetailsPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
                             ));
                           }}
                           title="Details (Priority/Status)"
@@ -1500,14 +1502,13 @@ useLayoutEffect(() => {
                             <line x1="12" y1="8" x2="12.01" y2="8"></line>
                           </svg>
                         </button>
-                        
-                        {/* Due Date */}
+                          {/* Due Date */}
                         <button
                           className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
                           onClick={(e) => {
                             e.stopPropagation();
                             wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, showDatePopup: !n.showDatePopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showCollaboratorPopup: false } : n
+                              n.id === node.id ? { ...n, showDatePopup: !n.showDatePopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
                             ));
                           }}
                           title="Set due date"
@@ -1519,14 +1520,13 @@ useLayoutEffect(() => {
                             <line x1="3" y1="10" x2="21" y2="10"></line>
                           </svg>
                         </button>
-                        
-                        {/* Collaborator */}
+                          {/* Collaborator */}
                         <button
                           className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
                           onClick={(e) => {
                             e.stopPropagation();
                             wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, showCollaboratorPopup: !n.showCollaboratorPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false } : n
+                              n.id === node.id ? { ...n, showCollaboratorPopup: !n.showCollaboratorPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showTagsPopup: false } : n
                             ));
                           }}
                           title="Assign collaborator"
@@ -1536,6 +1536,23 @@ useLayoutEffect(() => {
                             <circle cx="9" cy="7" r="4"></circle>
                             <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
                             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                          </svg>
+                        </button>
+                        
+                        {/* Tags */}
+                        <button
+                          className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            wrappedSetNodes(nodes.map(n => 
+                              n.id === node.id ? { ...n, showTagsPopup: !n.showTagsPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
+                            ));
+                          }}
+                          title="Manage tags"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                            <line x1="7" y1="7" x2="7.01" y2="7"></line>
                           </svg>
                         </button>
                         
@@ -1979,8 +1996,7 @@ useLayoutEffect(() => {
                       )}
                     </div>
                   )}
-                  
-                  {/* Due date badge if set */}
+                    {/* Due date badge if set */}
                   {node.dueDate && (
                     <div className="flex justify-center mb-1">
                       <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-800 flex items-center gap-1">
@@ -1992,6 +2008,26 @@ useLayoutEffect(() => {
                         </svg>
                         {new Date(node.dueDate).toLocaleDateString()}
                       </span>
+                    </div>
+                  )}
+                  
+                  {/* Tags display */}
+                  {Array.isArray(node.tags) && node.tags.length > 0 && (
+                    <div className="flex flex-wrap justify-center gap-1 mb-1">
+                      {node.tags.map(tagId => {
+                        const tag = globalTags.find(t => t.id === tagId);
+                        if (!tag) return null;
+                        return (
+                          <span
+                            key={tagId}
+                            className="text-xs px-2 py-0.5 rounded-full text-white font-medium"
+                            style={{ backgroundColor: tag.color }}
+                            title={tag.title}
+                          >
+                            {tag.title}
+                          </span>
+                        );
+                      })}
                     </div>
                   )}
                   
@@ -2044,8 +2080,193 @@ useLayoutEffect(() => {
                           }}
                         >
                           Cancel
-                        </button>
+                        </button>                      </div>
+                    </div>
+                  )}
+                    {/* Tags popup */}
+                  {node.showTagsPopup && (
+                    <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 w-80 popup-content" onClick={e => e.stopPropagation()}>
+                      <h4 className="text-sm font-medium text-gray-700 mb-3">Manage Tags</h4>
+                      
+                      {/* Tags list */}
+                      <div className="max-h-48 overflow-y-auto mb-3">
+                        {globalTags.map(tag => (
+                          <div key={tag.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded">
+                            <input
+                              type="checkbox"
+                              checked={Array.isArray(node.tags) && node.tags.includes(tag.id)}
+                              onChange={e => {
+                                wrappedSetNodes(nodes.map(n => {
+                                  if (n.id !== node.id) return n;
+                                  let newTags = Array.isArray(n.tags) ? [...n.tags] : [];
+                                  if (e.target.checked) {
+                                    if (!newTags.includes(tag.id)) newTags.push(tag.id);
+                                  } else {
+                                    newTags = newTags.filter(id => id !== tag.id);
+                                  }
+                                  return { ...n, tags: newTags };
+                                }));
+                              }}
+                              className="mr-2"
+                            />
+                              {editingTag && editingTag.id === tag.id ? (
+                              <>
+                                {/* Color picker for editing */}
+                                <div className="flex flex-wrap gap-1" onMouseDown={e => e.preventDefault()}>
+                                  {['#DC2626', '#2563EB', '#7C3AED', '#059669', '#D97706', '#DB2777'].map(color => (
+                                    <div
+                                      key={color}
+                                      className="w-4 h-4 rounded-full cursor-pointer hover:ring-1 hover:ring-gray-300"
+                                      style={{ 
+                                        backgroundColor: color,
+                                        border: editingTag.color === color ? '2px solid #4F46E5' : '1px solid #E5E7EB'
+                                      }}
+                                      onMouseDown={e => e.preventDefault()}
+                                      onClick={e => {
+                                        e.preventDefault();
+                                        setEditingTag({ ...editingTag, color });
+                                      }}
+                                    />
+                                  ))}
+                                </div>
+                                
+                                {/* Title input for editing */}
+                                <input
+                                  type="text"
+                                  className="flex-1 px-2 py-1 text-sm border rounded text-black"
+                                  value={editingTag.title}
+                                  onChange={e => setEditingTag({ ...editingTag, title: e.target.value })}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter') {
+                                      if (editingTag.title.trim()) {
+                                        setGlobalTags(globalTags.map(t =>
+                                          t.id === tag.id
+                                            ? { ...t, title: editingTag.title, color: editingTag.color }
+                                            : t
+                                        ));
+                                      }
+                                      setEditingTag(null);
+                                    } else if (e.key === 'Escape') {
+                                      setEditingTag(null);
+                                    }
+                                  }}
+                                  onBlur={e => {
+                                    // Check if the related target (what's being clicked) is a color picker
+                                    const isColorPicker = e.relatedTarget && e.relatedTarget.closest('.flex.flex-wrap.gap-1');
+                                    if (!isColorPicker) {
+                                      if (editingTag.title.trim()) {
+                                        setGlobalTags(globalTags.map(t =>
+                                          t.id === tag.id
+                                            ? { ...t, title: editingTag.title, color: editingTag.color }
+                                            : t
+                                        ));
+                                      }
+                                      setEditingTag(null);
+                                    }
+                                  }}
+                                  autoFocus
+                                />
+                              </>
+                            ): (
+                              <>
+                                <div
+                                  className="w-4 h-4 rounded-full"
+                                  style={{ backgroundColor: tag.color }}
+                                ></div>
+                                <span className="flex-1 text-sm text-gray-700">{tag.title}</span>
+                                <button
+                                  className="p-1 hover:bg-gray-200 rounded"
+                                  onClick={() => setEditingTag({ ...tag })}
+                                  title="Edit tag"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                                  </svg>
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        ))}
+                          {/* New tag creation row */}
+                        {editingTag && !editingTag.id && (
+                          <div className="flex items-center gap-2 p-2 bg-blue-50 rounded border border-blue-200">
+                            <input
+                              type="checkbox"
+                              disabled
+                              className="mr-2 opacity-50"
+                            />
+                            
+                            {/* Color picker for new tag */}
+                            <div className="flex flex-wrap gap-1" onMouseDown={e => e.preventDefault()}>
+                              {['#DC2626', '#2563EB', '#7C3AED', '#059669', '#D97706', '#DB2777'].map(color => (
+                                <div
+                                  key={color}
+                                  className="w-4 h-4 rounded-full cursor-pointer hover:ring-1 hover:ring-gray-300"
+                                  style={{ 
+                                    backgroundColor: color,
+                                    border: editingTag.color === color ? '2px solid #4F46E5' : '1px solid #E5E7EB'
+                                  }}
+                                  onMouseDown={e => e.preventDefault()}
+                                  onClick={e => {
+                                    e.preventDefault();
+                                    setEditingTag({ ...editingTag, color });
+                                  }}
+                                />
+                              ))}
+                            </div>
+                            
+                            {/* Title input for new tag */}
+                            <input
+                              type="text"
+                              className="flex-1 px-2 py-1 text-sm border rounded text-black"
+                              value={editingTag.title}
+                              onChange={e => setEditingTag({ ...editingTag, title: e.target.value })}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                  if (editingTag.title.trim()) {
+                                    const newTag = {
+                                      id: `tag-${Date.now()}`,
+                                      title: editingTag.title,
+                                      color: editingTag.color
+                                    };
+                                    setGlobalTags([...globalTags, newTag]);
+                                  }
+                                  setEditingTag(null);
+                                } else if (e.key === 'Escape') {
+                                  setEditingTag(null);
+                                }
+                              }}
+                              onBlur={e => {
+                                // Check if the related target (what's being clicked) is a color picker
+                                const isColorPicker = e.relatedTarget && e.relatedTarget.closest('.flex.flex-wrap.gap-1');
+                                if (!isColorPicker) {
+                                  if (editingTag.title.trim()) {
+                                    const newTag = {
+                                      id: `tag-${Date.now()}`,
+                                      title: editingTag.title,
+                                      color: editingTag.color
+                                    };
+                                    setGlobalTags([...globalTags, newTag]);
+                                  }
+                                  setEditingTag(null);
+                                }
+                              }}
+                              placeholder="Tag name..."
+                              autoFocus
+                            />
+                          </div>
+                        )}
                       </div>
+                      
+                      {/* Add new tag button */}
+                      {!editingTag && (
+                        <button
+                          className="w-full py-2 px-3 text-sm bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 border border-indigo-200"
+                          onClick={() => setEditingTag({ id: null, title: '', color: '#3B82F6' })}
+                        >
+                          + Add New Tag
+                        </button>
+                      )}
                     </div>
                   )}
                   
