@@ -60,9 +60,8 @@ const Dashboard = () => {
           <div className="flex items-center gap-4">
             <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
               New Task
-            </button>
-            <Link to="/mindmap" className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-              Open Mind Map
+            </button>            <Link to="/mindmaps" className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+              Manage Mind Maps
             </Link>
           </div>
         </div>
@@ -222,11 +221,10 @@ const Dashboard = () => {
                 </div>
               ))}
             </div>
-            
-            <button className="w-full mt-4 text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center justify-center gap-1">
+              <Link to="/team-members" className="w-full mt-4 text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center justify-center gap-1 transition-colors">
               <span>View All Team Members</span>
               <ArrowRight size={16} />
-            </button>
+            </Link>
           </div>
           
           {/* Project Summary Card */}
@@ -296,13 +294,12 @@ const Dashboard = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Recent Completed Tasks */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex justify-between items-center mb-6">
+          <div className="bg-white rounded-xl shadow-sm p-6">            <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold text-gray-800">Recently Completed Tasks</h2>
-              <button className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+              <Link to="/completed-tasks" className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1 transition-colors">
                 <span>View All</span>
                 <ArrowRight size={16} />
-              </button>
+              </Link>
             </div>
             
             <div className="space-y-4">
@@ -327,13 +324,12 @@ const Dashboard = () => {
           </div>
           
           {/* Upcoming Deadlines */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex justify-between items-center mb-6">
+          <div className="bg-white rounded-xl shadow-sm p-6">            <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold text-gray-800">Upcoming Deadlines</h2>
-              <button className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+              <Link to="/upcoming-deadlines" className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1 transition-colors">
                 <span>View All</span>
                 <ArrowRight size={16} />
-              </button>
+              </Link>
             </div>
             
             <div className="space-y-4">
