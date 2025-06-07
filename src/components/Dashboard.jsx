@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import WeeklyCalendarWidget from './WeeklyCalendarWidget';
 import { 
   CheckCircle, 
   Clock, 
@@ -355,10 +356,12 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              ))}            </div>
           </div>
         </div>
+        
+        {/* Weekly Calendar Widget */}
+        <WeeklyCalendarWidget />
       </main>
     </div>
   );
