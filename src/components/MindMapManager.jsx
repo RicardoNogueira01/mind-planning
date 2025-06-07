@@ -517,16 +517,15 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
                   </div>
                 </div>
 
-                {/* Card Body */}
-                <div 
+                {/* Card Body */}                <div 
                   className="p-4 cursor-pointer hover:bg-gray-50"
-                  onClick={() => onOpenMindMap && onOpenMindMap(map)}
+                  onClick={() => onOpenMindMap && onOpenMindMap(map.id)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      onOpenMindMap && onOpenMindMap(map);
+                      onOpenMindMap && onOpenMindMap(map.id);
                     }
                   }}
                 >
@@ -619,16 +618,15 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
                           }}
                           className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                         />
-                      </td>                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div 
+                      </td>                      <td className="px-6 py-4 whitespace-nowrap">                        <div 
                           className="flex items-center cursor-pointer"
-                          onClick={() => onOpenMindMap && onOpenMindMap(map)}
+                          onClick={() => onOpenMindMap && onOpenMindMap(map.id)}
                           role="button"
                           tabIndex={0}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                               e.preventDefault();
-                              onOpenMindMap && onOpenMindMap(map);
+                              onOpenMindMap && onOpenMindMap(map.id);
                             }
                           }}
                         >

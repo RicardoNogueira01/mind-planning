@@ -11,11 +11,11 @@ const layoutOptions = [
   { id: 'vertical', name: 'Vertical Layout', icon: 'arrow-down' }
 ];
 
-const MindMap = () => {
+const MindMap = ({ mapId, onBack }) => {
   const [nodes, setNodes] = useState([]);
   const [connections, setConnections] = useState([]);
   const [selectedNode, setSelectedNode] = useState(null);
-  const [showNewMapPrompt, setShowNewMapPrompt] = useState(true);
+  const [showNewMapPrompt, setShowNewMapPrompt] = useState(!mapId); // Show prompt only if no mapId
   const canvasRef = useRef(null);
   
   // Selection mode state
@@ -49,7 +49,7 @@ const MindMap = () => {
     { id: 'tag-5', title: '', color: '#D97706' },
     { id: 'tag-6', title: '', color: '#DB2777' }
   ]);
-    // Tag editing state
+  // Tag editing state
   const [editingTag, setEditingTag] = useState(null);
   
   // Function to delete a tag and remove it from all nodes
@@ -63,6 +63,112 @@ const MindMap = () => {
     // Remove tag from global tags
     setGlobalTags(globalTags.filter(tag => tag.id !== tagId));
   };
+
+  // Load existing mind map data when mapId is provided
+  useEffect(() => {
+    if (mapId) {
+      const savedMindMapData = localStorage.getItem(`mindMap_${mapId}`);
+      if (savedMindMapData) {
+        try {
+          const mindMapData = JSON.parse(savedMindMapData);
+          setNodes(mindMapData.nodes || []);
+          setConnections(mindMapData.connections || []);
+          setNodeGroups(mindMapData.nodeGroups || []);
+          setGlobalTags(mindMapData.globalTags || [
+            { id: 'tag-1', title: '', color: '#DC2626' },
+            { id: 'tag-2', title: '', color: '#2563EB' },
+            { id: 'tag-3', title: '', color: '#7C3AED' },
+            { id: 'tag-4', title: '', color: '#059669' },
+            { id: 'tag-5', title: '', color: '#D97706' },
+            { id: 'tag-6', title: '', color: '#DB2777' }
+          ]);
+        } catch (error) {
+          console.error('Error loading mind map data:', error);
+          // Create a new mind map if loading fails
+          createNewMapWithId(mapId);
+        }
+      } else {
+        // Create a new mind map if no saved data exists
+        createNewMapWithId(mapId);
+      }
+    }
+  }, [mapId]);
+
+  // Create a new mind map with a specific ID (for new maps)
+  const createNewMapWithId = (id) => {
+    // Get the mind map metadata to get the title
+    const savedMaps = localStorage.getItem('mindMaps');
+    let title = 'Central Idea';
+    if (savedMaps) {
+      try {
+        const maps = JSON.parse(savedMaps);
+        const mapMetadata = maps.find(map => map.id === id);
+        if (mapMetadata) {
+          title = mapMetadata.title || 'Central Idea';
+        }
+      } catch (error) {
+        console.error('Error loading mind map metadata:', error);
+      }
+    }
+
+    const rootNode = {
+      id: 'root',
+      text: title,
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+      color: '#EEF2FF'
+    };
+    
+    setNodes([rootNode]);
+    setConnections([]);
+    setNodeGroups([]);
+    setShowNewMapPrompt(false);
+    
+    // Save the initial state
+    saveMindMapData(id, [rootNode], [], []);
+  };
+
+  // Save mind map data to localStorage
+  const saveMindMapData = (mapId, nodesToSave = nodes, connectionsToSave = connections, nodeGroupsToSave = nodeGroups) => {
+    if (mapId) {
+      const mindMapData = {
+        nodes: nodesToSave,
+        connections: connectionsToSave,
+        nodeGroups: nodeGroupsToSave,
+        globalTags: globalTags,
+        updatedAt: new Date().toISOString()
+      };
+      
+      try {
+        localStorage.setItem(`mindMap_${mapId}`, JSON.stringify(mindMapData));
+        
+        // Update the mind map metadata with node count and updated timestamp
+        const savedMaps = localStorage.getItem('mindMaps');
+        if (savedMaps) {
+          const maps = JSON.parse(savedMaps);
+          const updatedMaps = maps.map(map => 
+            map.id === mapId 
+              ? { ...map, nodeCount: nodesToSave.length, updatedAt: new Date().toISOString().split('T')[0] }
+              : map
+          );
+          localStorage.setItem('mindMaps', JSON.stringify(updatedMaps));
+        }
+      } catch (error) {
+        console.error('Error saving mind map data:', error);
+      }
+    }
+  };
+
+  // Auto-save mind map data when nodes, connections, or nodeGroups change
+  useEffect(() => {
+    if (mapId && nodes.length > 0) {
+      const timeoutId = setTimeout(() => {
+        saveMindMapData(mapId);
+      }, 1000); // Auto-save after 1 second of inactivity
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [mapId, nodes, connections, nodeGroups, globalTags]);
   
   // Click outside to close popups
   useEffect(() => {
@@ -1184,23 +1290,27 @@ useLayoutEffect(() => {
           onCreateNew={(mapData) => {
             // Create a new mind map with the provided data
             createNewMap(mapData?.title || 'Central Idea');
-          }}
-          onOpenMindMap={(mapData) => {
-            // Load an existing mind map (placeholder for now)
-            createNewMap(mapData?.title || 'Central Idea');
-          }}
-          onBack={() => {
-            // Navigate back to dashboard
-            window.location.href = '/dashboard';
+          }}          onOpenMindMap={(mapId) => {
+            // This should never be called since we're already in the MindMap view
+            // But if it is, we can handle it by setting the showNewMapPrompt to false
+            setShowNewMapPrompt(false);
+          }}onBack={() => {
+            // Use the onBack callback instead of hardcoded navigation
+            if (onBack) {
+              onBack();
+            }
           }}
         />
       ) : (
         <>
           {/* Toolbar */}
           <div className="absolute top-4 left-4 z-20 bg-white shadow rounded-lg p-2">
-            <div className="flex gap-2">
-              <button 
-                onClick={() => window.location.href = '/dashboard'}
+            <div className="flex gap-2">              <button 
+                onClick={() => {
+                  if (onBack) {
+                    onBack();
+                  }
+                }}
                 className="p-2 rounded text-black hover:bg-gray-100"
                 title="Back to Dashboard"
               >
