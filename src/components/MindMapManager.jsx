@@ -208,24 +208,22 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
             {/* Search */}
             <div className="flex-1 max-w-md">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-                <input
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />                <input
                   type="text"
                   placeholder="Search mind maps..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black placeholder-black"
                 />
               </div>
             </div>
 
             {/* Filters and Controls */}
             <div className="flex items-center gap-3">
-              {/* Filter Dropdown */}
-              <select
+              {/* Filter Dropdown */}              <select
                 value={filterBy}
                 onChange={(e) => setFilterBy(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-indigo-500"
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-indigo-500 text-black"
               >
                 <option value="all">All Maps</option>
                 <option value="recent">Recent</option>
@@ -233,11 +231,10 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
                 <option value="shared">Shared</option>
               </select>
 
-              {/* Sort Dropdown */}
-              <select
+              {/* Sort Dropdown */}              <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-indigo-500"
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-indigo-500 text-black"
               >
                 <option value="updated">Last Modified</option>
                 <option value="created">Date Created</option>

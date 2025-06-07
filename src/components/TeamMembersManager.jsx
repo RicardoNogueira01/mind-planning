@@ -480,41 +480,36 @@ const TeamMembersManager = () => {
           <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
             <div className="flex flex-col sm:flex-row gap-4 flex-1">
               <div className="relative">
-                <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
+                <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />                <input
                   type="text"
                   placeholder="Search members..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-full sm:w-64"
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-full sm:w-64 text-black placeholder-black"
                 />
               </div>
-              
-              <button
+                <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 ${showFilters ? 'bg-gray-50' : ''}`}
+                className={`px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-black ${showFilters ? 'bg-gray-50' : ''}`}
               >
                 <Filter size={16} />
                 Filters
               </button>
             </div>
 
-            <div className="flex items-center gap-4">
-              <select
+            <div className="flex items-center gap-4">              <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black"
               >
                 <option value="name">Sort by Name</option>
                 <option value="role">Sort by Role</option>
                 <option value="completionRate">Sort by Completion Rate</option>
                 <option value="tasksAssigned">Sort by Tasks Assigned</option>
                 <option value="overdueTasks">Sort by Overdue Tasks</option>
-              </select>
-
-              <button
+              </select>              <button
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-black"
               >
                 {sortOrder === 'asc' ? '↑' : '↓'}
               </button>
@@ -541,11 +536,10 @@ const TeamMembersManager = () => {
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-                  <select
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>                  <select
                     value={selectedDepartment}
                     onChange={(e) => setSelectedDepartment(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black"
                   >
                     <option value="all">All Departments</option>
                     {departments.map(dept => (
@@ -554,11 +548,10 @@ const TeamMembersManager = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                  <select
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>                  <select
                     value={selectedStatus}
                     onChange={(e) => setSelectedStatus(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black"
                   >
                     <option value="all">All Statuses</option>
                     <option value="active">Active</option>
@@ -566,11 +559,10 @@ const TeamMembersManager = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Performance</label>
-                  <select
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Performance</label>                  <select
                     value={selectedPerformance}
                     onChange={(e) => setSelectedPerformance(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black"
                   >
                     <option value="all">All Performance Levels</option>
                     <option value="excellent">Excellent</option>
