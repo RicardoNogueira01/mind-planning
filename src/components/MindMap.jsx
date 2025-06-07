@@ -62,9 +62,7 @@ const MindMap = ({ mapId, onBack }) => {
     
     // Remove tag from global tags
     setGlobalTags(globalTags.filter(tag => tag.id !== tagId));
-  };
-
-  // Load existing mind map data when mapId is provided
+  };  // Load existing mind map data when mapId is provided
   useEffect(() => {
     if (mapId) {
       const savedMindMapData = localStorage.getItem(`mindMap_${mapId}`);
@@ -1285,12 +1283,13 @@ useLayoutEffect(() => {
               ? 'crosshair'
               : 'grab'
       }}
-    >      {showNewMapPrompt ? (
-        <MindMapManager
+    >      {showNewMapPrompt ? (        <MindMapManager
           onCreateNew={(mapData) => {
-            // Create a new mind map with the provided data
+            // Hide the new map prompt and start editing the newly created map
+            setShowNewMapPrompt(false);
+            // Since we're in the embedded manager (no mapId), we should create a basic mind map
             createNewMap(mapData?.title || 'Central Idea');
-          }}          onOpenMindMap={(mapId) => {
+          }}onOpenMindMap={(mapId) => {
             // This should never be called since we're already in the MindMap view
             // But if it is, we can handle it by setting the showNewMapPrompt to false
             setShowNewMapPrompt(false);
