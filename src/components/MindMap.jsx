@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { Plus, Trash2, MousePointer, Hand, Users, Link, Home } from 'lucide-react';
+import MindMapManager from './MindMapManager';
 
 const layoutOptions = [
   { id: 'tree', name: 'Tree Layout', icon: 'diagram-tree' },
@@ -294,12 +295,11 @@ const getDescendantNodeIds = (parentId) => {
     setMode('cursor');
     setSelectionType('simple');
   };
-  
-  // Create a new mind map
-  const createNewMap = () => {
+    // Create a new mind map
+  const createNewMap = (title = 'Central Idea') => {
     const rootNode = {
       id: 'root',
-      text: 'Central Idea',
+      text: title,
       x: window.innerWidth / 2,
       y: window.innerHeight / 2,
       color: '#EEF2FF'
@@ -1179,16 +1179,21 @@ useLayoutEffect(() => {
               ? 'crosshair'
               : 'grab'
       }}
-    >
-      {showNewMapPrompt ? (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <button 
-            onClick={createNewMap}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-700"
-          >
-            New Mind Map
-          </button>
-        </div>
+    >      {showNewMapPrompt ? (
+        <MindMapManager
+          onCreateNew={(mapData) => {
+            // Create a new mind map with the provided data
+            createNewMap(mapData?.title || 'Central Idea');
+          }}
+          onOpenMindMap={(mapData) => {
+            // Load an existing mind map (placeholder for now)
+            createNewMap(mapData?.title || 'Central Idea');
+          }}
+          onBack={() => {
+            // Navigate back to dashboard
+            window.location.href = '/dashboard';
+          }}
+        />
       ) : (
         <>
           {/* Toolbar */}
