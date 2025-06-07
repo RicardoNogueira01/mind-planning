@@ -1,14 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Trash2, Edit3, Calendar, User, Tag, Filter, Grid, List, Download, Upload, Star, MoreVertical } from 'lucide-react';
+import { Plus, Search, Trash2, Edit3, User, Grid, List, Star, MoreVertical, Palette, Check } from 'lucide-react';
 
 const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
   const [mindMaps, setMindMaps] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterBy, setFilterBy] = useState('all'); // all, recent, favorites, shared
   const [viewMode, setViewMode] = useState('grid'); // grid, list
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
-  const [selectedMaps, setSelectedMaps] = useState([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);  const [selectedMaps, setSelectedMaps] = useState([]);
   const [sortBy, setSortBy] = useState('updated'); // updated, created, name, size
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [editingMap, setEditingMap] = useState(null);
+  const [editingTitle, setEditingTitle] = useState('');
+
+  // Available colors for mind maps
+  const availableColors = [
+    '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444',
+    '#6366F1', '#EC4899', '#14B8A6', '#F97316', '#84CC16',
+    '#6B7280', '#8B5A2B', '#DC2626', '#7C3AED', '#059669'
+  ];
 
   // Load mind maps from localStorage on component mount
   useEffect(() => {
@@ -65,11 +74,22 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
       localStorage.setItem('mindMaps', JSON.stringify(sampleMaps));
     }
   }, []);
-
   // Save mind maps to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('mindMaps', JSON.stringify(mindMaps));
   }, [mindMaps]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.dropdown-container')) {
+        setActiveDropdown(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Filter and sort mind maps
   const filteredMaps = mindMaps
@@ -133,10 +153,29 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
       map.id === mapId ? { ...map, isFavorite: !map.isFavorite } : map
     ));
   };
-
   const handleBulkDelete = () => {
     setMindMaps(mindMaps.filter(map => !selectedMaps.includes(map.id)));
     setSelectedMaps([]);
+  };
+
+  const handleUpdateMapColor = (mapId, newColor) => {
+    setMindMaps(mindMaps.map(map => 
+      map.id === mapId ? { ...map, color: newColor } : map
+    ));
+  };
+
+  const handleUpdateMapTitle = (mapId, newTitle) => {
+    if (newTitle.trim()) {
+      setMindMaps(mindMaps.map(map => 
+        map.id === mapId ? { ...map, title: newTitle.trim() } : map
+      ));
+    }
+    setEditingMap(null);
+  };
+
+  const startEditing = (map) => {
+    setEditingMap(map.id);
+    setEditingTitle(map.title);
   };
 
   const formatDate = (dateString) => {
@@ -344,10 +383,32 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
                 </button>
               )}
             </div>
-          </div>
-        ) : viewMode === 'grid' ? (
+          </div>        ) : viewMode === 'grid' ? (
           /* Grid View */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {/* Create New Mind Map Card */}
+            <div 
+              className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg shadow-sm border border-indigo-200 hover:shadow-md transition-all cursor-pointer group"
+              onClick={handleCreateNew}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleCreateNew();
+                }
+              }}
+            >
+              <div className="p-6 h-full flex flex-col items-center justify-center text-center text-white">
+                <div className="mb-4 p-4 bg-white bg-opacity-20 rounded-full group-hover:bg-opacity-30 transition-all">
+                  <Plus size={32} />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Create New Mind Map</h3>
+                <p className="text-sm text-indigo-100">Start organizing your ideas with a new mind map</p>
+              </div>
+            </div>
+
+            {/* Existing Mind Maps */}
             {filteredMaps.map((map) => (
               <div key={map.id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
                 {/* Card Header */}
@@ -359,18 +420,99 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
                           className="w-3 h-3 rounded-full" 
                           style={{ backgroundColor: map.color }}
                         ></div>
-                        <h3 className="font-semibold text-gray-900 text-sm truncate">{map.title}</h3>
+                        {editingMap === map.id ? (
+                          <input
+                            type="text"
+                            value={editingTitle}
+                            onChange={(e) => setEditingTitle(e.target.value)}
+                            onBlur={() => handleUpdateMapTitle(map.id, editingTitle)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleUpdateMapTitle(map.id, editingTitle);
+                              } else if (e.key === 'Escape') {
+                                setEditingMap(null);
+                                setEditingTitle('');
+                              }
+                            }}
+                            className="text-sm font-semibold text-gray-900 bg-transparent border-b border-indigo-300 focus:outline-none focus:border-indigo-500 px-1"
+                            autoFocus
+                          />
+                        ) : (
+                          <h3 className="font-semibold text-gray-900 text-sm truncate">{map.title}</h3>
+                        )}
                         {map.isFavorite && (
                           <Star className="text-yellow-500 fill-current" size={14} />
                         )}
                       </div>
                       <p className="text-xs text-gray-600 line-clamp-2">{map.description}</p>
                     </div>
-                    
-                    <div className="relative ml-2">
-                      <button className="p-1 text-gray-400 hover:text-gray-600 rounded">
+                      <div className="relative ml-2 dropdown-container">
+                      <button 
+                        className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveDropdown(activeDropdown === map.id ? null : map.id);
+                        }}
+                      >
                         <MoreVertical size={16} />
                       </button>
+                      
+                      {/* Dropdown Menu */}
+                      {activeDropdown === map.id && (
+                        <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10 w-48">
+                          <button
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startEditing(map);
+                              setActiveDropdown(null);
+                            }}
+                          >
+                            <Edit3 size={14} />
+                            Edit Name
+                          </button>
+                          
+                          <div className="px-4 py-2 text-sm text-gray-700">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Palette size={14} />
+                              <span>Change Color</span>
+                            </div>
+                            <div className="grid grid-cols-5 gap-1">
+                              {availableColors.map(color => (
+                                <button
+                                  key={color}
+                                  className="w-6 h-6 rounded-full border-2 border-gray-200 hover:border-gray-400 transition-colors flex items-center justify-center"
+                                  style={{ backgroundColor: color }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUpdateMapColor(map.id, color);
+                                    setActiveDropdown(null);
+                                  }}
+                                  title={`Change to ${color}`}
+                                >
+                                  {map.color === color && (
+                                    <Check size={12} className="text-white" />
+                                  )}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <hr className="my-2" />
+                          
+                          <button
+                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowDeleteConfirm(map.id);
+                              setActiveDropdown(null);
+                            }}
+                          >
+                            <Trash2 size={14} />
+                            Delete
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -379,6 +521,14 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
                 <div 
                   className="p-4 cursor-pointer hover:bg-gray-50"
                   onClick={() => onOpenMindMap && onOpenMindMap(map)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onOpenMindMap && onOpenMindMap(map);
+                    }
+                  }}
                 >
                   {/* Thumbnail placeholder */}
                   <div className="h-32 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
@@ -418,53 +568,7 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
                       </div>
                       {map.collaborators.length > 1 && (
                         <span className="text-xs text-gray-400">+{map.collaborators.length - 1} collaborators</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card Footer */}
-                <div className="px-4 py-3 border-t border-gray-100 bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="checkbox"
-                        checked={selectedMaps.includes(map.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedMaps([...selectedMaps, map.id]);
-                          } else {
-                            setSelectedMaps(selectedMaps.filter(id => id !== map.id));
-                          }
-                        }}
-                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <span className="text-xs text-gray-500">Select</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleFavorite(map.id);
-                        }}
-                        className="p-1 text-gray-400 hover:text-yellow-500 rounded"
-                        title="Toggle favorite"
-                      >
-                        <Star size={14} className={map.isFavorite ? 'fill-current text-yellow-500' : ''} />
-                      </button>
-                      
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowDeleteConfirm(map.id);
-                        }}
-                        className="p-1 text-gray-400 hover:text-red-500 rounded"
-                        title="Delete mind map"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
+                      )}                    </div>
                   </div>
                 </div>
               </div>
@@ -515,11 +619,18 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
                           }}
                           className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                         />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      </td>                      <td className="px-6 py-4 whitespace-nowrap">
                         <div 
                           className="flex items-center cursor-pointer"
                           onClick={() => onOpenMindMap && onOpenMindMap(map)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              onOpenMindMap && onOpenMindMap(map);
+                            }
+                          }}
                         >
                           <div 
                             className="w-3 h-3 rounded-full mr-3" 
