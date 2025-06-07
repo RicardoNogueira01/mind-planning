@@ -477,11 +477,10 @@ const CalendarPage = () => {
       </div>
     );
   };
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 p-[27px]">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white border-b border-gray-200 -mx-[27px] -mt-[27px] mb-6">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -501,11 +500,8 @@ const CalendarPage = () => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Controls */}
-      <div className="px-6 py-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+      </div>      {/* Controls */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
           <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
             {/* Navigation */}
             <div className="flex items-center gap-4">
@@ -596,9 +592,9 @@ const CalendarPage = () => {
           {showFilters && (
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <div>                  <label htmlFor="category-select" className="block text-sm font-medium text-gray-700 mb-2">Category</label>
                   <select
+                    id="category-select"
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black"
@@ -613,13 +609,10 @@ const CalendarPage = () => {
               </div>
             </div>
           )}
-        </div>
-
-        {/* Calendar Views */}
+        </div>        {/* Calendar Views */}
         {viewMode === 'month' && <MonthView />}
         {viewMode === 'week' && <WeekView />}
         {viewMode === 'day' && <DayView />}
-      </div>
     </div>
   );
 };

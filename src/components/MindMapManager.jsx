@@ -197,11 +197,10 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
     if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
     return formatDate(dateString);
   };
-
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-[27px]">
       {/* Header */}
-      <div className="max-w-7xl mx-auto">
+      <div className="mb-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <div className="flex items-center gap-3 mb-2">              <button

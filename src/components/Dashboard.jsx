@@ -50,12 +50,11 @@ const Dashboard = () => {
   ]);
   
   // Calculate completion percentage
-  const completionPercentage = Math.round((stats.tasksCompleted / stats.totalTasks) * 100);
-    return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+  const completionPercentage = Math.round((stats.tasksCompleted / stats.totalTasks) * 100);    return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-[27px]">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-6">
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-10 -mx-[27px] -mt-[27px] mb-6">
+        <div className="px-6 py-6">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
@@ -75,9 +74,8 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-      </header>
-        {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      </header>        {/* Main Content */}
+      <main>
         {/* Quick Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Task Overview Card */}

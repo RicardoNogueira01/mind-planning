@@ -400,11 +400,10 @@ const TeamMembersManager = () => {
       </div>
     </div>
   );
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 p-[27px]">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white border-b border-gray-200 -mx-[27px] -mt-[27px] mb-6">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -424,11 +423,8 @@ const TeamMembersManager = () => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Statistics */}
-      <div className="px-6 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      </div>      {/* Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
@@ -580,11 +576,8 @@ const TeamMembersManager = () => {
           <p className="text-sm text-gray-600">
             Showing {filteredMembers.length} of {teamMembers.length} members
           </p>
-        </div>
-
-        {/* Members List */}
+        </div>        {/* Members List */}
         {viewMode === 'grid' ? <GridView /> : <ListView />}
-      </div>
     </div>
   );
 };
