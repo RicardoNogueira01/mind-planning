@@ -204,10 +204,9 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <button
+            <div className="flex items-center gap-3 mb-2">              <button
                 onClick={onBack}
-                className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-black"
                 title="Back to Dashboard"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
