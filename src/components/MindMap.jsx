@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import { Plus, Trash2, MousePointer, Hand, Users, Link, Home } from 'lucide-react';
 import MindMapManager from './MindMapManager';
 
@@ -47,10 +47,13 @@ const MindMap = ({ mapId, onBack }) => {
     { id: 'tag-3', title: '', color: '#7C3AED' },
     { id: 'tag-4', title: '', color: '#059669' },
     { id: 'tag-5', title: '', color: '#D97706' },
-    { id: 'tag-6', title: '', color: '#DB2777' }
-  ]);
+    { id: 'tag-6', title: '', color: '#DB2777' }  ]);
   // Tag editing state
   const [editingTag, setEditingTag] = useState(null);
+  
+  // Node positions for connections
+  const nodeRefs = useRef({});
+  const [nodePositions, setNodePositions] = useState({});
   
   // Function to delete a tag and remove it from all nodes
   const deleteTag = (tagId) => {
@@ -473,19 +476,36 @@ const getDescendantNodeIds = (parentId) => {
     wrappedSetNodesAndConnections([...nodes, newNode], connections);
     setSelectedNode(newId);
   };
-  
   // Update the addChildNode function to use similar logic
   const addChildNode = (parentId) => {
     const parent = nodes.find(n => n.id === parentId);
     if (!parent) return;
 
+    // Get existing children of this parent
+    const existingChildren = connections.filter(conn => conn.from === parentId);
+    const childCount = existingChildren.length;
+
     const newId = `node-${Date.now()}`;
     // Calculate dynamic parent width
     const parentWidth = Math.min(450, Math.max(150, parent.text.length * 10));
-    // Position child to the right of parent with at least 150px spacing
-    const minSpacing = 150; // Minimum spacing between parent and child
-    const newX = parent.x + parentWidth/2 + minSpacing; // Parent right edge + minimum spacing
-    const newY = parent.y; // Same vertical level as parent
+    
+    // Position child to the right of parent with spacing
+    const minSpacing = 200; // Minimum spacing between parent and child
+    const newX = parent.x + parentWidth/2 + minSpacing;
+    
+    // Improved vertical positioning for children
+    const verticalSpacing = 100; // Space between children
+    let newY;
+    
+    if (childCount === 0) {
+      // First child at same level as parent
+      newY = parent.y;
+    } else {
+      // Alternate children above and below parent
+      const isEven = childCount % 2 === 0;
+      const offset = Math.ceil(childCount / 2) * verticalSpacing;
+      newY = parent.y + (isEven ? offset : -offset);
+    }
 
     const newNode = {
       id: newId,
@@ -499,7 +519,14 @@ const getDescendantNodeIds = (parentId) => {
       id: `conn-${Date.now()}`,
       from: parentId,
       to: newId
-    };
+    };    // console.log('DEBUG: Adding child node', {
+    //   parentId,
+    //   newId,
+    //   parentPos: { x: parent.x, y: parent.y },
+    //   childPos: { x: newX, y: newY },
+    //   childCount,
+    //   existingChildren: existingChildren.length
+    // });
 
     wrappedSetNodesAndConnections([...nodes, newNode], [...connections, newConnection]);
     // setSelectedNode(newId); // Do NOT select the new child node, keep focus on parent
@@ -766,70 +793,156 @@ const handleNodeClick = (nodeId, e) => {
     setNodeGroups(updatedGroups);
     setSelectedNodes([]);
     setSelectedNode(null);
-  };
+  };  // Render connections between nodes
+  const renderConnections = useMemo(() => {
+    // console.log('DEBUG: Rendering connections', { connectionsCount: connections.length, connections, nodesCount: nodes.length });
+    
+    if (connections.length === 0) return null;
 
-  // Update the connection line calculation in renderConnections
-  const renderConnections = () => {
-    return connections.map(conn => {
-      const fromPos = nodePositions[conn.from];
-      const toPos = nodePositions[conn.to];
-      if (!fromPos || !toPos) return null;
-
-      // Calculate centers
-      const fromCenter = { x: fromPos.centerX, y: fromPos.centerY };
-      const toCenter = { x: toPos.centerX, y: toPos.centerY };
-
-      // Helper to get edge point
-      function getEdgePoint(rect, center, toward) {
-        const w = rect.width / 2;
-        const h = rect.height / 2;
-        const angle = Math.atan2(toward.y - center.y, toward.x - center.x);
-        const tanTheta = Math.abs(Math.tan(angle));
-        let x = center.x, y = center.y;
-        if (tanTheta <= h / w) {
-          x += (toward.x > center.x ? w : -w);
-          y += (toward.x > center.x ? w : -w) * Math.tan(angle);
-        } else {
-          y += (toward.y > center.y ? h : -h);
-          x += (toward.y > center.y ? h : -h) / Math.tan(angle);
-        }
-        return { x, y };
-      }
-
-      // Get edge points for both nodes
-      const fromRect = { ...fromPos, width: fromPos.width, height: fromPos.height };
-      const toRect = { ...toPos, width: toPos.width, height: toPos.height };
-      const start = getEdgePoint(fromRect, fromCenter, toCenter);
-      const end = getEdgePoint(toRect, toCenter, fromCenter);
-
-      // Control points for smooth curve
-      const controlPoint1X = start.x + (end.x - start.x) * 0.25;
-      const controlPoint1Y = start.y + (end.y - start.y) * 0.1;
-      const controlPoint2X = end.x - (end.x - start.x) * 0.25;
-      const controlPoint2Y = end.y - (end.y - start.y) * 0.1;
-
-      return (
-        <div key={conn.id} style={{
+    // Use a single SVG for all connections to avoid stacking issues
+    return (
+      <svg
+        style={{
           position: 'absolute',
           top: 0,
           left: 0,
-          right: 0,
-          bottom: 0,
+          width: '100%',
+          height: '100%',
           pointerEvents: 'none',
-          zIndex: 1
-        }}>
-          <svg width="100%" height="100%" style={{ overflow: 'visible', position: 'absolute', top: 0, left: 0 }}>
-            <path
-              d={`M ${start.x} ${start.y} C ${controlPoint1X} ${controlPoint1Y}, ${controlPoint2X} ${controlPoint2Y}, ${end.x} ${end.y}`}
-              stroke="#CBD5E1"
-              strokeWidth={2}
-              fill="none"
+          zIndex: 1,
+          overflow: 'visible'
+        }}
+      >
+        <defs>
+          <marker
+            id="arrowhead"
+            markerWidth="10"
+            markerHeight="7"
+            refX="9"
+            refY="3.5"
+            orient="auto"
+          >
+            <polygon
+              points="0 0, 10 3.5, 0 7"
+              fill="#64748B"
+              opacity="0.6"
             />
-          </svg>
-        </div>
-      );
-    });
-  };
+          </marker>
+        </defs>
+        {connections.map(conn => {          const fromNode = nodes.find(n => n.id === conn.from);
+          const toNode = nodes.find(n => n.id === conn.to);
+          
+          // console.log('DEBUG: Processing connection', { 
+          //   conn, 
+          //   fromNode: fromNode ? { id: fromNode.id, x: fromNode.x, y: fromNode.y, text: fromNode.text } : null,
+          //   toNode: toNode ? { id: toNode.id, x: toNode.x, y: toNode.y, text: toNode.text } : null
+          // });          
+          if (!fromNode || !toNode) {
+            return null;
+          }
+
+          // Use the measured node positions from nodePositions
+          const fromPos = nodePositions[conn.from];
+          const toPos = nodePositions[conn.to];
+          
+          if (!fromPos || !toPos) {
+            return null;
+          }
+
+          // Simple edge detection using actual measured boundaries
+          let startX, startY, endX, endY;
+
+          // Determine connection points based on relative positions
+          if (fromPos.centerX < toPos.centerX) {
+            // From is to the left of To - connect from right edge of From to left edge of To
+            startX = fromPos.right;
+            startY = fromPos.centerY;
+            endX = toPos.left;
+            endY = toPos.centerY;
+          } else if (fromPos.centerX > toPos.centerX) {
+            // From is to the right of To - connect from left edge of From to right edge of To
+            startX = fromPos.left;
+            startY = fromPos.centerY;
+            endX = toPos.right;
+            endY = toPos.centerY;
+          } else {
+            // Same X position - connect vertically
+            if (fromPos.centerY < toPos.centerY) {
+              // From is above To
+              startX = fromPos.centerX;
+              startY = fromPos.bottom;
+              endX = toPos.centerX;
+              endY = toPos.top;
+            } else {
+              // From is below To
+              startX = fromPos.centerX;
+              startY = fromPos.top;
+              endX = toPos.centerX;
+              endY = toPos.bottom;          }
+          }
+
+          // Create smooth curve with control points
+          const dx = endX - startX;
+          const dy = endY - startY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          // Control points for smooth curve
+          const controlDistance = Math.min(distance * 0.4, 100); // Limit curve intensity
+          const controlPoint1X = startX + dx * 0.3;
+          const controlPoint1Y = startY + dy * 0.1;
+          const controlPoint2X = endX - dx * 0.3;
+          const controlPoint2Y = endY - dy * 0.1;          const pathData = `M ${startX} ${startY} C ${controlPoint1X} ${controlPoint1Y}, ${controlPoint2X} ${controlPoint2Y}, ${endX} ${endY}`;
+          
+          // console.log('DEBUG: Final connection', {
+          //   connectionId: conn.id,
+          //   direction: `${fromNode.text} -> ${toNode.text}`,
+          //   fromBounds: { left: fromPos.left, right: fromPos.right, top: fromPos.top, bottom: fromPos.bottom },
+          //   toBounds: { left: toPos.left, right: toPos.right, top: toPos.top, bottom: toPos.bottom },
+          //   startPoint: { x: startX, y: startY },
+          //   endPoint: { x: endX, y: endY },          //   pathData          // });
+            return (
+            <g key={conn.id}>
+              {/* Debug: Show calculated node boundaries */}
+              <rect
+                x={fromPos.left}
+                y={fromPos.top}
+                width={fromPos.width}
+                height={fromPos.height}
+                stroke="green"
+                strokeWidth="1"
+                fill="none"
+                opacity="0.5"
+              />
+              <rect
+                x={toPos.left}
+                y={toPos.top}
+                width={toPos.width}
+                height={toPos.height}
+                stroke="red"
+                strokeWidth="1"
+                fill="none"
+                opacity="0.5"
+              />
+              
+              {/* Main connection path */}
+              <path
+                d={pathData}
+                stroke="#64748B"
+                strokeWidth={2}
+                fill="none"
+                strokeOpacity={0.6}
+                markerEnd="url(#arrowhead)"
+              />
+              
+              {/* Debug: Show connection points */}
+              <circle cx={startX} cy={startY} r={3} fill="green" opacity={0.8} />
+              <circle cx={endX} cy={endY} r={3} fill="red" opacity={0.8} />
+            </g>
+          );
+        })}
+      </svg>
+    );
+  }, [nodes, connections, nodePositions]);
   // Render the group bounding boxes and collaborator icons
   const renderNodeGroups = () => {
     return nodeGroups.map(group => {
@@ -1218,28 +1331,54 @@ const wrappedSetNodesAndConnections = (newNodes, newConnections) => {
   saveToHistory();
 };
 
-const nodeRefs = useRef({});
-const [nodePositions, setNodePositions] = useState({});
-
-// Measure node positions after nodes/connections change
+// Calculate node positions using actual DOM measurements
 useLayoutEffect(() => {
   const positions = {};
   nodes.forEach(node => {
+    // Get the actual DOM element to measure real boundaries
     const el = nodeRefs.current[node.id];
     if (el) {
       const rect = el.getBoundingClientRect();
+      const canvasRect = canvasRef.current?.getBoundingClientRect();
+      
+      if (canvasRect) {
+        // Convert screen coordinates to canvas coordinates, accounting for pan/zoom
+        // Since both nodes and SVG are in the same transformed container, we need to convert back to the untransformed space
+        const localLeft = (rect.left - canvasRect.left - pan.x) / zoom;
+        const localTop = (rect.top - canvasRect.top - pan.y) / zoom;
+        const localWidth = rect.width / zoom;
+        const localHeight = rect.height / zoom;
+        
+        positions[node.id] = {
+          left: localLeft,
+          top: localTop,
+          right: localLeft + localWidth,
+          bottom: localTop + localHeight,
+          width: localWidth,
+          height: localHeight,
+          centerX: localLeft + localWidth / 2,
+          centerY: localTop + localHeight / 2
+        };
+      }
+    } else {
+      // Fallback to calculated dimensions if DOM element not available
+      const textLength = node.text.length;
+      const nodeWidth = Math.min(350, Math.max(150, textLength * 10));
+      const nodeHeight = 50;
+      
       positions[node.id] = {
-        left: rect.left,
-        top: rect.top,
-        width: rect.width,
-        height: rect.height,
-        centerX: rect.left + rect.width / 2,
-        centerY: rect.top + rect.height / 2
+        left: node.x - nodeWidth / 2,
+        top: node.y - 25,
+        right: (node.x - nodeWidth / 2) + nodeWidth,
+        bottom: (node.y - 25) + nodeHeight,
+        width: nodeWidth,
+        height: nodeHeight,
+        centerX: node.x,
+        centerY: node.y
       };
-    }
-  });
+    }  });
   setNodePositions(positions);
-}, [nodes, connections]);
+}, [nodes, pan, zoom]); // Include pan and zoom as dependencies since they affect measurements
 
   return (
     <div 
@@ -1451,10 +1590,8 @@ useLayoutEffect(() => {
             }}
           >
             {/* Group bounding boxes */}
-            {renderNodeGroups()}
-            
-            {/* Connections between nodes */}
-            {renderConnections()}
+            {renderNodeGroups()}            {/* Connections between nodes */}
+            {renderConnections}
             
             {/* Selection rectangle */}
             {isSelecting && selectionRect && (
