@@ -24,8 +24,8 @@ const TaskStatusCard: React.FC<TaskStatusCardProps> = ({ stats }) => {
         <div>
           <h3 className="text-sm font-medium text-gray-600 mb-1">Tasks Completed</h3>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
-              <CheckCircle size={14} className="text-blue-600" />
+            <div className="w-6 h-6 bg-gray-100 rounded-lg flex items-center justify-center">
+              <CheckCircle size={14} className="text-emerald-600" />
             </div>
           </div>
         </div>
@@ -44,7 +44,7 @@ const TaskStatusCard: React.FC<TaskStatusCardProps> = ({ stats }) => {
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
           <span className="text-xs text-gray-500">Status</span>
-          <span className="text-xs text-emerald-600 font-medium">On Track</span>
+          <span className="text-xs text-gray-600 font-medium">On Track</span>
         </div>
       </div>
     </div>

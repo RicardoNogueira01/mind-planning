@@ -6,7 +6,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, ArrowRight } from 'lucide-react';
 import type { UpcomingDeadline } from '../../types/dashboard';
-import { getInitials, getDeadlineStatusClasses, CARD_STYLES } from '../../utils/dashboardUtils';
+import { CARD_STYLES } from '../../utils/dashboardUtils';
 
 interface UpcomingDeadlinesCardProps {
   /** Array of upcoming deadlines */
@@ -23,14 +23,14 @@ const UpcomingDeadlinesCard: React.FC<UpcomingDeadlinesCardProps> = ({ upcomingD
     <div className={CARD_STYLES} data-testid="upcoming-deadlines-card">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
-          <div className="p-2 bg-orange-100 rounded-lg">
+          <div className="p-2 bg-gray-100 rounded-lg">
             <Clock size={20} className="text-orange-600" />
           </div>
           Upcoming Deadlines
         </h2>
         <Link 
           to="/upcoming-deadlines" 
-          className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 font-medium"
+          className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1 font-medium"
           data-testid="view-all-deadlines-link"
         >
           View All Deadlines
@@ -59,31 +59,11 @@ const UpcomingDeadlinesCard: React.FC<UpcomingDeadlinesCardProps> = ({ upcomingD
                   </span>
                   <span 
                     className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      isUrgent ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
+                      isUrgent ? 'bg-gray-100 text-red-600' : 'bg-gray-100 text-orange-600'
                     }`}
                     data-testid="deadline-status"
                   >
                     {isUrgent ? 'Today' : 'Tomorrow'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-                </h3>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600" data-testid="assigned-to">
-                    Assigned to {task.assignedTo}
-                  </span>
-                  <span 
-                    className={`text-sm font-semibold px-3 py-1 rounded-full ${statusClasses}`}
-                    data-testid="due-date"
-                  >
-                    Due {task.dueDate}
                   </span>
                 </div>
               </div>

@@ -22,27 +22,27 @@ const DashboardHeader: React.FC = () => {
           </div>
           <div className="flex items-center gap-3">
             <button 
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 text-sm font-medium"
+              className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors duration-200 flex items-center gap-2 text-sm font-medium"
               aria-label="Create new task"
             >
               <CheckSquare size={16} />
               Create Task
             </button>
             <button 
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 text-sm font-medium"
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200 flex items-center gap-2 text-sm font-medium"
               aria-label="Strategy board"
             >
               <Activity size={16} />
               Strategy Board
             </button>
             <button 
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 text-sm font-medium"
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200 flex items-center gap-2 text-sm font-medium"
               aria-label="Calendar view"
             >
               Calendar
             </button>
             <button 
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 text-sm font-medium"
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200 flex items-center gap-2 text-sm font-medium"
               aria-label="Team management"
             >
               Team

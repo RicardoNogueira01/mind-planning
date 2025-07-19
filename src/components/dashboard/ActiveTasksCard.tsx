@@ -24,8 +24,8 @@ const ActiveTasksCard: React.FC<ActiveTasksCardProps> = ({ stats }) => {
         <div>
           <h3 className="text-sm font-medium text-gray-600 mb-1">Active Tasks</h3>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Clock size={14} className="text-blue-600" />
+            <div className="w-6 h-6 bg-gray-100 rounded-lg flex items-center justify-center">
+              <Clock size={14} className="text-orange-600" />
             </div>
           </div>
         </div>
@@ -44,7 +44,7 @@ const ActiveTasksCard: React.FC<ActiveTasksCardProps> = ({ stats }) => {
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
           <span className="text-xs text-gray-500">Status</span>
-          <span className="text-xs text-orange-600 font-medium">Working</span>
+          <span className="text-xs text-gray-600 font-medium">Working</span>
         </div>
       </div>
     </div>

@@ -26,7 +26,7 @@ const TaskOverviewCard: React.FC<TaskOverviewCardProps> = ({ stats }) => {
         <div>
           <h3 className="text-sm font-medium text-gray-600 mb-1">Project Completion</h3>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
+            <div className="w-6 h-6 bg-gray-100 rounded-lg flex items-center justify-center">
               <BarChart2 size={14} className="text-blue-600" />
             </div>
           </div>
@@ -46,7 +46,7 @@ const TaskOverviewCard: React.FC<TaskOverviewCardProps> = ({ stats }) => {
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
           <span className="text-xs text-gray-500">Progress</span>
-          <span className="text-xs text-emerald-600 font-medium">On Track</span>
+          <span className="text-xs text-gray-600 font-medium">On Track</span>
         </div>
         <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
           <div 

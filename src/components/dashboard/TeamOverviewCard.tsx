@@ -26,14 +26,14 @@ const TeamOverviewCard: React.FC<TeamOverviewCardProps> = ({ collaborators }) =>
     <div className={CARD_STYLES} data-testid="team-overview-card">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <Users size={20} className="text-blue-600" />
+          <div className="p-2 bg-gray-100 rounded-lg">
+            <Users size={20} className="text-purple-600" />
           </div>
           Team Performance
         </h2>
         <Link 
           to="/team-members" 
-          className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 font-medium"
+          className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1 font-medium"
           data-testid="view-all-team-link"
         >
           View All Team Members

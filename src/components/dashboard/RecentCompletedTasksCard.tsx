@@ -23,14 +23,14 @@ const RecentCompletedTasksCard: React.FC<RecentCompletedTasksCardProps> = ({ rec
     <div className={CARD_STYLES} data-testid="recent-completed-tasks-card">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
-          <div className="p-2 bg-emerald-100 rounded-lg">
+          <div className="p-2 bg-gray-100 rounded-lg">
             <CheckCircle size={20} className="text-emerald-600" />
           </div>
           Recently Completed
         </h2>
         <Link 
           to="/completed-tasks" 
-          className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 font-medium"
+          className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1 font-medium"
           data-testid="view-all-completed-link"
         >
           View All Completed Tasks
