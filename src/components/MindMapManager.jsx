@@ -25,7 +25,7 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
     if (savedMaps) {
       setMindMaps(JSON.parse(savedMaps));
     } else {
-      // Initialize with some sample data
+      // Initialize with some sample data to demonstrate the functionality
       const sampleMaps = [
         {
           id: 'map-1',
@@ -54,20 +54,6 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
           isFavorite: false,
           thumbnail: null,
           color: '#10B981'
-        },
-        {
-          id: 'map-3',
-          title: 'Event Organization',
-          description: 'Planning for annual company retreat',
-          createdAt: '2024-01-08',
-          updatedAt: '2024-01-16',
-          author: 'Mike Johnson',
-          collaborators: ['Mike Johnson', 'Emily Davis'],
-          tags: ['event', 'planning', 'team'],
-          nodeCount: 31,
-          isFavorite: true,
-          thumbnail: null,
-          color: '#8B5CF6'
         }
       ];
       setMindMaps(sampleMaps);
@@ -140,7 +126,11 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
     };
     
     setMindMaps([newMap, ...mindMaps]);
-    onCreateNew && onCreateNew(newMap);
+    
+    // Call the callback without the new map
+    if (onCreateNew) {
+      onCreateNew();
+    }
   };
 
   const handleDeleteMap = (mapId) => {
@@ -381,7 +371,7 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
               {!searchQuery && (
                 <button
                   onClick={handleCreateNew}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors"
                 >
                   <Plus size={20} />
                   Create Your First Mind Map
@@ -391,9 +381,9 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
           </div>        ) : viewMode === 'grid' ? (
           /* Grid View */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {/* Create New Mind Map Card */}
+            {/* Create New Mind Map Card - appears first when there are existing maps */}
             <div 
-              className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg shadow-sm border border-indigo-200 hover:shadow-md transition-all cursor-pointer group"
+              className="bg-white rounded-xl shadow-sm border-2 border-dashed border-gray-300 hover:border-gray-400 hover:shadow-md transition-all cursor-pointer group"
               onClick={handleCreateNew}
               role="button"
               tabIndex={0}
@@ -404,12 +394,12 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
                 }
               }}
             >
-              <div className="p-6 h-full flex flex-col items-center justify-center text-center text-white">
-                <div className="mb-4 p-4 bg-white bg-opacity-20 rounded-full group-hover:bg-opacity-30 transition-all">
-                  <Plus size={32} />
+              <div className="p-6 h-full flex flex-col items-center justify-center text-center min-h-[200px]">
+                <div className="mb-4 p-4 bg-gray-100 rounded-full group-hover:bg-gray-200 transition-all">
+                  <Plus size={32} className="text-gray-600" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">Create New Mind Map</h3>
-                <p className="text-sm text-indigo-100">Start organizing your ideas with a new mind map</p>
+                <h3 className="text-lg font-semibold mb-2 text-gray-900">Create New Mind Map</h3>
+                <p className="text-sm text-gray-500">Start organizing your ideas with a new mind map</p>
               </div>
             </div>
 
@@ -728,6 +718,17 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Floating Action Button - appears when there are mind maps for quick creation */}
+      {filteredMaps.length > 0 && (
+        <button
+          onClick={handleCreateNew}
+          className="fixed bottom-6 right-6 w-14 h-14 bg-gray-800 hover:bg-gray-900 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center z-10"
+          title="Create New Mind Map"
+        >
+          <Plus size={24} />
+        </button>
       )}
     </div>
   );

@@ -14,8 +14,8 @@ const MindMapManagerWrapper = () => {
   const navigate = useNavigate();
   
   const handleCreateNew = () => {
-    // The MindMapManager component itself handles adding the new map to the list
-    // We don't navigate here - we let the user click on the rectangle to navigate
+    // The MindMapManager component handles adding the new map to the list
+    // We stay on the manager page to allow creating more maps
   };
   
   const handleOpenMindMap = (mapId) => {
