@@ -926,7 +926,6 @@ const handleNodeClick = (nodeId, e) => {
                 strokeWidth={2}
                 fill="none"
                 strokeOpacity={0.8}
-                markerEnd="url(#arrowhead)"
                 style={{
                   transition: 'all 0.15s ease-out'
                 }}
