@@ -7,6 +7,7 @@ import TeamMembersManager from './components/TeamMembersManager';
 import RecentlyCompletedTasksManager from './components/RecentlyCompletedTasksManager';
 import UpcomingDeadlinesManager from './components/UpcomingDeadlinesManager';
 import CalendarPage from './components/CalendarPage';
+import ScrollToTop from './components/ScrollToTop';
 
 // Wrapper components to handle navigation
 const MindMapManagerWrapper = () => {
@@ -56,6 +57,7 @@ function App() {
 
   return (
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/mindmap/:mapId" element={<MindMapWrapper />} />
