@@ -6,8 +6,9 @@ import React from 'react';
 import DashboardHeader from './dashboard/DashboardHeader';
 import TaskOverviewCard from './dashboard/TaskOverviewCard';
 import TaskStatusCard from './dashboard/TaskStatusCard';
+import ActiveTasksCard from './dashboard/ActiveTasksCard';
+import PriorityItemsCard from './dashboard/PriorityItemsCard';
 import TeamOverviewCard from './dashboard/TeamOverviewCard';
-import ProjectSummaryCard from './dashboard/ProjectSummaryCard';
 import RecentCompletedTasksCard from './dashboard/RecentCompletedTasksCard';
 import UpcomingDeadlinesCard from './dashboard/UpcomingDeadlinesCard';
 import WeeklyCalendarWidget from './WeeklyCalendarWidget';
@@ -21,7 +22,7 @@ const Dashboard: React.FC = () => {
   const { stats, collaborators, recentCompletedTasks, upcomingDeadlines } = useDashboardData();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-[27px]">
+    <div className="min-h-screen bg-gray-50 p-6">
       <DashboardHeader />
       
       <main>
@@ -29,18 +30,19 @@ const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <TaskOverviewCard stats={stats} />
           <TaskStatusCard stats={stats} />
-          <TeamOverviewCard collaborators={collaborators} />
-          <ProjectSummaryCard stats={stats} />
+          <ActiveTasksCard stats={stats} />
+          <PriorityItemsCard stats={stats} />
         </div>
         
         {/* Detailed Sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <TeamOverviewCard collaborators={collaborators} />
           <RecentCompletedTasksCard recentCompletedTasks={recentCompletedTasks} />
           <UpcomingDeadlinesCard upcomingDeadlines={upcomingDeadlines} />
         </div>
         
         {/* Weekly Calendar Widget */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           <WeeklyCalendarWidget />
         </div>
       </main>

@@ -5,7 +5,7 @@
 import React from 'react';
 import { BarChart2 } from 'lucide-react';
 import type { TaskStats } from '../../types/dashboard';
-import { calculateCompletionPercentage, CARD_STYLES, ICON_CONTAINER_STYLES } from '../../utils/dashboardUtils';
+import { calculateCompletionPercentage, CARD_STYLES } from '../../utils/dashboardUtils';
 
 interface TaskOverviewCardProps {
   /** Task statistics data */
@@ -22,60 +22,38 @@ const TaskOverviewCard: React.FC<TaskOverviewCardProps> = ({ stats }) => {
 
   return (
     <div className={CARD_STYLES} data-testid="task-overview-card">
-      <div className="flex justify-between items-start mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">Task Overview</h2>
-        <div className={`${ICON_CONTAINER_STYLES} bg-gradient-to-br from-indigo-500 to-blue-600`}>
-          <BarChart2 size={22} />
-        </div>
-      </div>
-      
-      <div className="flex justify-between items-end mb-6">
+      <div className="flex justify-between items-start mb-4">
         <div>
-          <p 
-            className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent"
-            data-testid="completion-percentage"
-          >
-            {completionPercentage}%
-          </p>
-          <p className="text-sm text-gray-500 mt-1">Overall Completion</p>
-        </div>
-        <div className="text-right">
-          <p className="text-2xl font-bold text-emerald-600" data-testid="tasks-completed">
-            +{stats.tasksCompleted}
-          </p>
-          <p className="text-sm text-gray-500 mt-1">Tasks Done</p>
+          <h3 className="text-sm font-medium text-gray-600 mb-1">Project Completion</h3>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
+              <BarChart2 size={14} className="text-blue-600" />
+            </div>
+          </div>
         </div>
       </div>
       
-      <div className="h-3 bg-gray-100 rounded-full mb-4 overflow-hidden">
-        <div 
-          className="h-3 bg-gradient-to-r from-indigo-500 to-blue-600 rounded-full transition-all duration-1000 ease-out" 
-          style={{ width: `${completionPercentage}%` }}
-          data-testid="progress-bar"
-        />
+      <div className="mb-4">
+        <p 
+          className="text-3xl font-bold text-gray-900 mb-1"
+          data-testid="completion-percentage"
+        >
+          {completionPercentage}%
+        </p>
+        <p className="text-sm text-gray-500">Overall Progress</p>
       </div>
       
-      <div className="grid grid-cols-3 gap-3 text-center">
-        <div className="bg-emerald-50 rounded-lg p-2">
-          <div className="w-3 h-3 rounded-full bg-emerald-500 mx-auto mb-1" />
-          <span className="text-xs text-gray-600 block">Done</span>
-          <span className="text-sm font-semibold text-gray-800" data-testid="done-count">
-            {stats.tasksCompleted}
-          </span>
+      <div className="mb-4">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-xs text-gray-500">Progress</span>
+          <span className="text-xs text-emerald-600 font-medium">On Track</span>
         </div>
-        <div className="bg-amber-50 rounded-lg p-2">
-          <div className="w-3 h-3 rounded-full bg-amber-500 mx-auto mb-1" />
-          <span className="text-xs text-gray-600 block">Progress</span>
-          <span className="text-sm font-semibold text-gray-800" data-testid="progress-count">
-            {stats.tasksInProgress}
-          </span>
-        </div>
-        <div className="bg-gray-50 rounded-lg p-2">
-          <div className="w-3 h-3 rounded-full bg-gray-400 mx-auto mb-1" />
-          <span className="text-xs text-gray-600 block">Todo</span>
-          <span className="text-sm font-semibold text-gray-800" data-testid="todo-count">
-            {stats.tasksNotStarted}
-          </span>
+        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div 
+            className={`h-2 bg-emerald-500 rounded-full transition-all duration-1000 ease-out`}
+            style={{ width: `${completionPercentage}%` }}
+            data-testid="progress-bar"
+          />
         </div>
       </div>
     </div>

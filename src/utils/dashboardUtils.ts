@@ -73,9 +73,9 @@ export const getDeadlineStatusClasses = (status: 'danger' | 'warning'): string =
 /**
  * Common card styles for dashboard components
  */
-export const CARD_STYLES = "bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-white/20";
+export const CARD_STYLES = "bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200";
 
 /**
  * Common icon container styles
  */
-export const ICON_CONTAINER_STYLES = "p-3 text-white rounded-xl shadow-lg";
+export const ICON_CONTAINER_STYLES = "p-2 text-white rounded-lg";
