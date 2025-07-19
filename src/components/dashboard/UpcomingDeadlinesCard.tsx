@@ -22,42 +22,58 @@ const UpcomingDeadlinesCard: React.FC<UpcomingDeadlinesCardProps> = ({ upcomingD
   return (
     <div className={CARD_STYLES} data-testid="upcoming-deadlines-card">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-lg shadow-md">
-            <Clock size={20} />
+        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+          <div className="p-2 bg-orange-100 rounded-lg">
+            <Clock size={20} className="text-orange-600" />
           </div>
           Upcoming Deadlines
         </h2>
         <Link 
           to="/upcoming-deadlines" 
-          className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-2 transition-all duration-200 px-3 py-2 bg-indigo-50 rounded-lg hover:bg-indigo-100"
+          className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 font-medium"
           data-testid="view-all-deadlines-link"
         >
-          <span className="font-medium">View All</span>
+          View All Deadlines
           <ArrowRight size={16} />
         </Link>
       </div>
       
       <div className="space-y-4">
         {upcomingDeadlines.map(task => {
-          const statusClasses = getDeadlineStatusClasses(task.status);
+          const isUrgent = task.status === 'danger';
           
           return (
             <div 
               key={task.id} 
-              className="flex items-start gap-4 p-4 bg-gray-50/70 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors"
+              className="flex items-start gap-3"
               data-testid={`deadline-task-${task.id}`}
             >
-              <div 
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-semibold shadow-lg"
-                style={{ backgroundColor: task.color }}
-                data-testid="task-avatar"
-              >
-                {getInitials(task.assignedTo)}
-              </div>
+              <div className={`w-2 h-2 rounded-full mt-2 ${isUrgent ? 'bg-red-500' : 'bg-orange-500'}`} />
               <div className="flex-1">
-                <h3 className="font-semibold text-gray-800 mb-1" data-testid="task-title">
+                <h3 className="font-medium text-gray-900 mb-1" data-testid="task-title">
                   {task.title}
+                </h3>
+                <div className="flex justify-between items-center text-sm text-gray-500">
+                  <span data-testid="assigned-to">
+                    Assigned to {task.assignedTo} • Due {task.dueDate}
+                  </span>
+                  <span 
+                    className={`text-xs px-2 py-1 rounded-full font-medium ${
+                      isUrgent ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
+                    }`}
+                    data-testid="deadline-status"
+                  >
+                    {isUrgent ? 'Today' : 'Tomorrow'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
                 </h3>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600" data-testid="assigned-to">
