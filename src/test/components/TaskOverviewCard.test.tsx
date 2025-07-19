@@ -4,8 +4,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import TaskOverviewCard from '../components/dashboard/TaskOverviewCard';
-import type { TaskStats } from '../types/dashboard';
+import TaskOverviewCard from '../../components/dashboard/TaskOverviewCard';
+import type { TaskStats } from '../../types/dashboard';
 
 describe('TaskOverviewCard', () => {
   const mockStats: TaskStats = {

@@ -5,8 +5,8 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import TeamOverviewCard from '../components/dashboard/TeamOverviewCard';
-import type { Collaborator } from '../types/dashboard';
+import TeamOverviewCard from '../../components/dashboard/TeamOverviewCard';
+import type { Collaborator } from '../../types/dashboard';
 
 // Wrapper component to provide routing context
 const RouterWrapper = ({ children }: { children: React.ReactNode }) => (

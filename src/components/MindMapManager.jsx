@@ -198,24 +198,25 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
     return formatDate(dateString);
   };
   return (
-    <div className="min-h-screen bg-gray-50 p-[27px]">
+    <div className="min-h-screen bg-gray-50 p-6">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <div className="flex items-center gap-3 mb-2">              <button
-                onClick={onBack}
-                className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-black"
-                title="Back to Dashboard"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 12H5"/>
-                  <path d="M12 19l-7-7 7-7"/>
-                </svg>
-              </button>
-              <h1 className="text-3xl font-bold text-gray-900">Mind Maps</h1>
+      <header className="mb-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={onBack}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
+              title="Back to Dashboard"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5"/>
+                <path d="M12 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Mind Maps</h1>
+              <p className="text-gray-500">Create, organize, and manage your mind maps</p>
             </div>
-            <p className="text-gray-600">Create, organize, and manage your mind maps</p>
           </div>
           
           <div className="flex items-center gap-3">
@@ -231,36 +232,41 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
             
             <button
               onClick={handleCreateNew}
-              className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors"
             >
               <Plus size={20} />
               New Mind Map
             </button>
           </div>
         </div>
+      </header>
 
+      {/* Main Content */}
+      <main>
         {/* Controls Bar */}
-        <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
           <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
             {/* Search */}
             <div className="flex-1 max-w-md">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />                <input
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                <input
                   type="text"
                   placeholder="Search mind maps..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black placeholder-black"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
                 />
               </div>
             </div>
 
             {/* Filters and Controls */}
             <div className="flex items-center gap-3">
-              {/* Filter Dropdown */}              <select
+              {/* Filter Dropdown */}
+              <select
                 value={filterBy}
                 onChange={(e) => setFilterBy(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-indigo-500 text-black"
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500 text-gray-900"
               >
                 <option value="all">All Maps</option>
                 <option value="recent">Recent</option>
@@ -268,10 +274,11 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
                 <option value="shared">Shared</option>
               </select>
 
-              {/* Sort Dropdown */}              <select
+              {/* Sort Dropdown */}
+              <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-indigo-500 text-black"
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500 text-gray-900"
               >
                 <option value="updated">Last Modified</option>
                 <option value="created">Date Created</option>
@@ -283,13 +290,13 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
               <div className="flex border border-gray-300 rounded-lg">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 ${viewMode === 'grid' ? 'bg-indigo-100 text-indigo-600' : 'text-gray-600 hover:bg-gray-100'} rounded-l-lg transition-colors`}
+                  className={`p-2 ${viewMode === 'grid' ? 'bg-gray-800 text-white' : 'text-gray-600 hover:bg-gray-100'} rounded-l-lg transition-colors`}
                 >
                   <Grid size={16} />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-2 ${viewMode === 'list' ? 'bg-indigo-100 text-indigo-600' : 'text-gray-600 hover:bg-gray-100'} rounded-r-lg transition-colors`}
+                  className={`p-2 ${viewMode === 'list' ? 'bg-gray-800 text-white' : 'text-gray-600 hover:bg-gray-100'} rounded-r-lg transition-colors`}
                 >
                   <List size={16} />
                 </button>
@@ -685,7 +692,7 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
             </div>
           </div>
         )}
-      </div>
+      </main>
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (

@@ -138,15 +138,15 @@ const WeeklyCalendarWidget = () => {
   const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+          <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
             <Calendar size={20} />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-800">This Week</h2>
+            <h2 className="text-lg font-semibold text-gray-900">This Week</h2>
             <p className="text-sm text-gray-500">{formatDate(weekDates[0])} - {formatDate(weekDates[6])}</p>
           </div>
         </div>
@@ -159,7 +159,7 @@ const WeeklyCalendarWidget = () => {
           </button>
           <button
             onClick={() => setCurrentDate(new Date())}
-            className="px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+            className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
           >
             Today
           </button>
@@ -171,7 +171,7 @@ const WeeklyCalendarWidget = () => {
           </button>
           <Link
             to="/calendar"
-            className="ml-2 px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg transition-colors"
+            className="ml-2 px-3 py-1.5 text-xs font-medium bg-gray-800 text-white hover:bg-gray-900 rounded-lg transition-colors"
           >
             Full Calendar
           </Link>
@@ -189,7 +189,7 @@ const WeeklyCalendarWidget = () => {
               key={index}
               className={`p-3 rounded-lg border-2 transition-colors ${
                 isTodayDate 
-                  ? 'border-indigo-200 bg-indigo-50' 
+                  ? 'border-blue-200 bg-blue-50' 
                   : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
               }`}
             >
@@ -199,7 +199,7 @@ const WeeklyCalendarWidget = () => {
                   {dayNames[index]}
                 </div>
                 <div className={`text-lg font-semibold ${
-                  isTodayDate ? 'text-indigo-600' : 'text-gray-800'
+                  isTodayDate ? 'text-blue-600' : 'text-gray-800'
                 }`}>
                   {date.getDate()}
                 </div>
@@ -257,7 +257,7 @@ const WeeklyCalendarWidget = () => {
         </div>
         <Link
           to="/calendar"
-          className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+          className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
         >
           View full calendar →
         </Link>

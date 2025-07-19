@@ -1375,7 +1375,7 @@ useLayoutEffect(() => {
 
   return (
     <div 
-      className="relative w-full h-screen bg-slate-50 overflow-hidden" 
+      className="relative w-full h-screen bg-gray-50 overflow-hidden" 
       ref={canvasRef}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) {

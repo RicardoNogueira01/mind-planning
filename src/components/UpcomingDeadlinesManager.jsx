@@ -585,36 +585,36 @@ const UpcomingDeadlinesManager = () => {
     </div>
   );
   return (
-    <div className="min-h-screen bg-gray-50 p-[27px]">
+    <div className="min-h-screen bg-gray-50 p-6">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 -mx-[27px] -mt-[27px] mb-6">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link to="/" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <ArrowLeft size={20} className="text-gray-600" />
-              </Link>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Upcoming Deadlines</h1>
-                <p className="text-sm text-gray-500">Track deadlines and manage priorities</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <button className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
-                <RefreshCw size={16} />
-                Refresh
-              </button>
-              <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2">
-                <Plus size={16} />
-                Add Task
-              </button>
+      <header className="mb-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link to="/" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <ArrowLeft size={20} className="text-gray-600" />
+            </Link>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Upcoming Deadlines</h1>
+              <p className="text-gray-500">Track deadlines and manage priorities</p>
             </div>
           </div>
+          <div className="flex items-center gap-3">
+            <button className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+              <RefreshCw size={16} />
+              Refresh
+            </button>
+            <button className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2">
+              <Plus size={16} />
+              Add Task
+            </button>
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* Statistics */}
-      <div>        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
+      {/* Main Content */}
+      <main>
+        {/* Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
@@ -693,7 +693,7 @@ const UpcomingDeadlinesManager = () => {
                   placeholder="Search tasks..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-full sm:w-64 text-black placeholder-black"
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64 text-gray-900 placeholder-gray-500"
                 />
               </div>
                 <button
@@ -708,7 +708,7 @@ const UpcomingDeadlinesManager = () => {
             <div className="flex items-center gap-4">              <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               >
                 <option value="dueDate">Sort by Due Date</option>
                 <option value="title">Sort by Title</option>
@@ -717,7 +717,7 @@ const UpcomingDeadlinesManager = () => {
                 <option value="urgencyLevel">Sort by Urgency</option>
               </select>              <button
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-black"
+                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-700"
               >
                 {sortOrder === 'asc' ? '↑' : '↓'}
               </button>
@@ -725,13 +725,13 @@ const UpcomingDeadlinesManager = () => {
               <div className="flex border border-gray-300 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 ${viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} transition-colors`}
+                  className={`p-2 ${viewMode === 'grid' ? 'bg-gray-800 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} transition-colors`}
                 >
                   <Grid3X3 size={16} />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-2 ${viewMode === 'list' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} transition-colors`}
+                  className={`p-2 ${viewMode === 'list' ? 'bg-gray-800 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} transition-colors`}
                 >
                   <List size={16} />
                 </button>
@@ -811,7 +811,7 @@ const UpcomingDeadlinesManager = () => {
 
         {/* Tasks List */}
         {viewMode === 'grid' ? <GridView /> : <ListView />}
-      </div>
+      </main>
     </div>
   );
 };

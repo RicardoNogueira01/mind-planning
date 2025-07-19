@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { useDashboardData } from '../hooks/useDashboardData';
+import { useDashboardData } from '../../hooks/useDashboardData';
 
 describe('useDashboardData', () => {
   it('should return initial dashboard data', () => {

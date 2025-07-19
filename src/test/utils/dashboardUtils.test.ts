@@ -10,8 +10,8 @@ import {
   getStatusClasses,
   getStatusText,
   getDeadlineStatusClasses
-} from '../utils/dashboardUtils';
-import type { TaskStats, Collaborator } from '../types/dashboard';
+} from '../../utils/dashboardUtils';
+import type { TaskStats, Collaborator } from '../../types/dashboard';
 
 describe('dashboardUtils', () => {
   describe('calculateCompletionPercentage', () => {
