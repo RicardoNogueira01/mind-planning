@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import { Plus, Trash2, MousePointer, Hand, Users, Link, Home } from 'lucide-react';
 import MindMapManager from './MindMapManager';
+import RoundColorPicker from './RoundColorPicker';
 
 const layoutOptions = [
   { id: 'tree', name: 'Tree Layout', icon: 'diagram-tree' },
@@ -33,6 +34,7 @@ const MindMap = ({ mapId, onBack }) => {
   const [zoom, setZoom] = useState(1);
   const [isPanning, setIsPanning] = useState(false);
   const lastMousePosRef = useRef({ x: 0, y: 0 });
+  
     // Collaborator options
   const collaborators = [
     { id: 'jd', initials: 'JD', name: 'John Doe', color: '#3B82F6' },
@@ -40,6 +42,51 @@ const MindMap = ({ mapId, onBack }) => {
     { id: 'mr', initials: 'MR', name: 'Maria Rodriguez', color: '#F59E0B' },
     { id: 'ts', initials: 'TS', name: 'Taylor Smith', color: '#8B5CF6' }
   ];
+
+  // Comprehensive color palette for both background and font colors
+  const colorPalette = {
+    // Basic colors
+    basic: [
+      '#FFFFFF', '#F8F9FA', '#E9ECEF', '#DEE2E6', '#CED4DA', '#ADB5BD', '#6C757D', '#495057', '#343A40', '#212529', '#000000'
+    ],
+    // Red spectrum
+    reds: [
+      '#FFF5F5', '#FED7D7', '#FEB2B2', '#FC8181', '#F56565', '#E53E3E', '#C53030', '#9B2C2C', '#742A2A', '#63171B', '#1A202C'
+    ],
+    // Orange spectrum
+    oranges: [
+      '#FFFAF0', '#FEEBC8', '#FBD38D', '#F6AD55', '#ED8936', '#DD6B20', '#C05621', '#9C4221', '#7B341E', '#652B19', '#1A202C'
+    ],
+    // Yellow spectrum
+    yellows: [
+      '#FFFFF0', '#FEFCBF', '#FAF089', '#F6E05E', '#ECC94B', '#D69E2E', '#B7791F', '#975A16', '#744210', '#5F370E', '#1A202C'
+    ],
+    // Green spectrum
+    greens: [
+      '#F0FFF4', '#C6F6D5', '#9AE6B4', '#68D391', '#48BB78', '#38A169', '#2F855A', '#276749', '#22543D', '#1C4532', '#1A202C'
+    ],
+    // Teal spectrum
+    teals: [
+      '#E6FFFA', '#B2F5EA', '#81E6D9', '#4FD1C7', '#38B2AC', '#319795', '#2C7A7B', '#285E61', '#234E52', '#1D4044', '#1A202C'
+    ],
+    // Blue spectrum
+    blues: [
+      '#EBF8FF', '#BEE3F8', '#90CDF4', '#63B3ED', '#4299E1', '#3182CE', '#2B77CB', '#2C5282', '#2A4365', '#1A365D', '#1A202C'
+    ],
+    // Indigo spectrum
+    indigos: [
+      '#EBF4FF', '#C3DAFE', '#A3BFFA', '#7F9CF5', '#667EEA', '#5A67D8', '#4C51BF', '#434190', '#3C366B', '#322659', '#1A202C'
+    ],
+    // Purple spectrum
+    purples: [
+      '#FAF5FF', '#E9D8FD', '#D6BCFA', '#B794F6', '#9F7AEA', '#805AD5', '#6B46C1', '#553C9A', '#44337A', '#322659', '#1A202C'
+    ],
+    // Pink spectrum
+    pinks: [
+      '#FFF5F7', '#FED7E2', '#FBB6CE', '#F687B3', '#ED64A6', '#D53F8C', '#B83280', '#97266D', '#702459', '#521B41', '#1A202C'
+    ]
+  };
+
   // Global tags state
   const [globalTags, setGlobalTags] = useState([
     { id: 'tag-1', title: '', color: '#DC2626' },
@@ -1891,51 +1938,38 @@ useLayoutEffect(() => {
                       
                       {/* Background color popup */}
                       {node.showBgColorPopup && (
-                        <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 popup-content">
-                          <h4 className="text-sm font-semibold text-gray-900 mb-3">Background Color</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {['#EEF2FF', '#FEF3C7', '#DCFCE7', '#FEE2E2', '#E0E7FF', '#FDE68A', '#F5F5F5', '#D1FAE5', '#FFE4E6', '#EDE9FE', '#FEF9C3', '#DBEAFE'].map(color => (
-                              <div 
-                                key={color}
-                                className="w-8 h-8 rounded-full cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-all"
-                                style={{ 
-                                  backgroundColor: color, 
-                                  border: node.color === color ? '2px solid #4F46E5' : '1px solid #E5E7EB' 
-                                }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  wrappedSetNodes(nodes.map(n => 
-                                    n.id === node.id ? { ...n, color, showBgColorPopup: false } : n
-                                  ));
-                                }}
-                              />
-                            ))}
-                          </div>
-                        </div>
+                        <RoundColorPicker
+                          currentColor={node.color || '#FFFFFF'}
+                          onColorSelect={(color) => {
+                            wrappedSetNodes(nodes.map(n => 
+                              n.id === node.id ? { ...n, color, showBgColorPopup: false } : n
+                            ));
+                          }}
+                          onClose={() => {
+                            wrappedSetNodes(nodes.map(n => 
+                              n.id === node.id ? { ...n, showBgColorPopup: false } : n
+                            ));
+                          }}
+                          position="bottom-left"
+                        />
                       )}
                       
                       {/* Font color popup */}
                       {node.showFontColorPopup && (
-                        <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 popup-content">
-                          <h4 className="text-sm font-semibold text-gray-900 mb-3">Font Color</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {['#000000', '#4B5563', '#1F2937', '#7C3AED', '#2563EB', '#059669', '#D97706', '#DC2626', '#71717A'].map(color => (
-                              <div 
-                                key={color}
-                                className="w-8 h-8 rounded-full cursor-pointer hover:ring-2 hover:ring-indigo-300 transition-all"
-                                style={{ 
-                                  backgroundColor: color, 
-                                  border: node.fontColor === color ? '2px solid #4F46E5' : '1px solid #E5E7EB' 
-                                }}
-                                onClick={() => {
-                                  wrappedSetNodes(nodes.map(n => 
-                                    n.id === node.id ? { ...n, fontColor: color, showFontColorPopup: false } : n
-                                  ));
-                                }}
-                              />
-                            ))}
-                          </div>
-                        </div>
+                        <RoundColorPicker
+                          currentColor={node.fontColor || '#000000'}
+                          onColorSelect={(color) => {
+                            wrappedSetNodes(nodes.map(n => 
+                              n.id === node.id ? { ...n, fontColor: color, showFontColorPopup: false } : n
+                            ));
+                          }}
+                          onClose={() => {
+                            wrappedSetNodes(nodes.map(n => 
+                              n.id === node.id ? { ...n, showFontColorPopup: false } : n
+                            ));
+                          }}
+                          position="bottom-left"
+                        />
                       )}
                       
                       {/* Attachment popup */}

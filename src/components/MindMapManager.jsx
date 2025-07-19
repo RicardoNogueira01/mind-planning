@@ -1,23 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Trash2, Edit3, User, Grid, List, Star, MoreVertical, Palette, Check } from 'lucide-react';
+import { Plus, Search, Trash2, Edit3, User, Grid, List, Star, MoreVertical, Palette } from 'lucide-react';
+import RoundColorPicker from './RoundColorPicker';
 
 const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
   const [mindMaps, setMindMaps] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterBy, setFilterBy] = useState('all'); // all, recent, favorites, shared
   const [viewMode, setViewMode] = useState('grid'); // grid, list
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);  const [selectedMaps, setSelectedMaps] = useState([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  const [selectedMaps, setSelectedMaps] = useState([]);
   const [sortBy, setSortBy] = useState('updated'); // updated, created, name, size
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [editingMap, setEditingMap] = useState(null);
   const [editingTitle, setEditingTitle] = useState('');
-
-  // Available colors for mind maps
-  const availableColors = [
-    '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444',
-    '#6366F1', '#EC4899', '#14B8A6', '#F97316', '#84CC16',
-    '#6B7280', '#8B5A2B', '#DC2626', '#7C3AED', '#059669'
-  ];
+  const [showColorPicker, setShowColorPicker] = useState(null);
 
   // Load mind maps from localStorage on component mount
   useEffect(() => {
@@ -70,6 +66,7 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
     const handleClickOutside = (event) => {
       if (!event.target.closest('.dropdown-container')) {
         setActiveDropdown(null);
+        setShowColorPicker(null);
       }
     };
 
@@ -468,29 +465,34 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
                           </button>
                           
                           <div className="px-4 py-2 text-sm text-gray-700">
-                            <div className="flex items-center gap-2 mb-2">
+                            <button
+                              className="flex items-center gap-2 w-full text-left hover:bg-gray-50 p-2 rounded"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowColorPicker(showColorPicker === map.id ? null : map.id);
+                              }}
+                            >
                               <Palette size={14} />
                               <span>Change Color</span>
-                            </div>
-                            <div className="grid grid-cols-5 gap-1">
-                              {availableColors.map(color => (
-                                <button
-                                  key={color}
-                                  className="w-6 h-6 rounded-full border-2 border-gray-200 hover:border-gray-400 transition-colors flex items-center justify-center"
-                                  style={{ backgroundColor: color }}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
+                            </button>
+                            
+                            {/* Round Color Picker */}
+                            {showColorPicker === map.id && (
+                              <div className="relative mt-2">
+                                <RoundColorPicker
+                                  currentColor={map.color || '#3B82F6'}
+                                  onColorSelect={(color) => {
                                     handleUpdateMapColor(map.id, color);
                                     setActiveDropdown(null);
+                                    setShowColorPicker(null);
                                   }}
-                                  title={`Change to ${color}`}
-                                >
-                                  {map.color === color && (
-                                    <Check size={12} className="text-white" />
-                                  )}
-                                </button>
-                              ))}
-                            </div>
+                                  onClose={() => {
+                                    setShowColorPicker(null);
+                                  }}
+                                  position="bottom-left"
+                                />
+                              </div>
+                            )}
                           </div>
                           
                           <hr className="my-2" />
