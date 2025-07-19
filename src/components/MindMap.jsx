@@ -829,14 +829,10 @@ const handleNodeClick = (nodeId, e) => {
             />
           </marker>
         </defs>
-        {connections.map(conn => {          const fromNode = nodes.find(n => n.id === conn.from);
+        {connections.map(conn => {
+          const fromNode = nodes.find(n => n.id === conn.from);
           const toNode = nodes.find(n => n.id === conn.to);
           
-          // console.log('DEBUG: Processing connection', { 
-          //   conn, 
-          //   fromNode: fromNode ? { id: fromNode.id, x: fromNode.x, y: fromNode.y, text: fromNode.text } : null,
-          //   toNode: toNode ? { id: toNode.id, x: toNode.x, y: toNode.y, text: toNode.text } : null
-          // });          
           if (!fromNode || !toNode) {
             return null;
           }
@@ -849,94 +845,92 @@ const handleNodeClick = (nodeId, e) => {
             return null;
           }
 
-          // Simple edge detection using actual measured boundaries
-          let startX, startY, endX, endY;
-
-          // Determine connection points based on relative positions
-          if (fromPos.centerX < toPos.centerX) {
-            // From is to the left of To - connect from right edge of From to left edge of To
-            startX = fromPos.right;
-            startY = fromPos.centerY;
-            endX = toPos.left;
-            endY = toPos.centerY;
-          } else if (fromPos.centerX > toPos.centerX) {
-            // From is to the right of To - connect from left edge of From to right edge of To
-            startX = fromPos.left;
-            startY = fromPos.centerY;
-            endX = toPos.right;
-            endY = toPos.centerY;
-          } else {
-            // Same X position - connect vertically
-            if (fromPos.centerY < toPos.centerY) {
-              // From is above To
-              startX = fromPos.centerX;
-              startY = fromPos.bottom;
-              endX = toPos.centerX;
-              endY = toPos.top;
+          // Function to get exact point on rectangle perimeter based on angle
+          const getPerimeterPoint = (rect, targetCenterX, targetCenterY) => {
+            const rectCenterX = (rect.left + rect.right) / 2;
+            const rectCenterY = (rect.top + rect.bottom) / 2;
+            const width = rect.right - rect.left;
+            const height = rect.bottom - rect.top;
+            
+            // Calculate angle from rectangle center to target center
+            const angle = Math.atan2(targetCenterY - rectCenterY, targetCenterX - rectCenterX);
+            
+            // Calculate half dimensions
+            const halfWidth = width / 2;
+            const halfHeight = height / 2;
+            
+            // Determine which edge the angle intersects
+            const absAngle = Math.abs(angle);
+            const cornerAngle = Math.atan2(halfHeight, halfWidth);
+            
+            let x, y;
+            
+            if (absAngle <= cornerAngle) {
+              // Right edge
+              x = rect.right;
+              y = rectCenterY + halfWidth * Math.tan(angle);
+            } else if (absAngle <= Math.PI - cornerAngle) {
+              // Top or bottom edge
+              if (angle > 0) {
+                // Bottom edge
+                x = rectCenterX + halfHeight / Math.tan(angle);
+                y = rect.bottom;
+              } else {
+                // Top edge
+                x = rectCenterX - halfHeight / Math.tan(angle);
+                y = rect.top;
+              }
             } else {
-              // From is below To
-              startX = fromPos.centerX;
-              startY = fromPos.top;
-              endX = toPos.centerX;
-              endY = toPos.bottom;          }
-          }
+              // Left edge
+              x = rect.left;
+              y = rectCenterY + halfWidth * Math.tan(Math.PI - absAngle) * (angle > 0 ? -1 : 1);
+            }
+            
+            // Ensure point is within rectangle bounds
+            x = Math.max(rect.left, Math.min(rect.right, x));
+            y = Math.max(rect.top, Math.min(rect.bottom, y));
+            
+            return { x, y };
+          };
+
+          // Calculate centers for angle calculation
+          const fromCenterX = (fromPos.left + fromPos.right) / 2;
+          const fromCenterY = (fromPos.top + fromPos.bottom) / 2;
+          const toCenterX = (toPos.left + toPos.right) / 2;
+          const toCenterY = (toPos.top + toPos.bottom) / 2;
+
+          // Get exact perimeter points for smooth connection
+          const startPoint = getPerimeterPoint(fromPos, toCenterX, toCenterY);
+          const endPoint = getPerimeterPoint(toPos, fromCenterX, fromCenterY);
 
           // Create smooth curve with control points
-          const dx = endX - startX;
-          const dy = endY - startY;
+          const dx = endPoint.x - startPoint.x;
+          const dy = endPoint.y - startPoint.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
           
-          // Control points for smooth curve
-          const controlDistance = Math.min(distance * 0.4, 100); // Limit curve intensity
-          const controlPoint1X = startX + dx * 0.3;
-          const controlPoint1Y = startY + dy * 0.1;
-          const controlPoint2X = endX - dx * 0.3;
-          const controlPoint2Y = endY - dy * 0.1;          const pathData = `M ${startX} ${startY} C ${controlPoint1X} ${controlPoint1Y}, ${controlPoint2X} ${controlPoint2Y}, ${endX} ${endY}`;
+          // Control points for smooth curve - adjusted for better curves
+          const controlDistance = Math.min(distance * 0.4, 100);
+          const controlPoint1X = startPoint.x + dx * 0.25;
+          const controlPoint1Y = startPoint.y + dy * 0.1;
+          const controlPoint2X = endPoint.x - dx * 0.25;
+          const controlPoint2Y = endPoint.y - dy * 0.1;
+
+          const pathData = `M ${startPoint.x} ${startPoint.y} C ${controlPoint1X} ${controlPoint1Y}, ${controlPoint2X} ${controlPoint2Y}, ${endPoint.x} ${endPoint.y}`;
           
-          // console.log('DEBUG: Final connection', {
-          //   connectionId: conn.id,
-          //   direction: `${fromNode.text} -> ${toNode.text}`,
-          //   fromBounds: { left: fromPos.left, right: fromPos.right, top: fromPos.top, bottom: fromPos.bottom },
-          //   toBounds: { left: toPos.left, right: toPos.right, top: toPos.top, bottom: toPos.bottom },
-          //   startPoint: { x: startX, y: startY },
-          //   endPoint: { x: endX, y: endY },          //   pathData          // });
-            return (
+          return (
             <g key={conn.id}>
-              {/* Debug: Show calculated node boundaries */}
-              <rect
-                x={fromPos.left}
-                y={fromPos.top}
-                width={fromPos.width}
-                height={fromPos.height}
-                stroke="green"
-                strokeWidth="1"
-                fill="none"
-                opacity="0.5"
-              />
-              <rect
-                x={toPos.left}
-                y={toPos.top}
-                width={toPos.width}
-                height={toPos.height}
-                stroke="red"
-                strokeWidth="1"
-                fill="none"
-                opacity="0.5"
-              />
-              
-              {/* Main connection path */}
+              {/* Main connection path with smooth transitions */}
               <path
                 d={pathData}
                 stroke="#64748B"
                 strokeWidth={2}
                 fill="none"
-                strokeOpacity={0.6}
+                strokeOpacity={0.8}
                 markerEnd="url(#arrowhead)"
+                style={{
+                  transition: 'all 0.15s ease-out'
+                }}
               />
-              
-              {/* Debug: Show connection points */}
-              <circle cx={startX} cy={startY} r={3} fill="green" opacity={0.8} />
-              <circle cx={endX} cy={endY} r={3} fill="red" opacity={0.8} />
             </g>
           );
         })}
