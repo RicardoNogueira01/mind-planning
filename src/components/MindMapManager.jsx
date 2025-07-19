@@ -686,15 +686,15 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-25 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl border border-gray-200 p-6 max-w-md w-full mx-4">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-red-100 rounded-full">
+              <div className="p-3 bg-red-50 rounded-xl">
                 <Trash2 className="text-red-600" size={24} />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">Delete Mind Map</h3>
-                <p className="text-sm text-gray-600">This action cannot be undone.</p>
+                <p className="text-sm text-gray-500">This action cannot be undone.</p>
               </div>
             </div>
             
@@ -705,7 +705,7 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setShowDeleteConfirm(null)}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors"
               >
                 Cancel
               </button>

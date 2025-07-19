@@ -1435,7 +1435,7 @@ useLayoutEffect(() => {
       ) : (
         <>
           {/* Toolbar */}
-          <div className="absolute top-4 left-4 z-20 bg-white shadow rounded-lg p-2">
+          <div className="absolute top-4 left-4 z-20 bg-white shadow-sm border border-gray-200 rounded-xl p-2">
             <div className="flex gap-2">              <button 
                 onClick={() => {
                   if (onBack) {
@@ -1530,7 +1530,7 @@ useLayoutEffect(() => {
             <input
               type="text"
               placeholder="Search nodes..."
-              className="w-full px-4 py-2 bg-white shadow rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 text-black" // Added text-black here
+              className="w-full px-4 py-2 bg-white shadow-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -1541,7 +1541,7 @@ useLayoutEffect(() => {
             
             {/* Search results list - positioned relative to the container */}
             {showSearchList && searchQuery && (
-              <div className="absolute left-0 right-0 mt-2 bg-white shadow-lg rounded-lg p-2 max-h-96 overflow-y-auto">
+              <div className="absolute left-0 right-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-2 max-h-96 overflow-y-auto">
                 {nodes
                   .filter(node => node.text.toLowerCase().includes(searchQuery.toLowerCase()))
                   .map(node => (
@@ -1657,7 +1657,7 @@ useLayoutEffect(() => {
                 >
                   {selectedNode === node.id && mode === 'cursor' && (
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-3" style={{ marginTop: '-15px' }}>
-                      <div className="bg-white shadow-md rounded-full flex items-center p-1 gap-1 z-30">                        {/* Emoji Selector */}
+                      <div className="bg-white shadow-sm border border-gray-200 rounded-xl flex items-center p-1 gap-1 z-30">                        {/* Emoji Selector */}
                         <button
                           className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
                           onClick={(e) => {
@@ -1869,8 +1869,8 @@ useLayoutEffect(() => {
                       
                       {/* Emoji popup */}
                       {node.showEmojiPopup && (
-                        <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 w-80 popup-content">
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Select Emoji or Icon</h4>
+                        <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 w-80 popup-content">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-3">Select Emoji or Icon</h4>
                           <div className="grid grid-cols-8 gap-2">
                             {['😊', '😂', '❤️', '👍', '🎉', '✅', '⭐', '🔥', '💡', '📌', '⚠️', '❓', '📝', '🔍', '🗓️', '📊'].map(emoji => (
                               <button 
@@ -1891,8 +1891,8 @@ useLayoutEffect(() => {
                       
                       {/* Background color popup */}
                       {node.showBgColorPopup && (
-                        <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 popup-content">
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Background Color</h4>
+                        <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 popup-content">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-3">Background Color</h4>
                           <div className="flex flex-wrap gap-2">
                             {['#EEF2FF', '#FEF3C7', '#DCFCE7', '#FEE2E2', '#E0E7FF', '#FDE68A', '#F5F5F5', '#D1FAE5', '#FFE4E6', '#EDE9FE', '#FEF9C3', '#DBEAFE'].map(color => (
                               <div 
@@ -1916,8 +1916,8 @@ useLayoutEffect(() => {
                       
                       {/* Font color popup */}
                       {node.showFontColorPopup && (
-                        <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 popup-content">
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Font Color</h4>
+                        <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 popup-content">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-3">Font Color</h4>
                           <div className="flex flex-wrap gap-2">
                             {['#000000', '#4B5563', '#1F2937', '#7C3AED', '#2563EB', '#059669', '#D97706', '#DC2626', '#71717A'].map(color => (
                               <div 
@@ -1940,8 +1940,8 @@ useLayoutEffect(() => {
                       
                       {/* Attachment popup */}
                       {node.showAttachmentPopup && (
-                        <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 w-96 popup-content">
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Attachments</h4>
+                        <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 w-96 popup-content">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-3">Attachments</h4>
                           
                           {/* Filters */}
                           <div className="mb-3 grid grid-cols-3 gap-2">
@@ -2047,19 +2047,19 @@ useLayoutEffect(() => {
                       
                       {/* Notes popup */}
                       {node.showNotesPopup && (
-                        <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 w-80 popup-content">
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Notes</h4>
+                        <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 w-80 popup-content">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-3">Notes</h4>
                           <textarea
-                            className="w-full p-2 border rounded-md text-sm h-24 resize-none text-black"
+                            className="w-full p-3 border border-gray-300 rounded-lg text-sm h-24 resize-none text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             placeholder="Add notes about this node..."
                             value={node.notes || ''}
                             onChange={(e) => wrappedSetNodes(nodes.map(n => 
                               n.id === node.id ? { ...n, notes: e.target.value } : n
                             ))}
                           />
-                          <div className="flex justify-end mt-2">
+                          <div className="flex justify-end mt-3">
                             <button 
-                              className="px-3 py-1 text-sm bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100"
+                              className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                               onClick={() => wrappedSetNodes(nodes.map(n => 
                                 n.id === node.id ? { ...n, showNotesPopup: false } : n
                               ))}
@@ -2072,13 +2072,13 @@ useLayoutEffect(() => {
                       
                       {/* Details popup */}
                       {node.showDetailsPopup && (
-                        <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 w-80 popup-content">
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Details</h4>
+                        <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 w-80 popup-content">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-3">Details</h4>
                           <div className="flex flex-col gap-3">
                             <div>
-                              <label className="block text-xs font-medium text-gray-500 mb-1">Priority</label>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Priority</label>
                               <select 
-                                className="w-full p-2 border rounded-md text-sm text-black"
+                                className="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 value={node.priority || 'medium'}
                                 onChange={(e) => wrappedSetNodes(nodes.map(n => 
                                   n.id === node.id ? { ...n, priority: e.target.value } : n
@@ -2132,12 +2132,12 @@ useLayoutEffect(() => {
                       
                       {/* Date popup */}
                       {node.showDatePopup && (
-                        <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 w-64 popup-content">
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Due Date</h4>
+                        <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 w-64 popup-content">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-3">Due Date</h4>
                           <div>
                             <input
                               type="date"
-                              className="w-full p-2 border rounded-md text-sm text-black"
+                              className="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                               value={node.dueDate || ''}
                               onChange={(e) => wrappedSetNodes(nodes.map(n => 
                                 n.id === node.id ? { ...n, dueDate: e.target.value } : n
@@ -2185,8 +2185,8 @@ useLayoutEffect(() => {
 
                       {/* Add this with the other popups */}
                       {node.showLayoutPopup && node.id === 'root' && (
-                        <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 w-64 popup-content">
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Choose Layout</h4>
+                        <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 w-64 popup-content">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-3">Choose Layout</h4>
                           <div className="grid grid-cols-2 gap-2">
                             {layoutOptions.map(layout => (
                               <button
@@ -2289,8 +2289,8 @@ useLayoutEffect(() => {
                   
                   {/* Collaborator popup */}
                   {node.showCollaboratorPopup && (
-                    <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 w-72 popup-content" onClick={e => e.stopPropagation()}>
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Assign Collaborators</h4>
+                    <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 w-72 popup-content" onClick={e => e.stopPropagation()}>
+                      <h4 className="text-sm font-semibold text-gray-900 mb-3">Assign Collaborators</h4>
                       <input
                         type="text"
                         className="w-full p-2 mb-2 border rounded-md text-sm text-black"
@@ -2341,8 +2341,8 @@ useLayoutEffect(() => {
                   )}
                     {/* Tags popup */}
                   {node.showTagsPopup && (
-                    <div className="absolute top-full left-0 mt-2 bg-white shadow-lg rounded-md p-3 z-40 w-80 popup-content" onClick={e => e.stopPropagation()}>
-                      <h4 className="text-sm font-medium text-gray-700 mb-3">Manage Tags</h4>
+                    <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 w-80 popup-content" onClick={e => e.stopPropagation()}>
+                      <h4 className="text-sm font-semibold text-gray-900 mb-3">Manage Tags</h4>
                       
                       {/* Tags list */}
                       <div className="max-h-48 overflow-y-auto mb-3">
@@ -2608,10 +2608,10 @@ useLayoutEffect(() => {
           
           {/* Collaborator selection dialog */}
           {showCollaboratorDialog && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg shadow-lg p-6 w-80">
-                <h3 className="text-lg font-medium mb-4">Assign Collaborator</h3>
-                <p className="text-sm text-gray-600 mb-4">
+            <div className="fixed inset-0 bg-gray-900 bg-opacity-25 backdrop-blur-sm flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl shadow-xl border border-gray-200 p-6 w-80">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Assign Collaborator</h3>
+                <p className="text-sm text-gray-500 mb-4">
                   {selectedNodes.length} {selectedNodes.length === 1 ? 'node' : 'nodes'} selected
                 </p>
                 
@@ -2619,7 +2619,7 @@ useLayoutEffect(() => {
                   {collaborators.map(collab => (
                     <button
                       key={collab.id}
-                      className="flex flex-col items-center justify-center p-3 border rounded-lg hover:bg-gray-50"
+                      className="flex flex-col items-center justify-center p-3 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-colors"
                       onClick={() => assignCollaborator(collab)}
                     >
                       <div 
@@ -2628,14 +2628,14 @@ useLayoutEffect(() => {
                       >
                         {collab.initials}
                       </div>
-                      <span className="text-sm">{collab.name}</span>
+                      <span className="text-sm text-gray-700">{collab.name}</span>
                     </button>
                   ))}
                 </div>
                 
-                <div className="mt-4 flex justify-end">
+                <div className="mt-6 flex justify-end">
                   <button
-                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                    className="px-4 py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors"
                     onClick={() => {
                       setSelectedNodes([]);
                       setShowCollaboratorDialog(false);
