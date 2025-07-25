@@ -80,14 +80,14 @@ const RoundColorPicker = ({
   return (
     <div 
       ref={containerRef}
-      className="absolute z-50 bg-white rounded-2xl shadow-2xl border border-gray-200 p-6"
+      className="node-popup absolute"
       style={{
         width: '280px',
         height: '320px',
-        ...(position === 'bottom-left' && { top: '100%', left: '0', marginTop: '8px' }),
-        ...(position === 'bottom-right' && { top: '100%', right: '0', marginTop: '8px' }),
-        ...(position === 'top-left' && { bottom: '100%', left: '0', marginBottom: '8px' }),
-        ...(position === 'top-right' && { bottom: '100%', right: '0', marginBottom: '8px' }),
+        top: '100%',
+        left: '0',
+        marginTop: '8px',
+        zIndex: 50
       }}
     >
       {/* Header */}

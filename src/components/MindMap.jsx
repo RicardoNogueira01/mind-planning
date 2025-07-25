@@ -236,7 +236,7 @@ const MindMap = ({ mapId, onBack }) => {
   useEffect(() => {
     const handleClickOutside = (e) => {
       // Add check if click target is inside any popup content
-      const isClickInsidePopupContent = e.target.closest('.popup-content');      if (nodes.some(node => node.showEmojiPopup || node.showBgColorPopup || node.showFontColorPopup || 
+      const isClickInsidePopupContent = e.target.closest('.node-popup');      if (nodes.some(node => node.showEmojiPopup || node.showBgColorPopup || node.showFontColorPopup || 
                          node.showAttachmentPopup || node.showNotesPopup || node.showDetailsPopup || 
                          node.showDatePopup || node.showCollaboratorPopup || node.showLayoutPopup || node.showTagsPopup)) {
         const isClickInsidePopup = e.target.closest('.node-popup');
@@ -268,7 +268,7 @@ const MindMap = ({ mapId, onBack }) => {
   // Update the global click handler to properly detect clicks inside popups
   useEffect(() => {
     const handleClickOutside = (event) => {
-      const popupElements = document.querySelectorAll('.popup-content');
+      const popupElements = document.querySelectorAll('.node-popup');
       let clickedInsidePopup = false;
   
       popupElements.forEach(popup => {
@@ -332,7 +332,7 @@ const MindMap = ({ mapId, onBack }) => {
   const startPanning = (e) => {
     if (e.button === 0) { // Left mouse button
       const clickedOnNode = e.target.closest('.node');
-      const clickedOnPopup = e.target.closest('.popup-content');
+      const clickedOnPopup = e.target.closest('.node-popup');
       
       // Only start panning if:
       // 1. Click is on background (not on node or popup)
@@ -606,7 +606,7 @@ const getDescendantNodeIds = (parentId) => {
   // Update the handleNodeClick function to prevent focusing on the node when clicking inside a popup or input
 const handleNodeClick = (nodeId, e) => {
   // Prevent focusing on the node if the click is inside a popup or input
-  if (e.target.closest('.popup-content') || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
+  if (e.target.closest('.node-popup') || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
     return;
   }
 
@@ -1801,6 +1801,7 @@ useLayoutEffect(() => {
                     if (editingNode === node.id) return;
                     if (mode === 'cursor' && e.button === 0) {
                       e.preventDefault(); // Prevent text selection during drag
+
                       const startX = e.clientX;
                       const startY = e.clientY;
                       const startNodeX = node.x;
@@ -1840,57 +1841,117 @@ useLayoutEffect(() => {
                         {/* Visual Content Group */}
                         <div className="flex items-center gap-1">
                           {/* Emoji Selector */}
-                          <button
-                            className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              wrappedSetNodes(nodes.map(n => 
-                                n.id === node.id ? { ...n, showEmojiPopup: !n.showEmojiPopup, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
-                              ));
-                            }}
-                            title="Add emoji or icon"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="12" cy="12" r="10"></circle>
-                              <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
-                              <line x1="9" y1="9" x2="9.01" y2="9"></line>
-                              <line x1="15" y1="9" x2="15.01" y2="9"></line>
-                            </svg>
-                          </button>
+                          <div className="relative">
+                            <button
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                wrappedSetNodes(nodes.map(n => 
+                                  n.id === node.id ? { ...n, showEmojiPopup: !n.showEmojiPopup, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
+                                ));
+                              }}
+                              title="Add emoji or icon"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                                <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                                <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                              </svg>
+                            </button>
+                            {node.showEmojiPopup && (
+                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2">
+                                <h4>Select Emoji or Icon</h4>
+                                <div className="grid grid-cols-8 gap-3">
+                                  {['😊', '😂', '❤️', '👍', '🎉', '✅', '⭐', '🔥', '💡', '📌', '⚠️', '❓', '📝', '🔍', '🗓️', '📊'].map(emoji => (
+                                    <button 
+                                      key={emoji}
+                                      className="w-10 h-10 flex items-center justify-center text-xl"
+                                      onClick={() => {
+                                        wrappedSetNodes(nodes.map(n => 
+                                          n.id === node.id ? { ...n, emoji, showEmojiPopup: false } : n
+                                        ));
+                                      }}
+                                    >
+                                      {emoji}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                           
                           {/* Background Color */}
-                          <button
-                            className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              wrappedSetNodes(nodes.map(n => 
-                                n.id === node.id ? { ...n, showBgColorPopup: !n.showBgColorPopup, showEmojiPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
-                              ));
-                            }}
-                            title="Background color"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                              <path d="M3 9h18"></path>
-                            </svg>
-                          </button>
+                          <div className="relative">
+                            <button
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                wrappedSetNodes(nodes.map(n => 
+                                  n.id === node.id ? { ...n, showBgColorPopup: !n.showBgColorPopup, showEmojiPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
+                                ));
+                              }}
+                              title="Background color"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <path d="M3 9h18"></path>
+                              </svg>
+                            </button>
+                            {node.showBgColorPopup && (
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2">
+                                <RoundColorPicker
+                                  currentColor={node.color || '#FFFFFF'}
+                                  onColorSelect={(color) => {
+                                    wrappedSetNodes(nodes.map(n => 
+                                      n.id === node.id ? { ...n, color, showBgColorPopup: false } : n
+                                    ));
+                                  }}
+                                  onClose={() => {
+                                    wrappedSetNodes(nodes.map(n => 
+                                      n.id === node.id ? { ...n, showBgColorPopup: false } : n
+                                    ));
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
                           
                           {/* Font Color */}
-                          <button
-                            className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              wrappedSetNodes(nodes.map(n => 
-                                n.id === node.id ? { ...n, showFontColorPopup: !n.showFontColorPopup, showEmojiPopup: false, showBgColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
-                              ));
-                            }}
-                            title="Font color"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M4 20h16"></path>
-                              <path d="M9 4h6l-3 9z"></path>
-                            </svg>
-                          </button>
+                          <div className="relative">
+                            <button
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                wrappedSetNodes(nodes.map(n => 
+                                  n.id === node.id ? { ...n, showFontColorPopup: !n.showFontColorPopup, showEmojiPopup: false, showBgColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
+                                ));
+                              }}
+                              title="Font color"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M4 20h16"></path>
+                                <path d="M9 4h6l-3 9z"></path>
+                              </svg>
+                            </button>
+                            {node.showFontColorPopup && (
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2">
+                                <RoundColorPicker
+                                  currentColor={node.fontColor || '#000000'}
+                                  onColorSelect={(color) => {
+                                    wrappedSetNodes(nodes.map(n => 
+                                      n.id === node.id ? { ...n, fontColor: color, showFontColorPopup: false } : n
+                                    ));
+                                  }}
+                                  onClose={() => {
+                                    wrappedSetNodes(nodes.map(n => 
+                                      n.id === node.id ? { ...n, showFontColorPopup: false } : n
+                                    ));
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
                         </div>
                         
                         {/* Divider */}
@@ -1899,57 +1960,390 @@ useLayoutEffect(() => {
                         {/* Content Management Group */}
                         <div className="flex items-center gap-1">
                           {/* Attachment */}
-                          <button
-                            className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              wrappedSetNodes(nodes.map(n => 
-                                n.id === node.id ? { ...n, showAttachmentPopup: !n.showAttachmentPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
-                              ));
-                            }}
-                            title="Add attachment"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
-                            </svg>
-                          </button>
+                          <div className="relative">
+                            <button
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                wrappedSetNodes(nodes.map(n => 
+                                  n.id === node.id ? { ...n, showAttachmentPopup: !n.showAttachmentPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
+                                ));
+                              }}
+                              title="Add attachment"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                              </svg>
+                            </button>
+                            {node.showAttachmentPopup && (
+                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2">
+                                <h4>Attachments</h4>
+                                
+                                {/* Filters */}
+                                <div className="mb-3 grid grid-cols-3 gap-2">
+                                  <input
+                                    type="text"
+                                    placeholder="Search by name..."
+                                    className="p-2 text-sm border rounded-md text-black"
+                                    value={attachmentFilters.search}
+                                    onChange={(e) => setAttachmentFilters({
+                                      ...attachmentFilters,
+                                      search: e.target.value
+                                    })}
+                                  />
+                                  <select 
+                                    className="p-2 text-sm border rounded-md text-black"
+                                    value={attachmentFilters.fileType}
+                                    onChange={(e) => setAttachmentFilters({
+                                      ...attachmentFilters,
+                                      fileType: e.target.value
+                                    })}
+                                  >
+                                    <option value="">All file types</option>
+                                    <option value="pdf">PDF</option>
+                                    <option value="doc">Word</option>
+                                    <option value="docx">Word</option>
+                                    <option value="xls">Excel</option>
+                                    <option value="xlsx">Excel</option>
+                                  </select>
+                                  <select 
+                                    className="p-2 text-sm border rounded-md text-black"
+                                    value={attachmentFilters.addedBy}
+                                    onChange={(e) => setAttachmentFilters({
+                                      ...attachmentFilters,
+                                      addedBy: e.target.value
+                                    })}
+                                  >
+                                    <option value="">All users</option>
+                                    {getUniqueUsers(node.attachments).map(user => (
+                                      <option key={user} value={user}>{user}</option>
+                                    ))}
+                                  </select>
+                                </div>
+
+                                {/* File uploader */}
+                                <input 
+                                  type="file" 
+                                  accept=".xlsx,.xls,.doc,.docx,.pdf"
+                                  className="text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 mb-3"
+                                  onChange={(e) => handleAttachment(e, node.id)}
+                                />
+
+                                {/* Attachment list */}
+                                <div className="max-h-64 overflow-y-auto">
+                                  {node.attachments && node.attachments.length > 0 ? (
+                                    <div className="divide-y">
+                                      {node.attachments
+                                        .filter(attachment => {
+                                          const searchLower = attachmentFilters.search.toLowerCase();
+                                          const nameLower = attachment.name.toLowerCase();
+                                          const addedByLower = attachment.addedBy.toLowerCase();
+
+                                          return (
+                                            (attachmentFilters.fileType === '' || attachment.type === attachmentFilters.fileType) &&
+                                            (attachmentFilters.addedBy === '' || attachment.addedBy === attachmentFilters.addedBy) &&
+                                            (nameLower.includes(searchLower) || addedByLower.includes(searchLower))
+                                          );
+                                        })
+                                        .map(attachment => (
+                                          <div key={attachment.id} className="py-2 flex items-center justify-between">
+                                            <div className="flex items-center space-x-3">
+                                              <div className="text-gray-500">
+                                                {attachment.type === 'pdf' && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 0 0 2-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 00 2 2z" /></svg>}
+                                                {(attachment.type === 'doc' || attachment.type === 'docx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 01 2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
+                                                {(attachment.type === 'xls' || attachment.type === 'xlsx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24  24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 13v-1m4 1v-3m4 3V8M8 21l4-4 4 4M4 3h16a2 2 0 0 0 2 2v14a2 2 0 0 0-2 2H4a2 2 0 0 0-2-2z" /></svg>}
+                                              </div>
+                                              <div className="flex flex-col">
+                                                <span className="text-sm font-medium text-black">{attachment.name}</span> {/* Attachment name */}
+                                                <span className="text-xs text-gray-500">
+                                                  Added by {attachment.addedBy} on {new Date(attachment.dateAdded).toLocaleDateString()}
+                                                </span>
+                                              </div>
+                                            </div>
+                                            <button 
+                                              className="text-red-500 hover:text-red-700 p-1"
+                                              onClick={() => wrappedSetNodes(nodes.map(n => 
+                                                n.id === node.id ? {
+                                                  ...n,
+                                                  attachments: n.attachments.filter(a => a.id !== attachment.id)
+                                                } : n
+                                              ))}
+                                            >
+                                              <Trash2 size={14} />
+                                            </button>
+                                          </div>
+                                        ))}
+                                    </div>
+                                  ) : (
+                                    <div className="text-sm text-gray-500 text-center py-4">
+                                      No attachments yet
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                           
                           {/* Notes */}
-                          <button
-                            className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              wrappedSetNodes(nodes.map(n => 
-                                n.id === node.id ? { ...n, showNotesPopup: !n.showNotesPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
-                              ));
-                            }}
-                            title="Add notes"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-                              <polyline points="14 2 14 8 20 8"></polyline>
-                              <line x1="16" y1="13" x2="8" y2="13"></line>
-                              <line x1="16" y1="17" x2="8" y2="17"></line>
-                              <line x1="10" y1="9" x2="8" y2="9"></line>
-                            </svg>
-                          </button>
+                          <div className="relative">
+                            <button
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                wrappedSetNodes(nodes.map(n => 
+                                  n.id === node.id ? { ...n, showNotesPopup: !n.showNotesPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
+                                ));
+                              }}
+                              title="Add notes"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <line x1="10" y1="9" x2="8" y2="9"></line>
+                              </svg>
+                            </button>
+                            {node.showNotesPopup && (
+                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2">
+                                <h4>Notes</h4>
+                                <textarea
+                                  className="w-full p-3 border border-gray-300 rounded-lg text-sm h-32 resize-none text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  placeholder="Add notes about this node..."
+                                  value={node.notes || ''}
+                                  onChange={(e) => wrappedSetNodes(nodes.map(n => 
+                                    n.id === node.id ? { ...n, notes: e.target.value } : n
+                                  ))}
+                                />
+                                <div className="flex justify-end mt-3">
+                                  <button 
+                                    className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                                    onClick={() => wrappedSetNodes(nodes.map(n => 
+                                      n.id === node.id ? { ...n, showNotesPopup: false } : n
+                                    ))}
+                                  >
+                                    Done
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                           
                           {/* Tags */}
-                          <button
-                            className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              wrappedSetNodes(nodes.map(n => 
-                                n.id === node.id ? { ...n, showTagsPopup: !n.showTagsPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
-                              ));
-                            }}
-                            title="Manage tags"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-                              <line x1="7" y1="7" x2="7.01" y2="7"></line>
-                            </svg>
-                          </button>
+                          <div className="relative">
+                            <button
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                wrappedSetNodes(nodes.map(n => 
+                                  n.id === node.id ? { ...n, showTagsPopup: !n.showTagsPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
+                                ));
+                              }}
+                              title="Manage tags"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                                <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                              </svg>
+                            </button>
+                            {node.showTagsPopup && (
+                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={e => e.stopPropagation()}>
+                                <h4>Manage Tags</h4>
+                                
+                                {/* Tags list */}
+                                <div className="max-h-48 overflow-y-auto mb-3">
+                                  {globalTags.map(tag => (
+                                    <div key={tag.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded">
+                                      <input
+                                        type="checkbox"
+                                        checked={Array.isArray(node.tags) && node.tags.includes(tag.id)}
+                                        onChange={e => {
+                                          wrappedSetNodes(nodes.map(n => {
+                                            if (n.id !== node.id) return n;
+                                            let newTags = Array.isArray(n.tags) ? [...n.tags] : [];
+                                            if (e.target.checked) {
+                                              if (!newTags.includes(tag.id)) newTags.push(tag.id);
+                                            } else {
+                                              newTags = newTags.filter(id => id !== tag.id);
+                                            }
+                                            return { ...n, tags: newTags };
+                                          }));
+                                        }}
+                                        className="mr-2"
+                                      />
+                                        {editingTag && editingTag.id === tag.id ? (
+                                        <>
+                                          {/* Color picker for editing */}
+                                          <div className="flex flex-wrap gap-1" onMouseDown={e => e.preventDefault()}>
+                                            {['#DC2626', '#2563EB', '#7C3AED', '#059669', '#D97706', '#DB2777'].map(color => (
+                                              <div
+                                                key={color}
+                                                className="w-4 h-4 rounded-full cursor-pointer hover:ring-1 hover:ring-gray-300"
+                                                style={{ 
+                                                  backgroundColor: color,
+                                                  border: editingTag.color === color ? '2px solid #4F46E5' : '1px solid #E5E7EB'
+                                                }}
+                                                onMouseDown={e => e.preventDefault()}
+                                                onClick={e => {
+                                                  e.preventDefault();
+                                                  setEditingTag({ ...editingTag, color });
+                                                }}
+                                              />
+                                            ))}
+                                          </div>
+                                          
+                                          {/* Title input for editing */}
+                                          <input
+                                            type="text"
+                                            className="flex-1 px-2 py-1 text-sm border rounded text-black"
+                                            value={editingTag.title}
+                                            onChange={e => setEditingTag({ ...editingTag, title: e.target.value })}
+                                            onKeyDown={e => {
+                                              if (e.key === 'Enter') {
+                                                if (editingTag.title.trim()) {
+                                                  setGlobalTags(globalTags.map(t =>
+                                                    t.id === tag.id
+                                                      ? { ...t, title: editingTag.title, color: editingTag.color }
+                                                      : t
+                                                  ));
+                                                }
+                                                setEditingTag(null);
+                                              } else if (e.key === 'Escape') {
+                                                setEditingTag(null);
+                                              }
+                                            }}
+                                            onBlur={e => {
+                                              // Check if the related target (what's being clicked) is a color picker
+                                              const isColorPicker = e.relatedTarget && e.relatedTarget.closest('.flex.flex-wrap.gap-1');
+                                              if (!isColorPicker) {
+                                                if (editingTag.title.trim()) {
+                                                  setGlobalTags(globalTags.map(t =>
+                                                    t.id === tag.id
+                                                      ? { ...t, title: editingTag.title, color: editingTag.color }
+                                                      : t
+                                                  ));
+                                                }
+                                                setEditingTag(null);
+                                              }
+                                            }}
+                                            autoFocus
+                                          />
+                                        </>                            ): (
+                                        <>
+                                          <div
+                                            className="w-4 h-4 rounded-full"
+                                            style={{ backgroundColor: tag.color }}
+                                          ></div>
+                                          <span className="flex-1 text-sm text-gray-700">
+                                            {tag.title || `Color ${globalTags.findIndex(t => t.id === tag.id) + 1}`}
+                                          </span>                                <button
+                                            className="p-1 hover:bg-gray-200 rounded text-black"
+                                            onClick={() => setEditingTag({ ...tag })}
+                                            title="Edit tag"
+                                          >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                              <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                                            </svg>
+                                          </button>
+                                          <button
+                                            className="p-1 hover:bg-red-200 rounded text-red-600"
+                                            onClick={() => deleteTag(tag.id)}
+                                            title="Delete tag"
+                                          >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                              <polyline points="3 6 5 6 21 6"></polyline>
+                                              <path d="M19 6l-2 14H7L5 6"></path>
+                                              <path d="M10 11v6"></path>
+                                              <path d="M14 11v6"></path>
+                                            </svg>
+                                          </button>
+                                        </>
+                                      )}
+                                    </div>
+                                  ))}
+                                    {/* New tag creation row */}
+                                  {editingTag && !editingTag.id && (
+                                    <div className="flex items-center gap-2 p-2 bg-blue-50 rounded border border-blue-200">
+                                      <input
+                                        type="checkbox"
+                                        disabled
+                                        className="mr-2 opacity-50"
+                                      />
+                                      
+                                      {/* Color picker for new tag */}
+                                      <div className="flex flex-wrap gap-1" onMouseDown={e => e.preventDefault()}>
+                                        {['#DC2626', '#2563EB', '#7C3AED', '#059669', '#D97706', '#DB2777'].map(color => (
+                                          <div
+                                            key={color}
+                                            className="w-4 h-4 rounded-full cursor-pointer hover:ring-1 hover:ring-gray-300"
+                                            style={{ 
+                                              backgroundColor: color,
+                                              border: editingTag.color === color ? '2px solid #4F46E5' : '1px solid #E5E7EB'
+                                            }}
+                                            onMouseDown={e => e.preventDefault()}
+                                            onClick={e => {
+                                              e.preventDefault();
+                                              setEditingTag({ ...editingTag, color });
+                                            }}
+                                          />
+                                        ))}
+                                      </div>
+                                      
+                                      {/* Title input for new tag */}
+                                      <input
+                                        type="text"
+                                        className="flex-1 px-2 py-1 text-sm border rounded text-black"
+                                        value={editingTag.title}
+                                        onChange={e => setEditingTag({ ...editingTag, title: e.target.value })}
+                                        onKeyDown={e => {
+                                          if (e.key === 'Enter') {
+                                            if (editingTag.title.trim()) {
+                                              const newTag = {
+                                                id: `tag-${Date.now()}`,
+                                                title: editingTag.title,
+                                                color: editingTag.color
+                                              };
+                                              setGlobalTags([...globalTags, newTag]);
+                                            }
+                                            setEditingTag(null);
+                                          } else if (e.key === 'Escape') {
+                                            setEditingTag(null);
+                                          }
+                                        }}
+                                        onBlur={e => {
+                                          // Check if the related target (what's being clicked) is a color picker
+                                          const isColorPicker = e.relatedTarget && e.relatedTarget.closest('.flex.flex-wrap.gap-1');
+                                          if (!isColorPicker) {
+                                            if (editingTag.title.trim()) {
+                                              const newTag = {
+                                                id: `tag-${Date.now()}`,
+                                                title: editingTag.title,
+                                                color: editingTag.color
+                                              };
+                                              setGlobalTags([...globalTags, newTag]);
+                                            }
+                                            setEditingTag(null);
+                                          }
+                                        }}
+                                        placeholder="Tag name..."
+                                        autoFocus
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Add new tag button */}
+                                {!editingTag && (
+                                  <button
+                                    className="w-full py-2 px-3 text-sm bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 border border-indigo-200"
+                                    onClick={() => setEditingTag({ id: null, title: '', color: '#3B82F6' })}
+                                  >
+                                    + Add New Tag
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         
                         {/* Divider */}
@@ -1958,60 +2352,234 @@ useLayoutEffect(() => {
                         {/* Project Management Group */}
                         <div className="flex items-center gap-1">
                           {/* Details (Priority/Status) */}
-                          <button
-                            className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              wrappedSetNodes(nodes.map(n => 
-                                n.id === node.id ? { ...n, showDetailsPopup: !n.showDetailsPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
-                              ));
-                            }}
-                            title="Details (Priority/Status)"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="12" cy="12" r="10"></circle>
-                              <line x1="12" y1="16" x2="12" y2="12"></line>
-                              <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                            </svg>
-                          </button>
+                          <div className="relative">
+                            <button
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                wrappedSetNodes(nodes.map(n => 
+                                  n.id === node.id ? { ...n, showDetailsPopup: !n.showDetailsPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
+                                ));
+                              }}
+                              title="Details (Priority/Status)"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                              </svg>
+                            </button>
+                            {node.showDetailsPopup && (
+                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2">
+                                <h4>Details</h4>
+                                <div className="flex flex-col gap-3">
+                                  <div>
+                                    <label className="block text-xs font-medium text-gray-700 mb-1">Priority</label>
+                                    <select 
+                                      className="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                      value={node.priority || 'medium'}
+                                      onChange={(e) => wrappedSetNodes(nodes.map(n => 
+                                        n.id === node.id ? { ...n, priority: e.target.value } : n
+                                      ))}
+                                    >
+                                      <option value="low">Low</option>
+                                      <option value="medium">Medium</option>
+                                      <option value="high">High</option>
+                                      <option value="urgent">Urgent</option>
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                                    <select 
+                                      className="w-full p-2 border rounded-md text-sm text-black"
+                                      value={node.status || 'not-started'}
+                                      onChange={(e) => wrappedSetNodes(nodes.map(n => 
+                                        n.id === node.id ? { ...n, status: e.target.value } : n
+                                      ))}
+                                    >
+                                      <option value="not-started">Not Started</option>
+                                      <option value="in-progress">In Progress</option>
+                                      <option value="review">Review</option>
+                                      <option value="completed">Completed</option>
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
+                                    <textarea
+                                      className="w-full p-2 border rounded-md text-sm h-24 resize-none text-black"
+                                      placeholder="Additional details..."
+                                      value={node.description || ''}
+                                      onChange={(e) => wrappedSetNodes(nodes.map(n => 
+                                        n.id === node.id ? { ...n, description: e.target.value } : n
+                                      ))}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="flex justify-end mt-2">
+                                  <button 
+                                    className="px-3 py-1 text-sm bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100"
+                                    onClick={() => wrappedSetNodes(nodes.map(n => 
+                                      n.id === node.id ? { ...n, showDetailsPopup: false } : n
+                                    ))}
+                                  >
+                                    Done
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                           
                           {/* Due Date */}
-                          <button
-                            className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              wrappedSetNodes(nodes.map(n => 
-                                n.id === node.id ? { ...n, showDatePopup: !n.showDatePopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
-                              ));
-                            }}
-                            title="Set due date"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
-                              <line x1="16" y1="2" x2="16" y2="6"></line>
-                              <line x1="8" y1="2" x2="8" y2="6"></line>
-                              <line x1="3" y1="10" x2="21" y2="10"></line>
-                            </svg>
-                          </button>
+                          <div className="relative">
+                            <button
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                wrappedSetNodes(nodes.map(n => 
+                                  n.id === node.id ? { ...n, showDatePopup: !n.showDatePopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
+                                ));
+                              }}
+                              title="Set due date"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                              </svg>
+                            </button>
+                            {node.showDatePopup && (
+                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2">
+                                <h4>Due Date</h4>
+                                <div>
+                                  <input
+                                    type="date"
+                                    className="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    value={node.dueDate || ''}
+                                    onChange={(e) => wrappedSetNodes(nodes.map(n => 
+                                      n.id === node.id ? { ...n, dueDate: e.target.value } : n
+                                    ))}
+                                  />
+                                  {node.dueDate && (
+                                    <div className="mt-2 flex justify-between items-center">
+                                      {(() => {
+                                        const dueDate = new Date(node.dueDate);
+                                        const today = new Date();
+                                        today.setHours(0, 0, 0, 0);
+                                        dueDate.setHours(0, 0, 0, 0);
+                                        
+                                        const diffTime = dueDate.getTime() - today.getTime();
+                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                        
+                                        let statusText = '';
+                                        let statusClass = '';
+                                        
+                                        if (diffDays < 0) {
+                                          statusText = `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''}`;
+                                          statusClass = 'bg-red-200 text-red-800 font-medium';
+                                        } else if (diffDays === 0) {
+                                          statusText = 'Due today';
+                                          statusClass = 'bg-red-200 text-red-800 font-medium';
+                                        } else if (diffDays <= 3) {
+                                          statusText = `Due in ${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+                                          statusClass = 'bg-orange-200 text-orange-800 font-medium';
+                                        } else {
+                                          statusText = `Due in ${diffDays} days`;
+                                          statusClass = 'bg-green-200 text-green-800 font-medium';
+                                        }
+                                        
+                                        return (
+                                          <span className={`px-2 py-0.5 rounded-full ${statusClass}`}>
+                                            {statusText}
+                                          </span>
+                                        );
+                                      })()}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                           
                           {/* Collaborator */}
-                          <button
-                            className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              wrappedSetNodes(nodes.map(n => 
-                                n.id === node.id ? { ...n, showCollaboratorPopup: !n.showCollaboratorPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showTagsPopup: false } : n
-                              ));
-                            }}
-                            title="Assign collaborator"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                              <circle cx="9" cy="7" r="4"></circle>
-                              <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                            </svg>
-                          </button>
+                          <div className="relative">
+                            <button
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                wrappedSetNodes(nodes.map(n => 
+                                  n.id === node.id ? { ...n, showCollaboratorPopup: !n.showCollaboratorPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showTagsPopup: false } : n
+                                ));
+                              }}
+                              title="Assign collaborator"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                              </svg>
+                            </button>
+                            {node.showCollaboratorPopup && (
+                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={e => e.stopPropagation()}>
+                                <h4 className="text-sm font-semibold text-gray-900 mb-3">Assign Collaborators</h4>
+                                <input
+                                  type="text"
+                                  className="w-full p-2 mb-3 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  placeholder="Search collaborators..."
+                                  value={node.collaboratorSearch || ''}
+                                  onChange={e => wrappedSetNodes(nodes.map(n =>
+                                    n.id === node.id ? { ...n, collaboratorSearch: e.target.value } : n
+                                  ))}
+                                  autoFocus
+                                />
+                                <div className="max-h-48 overflow-y-auto flex flex-col gap-1">
+                                  {collaborators.filter(c =>
+                                    !node.collaboratorSearch || c.name.toLowerCase().includes(node.collaboratorSearch.toLowerCase()) || c.initials.toLowerCase().includes(node.collaboratorSearch.toLowerCase())
+                                  ).map(collab => (
+                                    <label key={collab.id} className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors duration-150">
+                                      <input
+                                        type="checkbox"
+                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        checked={Array.isArray(node.collaborators) && node.collaborators.includes(collab.id)}
+                                        onChange={e => {
+                                          wrappedSetNodes(nodes.map(n => {
+                                            if (n.id !== node.id) return n;
+                                            let newCollabs = Array.isArray(n.collaborators) ? [...n.collaborators] : [];
+                                            if (e.target.checked) {
+                                              if (!newCollabs.includes(collab.id)) newCollabs.push(collab.id);
+                                            } else {
+                                              newCollabs = newCollabs.filter(id => id !== collab.id);
+                                            }
+                                            return { ...n, collaborators: newCollabs };
+                                          }));
+                                        }}
+                                      />
+                                      <span 
+                                        className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm" 
+                                        style={{ backgroundColor: collab.color }}
+                                      >
+                                        {collab.initials}
+                                      </span>
+                                      <span className="text-sm font-medium text-gray-700">{collab.name}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                                <div className="flex justify-end mt-3 pt-3 border-t border-gray-100">
+                                  <button
+                                    className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-150"
+                                    onClick={() => {
+                                      wrappedSetNodes(nodes.map(n => 
+                                        n.id === node.id ? { ...n, showCollaboratorPopup: false } : n
+                                      ));
+                                    }}
+                                  >
+                                    Done
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                         
                         {/* Divider */}
@@ -2036,22 +2604,48 @@ useLayoutEffect(() => {
                           
                           {/* Layout Button (Root only) */}
                           {node.id === 'root' && (
-                            <button
-                              className="node-toolbar-btn p-2 rounded-xl hover:bg-blue-100 text-blue-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                wrappedSetNodes(nodes.map(n => 
-                                  n.id === node.id ? { ...n, showLayoutPopup: !n.showLayoutPopup } : n
-                                ));
-                              }}
-                              title="Change layout"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                <line x1="3" y1="9" x2="21" y2="9"></line>
-                                <line x1="9" y1="21" x2="9" y2="9"></line>
-                              </svg>
-                            </button>
+                            <div className="relative">
+                              <button
+                                className="node-toolbar-btn p-2 rounded-xl hover:bg-blue-100 text-blue-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  wrappedSetNodes(nodes.map(n => 
+                                    n.id === node.id ? { ...n, showLayoutPopup: !n.showLayoutPopup } : n
+                                  ));
+                                }}
+                                title="Change layout"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                  <line x1="3" y1="9" x2="21" y2="9"></line>
+                                  <line x1="9" y1="21" x2="9" y2="9"></line>
+                                </svg>
+                              </button>
+                              {node.showLayoutPopup && (
+                                <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={e => e.stopPropagation()}>
+                                  <h4>Choose Layout</h4>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {layoutOptions.map(layout => (
+                                      <button
+                                        key={layout.id}
+                                        className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-md text-sm"
+                                        onClick={() => {
+                                          applyLayout(node.id, layout.id);
+                                          wrappedSetNodes(nodes.map(n => 
+                                            n.id === node.id ? { ...n, showLayoutPopup: false } : n
+                                          ));
+                                        }}
+                                      >
+                                        <span className="text-gray-500">
+                                          <i className={`lucide lucide-${layout.icon}`}></i>
+                                        </span>
+                                        {layout.name}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           )}
                           
                           {/* Delete Node */}
@@ -2075,662 +2669,6 @@ useLayoutEffect(() => {
                         </div>
                         
                       </div>
-                      
-                      {/* Emoji popup */}
-                      {node.showEmojiPopup && (
-                        <div className="node-popup absolute top-full left-0 mt-2">
-                          <h4>Select Emoji or Icon</h4>
-                          <div className="grid grid-cols-8 gap-3">
-                            {['😊', '😂', '❤️', '👍', '🎉', '✅', '⭐', '🔥', '💡', '📌', '⚠️', '❓', '📝', '🔍', '🗓️', '📊'].map(emoji => (
-                              <button 
-                                key={emoji}
-                                className="w-10 h-10 flex items-center justify-center text-xl"
-                                onClick={() => {
-                                  wrappedSetNodes(nodes.map(n => 
-                                    n.id === node.id ? { ...n, emoji, showEmojiPopup: false } : n
-                                  ));
-                                }}
-                              >
-                                {emoji}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Background color popup */}
-                      {node.showBgColorPopup && (
-                        <RoundColorPicker
-                          currentColor={node.color || '#FFFFFF'}
-                          onColorSelect={(color) => {
-                            wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, color, showBgColorPopup: false } : n
-                            ));
-                          }}
-                          onClose={() => {
-                            wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, showBgColorPopup: false } : n
-                            ));
-                          }}
-                          position="bottom-left"
-                        />
-                      )}
-                      
-                      {/* Font color popup */}
-                      {node.showFontColorPopup && (
-                        <RoundColorPicker
-                          currentColor={node.fontColor || '#000000'}
-                          onColorSelect={(color) => {
-                            wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, fontColor: color, showFontColorPopup: false } : n
-                            ));
-                          }}
-                          onClose={() => {
-                            wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, showFontColorPopup: false } : n
-                            ));
-                          }}
-                          position="bottom-left"
-                        />
-                      )}
-                      
-                      {/* Attachment popup */}
-                      {node.showAttachmentPopup && (
-                        <div className="node-popup absolute top-full left-0 mt-2">
-                          <h4>Attachments</h4>
-                          
-                          {/* Filters */}
-                          <div className="mb-3 grid grid-cols-3 gap-2">
-                            <input
-                              type="text"
-                              placeholder="Search by name..."
-                              className="p-2 text-sm border rounded-md text-black" // Added text-black here
-                              value={attachmentFilters.search}
-                              onChange={(e) => setAttachmentFilters({
-                                ...attachmentFilters,
-                                search: e.target.value
-                              })}
-                            />
-                            <select 
-                              className="p-2 text-sm border rounded-md text-black" // Added text-black here
-                              value={attachmentFilters.fileType}
-                              onChange={(e) => setAttachmentFilters({
-                                ...attachmentFilters,
-                                fileType: e.target.value
-                              })}
-                            >
-                              <option value="">All file types</option>
-                              <option value="pdf">PDF</option>
-                              <option value="doc">Word</option>
-                              <option value="docx">Word</option>
-                              <option value="xls">Excel</option>
-                              <option value="xlsx">Excel</option>
-                            </select>
-                            <select 
-                              className="p-2 text-sm border rounded-md text-black" // Added text-black here
-                              value={attachmentFilters.addedBy}
-                              onChange={(e) => setAttachmentFilters({
-                                ...attachmentFilters,
-                                addedBy: e.target.value
-                              })}
-                            >
-                              <option value="">All users</option>
-                              {getUniqueUsers(node.attachments).map(user => (
-                                <option key={user} value={user}>{user}</option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {/* File input */}
-                          <input 
-                            type="file" 
-                            accept=".xlsx,.xls,.doc,.docx,.pdf"
-                            className="text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 mb-3"
-                            onChange={(e) => handleAttachment(e, node.id)}
-                          />
-
-                          {/* Filtered attachments list */}
-                          <div className="max-h-64 overflow-y-auto">
-                            {node.attachments && node.attachments.length > 0 ? (
-                              <div className="divide-y">
-                                {node.attachments
-                                  .filter(attachment => {
-                                    const matchesSearch = attachment.name.toLowerCase()
-                                      .includes(attachmentFilters.search.toLowerCase());
-                                    const matchesType = !attachmentFilters.fileType || 
-                                      attachment.type === attachmentFilters.fileType;
-                                    const matchesUser = !attachmentFilters.addedBy || 
-                                      attachment.addedBy === attachmentFilters.addedBy;
-                                    return matchesSearch && matchesType && matchesUser;
-                                  })
-                                  .map(attachment => (
-                                    <div key={attachment.id} className="py-2 flex items-center justify-between">
-                                      <div className="flex items-center space-x-3">
-                                        <div className="text-gray-500">
-                                          {attachment.type === 'pdf' && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 0 0 2-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 00 2 2z" /></svg>}
-                                          {(attachment.type === 'doc' || attachment.type === 'docx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 01 2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
-                                          {(attachment.type === 'xls' || attachment.type === 'xlsx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24  24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 13v-1m4 1v-3m4 3V8M8 21l4-4 4 4M4 3h16a2 2 0 0 0 2 2v14a2 2 0 0 0-2 2H4a2 2 0 0 0-2-2z" /></svg>}
-                                        </div>
-                                        <div className="flex flex-col">
-                                          <span className="text-sm font-medium text-black">{attachment.name}</span> {/* Added text-black here */}
-                                          <span className="text-xs text-gray-500">
-                                            Added by {attachment.addedBy} on {new Date(attachment.dateAdded).toLocaleDateString()}
-                                          </span>
-                                        </div>
-                                      </div>
-                                      <button 
-                                        className="text-red-500 hover:text-red-700 p-1"
-                                        onClick={() => wrappedSetNodes(nodes.map(n => 
-                                          n.id === node.id ? {
-                                            ...n,
-                                            attachments: n.attachments.filter(a => a.id !== attachment.id)
-                                          } : n
-                                        ))}
-                                      >
-                                        <Trash2 size={14} />
-                                      </button>
-                                    </div>
-                                  ))}
-                              </div>
-                            ) : (
-                              <div className="text-sm text-gray-500 text-center py-4">
-                                No attachments yet
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Notes popup */}
-                      {node.showNotesPopup && (
-                        <div className="node-popup absolute top-full left-0 mt-2">
-                          <h4>Notes</h4>
-                          <textarea
-                            className="w-full p-3 border border-gray-300 rounded-lg text-sm h-32 resize-none text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Add notes about this node..."
-                            value={node.notes || ''}
-                            onChange={(e) => wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, notes: e.target.value } : n
-                            ))}
-                          />
-                          <div className="flex justify-end mt-3">
-                            <button 
-                              className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                              onClick={() => wrappedSetNodes(nodes.map(n => 
-                                n.id === node.id ? { ...n, showNotesPopup: false } : n
-                              ))}
-                            >
-                              Done
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Details popup */}
-                      {node.showDetailsPopup && (
-                        <div className="node-popup absolute top-full left-0 mt-2">
-                          <h4>Details</h4>
-                          <div className="flex flex-col gap-3">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">Priority</label>
-                              <select 
-                                className="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                value={node.priority || 'medium'}
-                                onChange={(e) => wrappedSetNodes(nodes.map(n => 
-                                  n.id === node.id ? { ...n, priority: e.target.value } : n
-                                ))}
-                              >
-                                <option value="low">Low</option>
-                                <option value="medium">Medium</option>
-                                <option value="high">High</option>
-                                <option value="urgent">Urgent</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
-                              <select 
-                                className="w-full p-2 border rounded-md text-sm text-black"
-                                value={node.status || 'not-started'}
-                                onChange={(e) => wrappedSetNodes(nodes.map(n => 
-                                  n.id === node.id ? { ...n, status: e.target.value } : n
-                                ))}
-                              >
-                                <option value="not-started">Not Started</option>
-                                <option value="in-progress">In Progress</option>
-                                <option value="review">Review</option>
-                                <option value="completed">Completed</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
-                              <textarea
-                                className="w-full p-2 border rounded-md text-sm h-24 resize-none text-black"
-                                placeholder="Additional details..."
-                                value={node.description || ''}
-                                onChange={(e) => wrappedSetNodes(nodes.map(n => 
-                                  n.id === node.id ? { ...n, description: e.target.value } : n
-                                ))}
-                              />
-                            </div>
-                          </div>
-                          <div className="flex justify-end mt-2">
-                            <button 
-                              className="px-3 py-1 text-sm bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100"
-                              onClick={() => wrappedSetNodes(nodes.map(n => 
-                                n.id === node.id ? { ...n, showDetailsPopup: false } : n
-                              ))}
-                            >
-                              Done
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Date popup */}
-                      {node.showDatePopup && (
-                        <div className="node-popup absolute top-full left-0 mt-2">
-                          <h4>Due Date</h4>
-                          <div>
-                            <input
-                              type="date"
-                              className="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              value={node.dueDate || ''}
-                              onChange={(e) => wrappedSetNodes(nodes.map(n => 
-                                n.id === node.id ? { ...n, dueDate: e.target.value } : n
-                              ))}
-                            />
-                            {node.dueDate && (
-                              <div className="mt-2 flex justify-between items-center">
-                                {(() => {
-                                  const dueDate = new Date(node.dueDate);
-                                  const today = new Date();
-                                  today.setHours(0, 0, 0, 0);
-                                  dueDate.setHours(0, 0, 0, 0);
-                                  
-                                  const diffTime = dueDate.getTime() - today.getTime();
-                                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                  
-                                  let statusText = '';
-                                  let statusClass = '';
-                                  
-                                  if (diffDays < 0) {
-                                    statusText = `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''}`;
-                                    statusClass = 'bg-red-200 text-red-800 font-medium';
-                                  } else if (diffDays === 0) {
-                                    statusText = 'Due today';
-                                    statusClass = 'bg-red-200 text-red-800 font-medium';
-                                  } else if (diffDays <= 3) {
-                                    statusText = `Due in ${diffDays} day${diffDays !== 1 ? 's' : ''}`;
-                                    statusClass = 'bg-orange-200 text-orange-800 font-medium';
-                                  } else {
-                                    statusText = `Due in ${diffDays} days`;
-                                    statusClass = 'bg-green-200 text-green-800 font-medium';
-                                  }
-                                  
-                                  return (
-                                    <span className={`px-2 py-0.5 rounded-full ${statusClass}`}>
-                                      {statusText}
-                                    </span>
-                                  );
-                                })()}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Add this with the other popups */}
-                      {node.showLayoutPopup && node.id === 'root' && (
-                        <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 w-64 popup-content">
-                          <h4 className="text-sm font-semibold text-gray-900 mb-3">Choose Layout</h4>
-                          <div className="grid grid-cols-2 gap-2">
-                            {layoutOptions.map(layout => (
-                              <button
-                                key={layout.id}
-                                className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-md text-sm"
-                                onClick={() => {
-                                  applyLayout(node.id, layout.id);
-                                  wrappedSetNodes(nodes.map(n => 
-                                    n.id === node.id ? { ...n, showLayoutPopup: false } : n
-                                  ));
-                                }}
-                              >
-                                <span className="text-gray-500">
-                                  <i className={`lucide lucide-${layout.icon}`}></i>
-                                </span>
-                                {layout.name}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  {/* Node emoji if present */}
-                  {node.emoji && (
-                    <div className="text-2xl mb-1">{node.emoji}</div>
-                  )}
-                  
-                  {/* Node attachment indicator */}
-                  {node.attachment && (
-                    <div className="text-xs text-gray-500 mb-1 flex items-center justify-center gap-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line>
-                      </svg>
-                      {node.attachment.length > 15 ? node.attachment.substring(0, 12) + '...' : node.attachment}
-                    </div>
-                  )}
-                  
-                  {/* Status & priority badges if set */}
-                  {(node.status || node.priority) && (
-                    <div className="flex gap-1 justify-center mb-1">
-                      {node.priority && (
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                          node.priority === 'low' ? 'bg-blue-100 text-blue-800' :
-                          node.priority === 'medium' ? 'bg-green-100 text-green-800' :
-                          node.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {node.priority.charAt(0).toUpperCase() + node.priority.slice(1)}
-                        </span>
-                      )}
-                      {node.status && (
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                          node.status === 'not-started' ? 'bg-gray-100 text-gray-800' :
-                          node.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-                          node.status === 'review' ? 'bg-purple-100 text-purple-800' :
-                          'bg-green-100 text-green-800'
-                        }`}>
-                          {node.status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                    {/* Due date badge if set */}
-                  {node.dueDate && (
-                    <div className="flex justify-center mb-1">
-                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-800 flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
-                          <line x1="16" y1="2" x2="16" y2="6"></line>
-                          <line x1="8" y1="2" x2="8" y2="6"></line>
-                          <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                        {new Date(node.dueDate).toLocaleDateString()}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* Tags display */}                  {Array.isArray(node.tags) && node.tags.length > 0 && (
-                    <div className="flex flex-wrap justify-center gap-1 mb-1">
-                      {node.tags.map(tagId => {
-                        const tag = globalTags.find(t => t.id === tagId);
-                        if (!tag) return null;
-                        const displayText = tag.title || `Color ${globalTags.findIndex(t => t.id === tag.id) + 1}`;
-                        return (
-                          <span
-                            key={tagId}
-                            className="text-xs px-2 py-0.5 rounded-full text-white font-medium"
-                            style={{ backgroundColor: tag.color }}
-                            title={displayText}
-                          >
-                            {displayText}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  )}
-                  
-                  {/* Collaborator popup */}
-                  {node.showCollaboratorPopup && (
-                    <div className="node-popup absolute top-full left-0 mt-2" onClick={e => e.stopPropagation()}>
-                      <h4>Assign Collaborators</h4>
-                      <input
-                        type="text"
-                        className="w-full p-2 mb-2 border rounded-md text-sm text-black"
-                        placeholder="Search collaborators..."
-                        value={node.collaboratorSearch || ''}
-                        onChange={e => wrappedSetNodes(nodes.map(n =>
-                          n.id === node.id ? { ...n, collaboratorSearch: e.target.value } : n
-                        ))}
-                        autoFocus
-                      />
-                      <div className="max-h-48 overflow-y-auto flex flex-col gap-1">
-                        {collaborators.filter(c =>
-                          !node.collaboratorSearch || c.name.toLowerCase().includes(node.collaboratorSearch.toLowerCase()) || c.initials.toLowerCase().includes(node.collaboratorSearch.toLowerCase())
-                        ).map(collab => (
-                          <label key={collab.id} className="flex items-center gap-2 cursor-pointer p-1 rounded hover:bg-gray-50">
-                            <input
-                              type="checkbox"
-                              checked={Array.isArray(node.collaborators) && node.collaborators.includes(collab.id)}
-                              onChange={e => {
-                                wrappedSetNodes(nodes.map(n => {
-                                  if (n.id !== node.id) return n;
-                                  let newCollabs = Array.isArray(n.collaborators) ? [...n.collaborators] : [];
-                                  if (e.target.checked) {
-                                    if (!newCollabs.includes(collab.id)) newCollabs.push(collab.id);
-                                  } else {
-                                    newCollabs = newCollabs.filter(id => id !== collab.id);
-                                  }
-                                  return { ...n, collaborators: newCollabs };
-                                }));
-                              }}
-                            />
-                            <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: collab.color, color: 'white' }}>{collab.initials}</span>
-                            <span className="text-sm text-gray-700">{collab.name}</span>
-                          </label>
-                        ))}
-                      </div>
-                      <div className="flex justify-end mt-2">
-                        <button
-                          className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                          onClick={() => {
-                            setSelectedNodes([]);
-                            setShowCollaboratorDialog(false);
-                          }}
-                        >
-                          Cancel
-                        </button>                      </div>
-                    </div>
-                  )}
-                    {/* Tags popup */}
-                  {node.showTagsPopup && (
-                    <div className="node-popup absolute top-full left-0 mt-2" onClick={e => e.stopPropagation()}>
-                      <h4>Manage Tags</h4>
-                      
-                      {/* Tags list */}
-                      <div className="max-h-48 overflow-y-auto mb-3">
-                        {globalTags.map(tag => (
-                          <div key={tag.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded">
-                            <input
-                              type="checkbox"
-                              checked={Array.isArray(node.tags) && node.tags.includes(tag.id)}
-                              onChange={e => {
-                                wrappedSetNodes(nodes.map(n => {
-                                  if (n.id !== node.id) return n;
-                                  let newTags = Array.isArray(n.tags) ? [...n.tags] : [];
-                                  if (e.target.checked) {
-                                    if (!newTags.includes(tag.id)) newTags.push(tag.id);
-                                  } else {
-                                    newTags = newTags.filter(id => id !== tag.id);
-                                  }
-                                  return { ...n, tags: newTags };
-                                }));
-                              }}
-                              className="mr-2"
-                            />
-                              {editingTag && editingTag.id === tag.id ? (
-                              <>
-                                {/* Color picker for editing */}
-                                <div className="flex flex-wrap gap-1" onMouseDown={e => e.preventDefault()}>
-                                  {['#DC2626', '#2563EB', '#7C3AED', '#059669', '#D97706', '#DB2777'].map(color => (
-                                    <div
-                                      key={color}
-                                      className="w-4 h-4 rounded-full cursor-pointer hover:ring-1 hover:ring-gray-300"
-                                      style={{ 
-                                        backgroundColor: color,
-                                        border: editingTag.color === color ? '2px solid #4F46E5' : '1px solid #E5E7EB'
-                                      }}
-                                      onMouseDown={e => e.preventDefault()}
-                                      onClick={e => {
-                                        e.preventDefault();
-                                        setEditingTag({ ...editingTag, color });
-                                      }}
-                                    />
-                                  ))}
-                                </div>
-                                
-                                {/* Title input for editing */}
-                                <input
-                                  type="text"
-                                  className="flex-1 px-2 py-1 text-sm border rounded text-black"
-                                  value={editingTag.title}
-                                  onChange={e => setEditingTag({ ...editingTag, title: e.target.value })}
-                                  onKeyDown={e => {
-                                    if (e.key === 'Enter') {
-                                      if (editingTag.title.trim()) {
-                                        setGlobalTags(globalTags.map(t =>
-                                          t.id === tag.id
-                                            ? { ...t, title: editingTag.title, color: editingTag.color }
-                                            : t
-                                        ));
-                                      }
-                                      setEditingTag(null);
-                                    } else if (e.key === 'Escape') {
-                                      setEditingTag(null);
-                                    }
-                                  }}
-                                  onBlur={e => {
-                                    // Check if the related target (what's being clicked) is a color picker
-                                    const isColorPicker = e.relatedTarget && e.relatedTarget.closest('.flex.flex-wrap.gap-1');
-                                    if (!isColorPicker) {
-                                      if (editingTag.title.trim()) {
-                                        setGlobalTags(globalTags.map(t =>
-                                          t.id === tag.id
-                                            ? { ...t, title: editingTag.title, color: editingTag.color }
-                                            : t
-                                        ));
-                                      }
-                                      setEditingTag(null);
-                                    }
-                                  }}
-                                  autoFocus
-                                />
-                              </>                            ): (
-                              <>
-                                <div
-                                  className="w-4 h-4 rounded-full"
-                                  style={{ backgroundColor: tag.color }}
-                                ></div>
-                                <span className="flex-1 text-sm text-gray-700">
-                                  {tag.title || `Color ${globalTags.findIndex(t => t.id === tag.id) + 1}`}
-                                </span>                                <button
-                                  className="p-1 hover:bg-gray-200 rounded text-black"
-                                  onClick={() => setEditingTag({ ...tag })}
-                                  title="Edit tag"
-                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
-                                  </svg>
-                                </button>
-                                <button
-                                  className="p-1 hover:bg-red-200 rounded text-red-600"
-                                  onClick={() => deleteTag(tag.id)}
-                                  title="Delete tag"
-                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path d="M19 6l-2 14H7L5 6"></path>
-                                    <path d="M10 11v6"></path>
-                                    <path d="M14 11v6"></path>
-                                  </svg>
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        ))}
-                          {/* New tag creation row */}
-                        {editingTag && !editingTag.id && (
-                          <div className="flex items-center gap-2 p-2 bg-blue-50 rounded border border-blue-200">
-                            <input
-                              type="checkbox"
-                              disabled
-                              className="mr-2 opacity-50"
-                            />
-                            
-                            {/* Color picker for new tag */}
-                            <div className="flex flex-wrap gap-1" onMouseDown={e => e.preventDefault()}>
-                              {['#DC2626', '#2563EB', '#7C3AED', '#059669', '#D97706', '#DB2777'].map(color => (
-                                <div
-                                  key={color}
-                                  className="w-4 h-4 rounded-full cursor-pointer hover:ring-1 hover:ring-gray-300"
-                                  style={{ 
-                                    backgroundColor: color,
-                                    border: editingTag.color === color ? '2px solid #4F46E5' : '1px solid #E5E7EB'
-                                  }}
-                                  onMouseDown={e => e.preventDefault()}
-                                  onClick={e => {
-                                    e.preventDefault();
-                                    setEditingTag({ ...editingTag, color });
-                                  }}
-                                />
-                              ))}
-                            </div>
-                            
-                            {/* Title input for new tag */}
-                            <input
-                              type="text"
-                              className="flex-1 px-2 py-1 text-sm border rounded text-black"
-                              value={editingTag.title}
-                              onChange={e => setEditingTag({ ...editingTag, title: e.target.value })}
-                              onKeyDown={e => {
-                                if (e.key === 'Enter') {
-                                  if (editingTag.title.trim()) {
-                                    const newTag = {
-                                      id: `tag-${Date.now()}`,
-                                      title: editingTag.title,
-                                      color: editingTag.color
-                                    };
-                                    setGlobalTags([...globalTags, newTag]);
-                                  }
-                                  setEditingTag(null);
-                                } else if (e.key === 'Escape') {
-                                  setEditingTag(null);
-                                }
-                              }}
-                              onBlur={e => {
-                                // Check if the related target (what's being clicked) is a color picker
-                                const isColorPicker = e.relatedTarget && e.relatedTarget.closest('.flex.flex-wrap.gap-1');
-                                if (!isColorPicker) {
-                                  if (editingTag.title.trim()) {
-                                    const newTag = {
-                                      id: `tag-${Date.now()}`,
-                                      title: editingTag.title,
-                                      color: editingTag.color
-                                    };
-                                    setGlobalTags([...globalTags, newTag]);
-                                  }
-                                  setEditingTag(null);
-                                }
-                              }}
-                              placeholder="Tag name..."
-                              autoFocus
-                            />
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Add new tag button */}
-                      {!editingTag && (
-                        <button
-                          className="w-full py-2 px-3 text-sm bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 border border-indigo-200"
-                          onClick={() => setEditingTag({ id: null, title: '', color: '#3B82F6' })}
-                        >
-                          + Add New Tag
-                        </button>
-                      )}
                     </div>
                   )}
                   
@@ -2845,9 +2783,9 @@ useLayoutEffect(() => {
                       <div className="flex items-center gap-1 mt-1">
                         {node.priority && (
                           <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
-                            node.priority === 'high' ? 'bg-red-50 text-red-600 border-red-200' :
-                            node.priority === 'medium' ? 'bg-yellow-50 text-yellow-600 border-yellow-200' :
-                            'bg-green-50 text-green-600 border-green-200'
+                            node.priority === 'high' ? 'bg-red-50 text-red-600' :
+                            node.priority === 'medium' ? 'bg-green-50 text-green-600' :
+                            'bg-blue-50 text-blue-600'
                           }`}>
                             {node.priority}
                           </span>
@@ -2894,7 +2832,7 @@ useLayoutEffect(() => {
                 
                 <div className="mt-6 flex justify-end">
                   <button
-                    className="px-4 py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors"
+                    className="px-4 py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg"
                     onClick={() => {
                       setSelectedNodes([]);
                       setShowCollaboratorDialog(false);
