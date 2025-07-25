@@ -1731,7 +1731,6 @@ useLayoutEffect(() => {
                  
           {/* Wrapper for panned and zoomed content */}
           <div 
-            key={nodes.length + '-' + connections.length}
             className="absolute"
             style={{
               transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
