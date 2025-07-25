@@ -1786,7 +1786,7 @@ useLayoutEffect(() => {
                     minHeight: 80, // Increased minimum height for better proportion
                     background: `linear-gradient(135deg, ${node.color || '#ffffff'} 0%, ${adjustBrightness(node.color || '#ffffff', -5)} 100%)`,
                     border: `2px solid ${adjustBrightness(node.color || '#ffffff', -15)}`,
-                    zIndex: searchQuery ? (isNodeMatching ? 20 : 10) : 10,
+                    zIndex: selectedNode === node.id ? 50 : (searchQuery ? (isNodeMatching ? 20 : 10) : 10),
                     textAlign: 'center',
                     opacity: searchQuery ? (isNodeMatching ? 1 : 0.3) : 1,
                     position: 'relative',
