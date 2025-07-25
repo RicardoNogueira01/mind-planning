@@ -1504,120 +1504,172 @@ useLayoutEffect(() => {
         />
       ) : (
         <>
-          {/* Toolbar */}
-          <div className="absolute top-4 left-4 z-20 bg-white shadow-sm border border-gray-200 rounded-xl p-2">
-            <div className="flex gap-2">              <button 
-                onClick={() => {
-                  if (onBack) {
-                    onBack();
-                  }
-                }}
-                className="p-2 rounded text-black hover:bg-gray-100"
-                title="Back to Dashboard"
-              >
-                <Home size={20} />
-              </button>
+          {/* Enhanced Professional Toolbar */}
+          <div className="absolute top-4 left-4 z-20 bg-white/95 backdrop-blur-lg shadow-xl border border-gray-200/50 rounded-2xl p-3">
+            <div className="flex items-center gap-1">
+              
+              {/* Navigation Group */}
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50/50">
+                <button 
+                  onClick={() => {
+                    if (onBack) {
+                      onBack();
+                    }
+                  }}
+                  className="p-2.5 rounded-lg text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm transition-all duration-200 group"
+                  title="Back to Dashboard"
+                >
+                  <Home size={18} className="group-hover:scale-110 transition-transform duration-200" />
+                </button>
+              </div>
 
-              <div className="w-px h-6 bg-gray-200 my-auto" /> {/* Divider */}
+              {/* Divider */}
+              <div className="w-px h-8 bg-gradient-to-b from-transparent via-gray-300 to-transparent mx-2" />
               
-              <button 
-                onClick={() => {
-                  setMode('cursor');
-                  setSelectionType('simple');
-                }}
-                className={`p-2 rounded text-black ${mode === 'cursor' && selectionType === 'simple' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100'}`}
-                title="Simple select mode"
-              >
-                <MousePointer size={20} />
-              </button>
-              <button 
-                onClick={() => {
-                  setMode('cursor');
-                  setSelectionType('collaborator');
-                }}
-                className={`p-2 rounded text-black ${mode === 'cursor' && selectionType === 'collaborator' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100'}`}
-                title="Collaborator select mode"
-              >
-                <Users size={20} />
-              </button>
-              <button 
-                onClick={() => setMode('pan')}
-                className={`p-2 rounded text-black ${mode === 'pan' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100'}`}
-                title="Pan mode"
-              >
-                <Hand size={20} />
-              </button>
-              
-              {/* Rest of the toolbar buttons */}
-              <button 
-                onClick={addStandaloneNode} 
-                className="p-2 hover:bg-gray-100 rounded text-black"
-                title="Add standalone node"
-              >
-                <Plus size={20} />
-              </button>
-              
-              <button 
-                onClick={() => selectedNodes.length > 0 && deleteNodes(selectedNodes)}
-                className={`p-2 rounded ${selectedNodes.length > 0 ? 'hover:bg-red-100 text-red-600' : 'text-gray-400'}`}
-                title="Delete selected nodes"
-                disabled={selectedNodes.length === 0}
-              >
-                <Trash2 size={20} />
-              </button>
+              {/* Selection Tools Group */}
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50/50">
+                <button 
+                  onClick={() => {
+                    setMode('cursor');
+                    setSelectionType('simple');
+                  }}
+                  className={`p-2.5 rounded-lg transition-all duration-200 group ${
+                    mode === 'cursor' && selectionType === 'simple' 
+                      ? 'bg-blue-500 text-white shadow-md shadow-blue-500/20' 
+                      : 'text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm'
+                  }`}
+                  title="Selection Mode"
+                >
+                  <MousePointer size={18} className="group-hover:scale-110 transition-transform duration-200" />
+                </button>
+                
+                <button 
+                  onClick={() => {
+                    setMode('cursor');
+                    setSelectionType('collaborator');
+                  }}
+                  className={`p-2.5 rounded-lg transition-all duration-200 group ${
+                    mode === 'cursor' && selectionType === 'collaborator' 
+                      ? 'bg-purple-500 text-white shadow-md shadow-purple-500/20' 
+                      : 'text-gray-700 hover:bg-white hover:text-purple-600 hover:shadow-sm'
+                  }`}
+                  title="Collaborator Mode"
+                >
+                  <Users size={18} className="group-hover:scale-110 transition-transform duration-200" />
+                </button>
+                
+                <button 
+                  onClick={() => setMode('pan')}
+                  className={`p-2.5 rounded-lg transition-all duration-200 group ${
+                    mode === 'pan' 
+                      ? 'bg-green-500 text-white shadow-md shadow-green-500/20' 
+                      : 'text-gray-700 hover:bg-white hover:text-green-600 hover:shadow-sm'
+                  }`}
+                  title="Pan Mode"
+                >
+                  <Hand size={18} className="group-hover:scale-110 transition-transform duration-200" />
+                </button>
+              </div>
 
-              {/* Add undo and redo buttons to the toolbar */}
-              <button 
-                onClick={undo}
-                className="p-2 rounded text-black hover:bg-gray-100"
-                title="Undo"
-                disabled={historyIndex <= 0}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 17L4 12l5-5" />
-                  <path d="M20 18v-1a4 4 0 0 0-4-4H4" />
-                </svg>
-              </button>
-              <button 
-                onClick={redo}
-                className="p-2 rounded text-black hover:bg-gray-100"
-                title="Redo"
-                disabled={historyIndex >= history.length - 1}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M15 7l5 5-5 5" />
-                  <path d="M4 6v1a4 4 0 0 0 4 4h12" />
-                </svg>
-              </button>
+              {/* Divider */}
+              <div className="w-px h-8 bg-gradient-to-b from-transparent via-gray-300 to-transparent mx-2" />
+              
+              {/* Content Creation Group */}
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50/50">
+                <button 
+                  onClick={addStandaloneNode} 
+                  className="p-2.5 rounded-lg text-gray-700 hover:bg-white hover:text-emerald-600 hover:shadow-sm transition-all duration-200 group"
+                  title="Add New Node"
+                >
+                  <Plus size={18} className="group-hover:scale-110 transition-transform duration-200" />
+                </button>
+                
+                <button 
+                  onClick={() => selectedNodes.length > 0 && deleteNodes(selectedNodes)}
+                  className={`p-2.5 rounded-lg transition-all duration-200 group ${
+                    selectedNodes.length > 0 
+                      ? 'text-gray-700 hover:bg-white hover:text-red-600 hover:shadow-sm' 
+                      : 'text-gray-400 cursor-not-allowed'
+                  }`}
+                  title="Delete Selected Nodes"
+                  disabled={selectedNodes.length === 0}
+                >
+                  <Trash2 size={18} className={selectedNodes.length > 0 ? 'group-hover:scale-110 transition-transform duration-200' : ''} />
+                </button>
+              </div>
+
+              {/* Divider */}
+              <div className="w-px h-8 bg-gradient-to-b from-transparent via-gray-300 to-transparent mx-2" />
+
+              {/* History Controls Group */}
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50/50">
+                <button 
+                  onClick={undo}
+                  className={`p-2.5 rounded-lg transition-all duration-200 group ${
+                    historyIndex <= 0 
+                      ? 'text-gray-400 cursor-not-allowed' 
+                      : 'text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm'
+                  }`}
+                  title="Undo"
+                  disabled={historyIndex <= 0}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={historyIndex > 0 ? 'group-hover:scale-110 transition-transform duration-200' : ''}>
+                    <path d="M9 17L4 12l5-5" />
+                    <path d="M20 18v-1a4 4 0 0 0-4-4H4" />
+                  </svg>
+                </button>
+                
+                <button 
+                  onClick={redo}
+                  className={`p-2.5 rounded-lg transition-all duration-200 group ${
+                    historyIndex >= history.length - 1 
+                      ? 'text-gray-400 cursor-not-allowed' 
+                      : 'text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm'
+                  }`}
+                  title="Redo"
+                  disabled={historyIndex >= history.length - 1}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={historyIndex < history.length - 1 ? 'group-hover:scale-110 transition-transform duration-200' : ''}>
+                    <path d="M15 7l5 5-5 5" />
+                    <path d="M4 6v1a4 4 0 0 0 4 4h12" />
+                  </svg>
+                </button>
+              </div>
+              
             </div>
           </div>
           
-          {/* Add this right after the toolbar div in the return statement */}
-          {/* After the closing </div> of the toolbar and before the zoom controls */}
-          {/* Search input with results container */}
+          {/* Enhanced Search Section */}
           <div className="absolute top-20 left-4 z-20 w-80">
-            {/* Search input */}
-            <input
-              type="text"
-              placeholder="Search nodes..."
-              className="w-full px-4 py-2 bg-white shadow-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setShowSearchList(true);
-              }}
-              onFocus={() => setShowSearchList(true)}
-            />
+            {/* Search input with improved styling */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Search nodes..."
+                className="w-full pl-10 pr-4 py-3 bg-white/95 backdrop-blur-lg shadow-xl border border-gray-200/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 text-gray-900 placeholder-gray-500 transition-all duration-200"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSearchList(e.target.value.length > 0);
+                }}
+                onFocus={() => setShowSearchList(true)}
+              />
+            </div>
             
-            {/* Search results list - positioned relative to the container */}
+            {/* Enhanced Search Results */}
             {showSearchList && searchQuery && (
-              <div className="absolute left-0 right-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-2 max-h-96 overflow-y-auto">
+              <div className="absolute left-0 right-0 mt-3 bg-white/95 backdrop-blur-lg shadow-2xl border border-gray-200/50 rounded-2xl p-3 max-h-96 overflow-y-auto">
                 {nodes
                   .filter(node => node.text.toLowerCase().includes(searchQuery.toLowerCase()))
                   .map(node => (
                     <div 
                       key={node.id}
-                      className="p-2 hover:bg-gray-50 rounded-md cursor-pointer flex items-center justify-between"
+                      className="p-3 hover:bg-gray-50/80 rounded-xl cursor-pointer flex items-center justify-between transition-all duration-200 group"
                       onClick={() => {
                         setSelectedNode(node.id);
                         setShowSearchList(false);
@@ -1627,16 +1679,50 @@ useLayoutEffect(() => {
                         });
                       }}
                     >
-                      <div className="flex items-center gap-2">
-                        {/* Show node emoji if it exists */}
-                        {node.emoji && <span>{node.emoji}</span>}
-                        {/* Show node text */}
-                        <span className="text-sm text-gray-700">{node.text}</span>
+                      <div className="flex items-center gap-3">
+                        {/* Enhanced node emoji/icon display */}
+                        {node.emoji ? (
+                          <span className="text-lg">{node.emoji}</span>
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                        )}
+                        {/* Enhanced node text */}
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors duration-200">{node.text}</span>
+                          {(node.priority || node.status) && (
+                            <div className="flex gap-1 mt-1">
+                              {node.priority && (
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                  node.priority === 'high' ? 'bg-red-100 text-red-600' :
+                                  node.priority === 'medium' ? 'bg-yellow-100 text-yellow-600' :
+                                  'bg-green-100 text-green-600'
+                                }`}>
+                                  {node.priority}
+                                </span>
+                              )}
+                              {node.status && (
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                                  {node.status}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      {/* Show node type/role */}
-                      <span className="text-xs text-gray-500">
-                        {node.id === 'root' ? 'Central Idea' : 'Sub-topic'}
-                      </span>
+                      {/* Enhanced node type indicator */}
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                          node.id === 'root' 
+                            ? 'bg-purple-100 text-purple-600' 
+                            : 'bg-blue-100 text-blue-600'
+                        }`}>
+                          {node.id === 'root' ? 'Central' : 'Node'}
+                        </span>
+                      </div>
                     </div>
                   ))}
               </div>
@@ -1653,7 +1739,9 @@ useLayoutEffect(() => {
             }}
           >
             {/* Group bounding boxes */}
-            {renderNodeGroups()}            {/* Connections between nodes */}
+            {renderNodeGroups()}
+            
+            {/* Connections between nodes */}
             {renderConnections}
             
             {/* Selection rectangle */}
@@ -1747,225 +1835,256 @@ useLayoutEffect(() => {
                 >
                   {selectedNode === node.id && mode === 'cursor' && (
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-3" style={{ marginTop: '-15px' }}>
-                      <div className="bg-white shadow-sm border border-gray-200 rounded-xl flex items-center p-1 gap-1 z-30">                        {/* Emoji Selector */}
-                        <button
-                          className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, showEmojiPopup: !n.showEmojiPopup, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
-                            ));
-                          }}
-                          title="Add emoji or icon"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
-                            <line x1="9" y1="9" x2="9.01" y2="9"></line>
-                            <line x1="15" y1="9" x2="15.01" y2="9"></line>
-                          </svg>
-                        </button>
-                          {/* Background Color */}
-                        <button
-                          className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, showBgColorPopup: !n.showBgColorPopup, showEmojiPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
-                            ));
-                          }}
-                          title="Background color"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            <path d="M3 9h18"></path>
-                          </svg>
-                        </button>
-                          {/* Font Color */}
-                        <button
-                          className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, showFontColorPopup: !n.showFontColorPopup, showEmojiPopup: false, showBgColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
-                            ));
-                          }}
-                          title="Font color"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M4 20h16"></path>
-                            <path d="M9 4h6l-3 9z"></path>
-                          </svg>
-                        </button>
-                          {/* Attachment */}
-                        <button
-                          className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, showAttachmentPopup: !n.showAttachmentPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
-                            ));
-                          }}
-                          title="Add attachment"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
-                          </svg>
-                        </button>
-                          {/* Notes */}
-                        <button
-                          className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, showNotesPopup: !n.showNotesPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
-                            ));
-                          }}
-                          title="Add notes"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                            <line x1="10" y1="9" x2="8" y2="9"></line>
-                          </svg>
-                        </button>
-                          {/* Details (Priority/Status) */}
-                        <button
-                          className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, showDetailsPopup: !n.showDetailsPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
-                            ));
-                          }}
-                          title="Details (Priority/Status)"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="16" x2="12" y2="12"></line>
-                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                          </svg>
-                        </button>
-                          {/* Due Date */}
-                        <button
-                          className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, showDatePopup: !n.showDatePopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
-                            ));
-                          }}
-                          title="Set due date"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                          </svg>
-                        </button>
-                          {/* Collaborator */}
-                        <button
-                          className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, showCollaboratorPopup: !n.showCollaboratorPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showTagsPopup: false } : n
-                            ));
-                          }}
-                          title="Assign collaborator"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                          </svg>
-                        </button>
+                      <div className="enhanced-node-toolbar backdrop-blur-md bg-white/90 shadow-lg border border-white/20 rounded-2xl flex items-center p-2 gap-1 z-30">
                         
-                        {/* Tags */}
-                        <button
-                          className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            wrappedSetNodes(nodes.map(n => 
-                              n.id === node.id ? { ...n, showTagsPopup: !n.showTagsPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
-                            ));
-                          }}
-                          title="Manage tags"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-                            <line x1="7" y1="7" x2="7.01" y2="7"></line>
-                          </svg>
-                        </button>
-                        
-                        {/* Add Node */}
-                        <button
-                          className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            addChildNode(node.id);
-                          }}
-                          title="Add connected child node"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                          </svg>
-                        </button>
-                        
-                        {/* Delete Node */}
-                        {node.id !== 'root' && (
+                        {/* Visual Content Group */}
+                        <div className="flex items-center gap-1">
+                          {/* Emoji Selector */}
                           <button
-                            className="p-1.5 rounded-full hover:bg-red-100 text-red-600"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteNode(node.id);
-                            }}
-                            title="Delete this node"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="3 6 5 6 21 6"></polyline>
-                              <path d="M19 6l-2 14H7L5 6"></path>
-                              <path d="M10 11v6"></path>
-                              <path d="M14 11v6"></path>
-                            </svg>
-                          </button>
-                        )}
-
-                        {/* Add this inside the node options toolbar, only for root node */}
-                        {node.id === 'root' && (
-                          <button
-                            className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700"
+                            className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
                             onClick={(e) => {
                               e.stopPropagation();
                               wrappedSetNodes(nodes.map(n => 
-                                n.id === node.id ? { ...n, showLayoutPopup: !n.showLayoutPopup } : n
+                                n.id === node.id ? { ...n, showEmojiPopup: !n.showEmojiPopup, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
                               ));
                             }}
-                            title="Change layout"
+                            title="Add emoji or icon"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10"></circle>
+                              <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                              <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                              <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                            </svg>
+                          </button>
+                          
+                          {/* Background Color */}
+                          <button
+                            className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              wrappedSetNodes(nodes.map(n => 
+                                n.id === node.id ? { ...n, showBgColorPopup: !n.showBgColorPopup, showEmojiPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
+                              ));
+                            }}
+                            title="Background color"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                              <line x1="3" y1="9" x2="21" y2="9"></line>
-                              <line x1="9" y1="21" x2="9" y2="9"></line>
+                              <path d="M3 9h18"></path>
                             </svg>
                           </button>
-                        )}
+                          
+                          {/* Font Color */}
+                          <button
+                            className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              wrappedSetNodes(nodes.map(n => 
+                                n.id === node.id ? { ...n, showFontColorPopup: !n.showFontColorPopup, showEmojiPopup: false, showBgColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
+                              ));
+                            }}
+                            title="Font color"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M4 20h16"></path>
+                              <path d="M9 4h6l-3 9z"></path>
+                            </svg>
+                          </button>
+                        </div>
+                        
+                        {/* Divider */}
+                        <div className="w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
+                        
+                        {/* Content Management Group */}
+                        <div className="flex items-center gap-1">
+                          {/* Attachment */}
+                          <button
+                            className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              wrappedSetNodes(nodes.map(n => 
+                                n.id === node.id ? { ...n, showAttachmentPopup: !n.showAttachmentPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
+                              ));
+                            }}
+                            title="Add attachment"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                            </svg>
+                          </button>
+                          
+                          {/* Notes */}
+                          <button
+                            className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              wrappedSetNodes(nodes.map(n => 
+                                n.id === node.id ? { ...n, showNotesPopup: !n.showNotesPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
+                              ));
+                            }}
+                            title="Add notes"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                              <polyline points="14 2 14 8 20 8"></polyline>
+                              <line x1="16" y1="13" x2="8" y2="13"></line>
+                              <line x1="16" y1="17" x2="8" y2="17"></line>
+                              <line x1="10" y1="9" x2="8" y2="9"></line>
+                            </svg>
+                          </button>
+                          
+                          {/* Tags */}
+                          <button
+                            className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              wrappedSetNodes(nodes.map(n => 
+                                n.id === node.id ? { ...n, showTagsPopup: !n.showTagsPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
+                              ));
+                            }}
+                            title="Manage tags"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                              <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                            </svg>
+                          </button>
+                        </div>
+                        
+                        {/* Divider */}
+                        <div className="w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
+                        
+                        {/* Project Management Group */}
+                        <div className="flex items-center gap-1">
+                          {/* Details (Priority/Status) */}
+                          <button
+                            className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              wrappedSetNodes(nodes.map(n => 
+                                n.id === node.id ? { ...n, showDetailsPopup: !n.showDetailsPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
+                              ));
+                            }}
+                            title="Details (Priority/Status)"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10"></circle>
+                              <line x1="12" y1="16" x2="12" y2="12"></line>
+                              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                          </button>
+                          
+                          {/* Due Date */}
+                          <button
+                            className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              wrappedSetNodes(nodes.map(n => 
+                                n.id === node.id ? { ...n, showDatePopup: !n.showDatePopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
+                              ));
+                            }}
+                            title="Set due date"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
+                              <line x1="16" y1="2" x2="16" y2="6"></line>
+                              <line x1="8" y1="2" x2="8" y2="6"></line>
+                              <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                          </button>
+                          
+                          {/* Collaborator */}
+                          <button
+                            className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              wrappedSetNodes(nodes.map(n => 
+                                n.id === node.id ? { ...n, showCollaboratorPopup: !n.showCollaboratorPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showTagsPopup: false } : n
+                              ));
+                            }}
+                            title="Assign collaborator"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                              <circle cx="9" cy="7" r="4"></circle>
+                              <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                          </button>
+                        </div>
+                        
+                        {/* Divider */}
+                        <div className="w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
+                        
+                        {/* Action Group */}
+                        <div className="flex items-center gap-1">
+                          {/* Add Node */}
+                          <button
+                            className="node-toolbar-btn p-2 rounded-xl hover:bg-green-100 text-green-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addChildNode(node.id);
+                            }}
+                            title="Add connected child node"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="12" y1="5" x2="12" y2="19"></line>
+                              <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                          </button>
+                          
+                          {/* Layout Button (Root only) */}
+                          {node.id === 'root' && (
+                            <button
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-blue-100 text-blue-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                wrappedSetNodes(nodes.map(n => 
+                                  n.id === node.id ? { ...n, showLayoutPopup: !n.showLayoutPopup } : n
+                                ));
+                              }}
+                              title="Change layout"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="3" y1="9" x2="21" y2="9"></line>
+                                <line x1="9" y1="21" x2="9" y2="9"></line>
+                              </svg>
+                            </button>
+                          )}
+                          
+                          {/* Delete Node */}
+                          {node.id !== 'root' && (
+                            <button
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-red-100 text-red-600 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteNode(node.id);
+                              }}
+                              title="Delete this node"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6l-2 14H7L5 6"></path>
+                                <path d="M10 11v6"></path>
+                                <path d="M14 11v6"></path>
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                        
                       </div>
                       
                       {/* Emoji popup */}
                       {node.showEmojiPopup && (
-                        <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 w-80 popup-content">
-                          <h4 className="text-sm font-semibold text-gray-900 mb-3">Select Emoji or Icon</h4>
-                          <div className="grid grid-cols-8 gap-2">
+                        <div className="node-popup absolute top-full left-0 mt-2">
+                          <h4>Select Emoji or Icon</h4>
+                          <div className="grid grid-cols-8 gap-3">
                             {['😊', '😂', '❤️', '👍', '🎉', '✅', '⭐', '🔥', '💡', '📌', '⚠️', '❓', '📝', '🔍', '🗓️', '📊'].map(emoji => (
                               <button 
                                 key={emoji}
-                                className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded text-xl"
+                                className="w-10 h-10 flex items-center justify-center text-xl"
                                 onClick={() => {
                                   wrappedSetNodes(nodes.map(n => 
                                     n.id === node.id ? { ...n, emoji, showEmojiPopup: false } : n
@@ -2017,8 +2136,8 @@ useLayoutEffect(() => {
                       
                       {/* Attachment popup */}
                       {node.showAttachmentPopup && (
-                        <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 w-96 popup-content">
-                          <h4 className="text-sm font-semibold text-gray-900 mb-3">Attachments</h4>
+                        <div className="node-popup absolute top-full left-0 mt-2">
+                          <h4>Attachments</h4>
                           
                           {/* Filters */}
                           <div className="mb-3 grid grid-cols-3 gap-2">
@@ -2124,10 +2243,10 @@ useLayoutEffect(() => {
                       
                       {/* Notes popup */}
                       {node.showNotesPopup && (
-                        <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 w-80 popup-content">
-                          <h4 className="text-sm font-semibold text-gray-900 mb-3">Notes</h4>
+                        <div className="node-popup absolute top-full left-0 mt-2">
+                          <h4>Notes</h4>
                           <textarea
-                            className="w-full p-3 border border-gray-300 rounded-lg text-sm h-24 resize-none text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full p-3 border border-gray-300 rounded-lg text-sm h-32 resize-none text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             placeholder="Add notes about this node..."
                             value={node.notes || ''}
                             onChange={(e) => wrappedSetNodes(nodes.map(n => 
@@ -2149,8 +2268,8 @@ useLayoutEffect(() => {
                       
                       {/* Details popup */}
                       {node.showDetailsPopup && (
-                        <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 w-80 popup-content">
-                          <h4 className="text-sm font-semibold text-gray-900 mb-3">Details</h4>
+                        <div className="node-popup absolute top-full left-0 mt-2">
+                          <h4>Details</h4>
                           <div className="flex flex-col gap-3">
                             <div>
                               <label className="block text-xs font-medium text-gray-700 mb-1">Priority</label>
@@ -2209,8 +2328,8 @@ useLayoutEffect(() => {
                       
                       {/* Date popup */}
                       {node.showDatePopup && (
-                        <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 w-64 popup-content">
-                          <h4 className="text-sm font-semibold text-gray-900 mb-3">Due Date</h4>
+                        <div className="node-popup absolute top-full left-0 mt-2">
+                          <h4>Due Date</h4>
                           <div>
                             <input
                               type="date"
@@ -2366,8 +2485,8 @@ useLayoutEffect(() => {
                   
                   {/* Collaborator popup */}
                   {node.showCollaboratorPopup && (
-                    <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 w-72 popup-content" onClick={e => e.stopPropagation()}>
-                      <h4 className="text-sm font-semibold text-gray-900 mb-3">Assign Collaborators</h4>
+                    <div className="node-popup absolute top-full left-0 mt-2" onClick={e => e.stopPropagation()}>
+                      <h4>Assign Collaborators</h4>
                       <input
                         type="text"
                         className="w-full p-2 mb-2 border rounded-md text-sm text-black"
@@ -2418,8 +2537,8 @@ useLayoutEffect(() => {
                   )}
                     {/* Tags popup */}
                   {node.showTagsPopup && (
-                    <div className="absolute top-full left-0 mt-2 bg-white shadow-xl border border-gray-200 rounded-xl p-4 z-40 w-80 popup-content" onClick={e => e.stopPropagation()}>
-                      <h4 className="text-sm font-semibold text-gray-900 mb-3">Manage Tags</h4>
+                    <div className="node-popup absolute top-full left-0 mt-2" onClick={e => e.stopPropagation()}>
+                      <h4>Manage Tags</h4>
                       
                       {/* Tags list */}
                       <div className="max-h-48 overflow-y-auto mb-3">
