@@ -29,6 +29,10 @@ const MindMap = ({ mapId, onBack }) => {
   const [nodeGroups, setNodeGroups] = useState([]);
   const [lastSelectionRect, setLastSelectionRect] = useState(null);
   
+  // Dragging state for smooth animations
+  const [draggingNodeId, setDraggingNodeId] = useState(null);
+  const dragFrameRef = useRef(null);
+  
   // Canvas pan and zoom state
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -85,6 +89,16 @@ const MindMap = ({ mapId, onBack }) => {
     pinks: [
       '#FFF5F7', '#FED7E2', '#FBB6CE', '#F687B3', '#ED64A6', '#D53F8C', '#B83280', '#97266D', '#702459', '#521B41', '#1A202C'
     ]
+  };
+
+  // Helper function to adjust color brightness for gradients
+  const adjustBrightness = (hex, percent) => {
+    const num = parseInt(hex.replace("#", ""), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.max(0, Math.min(255, (num >> 16) + amt));
+    const G = Math.max(0, Math.min(255, (num >> 8 & 0x00FF) + amt));
+    const B = Math.max(0, Math.min(255, (num & 0x0000FF) + amt));
+    return "#" + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
   };
 
   // Global tags state
@@ -517,7 +531,7 @@ const getDescendantNodeIds = (parentId) => {
       text: 'New Idea',
       x: x,
       y: y,
-      color: '#EEF2FF'
+      color: '#ffffff'
     };
     
     wrappedSetNodesAndConnections([...nodes, newNode], connections);
@@ -533,11 +547,11 @@ const getDescendantNodeIds = (parentId) => {
     const childCount = existingChildren.length;
 
     const newId = `node-${Date.now()}`;
-    // Calculate dynamic parent width
-    const parentWidth = Math.min(450, Math.max(150, parent.text.length * 10));
+    // Calculate dynamic parent width with updated formula
+    const parentWidth = Math.min(400, Math.max(200, parent.text.length * 12));
     
-    // Position child to the right of parent with spacing
-    const minSpacing = 200; // Minimum spacing between parent and child
+    // Position child to the right of parent with better spacing
+    const minSpacing = 220; // Increased spacing for larger nodes
     const newX = parent.x + parentWidth/2 + minSpacing;
     
     // Improved vertical positioning for children
@@ -622,12 +636,19 @@ const handleNodeClick = (nodeId, e) => {
       setIsEditing(false);
     }
   }
-};    // Handle node dragging
+};    // Handle node dragging with optimized performance
   const handleNodeDrag = (nodeId, newX, newY) => {
-    const targetNode = nodes.find(n => n.id === nodeId);
+    // Cancel any pending animation frame
+    if (dragFrameRef.current) {
+      cancelAnimationFrame(dragFrameRef.current);
+    }
     
-    // Check if this node belongs to any collaborator group
-    const nodeGroup = nodeGroups.find(group => group.nodeIds.includes(nodeId));
+    // Use requestAnimationFrame for smooth updates
+    dragFrameRef.current = requestAnimationFrame(() => {
+      const targetNode = nodes.find(n => n.id === nodeId);
+      
+      // Check if this node belongs to any collaborator group
+      const nodeGroup = nodeGroups.find(group => group.nodeIds.includes(nodeId));
     
     // If node is in a group, constrain its movement to the group's bounding box
     if (nodeGroup) {
@@ -696,7 +717,9 @@ const handleNodeClick = (nodeId, e) => {
       // No need to update group bounding box since node stays within bounds
       // The group bounding box should remain the same when nodes move within it
     }
+    }); // Close requestAnimationFrame
   };
+  
   // Helper function to update group bounding boxes
   const updateGroupBoundingBoxes = (affectedNodeIds, dx, dy) => {
     // For constrained groups, we don't update the bounding box
@@ -1655,50 +1678,70 @@ useLayoutEffect(() => {
               const isNodeMatching = searchQuery ? 
                 node.text.toLowerCase().includes(searchQuery.toLowerCase()) : true;
               
-              // Calculate dynamic width based on text length
+              // Calculate dynamic width based on text length with better handling for long words
               const textLength = node.text.length;
-              const nodeWidth = Math.min(350, Math.max(150, textLength * 10));
+              const hasLongWords = node.text.split(' ').some(word => word.length > 15);
+              const baseFactor = hasLongWords ? 10 : 12; // Reduce width multiplier for long words
+              const nodeWidth = Math.min(400, Math.max(200, textLength * baseFactor));
 
               return (
                 <div
                   key={node.id}
                   data-node-id={node.id}
                   ref={el => { nodeRefs.current[node.id] = el; }}
-                  className={`absolute p-3 rounded-lg shadow cursor-move node
-                    ${selectedNodes.includes(node.id) ? 'ring-2 ring-indigo-500' : ''}`}
+                  className={`absolute rounded-xl shadow-lg cursor-move node node-text-wrap transition-all duration-200 ease-out hover:shadow-xl
+                    ${selectedNodes.includes(node.id) ? 'ring-2 ring-blue-500 ring-opacity-60' : ''}
+                    ${draggingNodeId === node.id ? 'dragging' : ''}`}
                   style={{
                     left: node.x - nodeWidth / 2, // Center the node horizontally
-                    top: node.y - 25, // Adjust vertical position
+                    top: node.y - 40, // Adjust vertical position for larger height
                     width: nodeWidth,
-                    minHeight: 50, // Ensure minimum height for consistent connection points
-                    backgroundColor: node.color,
+                    minHeight: 80, // Increased minimum height for better proportion
+                    background: `linear-gradient(135deg, ${node.color || '#ffffff'} 0%, ${adjustBrightness(node.color || '#ffffff', -5)} 100%)`,
+                    border: `2px solid ${adjustBrightness(node.color || '#ffffff', -15)}`,
                     zIndex: searchQuery ? (isNodeMatching ? 20 : 10) : 10,
                     textAlign: 'center',
                     opacity: searchQuery ? (isNodeMatching ? 1 : 0.3) : 1,
-                    transition: 'opacity 0.2s ease-in-out',
-                    position: 'relative'  // Ensure the node container is relative
+                    position: 'relative',
+                    padding: '16px 20px',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    transform: selectedNodes.includes(node.id) && draggingNodeId !== node.id ? 'translateY(-2px)' : 'translateY(0)',
                   }}
                   onClick={(e) => handleNodeClick(node.id, e)}
                   onMouseDown={(e) => {
                     // Prevent moving the node if it is being edited
                     if (editingNode === node.id) return;
                     if (mode === 'cursor' && e.button === 0) {
+                      e.preventDefault(); // Prevent text selection during drag
                       const startX = e.clientX;
                       const startY = e.clientY;
                       const startNodeX = node.x;
                       const startNodeY = node.y;
+                      
+                      // Set dragging state for smooth animations
+                      setDraggingNodeId(node.id);
+                      
                       const handleMouseMove = (moveEvent) => {
                         if (isPanning) return;
                         const dx = (moveEvent.clientX - startX) / zoom;
                         const dy = (moveEvent.clientY - startY) / zoom;
                         handleNodeDrag(node.id, startNodeX + dx, startNodeY + dy);
                       };
+                      
                       const handleMouseUp = () => {
+                        // Clear dragging state
+                        setDraggingNodeId(null);
+                        // Cancel any pending animation frame
+                        if (dragFrameRef.current) {
+                          cancelAnimationFrame(dragFrameRef.current);
+                          dragFrameRef.current = null;
+                        }
                         document.removeEventListener('mousemove', handleMouseMove);
                         document.removeEventListener('mouseup', handleMouseUp);
                       };
-                      document.addEventListener('mousemove', handleMouseMove);
-                      document.addEventListener('mouseup', handleMouseUp);
+                      
+                      document.addEventListener('mousemove', handleMouseMove, { passive: true });
+                      document.addEventListener('mouseup', handleMouseUp, { passive: true });
                     }
                   }}
                 >
@@ -2596,45 +2639,108 @@ useLayoutEffect(() => {
                     </div>
                   )}
 
-                  {/* Node text content (editable) */}
-                  {selectedNode === node.id && mode === 'cursor' ? (
-                    editingNode === node.id ? (
-                      <textarea
-                        value={node.text}
-                        onChange={(e) => updateNodeText(node.id, e.target.value)}
-                        className="bg-transparent outline-none w-full text-center resize-none overflow-hidden whitespace-pre-wrap"
-                        style={{ color: node.fontColor || 'black', whiteSpace: 'pre-wrap' }}
-                        onClick={(e) => e.stopPropagation()}
-                        onFocus={(e) => {
-                          setIsEditing(true);
-                          e.target.style.height = 'auto';
-                          e.target.style.height = `${e.target.scrollHeight}px`;
-                        }}
-                        onBlur={() => {
-                          setEditingNode(null);
-                          setIsEditing(false);
-                        }}
-                        onKeyDown={(e) => {
-                          e.stopPropagation();
-                        }}
-                        autoFocus
-                        rows={1}
-                        onInput={(e) => {
-                          e.target.style.height = 'auto';
-                          e.target.style.height = `${e.target.scrollHeight}px`;
-                        }}
-                      />
+                  {/* Professional Node Content */}
+                  <div className="flex flex-col items-center justify-center gap-2 h-full min-h-[48px]">
+                    {/* Display emoji if present */}
+                    {node.emoji && (
+                      <div className="text-lg leading-none" style={{ fontSize: '18px' }}>{node.emoji}</div>
+                    )}
+                    
+                    {/* Node text with improved typography */}
+                    {selectedNode === node.id && mode === 'cursor' ? (
+                      editingNode === node.id ? (
+                        <textarea
+                          value={node.text}
+                          onChange={(e) => updateNodeText(node.id, e.target.value)}
+                          className="bg-transparent outline-none w-full text-center resize-none overflow-hidden font-medium leading-snug"
+                          style={{ 
+                            color: node.fontColor || '#2d3748', 
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            lineHeight: '1.3',
+                            whiteSpace: 'pre-wrap',
+                            wordWrap: 'break-word',
+                            overflowWrap: 'break-word',
+                            wordBreak: 'break-word',
+                            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          onFocus={(e) => {
+                            setIsEditing(true);
+                            e.target.style.height = 'auto';
+                            e.target.style.height = `${e.target.scrollHeight}px`;
+                          }}
+                          onBlur={() => {
+                            setEditingNode(null);
+                            setIsEditing(false);
+                          }}
+                          onKeyDown={(e) => {
+                            e.stopPropagation();
+                          }}
+                          autoFocus
+                          rows={1}
+                          onInput={(e) => {
+                            e.target.style.height = 'auto';
+                            e.target.style.height = `${e.target.scrollHeight}px`;
+                          }}
+                        />
+                      ) : (
+                        <div 
+                          className="w-full text-center cursor-text font-medium leading-snug px-1"
+                          style={{ 
+                            color: node.fontColor || '#2d3748',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            lineHeight: '1.3',
+                            wordWrap: 'break-word',
+                            overflowWrap: 'break-word',
+                            wordBreak: 'break-word',
+                            whiteSpace: 'pre-wrap',
+                            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                          }}
+                        >
+                          {node.text}
+                        </div>
+                      )
                     ) : (
                       <div 
-                        className="w-full text-center cursor-text"
-                        style={{ color: node.fontColor || 'black' }}
+                        className="font-medium text-center leading-snug px-1"
+                        style={{ 
+                          color: node.fontColor || '#2d3748',
+                          fontSize: '14px',
+                          fontWeight: '500',
+                          lineHeight: '1.3',
+                          wordWrap: 'break-word',
+                          overflowWrap: 'break-word',
+                          wordBreak: 'break-word',
+                          whiteSpace: 'pre-wrap',
+                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                        }}
                       >
                         {node.text}
                       </div>
-                    )
-                  ) : (
-                    <div style={{ color: node.fontColor || 'black' }}>{node.text}</div>
-                  )}
+                    )}
+
+                    {/* Node metadata - Priority and Status indicators */}
+                    {(node.priority || node.status) && (
+                      <div className="flex items-center gap-1 mt-1">
+                        {node.priority && (
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
+                            node.priority === 'high' ? 'bg-red-50 text-red-600 border-red-200' :
+                            node.priority === 'medium' ? 'bg-yellow-50 text-yellow-600 border-yellow-200' :
+                            'bg-green-50 text-green-600 border-green-200'
+                          }`}>
+                            {node.priority}
+                          </span>
+                        )}
+                        {node.status && node.status !== 'todo' && (
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200">
+                            {node.status}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
