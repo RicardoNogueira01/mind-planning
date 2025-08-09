@@ -23,7 +23,7 @@ const MindMapToolbar = ({
         <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50/50">
           <button 
             onClick={onBack}
-            className="p-2.5 rounded-lg text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm transition-all duration-200 group"
+            className="p-2.5 rounded-lg text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm transition-all duration-200 group border border-gray-200/60 hover:border-gray-300"
             title="Back to Dashboard"
           >
             <Home size={18} className="group-hover:scale-110 transition-transform duration-200" />
@@ -40,10 +40,10 @@ const MindMapToolbar = ({
               setMode('cursor');
               setSelectionType('simple');
             }}
-            className={`p-2.5 rounded-lg transition-all duration-200 group ${
+            className={`p-2.5 rounded-lg transition-all duration-200 group border ${
               mode === 'cursor' && selectionType === 'simple' 
-                ? 'bg-blue-500 text-white shadow-md shadow-blue-500/20' 
-                : 'text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm'
+                ? 'bg-blue-500 text-white shadow-md shadow-blue-500/20 border-blue-600' 
+                : 'text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm border-gray-200/60 hover:border-gray-300'
             }`}
             title="Selection Mode"
           >
@@ -55,10 +55,10 @@ const MindMapToolbar = ({
               setMode('cursor');
               setSelectionType('collaborator');
             }}
-            className={`p-2.5 rounded-lg transition-all duration-200 group ${
+            className={`p-2.5 rounded-lg transition-all duration-200 group border ${
               mode === 'cursor' && selectionType === 'collaborator' 
-                ? 'bg-purple-500 text-white shadow-md shadow-purple-500/20' 
-                : 'text-gray-700 hover:bg-white hover:text-purple-600 hover:shadow-sm'
+                ? 'bg-purple-500 text-white shadow-md shadow-purple-500/20 border-purple-600' 
+                : 'text-gray-700 hover:bg-white hover:text-purple-600 hover:shadow-sm border-gray-200/60 hover:border-gray-300'
             }`}
             title="Collaborator Mode"
           >
@@ -67,10 +67,10 @@ const MindMapToolbar = ({
           
           <button 
             onClick={() => setMode('pan')}
-            className={`p-2.5 rounded-lg transition-all duration-200 group ${
+            className={`p-2.5 rounded-lg transition-all duration-200 group border ${
               mode === 'pan' 
-                ? 'bg-green-500 text-white shadow-md shadow-green-500/20' 
-                : 'text-gray-700 hover:bg-white hover:text-green-600 hover:shadow-sm'
+                ? 'bg-green-500 text-white shadow-md shadow-green-500/20 border-green-600' 
+                : 'text-gray-700 hover:bg-white hover:text-green-600 hover:shadow-sm border-gray-200/60 hover:border-gray-300'
             }`}
             title="Pan Mode"
           >
@@ -85,7 +85,7 @@ const MindMapToolbar = ({
         <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50/50">
           <button 
             onClick={addStandaloneNode} 
-            className="p-2.5 rounded-lg text-gray-700 hover:bg-white hover:text-emerald-600 hover:shadow-sm transition-all duration-200 group"
+            className="p-2.5 rounded-lg text-gray-700 hover:bg-white hover:text-emerald-600 hover:shadow-sm transition-all duration-200 group border border-gray-200/60 hover:border-gray-300"
             title="Add New Node"
           >
             <Plus size={18} className="group-hover:scale-110 transition-transform duration-200" />
@@ -93,10 +93,10 @@ const MindMapToolbar = ({
           
           <button 
             onClick={() => selectedNodes.length > 0 && deleteNodes(selectedNodes)}
-            className={`p-2.5 rounded-lg transition-all duration-200 group ${
+            className={`p-2.5 rounded-lg transition-all duration-200 group border ${
               selectedNodes.length > 0 
-                ? 'text-gray-700 hover:bg-white hover:text-red-600 hover:shadow-sm' 
-                : 'text-gray-400 cursor-not-allowed'
+                ? 'text-gray-700 hover:bg-white hover:text-red-600 hover:shadow-sm border-gray-200/60 hover:border-gray-300' 
+                : 'text-gray-400 cursor-not-allowed border-gray-100'
             }`}
             title="Delete Selected Nodes"
             disabled={selectedNodes.length === 0}
@@ -112,10 +112,10 @@ const MindMapToolbar = ({
         <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50/50">
           <button 
             onClick={undo}
-            className={`p-2.5 rounded-lg transition-all duration-200 group ${
+            className={`p-2.5 rounded-lg transition-all duration-200 group border ${
               historyIndex <= 0 
-                ? 'text-gray-400 cursor-not-allowed' 
-                : 'text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm'
+                ? 'text-gray-400 cursor-not-allowed border-gray-100' 
+                : 'text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm border-gray-200/60 hover:border-gray-300'
             }`}
             title="Undo"
             disabled={historyIndex <= 0}
@@ -128,10 +128,10 @@ const MindMapToolbar = ({
           
           <button 
             onClick={redo}
-            className={`p-2.5 rounded-lg transition-all duration-200 group ${
+            className={`p-2.5 rounded-lg transition-all duration-200 group border ${
               historyIndex >= history.length - 1 
-                ? 'text-gray-400 cursor-not-allowed' 
-                : 'text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm'
+                ? 'text-gray-400 cursor-not-allowed border-gray-100' 
+                : 'text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm border-gray-200/60 hover:border-gray-300'
             }`}
             title="Redo"
             disabled={historyIndex >= history.length - 1}
