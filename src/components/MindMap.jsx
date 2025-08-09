@@ -1885,7 +1885,7 @@ useLayoutEffect(() => {
                               </svg>
                             </button>
                             {node.showNotesPopup && (
-                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2">
+                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={e => e.stopPropagation()}>
                                 <h4>Notes</h4>
                                 <textarea
                                   className="w-full p-3 border border-gray-300 rounded-lg text-sm h-32 resize-none text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -1894,6 +1894,9 @@ useLayoutEffect(() => {
                                   onChange={(e) => wrappedSetNodes(nodes.map(n => 
                                     n.id === node.id ? { ...n, notes: e.target.value } : n
                                   ))}
+                                  onClick={e => e.stopPropagation()}
+                                  onMouseDown={e => e.stopPropagation()}
+                                  onFocus={e => e.stopPropagation()}
                                 />
                                 <div className="flex justify-end mt-3">
                                   <button 
@@ -1927,11 +1930,11 @@ useLayoutEffect(() => {
                               </svg>
                             </button>
                             {node.showTagsPopup && (
-                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={e => e.stopPropagation()}>
+                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2 w-80 max-h-96" onClick={e => e.stopPropagation()}>
                                 <h4>Manage Tags</h4>
                                 
                                 {/* Tags list */}
-                                <div className="max-h-48 overflow-y-auto mb-3">
+                                <div className="max-h-72 overflow-y-auto mb-3">
                                   {globalTags.map(tag => (
                                     <div key={tag.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded">
                                       <input
@@ -1992,10 +1995,14 @@ useLayoutEffect(() => {
                                                 setEditingTag(null);
                                               }
                                             }}
-                                            onBlur={e => {
-                                              // Check if the related target (what's being clicked) is a color picker
-                                              const isColorPicker = e.relatedTarget && e.relatedTarget.closest('.flex.flex-wrap.gap-1');
-                                              if (!isColorPicker) {
+                                            autoFocus
+                                          />
+                                          
+                                          {/* Confirm and Cancel buttons */}
+                                          <div className="flex gap-1">
+                                            <button
+                                              className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
+                                              onClick={() => {
                                                 if (editingTag.title.trim()) {
                                                   setGlobalTags(globalTags.map(t =>
                                                     t.id === tag.id
@@ -2004,10 +2011,19 @@ useLayoutEffect(() => {
                                                   ));
                                                 }
                                                 setEditingTag(null);
-                                              }
-                                            }}
-                                            autoFocus
-                                          />
+                                              }}
+                                              title="Confirm"
+                                            >
+                                              ✓
+                                            </button>
+                                            <button
+                                              className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
+                                              onClick={() => setEditingTag(null)}
+                                              title="Cancel"
+                                            >
+                                              ✕
+                                            </button>
+                                          </div>
                                         </>                            ): (
                                         <>
                                           <div
@@ -2021,7 +2037,7 @@ useLayoutEffect(() => {
                                             onClick={() => setEditingTag({ ...tag })}
                                             title="Edit tag"
                                           >
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                               <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
                                             </svg>
                                           </button>
@@ -2030,7 +2046,7 @@ useLayoutEffect(() => {
                                             onClick={() => deleteTag(tag.id)}
                                             title="Delete tag"
                                           >
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                               <polyline points="3 6 5 6 21 6"></polyline>
                                               <path d="M19 6l-2 14H7L5 6"></path>
                                               <path d="M10 11v6"></path>
@@ -2154,7 +2170,7 @@ useLayoutEffect(() => {
                               </svg>
                             </button>
                             {node.showDetailsPopup && (
-                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2">
+                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={e => e.stopPropagation()}>
                                 <h4>Details</h4>
                                 <div className="flex flex-col gap-3">
                                   <div>
@@ -2165,6 +2181,9 @@ useLayoutEffect(() => {
                                       onChange={(e) => wrappedSetNodes(nodes.map(n => 
                                         n.id === node.id ? { ...n, priority: e.target.value } : n
                                       ))}
+                                      onClick={e => e.stopPropagation()}
+                                      onMouseDown={e => e.stopPropagation()}
+                                      onFocus={e => e.stopPropagation()}
                                     >
                                       <option value="low">Low</option>
                                       <option value="medium">Medium</option>
@@ -2180,6 +2199,9 @@ useLayoutEffect(() => {
                                       onChange={(e) => wrappedSetNodes(nodes.map(n => 
                                         n.id === node.id ? { ...n, status: e.target.value } : n
                                       ))}
+                                      onClick={e => e.stopPropagation()}
+                                      onMouseDown={e => e.stopPropagation()}
+                                      onFocus={e => e.stopPropagation()}
                                     >
                                       <option value="not-started">Not Started</option>
                                       <option value="in-progress">In Progress</option>
@@ -2196,6 +2218,9 @@ useLayoutEffect(() => {
                                       onChange={(e) => wrappedSetNodes(nodes.map(n => 
                                         n.id === node.id ? { ...n, description: e.target.value } : n
                                       ))}
+                                      onClick={e => e.stopPropagation()}
+                                      onMouseDown={e => e.stopPropagation()}
+                                      onFocus={e => e.stopPropagation()}
                                     />
                                   </div>
                                 </div>
@@ -2315,6 +2340,10 @@ useLayoutEffect(() => {
                                   onChange={e => wrappedSetNodes(nodes.map(n =>
                                     n.id === node.id ? { ...n, collaboratorSearch: e.target.value } : n
                                   ))}
+                                  onClick={e => e.stopPropagation()}
+                                  onMouseDown={e => e.stopPropagation()}
+                                  onFocus={e => e.stopPropagation()}
+                                  onSelect={e => e.stopPropagation()}
                                   autoFocus
                                 />
                                 <div className="max-h-48 overflow-y-auto flex flex-col gap-1">
