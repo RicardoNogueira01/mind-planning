@@ -326,6 +326,14 @@ const MindMap = ({ mapId, onBack }) => {
   // Set up wheel event for zooming
   useEffect(() => {
     const handleWheel = (e) => {
+      // Check if the wheel event is inside a popup
+      const isInsidePopup = e.target.closest('.node-popup');
+      
+      // If inside a popup, allow normal scroll behavior
+      if (isInsidePopup) {
+        return;
+      }
+      
       e.preventDefault();
       const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
       setZoom(prevZoom => {
@@ -1090,6 +1098,11 @@ const handleNodeClick = (nodeId, e) => {
   // Simulated current user - in a real app this would come from auth context
   const currentUser = 'Current User'; // This should be replaced with actual logged-in user info
 
+  // Helper function to stop click propagation (keep for onClick events)
+  const stopClickPropagation = (e) => {
+    e.stopPropagation();
+  };
+
   // we'll store an array of attachment objects
   const handleAttachment = (e, nodeId) => {
     if (e.target.files && e.target.files[0]) {
@@ -1750,7 +1763,11 @@ useLayoutEffect(() => {
                               </svg>
                             </button>
                             {node.showAttachmentPopup && (
-                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" style={{ minWidth: '450px', maxWidth: '500px' }} onClick={e => e.stopPropagation()}>
+                              <div 
+                                className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" 
+                                style={{ minWidth: '450px', maxWidth: '500px' }} 
+                                onClick={stopClickPropagation}
+                              >
                                 <h4>Attachments</h4>
                                 
                                 {/* Search filter only */}
@@ -1880,7 +1897,7 @@ useLayoutEffect(() => {
                               </svg>
                             </button>
                             {node.showNotesPopup && (
-                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={e => e.stopPropagation()}>
+                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={stopClickPropagation}>
                                 <h4>Notes</h4>
                                 <textarea
                                   className="w-full p-3 border border-gray-300 rounded-lg text-sm h-32 resize-none text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -1926,7 +1943,7 @@ useLayoutEffect(() => {
                               </svg>
                             </button>
                             {node.showTagsPopup && (
-                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2 w-80 max-h-96" onClick={e => e.stopPropagation()}>
+                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2 w-80 max-h-96" onClick={stopClickPropagation}>
                                 <h4>Manage Tags</h4>
                                 
                                 {/* Tags list */}
@@ -2168,7 +2185,7 @@ useLayoutEffect(() => {
                               </svg>
                             </button>
                             {node.showDetailsPopup && (
-                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={e => e.stopPropagation()}>
+                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={stopClickPropagation}>
                                 <h4>Details</h4>
                                 <div className="flex flex-col gap-3">
                                   <div>
@@ -2259,7 +2276,7 @@ useLayoutEffect(() => {
                               </svg>
                             </button>
                             {node.showDatePopup && (
-                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2">
+                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={stopClickPropagation}>
                                 <h4>Due Date</h4>
                                 <div>
                                   <input
@@ -2331,7 +2348,7 @@ useLayoutEffect(() => {
                               </svg>
                             </button>
                             {node.showCollaboratorPopup && (
-                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={e => e.stopPropagation()}>
+                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={stopClickPropagation}>
                                 <h4 className="text-sm font-semibold text-gray-900 mb-3">Assign Collaborators</h4>
                                 <input
                                   type="text"
@@ -2441,7 +2458,7 @@ useLayoutEffect(() => {
                                 </svg>
                               </button>
                               {node.showLayoutPopup && (
-                                <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={e => e.stopPropagation()}>
+                                <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={stopClickPropagation}>
                                   <h4>Choose Layout</h4>
                                   <div className="grid grid-cols-2 gap-2">
                                     {layoutOptions.map(layout => (

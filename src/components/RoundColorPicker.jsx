@@ -89,6 +89,7 @@ const RoundColorPicker = ({
         marginTop: '8px',
         zIndex: 50
       }}
+      onClick={e => e.stopPropagation()}
     >
       {/* Header */}
       <div className="text-center mb-4">
