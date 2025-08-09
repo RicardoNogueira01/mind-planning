@@ -1897,6 +1897,7 @@ useLayoutEffect(() => {
                                   onClick={e => e.stopPropagation()}
                                   onMouseDown={e => e.stopPropagation()}
                                   onFocus={e => e.stopPropagation()}
+                                  onKeyDown={e => e.stopPropagation()}
                                 />
                                 <div className="flex justify-end mt-3">
                                   <button 
@@ -1982,6 +1983,7 @@ useLayoutEffect(() => {
                                             value={editingTag.title}
                                             onChange={e => setEditingTag({ ...editingTag, title: e.target.value })}
                                             onKeyDown={e => {
+                                              e.stopPropagation(); // Prevent node deletion
                                               if (e.key === 'Enter') {
                                                 if (editingTag.title.trim()) {
                                                   setGlobalTags(globalTags.map(t =>
@@ -2092,6 +2094,7 @@ useLayoutEffect(() => {
                                         value={editingTag.title}
                                         onChange={e => setEditingTag({ ...editingTag, title: e.target.value })}
                                         onKeyDown={e => {
+                                          e.stopPropagation(); // Prevent node deletion
                                           if (e.key === 'Enter') {
                                             if (editingTag.title.trim()) {
                                               const newTag = {
@@ -2184,6 +2187,7 @@ useLayoutEffect(() => {
                                       onClick={e => e.stopPropagation()}
                                       onMouseDown={e => e.stopPropagation()}
                                       onFocus={e => e.stopPropagation()}
+                                      onKeyDown={e => e.stopPropagation()}
                                     >
                                       <option value="low">Low</option>
                                       <option value="medium">Medium</option>
@@ -2202,6 +2206,7 @@ useLayoutEffect(() => {
                                       onClick={e => e.stopPropagation()}
                                       onMouseDown={e => e.stopPropagation()}
                                       onFocus={e => e.stopPropagation()}
+                                      onKeyDown={e => e.stopPropagation()}
                                     >
                                       <option value="not-started">Not Started</option>
                                       <option value="in-progress">In Progress</option>
@@ -2221,6 +2226,7 @@ useLayoutEffect(() => {
                                       onClick={e => e.stopPropagation()}
                                       onMouseDown={e => e.stopPropagation()}
                                       onFocus={e => e.stopPropagation()}
+                                      onKeyDown={e => e.stopPropagation()}
                                     />
                                   </div>
                                 </div>
@@ -2344,6 +2350,7 @@ useLayoutEffect(() => {
                                   onMouseDown={e => e.stopPropagation()}
                                   onFocus={e => e.stopPropagation()}
                                   onSelect={e => e.stopPropagation()}
+                                  onKeyDown={e => e.stopPropagation()}
                                   autoFocus
                                 />
                                 <div className="max-h-48 overflow-y-auto flex flex-col gap-1">
@@ -2521,6 +2528,31 @@ useLayoutEffect(() => {
                       <div className="text-lg leading-none" style={{ fontSize: '18px' }}>{node.emoji}</div>
                     )}
                     
+                    {/* Tags display - show as colored rectangles */}
+                    {Array.isArray(node.tags) && node.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-1 justify-center max-w-full">
+                        {node.tags.map(tagId => {
+                          const tag = globalTags.find(t => t.id === tagId);
+                          if (!tag) return null;
+                          return (
+                            <div
+                              key={tagId}
+                              className="px-1.5 py-0.5 rounded text-xs font-medium truncate min-w-0 flex-shrink"
+                              style={{
+                                backgroundColor: tag.color,
+                                color: '#ffffff',
+                                fontSize: '10px',
+                                maxWidth: '60px'
+                              }}
+                              title={tag.title}
+                            >
+                              {tag.title || `Tag ${tagId}`}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    
                     {/* Node text with improved typography */}
                     {selectedNode === node.id && mode === 'cursor' ? (
                       editingNode === node.id ? (
@@ -2593,6 +2625,24 @@ useLayoutEffect(() => {
                         }}
                       >
                         {node.text}
+                      </div>
+                    )}
+
+                    {/* Note indicator */}
+                    {node.notes && node.notes.trim() && (
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center shadow-sm cursor-pointer hover:bg-blue-600 transition-colors z-10"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             wrappedSetNodes(nodes.map(n => 
+                               n.id === node.id ? { ...n, showNotesPopup: !n.showNotesPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
+                             ));
+                           }}
+                           title="View notes"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                        </svg>
                       </div>
                     )}
 
