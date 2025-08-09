@@ -240,13 +240,16 @@ const MindMap = ({ mapId, onBack }) => {
   useEffect(() => {
     const handleClickOutside = (e) => {
       // Add check if click target is inside any popup content
-      const isClickInsidePopupContent = e.target.closest('.node-popup');      if (nodes.some(node => node.showEmojiPopup || node.showBgColorPopup || node.showFontColorPopup || 
+      const isClickInsidePopupContent = e.target.closest('.node-popup');
+      const isClickInsideToolbarButton = e.target.closest('.node-toolbar-btn');
+      
+      if (nodes.some(node => node.showEmojiPopup || node.showBgColorPopup || node.showFontColorPopup || 
                          node.showAttachmentPopup || node.showNotesPopup || node.showDetailsPopup || 
                          node.showDatePopup || node.showCollaboratorPopup || node.showLayoutPopup || node.showTagsPopup)) {
         const isClickInsidePopup = e.target.closest('.node-popup');
         const isClickInsideButton = e.target.closest('.node-popup-button');
         
-        if (!isClickInsidePopup && !isClickInsideButton && !isClickInsidePopupContent) {
+        if (!isClickInsidePopup && !isClickInsideButton && !isClickInsidePopupContent && !isClickInsideToolbarButton) {
           setNodes(nodes.map(node => ({
             ...node,
             showEmojiPopup: false,
@@ -273,15 +276,23 @@ const MindMap = ({ mapId, onBack }) => {
   useEffect(() => {
     const handleClickOutside = (event) => {
       const popupElements = document.querySelectorAll('.node-popup');
+      const toolbarButtons = document.querySelectorAll('.node-toolbar-btn');
       let clickedInsidePopup = false;
+      let clickedInsideToolbarButton = false;
   
       popupElements.forEach(popup => {
         if (popup.contains(event.target)) {
           clickedInsidePopup = true;
         }
       });
+
+      toolbarButtons.forEach(button => {
+        if (button.contains(event.target)) {
+          clickedInsideToolbarButton = true;
+        }
+      });
   
-      if (!clickedInsidePopup) {        setNodes(nodes.map(node => ({
+      if (!clickedInsidePopup && !clickedInsideToolbarButton) {        setNodes(nodes.map(node => ({
           ...node,
           showEmojiPopup: false,
           showBgColorPopup: false,
