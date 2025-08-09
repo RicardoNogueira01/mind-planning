@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
-import { Link, Settings } from 'lucide-react';
+import { Link, Settings, Trash2 } from 'lucide-react';
 import MindMapManager from './MindMapManager';
 import RoundColorPicker from './RoundColorPicker';
 import MindMapToolbar from './mindmap/MindMapToolbar';
@@ -1087,6 +1087,9 @@ const handleNodeClick = (nodeId, e) => {
   };
 
   // First, modify how attachments are stored in the node. Instead of a single attachment,
+  // Simulated current user - in a real app this would come from auth context
+  const currentUser = 'Current User'; // This should be replaced with actual logged-in user info
+
   // we'll store an array of attachment objects
   const handleAttachment = (e, nodeId) => {
     if (e.target.files && e.target.files[0]) {
@@ -1095,7 +1098,7 @@ const handleNodeClick = (nodeId, e) => {
         id: Date.now(),
         name: file.name,
         dateAdded: new Date().toISOString(),
-        addedBy: 'Current User', // This should be replaced with actual user info
+        addedBy: currentUser, // Automatically use the current logged-in user
         type: file.name.split('.').pop().toLowerCase(),
       };
 
@@ -1110,17 +1113,8 @@ const handleNodeClick = (nodeId, e) => {
 
   // Add this state at component level
   const [attachmentFilters, setAttachmentFilters] = useState({
-    search: '',
-    fileType: '',
-    addedBy: ''
+    search: ''
   });
-
-  // Add this function to get unique users who added files
-  const getUniqueUsers = (attachments) => {
-    if (!attachments) return [];
-    const users = new Set(attachments.map(a => a.addedBy));
-    return Array.from(users);
-  };
 
   // Add near the other state declarations
   const [searchQuery, setSearchQuery] = useState('');
@@ -1756,98 +1750,94 @@ useLayoutEffect(() => {
                               </svg>
                             </button>
                             {node.showAttachmentPopup && (
-                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2">
+                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" style={{ minWidth: '450px', maxWidth: '500px' }} onClick={e => e.stopPropagation()}>
                                 <h4>Attachments</h4>
                                 
-                                {/* Filters */}
-                                <div className="mb-3 grid grid-cols-3 gap-2">
+                                {/* Search filter only */}
+                                <div className="mb-4">
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">Search by name</label>
                                   <input
                                     type="text"
                                     placeholder="Search by name..."
-                                    className="p-2 text-sm border rounded-md text-black"
+                                    className="w-full p-2 text-sm border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     value={attachmentFilters.search}
                                     onChange={(e) => setAttachmentFilters({
                                       ...attachmentFilters,
                                       search: e.target.value
                                     })}
+                                    onClick={e => e.stopPropagation()}
+                                    onMouseDown={e => e.stopPropagation()}
+                                    onFocus={e => e.stopPropagation()}
+                                    onKeyDown={e => e.stopPropagation()}
                                   />
-                                  <select 
-                                    className="p-2 text-sm border rounded-md text-black"
-                                    value={attachmentFilters.fileType}
-                                    onChange={(e) => setAttachmentFilters({
-                                      ...attachmentFilters,
-                                      fileType: e.target.value
-                                    })}
-                                  >
-                                    <option value="">All file types</option>
-                                    <option value="pdf">PDF</option>
-                                    <option value="doc">Word</option>
-                                    <option value="docx">Word</option>
-                                    <option value="xls">Excel</option>
-                                    <option value="xlsx">Excel</option>
-                                  </select>
-                                  <select 
-                                    className="p-2 text-sm border rounded-md text-black"
-                                    value={attachmentFilters.addedBy}
-                                    onChange={(e) => setAttachmentFilters({
-                                      ...attachmentFilters,
-                                      addedBy: e.target.value
-                                    })}
-                                  >
-                                    <option value="">All users</option>
-                                    {getUniqueUsers(node.attachments).map(user => (
-                                      <option key={user} value={user}>{user}</option>
-                                    ))}
-                                  </select>
                                 </div>
 
                                 {/* File uploader */}
-                                <input 
-                                  type="file" 
-                                  accept=".xlsx,.xls,.doc,.docx,.pdf"
-                                  className="text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 mb-3"
-                                  onChange={(e) => handleAttachment(e, node.id)}
-                                />
+                                <div className="mb-4">
+                                  <label className="block text-xs font-medium text-gray-700 mb-2">Add new file</label>
+                                  <input 
+                                    type="file" 
+                                    accept=".xlsx,.xls,.doc,.docx,.pdf"
+                                    className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-300 rounded-lg p-2"
+                                    onChange={(e) => handleAttachment(e, node.id)}
+                                    onClick={e => e.stopPropagation()}
+                                    onMouseDown={e => e.stopPropagation()}
+                                    onFocus={e => e.stopPropagation()}
+                                    onKeyDown={e => e.stopPropagation()}
+                                  />
+                                </div>
 
                                 {/* Attachment list */}
                                 <div className="max-h-64 overflow-y-auto">
                                   {node.attachments && node.attachments.length > 0 ? (
-                                    <div className="divide-y">
+                                    <div className="space-y-2">
                                       {node.attachments
                                         .filter(attachment => {
                                           const searchLower = attachmentFilters.search.toLowerCase();
                                           const nameLower = attachment.name.toLowerCase();
-                                          const addedByLower = attachment.addedBy.toLowerCase();
-
-                                          return (
-                                            (attachmentFilters.fileType === '' || attachment.type === attachmentFilters.fileType) &&
-                                            (attachmentFilters.addedBy === '' || attachment.addedBy === attachmentFilters.addedBy) &&
-                                            (nameLower.includes(searchLower) || addedByLower.includes(searchLower))
-                                          );
+                                          return nameLower.includes(searchLower);
                                         })
                                         .map(attachment => (
-                                          <div key={attachment.id} className="py-2 flex items-center justify-between">
-                                            <div className="flex items-center space-x-3">
-                                              <div className="text-gray-500">
-                                                {attachment.type === 'pdf' && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 0 0 2-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 00 2 2z" /></svg>}
-                                                {(attachment.type === 'doc' || attachment.type === 'docx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 01 2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
-                                                {(attachment.type === 'xls' || attachment.type === 'xlsx') && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24  24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 13v-1m4 1v-3m4 3V8M8 21l4-4 4 4M4 3h16a2 2 0 0 0 2 2v14a2 2 0 0 0-2 2H4a2 2 0 0 0-2-2z" /></svg>}
+                                          <div key={attachment.id} className="p-3 border border-gray-200 rounded-lg bg-gray-50 flex items-center justify-between hover:bg-gray-100 transition-colors">
+                                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                                              <div className="text-gray-500 flex-shrink-0">
+                                                {attachment.type === 'pdf' && (
+                                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 0 0 2-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 00 2 2z" />
+                                                  </svg>
+                                                )}
+                                                {(attachment.type === 'doc' || attachment.type === 'docx') && (
+                                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 01 2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                  </svg>
+                                                )}
+                                                {(attachment.type === 'xls' || attachment.type === 'xlsx') && (
+                                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h2a2 2 0 002-2z" />
+                                                  </svg>
+                                                )}
                                               </div>
-                                              <div className="flex flex-col">
-                                                <span className="text-sm font-medium text-black">{attachment.name}</span> {/* Attachment name */}
+                                              <div className="flex flex-col min-w-0 flex-1">
+                                                <span className="text-sm font-medium text-gray-900 truncate" title={attachment.name}>
+                                                  {attachment.name}
+                                                </span>
                                                 <span className="text-xs text-gray-500">
                                                   Added by {attachment.addedBy} on {new Date(attachment.dateAdded).toLocaleDateString()}
                                                 </span>
                                               </div>
                                             </div>
                                             <button 
-                                              className="text-red-500 hover:text-red-700 p-1"
-                                              onClick={() => wrappedSetNodes(nodes.map(n => 
-                                                n.id === node.id ? {
-                                                  ...n,
-                                                  attachments: n.attachments.filter(a => a.id !== attachment.id)
-                                                } : n
-                                              ))}
+                                              className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors flex-shrink-0 ml-2"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                wrappedSetNodes(nodes.map(n => 
+                                                  n.id === node.id ? {
+                                                    ...n,
+                                                    attachments: n.attachments.filter(a => a.id !== attachment.id)
+                                                  } : n
+                                                ));
+                                              }}
+                                              title="Remove attachment"
                                             >
                                               <Trash2 size={14} />
                                             </button>
@@ -1855,8 +1845,13 @@ useLayoutEffect(() => {
                                         ))}
                                     </div>
                                   ) : (
-                                    <div className="text-sm text-gray-500 text-center py-4">
-                                      No attachments yet
+                                    <div className="text-sm text-gray-500 text-center py-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto mb-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 0 0 2-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 00 2 2z" />
+                                      </svg>
+                                      Nenhum ficheiro selecionado.
+                                      <br />
+                                      <span className="text-xs">Use o campo acima para adicionar ficheiros.</span>
                                     </div>
                                   )}
                                 </div>
@@ -2630,7 +2625,8 @@ useLayoutEffect(() => {
 
                     {/* Note indicator */}
                     {node.notes && node.notes.trim() && (
-                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center shadow-sm cursor-pointer hover:bg-blue-600 transition-colors z-10"
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center shadow-sm cursor-pointer hover:bg-blue-600 transition-colors"
+                           style={{ zIndex: -1 }}
                            onClick={(e) => {
                              e.stopPropagation();
                              wrappedSetNodes(nodes.map(n => 
