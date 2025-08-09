@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
-import { Link } from 'lucide-react';
+import { Link, Settings } from 'lucide-react';
 import MindMapManager from './MindMapManager';
 import RoundColorPicker from './RoundColorPicker';
 import MindMapToolbar from './mindmap/MindMapToolbar';
@@ -42,6 +42,9 @@ const MindMap = ({ mapId, onBack }) => {
   const [zoom, setZoom] = useState(1);
   const [isPanning, setIsPanning] = useState(false);
   const lastMousePosRef = useRef({ x: 0, y: 0 });
+  
+  // Node toolbar expansion state
+  const [isToolbarExpanded, setIsToolbarExpanded] = useState(false);
   
     // Collaborator options
   const collaborators = [
@@ -1635,46 +1638,23 @@ useLayoutEffect(() => {
                         
                         {/* Visual Content Group */}
                         <div className="flex items-center gap-1">
-                          {/* Emoji Selector */}
+                          {/* Settings Button */}
                           <div className="relative">
                             <button
-                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md"
+                              className={`node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-300 hover:scale-105 hover:shadow-md transform ${isToolbarExpanded ? 'rotate-90' : ''}`}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                wrappedSetNodes(nodes.map(n => 
-                                  n.id === node.id ? { ...n, showEmojiPopup: !n.showEmojiPopup, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
-                                ));
+                                setIsToolbarExpanded(!isToolbarExpanded);
                               }}
-                              title="Add emoji or icon"
+                              title="Settings"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
-                                <line x1="9" y1="9" x2="9.01" y2="9"></line>
-                                <line x1="15" y1="9" x2="15.01" y2="9"></line>
-                              </svg>
+                              <Settings size={16} />
                             </button>
-                            {node.showEmojiPopup && (
-                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2">
-                                <h4>Select Emoji or Icon</h4>
-                                <div className="grid grid-cols-8 gap-3">
-                                  {['😊', '😂', '❤️', '👍', '🎉', '✅', '⭐', '🔥', '💡', '📌', '⚠️', '❓', '📝', '🔍', '🗓️', '📊'].map(emoji => (
-                                    <button 
-                                      key={emoji}
-                                      className="w-10 h-10 flex items-center justify-center text-xl"
-                                      onClick={() => {
-                                        wrappedSetNodes(nodes.map(n => 
-                                          n.id === node.id ? { ...n, emoji, showEmojiPopup: false } : n
-                                        ));
-                                      }}
-                                    >
-                                      {emoji}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
                           </div>
+                          
+                          {/* Show other buttons only when expanded */}
+                          {isToolbarExpanded && (
+                            <>
                           
                           {/* Background Color */}
                           <div className="relative">
@@ -1747,12 +1727,17 @@ useLayoutEffect(() => {
                               </div>
                             )}
                           </div>
+                            </>
+                          )}
                         </div>
                         
-                        {/* Divider */}
-                        <div className="w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
+                        {/* Divider - only show when expanded */}
+                        {isToolbarExpanded && (
+                          <div className="w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
+                        )}
                         
-                        {/* Content Management Group */}
+                        {/* Content Management Group - only show when expanded */}
+                        {isToolbarExpanded && (
                         <div className="flex items-center gap-1">
                           {/* Attachment */}
                           <div className="relative">
@@ -2140,11 +2125,15 @@ useLayoutEffect(() => {
                             )}
                           </div>
                         </div>
+                        )}
                         
-                        {/* Divider */}
-                        <div className="w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
+                        {/* Divider - only show when expanded */}
+                        {isToolbarExpanded && (
+                          <div className="w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
+                        )}
                         
-                        {/* Project Management Group */}
+                        {/* Project Management Group - only show when expanded */}
+                        {isToolbarExpanded && (
                         <div className="flex items-center gap-1">
                           {/* Details (Priority/Status) */}
                           <div className="relative">
@@ -2376,11 +2365,15 @@ useLayoutEffect(() => {
                             )}
                           </div>
                         </div>
+                        )}
                         
-                        {/* Divider */}
-                        <div className="w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
+                        {/* Divider - only show when expanded */}
+                        {isToolbarExpanded && (
+                          <div className="w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
+                        )}
                         
-                        {/* Action Group */}
+                        {/* Action Group - only show when expanded */}
+                        {isToolbarExpanded && (
                         <div className="flex items-center gap-1">
                           {/* Add Node */}
                           <button
@@ -2462,6 +2455,7 @@ useLayoutEffect(() => {
                             </button>
                           )}
                         </div>
+                        )}
                         
                       </div>
                     </div>
