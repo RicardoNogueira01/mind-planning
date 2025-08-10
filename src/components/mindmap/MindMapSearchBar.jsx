@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 const MindMapSearchBar = ({
   searchQuery,
@@ -18,6 +18,11 @@ const MindMapSearchBar = ({
       x: window.innerWidth/2 - node.x,
       y: window.innerHeight/2 - node.y
     });
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setShowSearchList(false);
   };
 
   const toggleSearch = () => {
@@ -57,7 +62,9 @@ const MindMapSearchBar = ({
           <input
             type="text"
             placeholder="Search nodes..."
-            className="w-full pl-10 pr-4 py-3 bg-white/95 backdrop-blur-lg shadow-xl border border-gray-200/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 text-gray-900 placeholder-gray-500 transition-all duration-200"
+            className={`w-full pl-10 py-3 bg-white/95 backdrop-blur-lg shadow-xl border border-gray-200/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 text-gray-900 placeholder-gray-500 transition-all duration-200 ${
+              searchQuery ? 'pr-10' : 'pr-4'
+            }`}
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -65,6 +72,16 @@ const MindMapSearchBar = ({
             }}
             onFocus={() => setShowSearchList(true)}
           />
+          {/* Clear button - only show when there's text */}
+          {searchQuery && (
+            <button
+              onClick={clearSearch}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center hover:bg-gray-100 rounded-r-2xl transition-colors duration-200"
+              title="Clear search"
+            >
+              <X size={16} className="text-gray-400 hover:text-gray-600" />
+            </button>
+          )}
         </div>
       </div>
       
