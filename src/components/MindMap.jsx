@@ -636,23 +636,74 @@ const getDescendantNodeIds = (parentId) => {
     ));
   };
 
-  // Calculate completion progress for parent nodes
+  // Calculate completion progress for parent nodes (recursive - includes all descendants)
   const getNodeProgress = (nodeId) => {
-    const childConnections = connections.filter(conn => conn.from === nodeId);
-    const childNodes = childConnections.map(conn => 
-      nodes.find(node => node.id === conn.to)
-    ).filter(Boolean);
+    // Recursive function to get all descendant nodes
+    const getAllDescendants = (parentId, visited = new Set()) => {
+      // Prevent infinite loops in case of circular references
+      if (visited.has(parentId)) {
+        return [];
+      }
+      visited.add(parentId);
+      
+      const directChildren = connections
+        .filter(conn => conn.from === parentId)
+        .map(conn => nodes.find(node => node.id === conn.to))
+        .filter(Boolean);
+      
+      let allDescendants = [...directChildren];
+      
+      // Recursively get descendants of each child
+      directChildren.forEach(child => {
+        const childDescendants = getAllDescendants(child.id, new Set(visited));
+        allDescendants = [...allDescendants, ...childDescendants];
+      });
+      
+      return allDescendants;
+    };
     
-    if (childNodes.length === 0) {
-      return null; // No children, no progress to show
+    const allDescendants = getAllDescendants(nodeId);
+    
+    if (allDescendants.length === 0) {
+      return null; // No descendants, no progress to show
     }
     
-    const completedChildren = childNodes.filter(child => child.completed).length;
+    // Remove duplicates (in case of complex graph structures)
+    const uniqueDescendants = allDescendants.filter((node, index, self) => 
+      index === self.findIndex(n => n.id === node.id)
+    );
+    
+    const completedDescendants = uniqueDescendants.filter(descendant => descendant.completed).length;
+    const totalDescendants = uniqueDescendants.length;
+    
     return {
-      completed: completedChildren,
-      total: childNodes.length,
-      percentage: Math.round((completedChildren / childNodes.length) * 100)
+      completed: completedDescendants,
+      total: totalDescendants,
+      percentage: Math.round((completedDescendants / totalDescendants) * 100),
+      depth: getMaxDepth(nodeId) // Optional: show how deep the hierarchy goes
     };
+  };
+
+  // Helper function to calculate the maximum depth of the node tree
+  const getMaxDepth = (nodeId, visited = new Set(), currentDepth = 0) => {
+    if (visited.has(nodeId)) {
+      return currentDepth;
+    }
+    visited.add(nodeId);
+    
+    const children = connections
+      .filter(conn => conn.from === nodeId)
+      .map(conn => conn.to);
+    
+    if (children.length === 0) {
+      return currentDepth;
+    }
+    
+    const childDepths = children.map(childId => 
+      getMaxDepth(childId, new Set(visited), currentDepth + 1)
+    );
+    
+    return Math.max(...childDepths);
   };
   
   // Add this state to track whether a node is in edit mode
@@ -2609,7 +2660,10 @@ useLayoutEffect(() => {
                       if (!progress || node.completed) return null; // Don't show progress if node itself is completed
                       
                       return (
-                        <div className="absolute top-1 left-1 flex items-center gap-1" title={`Progress: ${progress.completed}/${progress.total} tasks completed (${progress.percentage}%)`}>
+                        <div 
+                          className="absolute top-1 left-1 flex items-center gap-1" 
+                          title={`Total Progress: ${progress.completed}/${progress.total} tasks completed (${progress.percentage}%)${progress.depth > 0 ? ` - ${progress.depth + 1} levels deep` : ''}`}
+                        >
                           {/* Progress circle */}
                           <div className="relative w-6 h-6">
                             <svg className="w-6 h-6 transform -rotate-90" viewBox="0 0 24 24">
