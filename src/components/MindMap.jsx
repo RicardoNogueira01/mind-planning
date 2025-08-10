@@ -2599,23 +2599,24 @@ useLayoutEffect(() => {
                           value={node.text}
                           onChange={(e) => updateNodeText(node.id, e.target.value)}
                           placeholder="Please introduce your task"
-                          className="bg-transparent outline-none w-full text-center resize-none overflow-hidden font-medium leading-snug"
+                          className="bg-transparent outline-none w-full text-left resize-none overflow-hidden font-medium leading-snug"
                           style={{ 
                             color: node.fontColor || '#2d3748', 
                             fontSize: '14px',
                             fontWeight: '500',
-                            lineHeight: '1.3',
+                            lineHeight: '1.4',
                             whiteSpace: 'pre-wrap',
                             wordWrap: 'break-word',
                             overflowWrap: 'break-word',
                             wordBreak: 'break-word',
-                            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                            minHeight: '40px'
                           }}
                           onClick={(e) => e.stopPropagation()}
                           onFocus={(e) => {
                             setIsEditing(true);
                             e.target.style.height = 'auto';
-                            e.target.style.height = `${e.target.scrollHeight}px`;
+                            e.target.style.height = `${Math.max(40, e.target.scrollHeight)}px`;
                           }}
                           onBlur={() => {
                             setEditingNode(null);
@@ -2623,28 +2624,33 @@ useLayoutEffect(() => {
                           }}
                           onKeyDown={(e) => {
                             e.stopPropagation();
+                            // Allow Enter key to create new lines
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              // Don't prevent default, allow new line
+                            }
                           }}
                           autoFocus
-                          rows={1}
+                          rows={2}
                           onInput={(e) => {
                             e.target.style.height = 'auto';
-                            e.target.style.height = `${e.target.scrollHeight}px`;
+                            e.target.style.height = `${Math.max(40, e.target.scrollHeight)}px`;
                           }}
                         />
                       ) : (
                         <div 
-                          className="w-full text-center cursor-text font-medium leading-snug px-1"
+                          className="w-full text-left cursor-text font-medium leading-snug px-1"
                           style={{ 
                             color: node.text ? (node.fontColor || '#2d3748') : '#6b7280',
                             fontSize: '14px',
                             fontWeight: '500',
-                            lineHeight: '1.3',
+                            lineHeight: '1.4',
                             wordWrap: 'break-word',
                             overflowWrap: 'break-word',
                             wordBreak: 'break-word',
                             whiteSpace: 'pre-wrap',
                             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                            opacity: node.completed ? 0.7 : 1
+                            opacity: node.completed ? 0.7 : 1,
+                            minHeight: '20px'
                           }}
                         >
                           {node.text || 'Please introduce your task'}
@@ -2652,17 +2658,18 @@ useLayoutEffect(() => {
                       )
                     ) : (
                       <div 
-                        className="font-medium text-center leading-snug px-1"
+                        className="font-medium text-left leading-snug px-1"
                         style={{ 
                           color: node.text ? (node.fontColor || '#2d3748') : '#6b7280',
                           fontSize: '14px',
                           fontWeight: '500',
-                          lineHeight: '1.3',
+                          lineHeight: '1.4',
                           wordWrap: 'break-word',
                           overflowWrap: 'break-word',
                           wordBreak: 'break-word',
                           whiteSpace: 'pre-wrap',
-                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                          minHeight: '20px'
                         }}
                       >
                         {node.text || 'Please introduce your task'}
