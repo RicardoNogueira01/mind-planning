@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
-import { Link, Settings, Trash2, Check } from 'lucide-react';
+import { Link, Settings, Trash2, Check, Moon, Sun } from 'lucide-react';
 import MindMapManager from './MindMapManager';
 import RoundColorPicker from './RoundColorPicker';
 import MindMapToolbar from './mindmap/MindMapToolbar';
@@ -45,6 +45,9 @@ const MindMap = ({ mapId, onBack }) => {
   
   // Node toolbar expansion state
   const [isToolbarExpanded, setIsToolbarExpanded] = useState(false);
+  
+  // Dark mode state
+  const [isDarkMode, setIsDarkMode] = useState(false);
   
     // Collaborator options
   const collaborators = [
@@ -557,7 +560,7 @@ const getDescendantNodeIds = (parentId) => {
       text: '',
       x: x,
       y: y,
-      color: '#ffffff'
+      color: isDarkMode ? '#374151' : '#ffffff'
     };
     
     wrappedSetNodesAndConnections([...nodes, newNode], connections);
@@ -927,7 +930,7 @@ const handleNodeClick = (nodeId, e) => {
           >
             <polygon
               points="0 0, 10 3.5, 0 7"
-              fill="#64748B"
+              fill={isDarkMode ? "#9ca3af" : "#64748B"}
               opacity="0.6"
             />
           </marker>
@@ -1025,7 +1028,7 @@ const handleNodeClick = (nodeId, e) => {
               {/* Main connection path with smooth transitions */}
               <path
                 d={pathData}
-                stroke="#64748B"
+                stroke={isDarkMode ? "#9ca3af" : "#64748B"}
                 strokeWidth={2}
                 fill="none"
                 strokeOpacity={0.8}
@@ -1477,7 +1480,9 @@ useLayoutEffect(() => {
 
   return (
     <div 
-      className="relative w-full h-screen bg-gray-50 overflow-hidden" 
+      className={`relative w-full h-screen overflow-hidden transition-colors duration-300 ${
+        isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
+      }`} 
       ref={canvasRef}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) {
@@ -1562,6 +1567,23 @@ useLayoutEffect(() => {
             setSelectedNode={setSelectedNode}
             setPan={setPan}
           />
+
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            className={`fixed top-4 right-4 z-50 p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl ${
+              isDarkMode 
+                ? 'bg-gray-800 text-yellow-300 hover:bg-gray-700' 
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {isDarkMode ? (
+              <Sun size={20} />
+            ) : (
+              <Moon size={20} />
+            )}
+          </button>
                  
           {/* Wrapper for panned and zoomed content */}
           <MindMapCanvas
@@ -2601,7 +2623,7 @@ useLayoutEffect(() => {
                           placeholder="Please introduce your task"
                           className="bg-transparent outline-none w-full text-left resize-none overflow-hidden font-medium leading-snug"
                           style={{ 
-                            color: node.fontColor || '#2d3748', 
+                            color: node.text ? (node.fontColor || (isDarkMode ? '#f3f4f6' : '#2d3748')) : (isDarkMode ? '#9ca3af' : '#6b7280'),
                             fontSize: '14px',
                             fontWeight: '500',
                             lineHeight: '1.4',
@@ -2640,7 +2662,7 @@ useLayoutEffect(() => {
                         <div 
                           className="w-full text-left cursor-text font-medium leading-snug px-1"
                           style={{ 
-                            color: node.text ? (node.fontColor || '#2d3748') : '#6b7280',
+                            color: node.text ? (node.fontColor || (isDarkMode ? '#f3f4f6' : '#2d3748')) : (isDarkMode ? '#9ca3af' : '#6b7280'),
                             fontSize: '14px',
                             fontWeight: '500',
                             lineHeight: '1.4',
@@ -2660,7 +2682,7 @@ useLayoutEffect(() => {
                       <div 
                         className="font-medium text-left leading-snug px-1"
                         style={{ 
-                          color: node.text ? (node.fontColor || '#2d3748') : '#6b7280',
+                          color: node.text ? (node.fontColor || (isDarkMode ? '#f3f4f6' : '#2d3748')) : (isDarkMode ? '#9ca3af' : '#6b7280'),
                           fontSize: '14px',
                           fontWeight: '500',
                           lineHeight: '1.4',
