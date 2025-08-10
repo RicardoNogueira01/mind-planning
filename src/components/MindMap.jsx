@@ -554,7 +554,7 @@ const getDescendantNodeIds = (parentId) => {
     const newId = `node-${Date.now()}`;
     const newNode = {
       id: newId,
-      text: 'New Idea',
+      text: '',
       x: x,
       y: y,
       color: '#ffffff'
@@ -596,7 +596,7 @@ const getDescendantNodeIds = (parentId) => {
 
     const newNode = {
       id: newId,
-      text: 'New Idea',
+      text: '',
       x: newX,
       y: newY,
       color: parent.color
@@ -2598,6 +2598,7 @@ useLayoutEffect(() => {
                         <textarea
                           value={node.text}
                           onChange={(e) => updateNodeText(node.id, e.target.value)}
+                          placeholder="Please introduce your task"
                           className="bg-transparent outline-none w-full text-center resize-none overflow-hidden font-medium leading-snug"
                           style={{ 
                             color: node.fontColor || '#2d3748', 
@@ -2634,7 +2635,7 @@ useLayoutEffect(() => {
                         <div 
                           className="w-full text-center cursor-text font-medium leading-snug px-1"
                           style={{ 
-                            color: node.fontColor || '#2d3748',
+                            color: node.text ? (node.fontColor || '#2d3748') : '#6b7280',
                             fontSize: '14px',
                             fontWeight: '500',
                             lineHeight: '1.3',
@@ -2646,14 +2647,14 @@ useLayoutEffect(() => {
                             opacity: node.completed ? 0.7 : 1
                           }}
                         >
-                          {node.text}
+                          {node.text || 'Please introduce your task'}
                         </div>
                       )
                     ) : (
                       <div 
                         className="font-medium text-center leading-snug px-1"
                         style={{ 
-                          color: node.fontColor || '#2d3748',
+                          color: node.text ? (node.fontColor || '#2d3748') : '#6b7280',
                           fontSize: '14px',
                           fontWeight: '500',
                           lineHeight: '1.3',
@@ -2664,7 +2665,7 @@ useLayoutEffect(() => {
                           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
                         }}
                       >
-                        {node.text}
+                        {node.text || 'Please introduce your task'}
                       </div>
                     )}
 
