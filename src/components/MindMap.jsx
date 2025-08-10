@@ -635,6 +635,25 @@ const getDescendantNodeIds = (parentId) => {
       node.id === nodeId ? { ...node, completed: !node.completed } : node
     ));
   };
+
+  // Calculate completion progress for parent nodes
+  const getNodeProgress = (nodeId) => {
+    const childConnections = connections.filter(conn => conn.from === nodeId);
+    const childNodes = childConnections.map(conn => 
+      nodes.find(node => node.id === conn.to)
+    ).filter(Boolean);
+    
+    if (childNodes.length === 0) {
+      return null; // No children, no progress to show
+    }
+    
+    const completedChildren = childNodes.filter(child => child.completed).length;
+    return {
+      completed: completedChildren,
+      total: childNodes.length,
+      percentage: Math.round((completedChildren / childNodes.length) * 100)
+    };
+  };
   
   // Add this state to track whether a node is in edit mode
   const [editingNode, setEditingNode] = useState(null);
@@ -1684,7 +1703,7 @@ useLayoutEffect(() => {
                             }}
                             title={node.completed ? "Mark as incomplete" : "Mark as completed"}
                           >
-                            <Check size={16} />
+                            <Check size={20} />
                           </button>
                           
                           {/* Settings Button */}
@@ -2579,10 +2598,53 @@ useLayoutEffect(() => {
                   <div className={`flex flex-col items-center justify-center gap-2 h-full min-h-[48px] ${node.completed ? 'opacity-75' : ''}`}>
                     {/* Completion indicator */}
                     {node.completed && (
-                      <div className="absolute top-1 right-1 w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
-                        <Check size={8} className="text-white" />
+                      <div className="absolute top-1 right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                        <Check size={12} className="text-white" />
                       </div>
                     )}
+                    
+                    {/* Progress indicator for parent nodes */}
+                    {(() => {
+                      const progress = getNodeProgress(node.id);
+                      if (!progress || node.completed) return null; // Don't show progress if node itself is completed
+                      
+                      return (
+                        <div className="absolute top-1 left-1 flex items-center gap-1" title={`Progress: ${progress.completed}/${progress.total} tasks completed (${progress.percentage}%)`}>
+                          {/* Progress circle */}
+                          <div className="relative w-6 h-6">
+                            <svg className="w-6 h-6 transform -rotate-90" viewBox="0 0 24 24">
+                              {/* Background circle */}
+                              <circle
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke={isDarkMode ? '#374151' : '#e5e7eb'}
+                                strokeWidth="3"
+                                fill="transparent"
+                              />
+                              {/* Progress circle */}
+                              <circle
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke={progress.percentage === 100 ? '#10b981' : '#3b82f6'}
+                                strokeWidth="3"
+                                fill="transparent"
+                                strokeDasharray={`${2 * Math.PI * 10}`}
+                                strokeDashoffset={`${2 * Math.PI * 10 * (1 - progress.percentage / 100)}`}
+                                className="transition-all duration-300"
+                              />
+                            </svg>
+                            {/* Progress text */}
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className={`text-xs font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                                {progress.completed}/{progress.total}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                     
                     {/* Display emoji if present */}
                     {node.emoji && (
