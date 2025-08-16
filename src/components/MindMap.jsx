@@ -37,6 +37,21 @@ const MindMap = ({ mapId, onBack }) => {
   const [draggingNodeId, setDraggingNodeId] = useState(null);
   const dragFrameRef = useRef(null);
   
+  // Shapes panel state
+  const [isDraggingShape, setIsDraggingShape] = useState(false);
+  const [draggedShapeType, setDraggedShapeType] = useState(null);
+  const [shapes, setShapes] = useState([]);
+
+  // Shape definitions with different colors
+  const shapeDefinitions = [
+    { type: 'circle', name: 'Circle', color: '#3B82F6', icon: '○' },
+    { type: 'hexagon', name: 'Hexagon', color: '#10B981', icon: '⬢' },
+    { type: 'rhombus', name: 'Rhombus', color: '#F59E0B', icon: '♦' },
+    { type: 'pentagon', name: 'Pentagon', color: '#EF4444', icon: '⬟' },
+    { type: 'ellipse', name: 'Ellipse', color: '#8B5CF6', icon: '⬮' },
+    { type: 'connector', name: 'Connector', color: '#6B7280', icon: '→' }
+  ];
+  
   // Canvas pan and zoom state
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -136,6 +151,192 @@ const MindMap = ({ mapId, onBack }) => {
     
     // Remove tag from global tags
     setGlobalTags(globalTags.filter(tag => tag.id !== tagId));
+  };
+
+  // Shape handling functions
+  const handleShapeDragStart = (e, shapeType) => {
+    console.log('Starting drag for shape:', shapeType);
+    e.dataTransfer.setData('text/plain', shapeType);
+    e.dataTransfer.effectAllowed = 'copy';
+    setIsDraggingShape(true);
+    setDraggedShapeType(shapeType);
+  };
+
+  const handleShapeDrop = (e) => {
+    e.preventDefault();
+    
+    const shapeType = e.dataTransfer.getData('text/plain');
+    if (!shapeType) {
+      console.log('Drop rejected: no shape type in data transfer');
+      return;
+    }
+    
+    console.log('Shape drop detected:', shapeType);
+    
+    // Calculate coordinates relative to the canvas
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left - pan.x) / zoom;
+    const y = (e.clientY - rect.top - pan.y) / zoom;
+    
+    console.log('Drop coordinates:', { x, y, pan, zoom });
+    
+    const shapeDefinition = shapeDefinitions.find(s => s.type === shapeType);
+    if (!shapeDefinition) {
+      console.log('Shape definition not found for type:', shapeType);
+      return;
+    }
+    
+    // Create a new node with the shape properties
+    const newNode = {
+      id: `node-${Date.now()}`,
+      text: shapeDefinition.name,
+      x: x,
+      y: y,
+      type: 'shape',
+      shapeType: shapeType,
+      backgroundColor: shapeDefinition.color,
+      fontColor: '#ffffff',
+      completed: false,
+      children: [],
+      level: 0,
+      width: 120,
+      height: 80
+    };
+    
+    console.log('Creating new shape node:', newNode);
+    
+    // Add the new node to the nodes array
+    setNodes(prevNodes => {
+      const newNodes = [...prevNodes, newNode];
+      console.log('Updated nodes array with shape:', newNodes);
+      return newNodes;
+    });
+    
+    setIsDraggingShape(false);
+    setDraggedShapeType(null);
+  };
+
+  const handleShapeDragOver = (e) => {
+    if (isDraggingShape) {
+      e.preventDefault(); // This is crucial for allowing drop
+      e.dataTransfer.dropEffect = "copy";
+    }
+  };
+
+  const renderShape = (shape) => {
+    console.log('Rendering shape:', shape);
+    if (!shape || !shape.type) return null;
+    
+    const { type, x, y, width, height, color, id } = shape;
+    
+    try {
+      switch (type) {
+        case 'circle':
+          return (
+            <circle
+              key={id}
+              cx={x + width/2}
+              cy={y + height/2}
+              r={width/2}
+              fill={color}
+              stroke="#fff"
+              strokeWidth="2"
+              className="cursor-move"
+            />
+          );
+        case 'hexagon':
+          const hexPoints = [
+            [x + width/2, y],
+            [x + width*0.87, y + height*0.25],
+            [x + width*0.87, y + height*0.75],
+            [x + width/2, y + height],
+            [x + width*0.13, y + height*0.75],
+            [x + width*0.13, y + height*0.25]
+          ].map(point => point.join(',')).join(' ');
+          return (
+            <polygon
+              key={id}
+              points={hexPoints}
+              fill={color}
+              stroke="#fff"
+              strokeWidth="2"
+              className="cursor-move"
+            />
+          );
+        case 'rhombus':
+          const rhombusPoints = [
+            [x + width/2, y],
+            [x + width, y + height/2],
+            [x + width/2, y + height],
+            [x, y + height/2]
+          ].map(point => point.join(',')).join(' ');
+          return (
+            <polygon
+              key={id}
+              points={rhombusPoints}
+              fill={color}
+              stroke="#fff"
+              strokeWidth="2"
+              className="cursor-move"
+            />
+          );
+        case 'pentagon':
+          const pentagonPoints = [
+            [x + width/2, y],
+            [x + width*0.95, y + height*0.35],
+            [x + width*0.79, y + height],
+            [x + width*0.21, y + height],
+            [x + width*0.05, y + height*0.35]
+          ].map(point => point.join(',')).join(' ');
+          return (
+            <polygon
+              key={id}
+              points={pentagonPoints}
+              fill={color}
+              stroke="#fff"
+              strokeWidth="2"
+              className="cursor-move"
+            />
+          );
+        case 'ellipse':
+          return (
+            <ellipse
+              key={id}
+              cx={x + width/2}
+              cy={y + height/2}
+              rx={width/2}
+              ry={height/3}
+              fill={color}
+              stroke="#fff"
+              strokeWidth="2"
+              className="cursor-move"
+            />
+          );
+        case 'connector':
+          return (
+            <g key={id}>
+              <line
+                x1={x}
+                y1={y + height/2}
+                x2={x + width}
+                y2={y + height/2}
+                stroke={color}
+                strokeWidth="3"
+                className="cursor-move"
+              />
+              <polygon
+                points={`${x + width},${y + height/2 - 5} ${x + width + 8},${y + height/2} ${x + width},${y + height/2 + 5}`}
+                fill={color}
+              />
+            </g>
+          );
+        default:
+          return null;
+      }
+    } catch (error) {
+      console.error('Error rendering shape:', error);
+      return null;
+    }
   };  // Load existing mind map data when mapId is provided
   useEffect(() => {
     if (mapId) {
@@ -1612,22 +1813,26 @@ useLayoutEffect(() => {
 }, [nodes, pan, zoom]); // Include pan and zoom as dependencies since they affect measurements
 
   return (
-    <div 
-      className={`relative w-full h-screen overflow-hidden transition-colors duration-300 ${
-        isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
-      }`} 
-      ref={canvasRef}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) {
-          if (mode === 'cursor' && selectionType === 'collaborator') {
-            startSelection(e);
-          } else {
-            setSelectedNode(null);
-            setSelectedNodes([]);
-            startPanning(e);
+    <div className={`flex w-full h-screen overflow-hidden transition-colors duration-300 ${
+      isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
+    }`}>
+      {/* Main Canvas Area */}
+      <div 
+        className="flex-1 relative overflow-hidden"
+        ref={canvasRef}
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) {
+            if (mode === 'cursor' && selectionType === 'collaborator') {
+              startSelection(e);
+            } else {
+              setSelectedNode(null);
+              setSelectedNodes([]);
+              startPanning(e);
+            }
           }
-        }
-      }}
+        }}
+        onDrop={handleShapeDrop}
+        onDragOver={handleShapeDragOver}
       onMouseMove={(e) => {
         if (isSelecting) {
           updateSelection(e);
@@ -1739,21 +1944,82 @@ useLayoutEffect(() => {
               const baseFactor = hasLongWords ? 10 : 12; // Reduce width multiplier for long words
               const nodeWidth = Math.min(400, Math.max(200, textLength * baseFactor));
 
+              // Define shape-specific styles
+              const getShapeStyles = (shapeType) => {
+                const baseColor = node.backgroundColor || node.color || (isDarkMode ? '#374151' : '#ffffff');
+                
+                switch (shapeType) {
+                  case 'circle':
+                    return {
+                      borderRadius: '50%',
+                      width: 120,
+                      height: 120,
+                      clipPath: 'none'
+                    };
+                  case 'hexagon':
+                    return {
+                      borderRadius: '8px',
+                      clipPath: 'polygon(50% 0%, 93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%)',
+                      width: 120,
+                      height: 120
+                    };
+                  case 'rhombus':
+                    return {
+                      borderRadius: '4px',
+                      clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+                      width: 120,
+                      height: 120
+                    };
+                  case 'pentagon':
+                    return {
+                      borderRadius: '8px',
+                      clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
+                      width: 120,
+                      height: 120
+                    };
+                  case 'ellipse':
+                    return {
+                      borderRadius: '50%',
+                      width: 160,
+                      height: 100,
+                      clipPath: 'none'
+                    };
+                  case 'connector':
+                    return {
+                      borderRadius: '40px',
+                      width: 200,
+                      height: 80,
+                      clipPath: 'none'
+                    };
+                  default:
+                    return {
+                      borderRadius: '16px',
+                      width: nodeWidth,
+                      height: 'auto',
+                      clipPath: 'none'
+                    };
+                }
+              };
+
+              const shapeStyles = node.shapeType ? getShapeStyles(node.shapeType) : getShapeStyles('default');
+              const displayWidth = shapeStyles.width || nodeWidth;
+
               return (
                 <div
                   key={node.id}
                   data-node-id={node.id}
                   ref={el => { nodeRefs.current[node.id] = el; }}
-                  className={`absolute rounded-2xl shadow-lg cursor-move node node-text-wrap backdrop-blur-sm
+                  className={`absolute shadow-lg cursor-move node node-text-wrap backdrop-blur-sm
                     ${selectedNodes.includes(node.id) ? 'ring-2 ring-blue-500/80 ring-offset-2 ring-offset-white/50' : ''}
                     ${draggingNodeId === node.id ? 'dragging' : ''}
                     ${node.completed ? 'border-2 border-green-400/60 bg-green-50/40' : 'border border-gray-200/60'}`}
                   style={{
-                    left: node.x - nodeWidth / 2, // Center the node horizontally
-                    top: node.y - 40, // Adjust vertical position for larger height
-                    width: nodeWidth,
-                    minHeight: 80, // Increased minimum height for better proportion
-                    background: `linear-gradient(135deg, ${node.color || (isDarkMode ? '#374151' : '#ffffff')} 0%, ${adjustBrightness(node.color || (isDarkMode ? '#374151' : '#ffffff'), -3)} 100%)`,
+                    left: node.x - displayWidth / 2, // Center the node horizontally
+                    top: node.y - (shapeStyles.height === 'auto' ? 40 : shapeStyles.height / 2), // Adjust vertical position
+                    width: shapeStyles.width,
+                    height: shapeStyles.height,
+                    minHeight: shapeStyles.height === 'auto' ? 80 : shapeStyles.height,
+                    background: `linear-gradient(135deg, ${node.backgroundColor || node.color || (isDarkMode ? '#374151' : '#ffffff')} 0%, ${adjustBrightness(node.backgroundColor || node.color || (isDarkMode ? '#374151' : '#ffffff'), -3)} 100%)`,
                     boxShadow: selectedNode === node.id 
                       ? `0 20px 40px ${isDarkMode ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.15)'}, 0 0 0 1px rgba(59, 130, 246, 0.5)`
                       : `0 10px 25px ${isDarkMode ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.08)'}`,
@@ -1763,6 +2029,11 @@ useLayoutEffect(() => {
                     position: 'relative',
                     padding: '18px 22px',
                     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    borderRadius: shapeStyles.borderRadius,
+                    clipPath: shapeStyles.clipPath,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}
                   onClick={(e) => handleNodeClick(node.id, e)}
                   onMouseDown={(e) => {
@@ -1978,7 +2249,7 @@ useLayoutEffect(() => {
                                   <input
                                     type="text"
                                     placeholder="Search by name..."
-                                    className="w-full p-2 text-sm border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full p-2 text-sm border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left"
                                     value={attachmentFilters.search}
                                     onChange={(e) => setAttachmentFilters({
                                       ...attachmentFilters,
@@ -2102,7 +2373,7 @@ useLayoutEffect(() => {
                               <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={stopClickPropagation}>
                                 <h4>Notes</h4>
                                 <textarea
-                                  className="w-full p-3 border border-gray-300 rounded-lg text-sm h-32 resize-none text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  className="w-full p-3 border border-gray-300 rounded-lg text-sm h-32 resize-none text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left"
                                   placeholder="Add notes about this node..."
                                   value={node.notes || ''}
                                   onChange={(e) => wrappedSetNodes(nodes.map(n => 
@@ -2193,7 +2464,7 @@ useLayoutEffect(() => {
                                           {/* Title input for editing */}
                                           <input
                                             type="text"
-                                            className="flex-1 px-2 py-1 text-sm border rounded text-black"
+                                            className="flex-1 px-2 py-1 text-sm border rounded text-black text-left"
                                             value={editingTag.title}
                                             onChange={e => setEditingTag({ ...editingTag, title: e.target.value })}
                                             onKeyDown={e => {
@@ -2304,7 +2575,7 @@ useLayoutEffect(() => {
                                       {/* Title input for new tag */}
                                       <input
                                         type="text"
-                                        className="flex-1 px-2 py-1 text-sm border rounded text-black"
+                                        className="flex-1 px-2 py-1 text-sm border rounded text-black text-left"
                                         value={editingTag.title}
                                         onChange={e => setEditingTag({ ...editingTag, title: e.target.value })}
                                         onKeyDown={e => {
@@ -2431,7 +2702,7 @@ useLayoutEffect(() => {
                                   <div>
                                     <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
                                     <textarea
-                                      className="w-full p-2 border rounded-md text-sm h-24 resize-none text-black"
+                                      className="w-full p-2 border rounded-md text-sm h-24 resize-none text-black text-left"
                                       placeholder="Additional details..."
                                       value={node.description || ''}
                                       onChange={(e) => wrappedSetNodes(nodes.map(n => 
@@ -2483,7 +2754,7 @@ useLayoutEffect(() => {
                                 <div>
                                   <input
                                     type="date"
-                                    className="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left"
                                     value={node.dueDate || ''}
                                     onChange={(e) => wrappedSetNodes(nodes.map(n => 
                                       n.id === node.id ? { ...n, dueDate: e.target.value } : n
@@ -2554,7 +2825,7 @@ useLayoutEffect(() => {
                                 <h4 className="text-sm font-semibold text-gray-900 mb-3">Assign Collaborators</h4>
                                 <input
                                   type="text"
-                                  className="w-full p-2 mb-3 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  className="w-full p-2 mb-3 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left"
                                   placeholder="Search collaborators..."
                                   value={node.collaboratorSearch || ''}
                                   onChange={e => wrappedSetNodes(nodes.map(n =>
@@ -2939,6 +3210,33 @@ useLayoutEffect(() => {
           />
         </>
       )}
+      
+      </div>
+
+      {/* Shapes Panel */}
+      <div className={`w-20 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg border-l ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex flex-col items-center py-4 gap-3`}>
+        <h3 className={`text-xs font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-2 transform rotate-90 whitespace-nowrap`}>
+          Shapes
+        </h3>
+        
+        {shapeDefinitions.map((shapeDef) => (
+          <div
+            key={shapeDef.type}
+            className={`w-14 h-14 rounded-lg border-2 cursor-grab active:cursor-grabbing transition-all duration-200 hover:scale-105 hover:shadow-md flex items-center justify-center`}
+            style={{ 
+              backgroundColor: shapeDef.color,
+              borderColor: isDarkMode ? '#374151' : '#e5e7eb'
+            }}
+            draggable={true}
+            onDragStart={(e) => handleShapeDragStart(e, shapeDef.type)}
+            title={shapeDef.name}
+          >
+            <span className="text-white text-xl font-bold select-none">
+              {shapeDef.icon}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
