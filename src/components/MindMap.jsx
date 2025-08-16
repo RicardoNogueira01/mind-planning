@@ -41,6 +41,11 @@ const MindMap = ({ mapId, onBack }) => {
   const [isDraggingShape, setIsDraggingShape] = useState(false);
   const [draggedShapeType, setDraggedShapeType] = useState(null);
   const [shapes, setShapes] = useState([]);
+  
+  // Connection state
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionStart, setConnectionStart] = useState(null);
+  const [tempConnection, setTempConnection] = useState(null);
 
   // Shape definitions with different colors
   const shapeDefinitions = [
@@ -189,7 +194,7 @@ const MindMap = ({ mapId, onBack }) => {
     // Create a new node with the shape properties
     const newNode = {
       id: `node-${Date.now()}`,
-      text: shapeDefinition.name,
+      text: `${shapeDefinition.name} Node`, // More descriptive initial text
       x: x,
       y: y,
       type: 'shape',
@@ -200,7 +205,9 @@ const MindMap = ({ mapId, onBack }) => {
       children: [],
       level: 0,
       width: 120,
-      height: 80
+      height: 80,
+      notes: '', // Add notes field
+      tags: [] // Add tags field
     };
     
     console.log('Creating new shape node:', newNode);
@@ -221,6 +228,57 @@ const MindMap = ({ mapId, onBack }) => {
       e.preventDefault(); // This is crucial for allowing drop
       e.dataTransfer.dropEffect = "copy";
     }
+  };
+
+  // Connection handling functions
+  const startConnection = (nodeId, event) => {
+    event.stopPropagation();
+    setIsConnecting(true);
+    setConnectionStart(nodeId);
+    
+    const startNode = nodes.find(n => n.id === nodeId);
+    if (startNode) {
+      setTempConnection({
+        start: { x: startNode.x, y: startNode.y },
+        end: { x: event.clientX, y: event.clientY }
+      });
+    }
+  };
+
+  const updateTempConnection = (event) => {
+    if (isConnecting && connectionStart && tempConnection) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      const x = (event.clientX - rect.left - pan.x) / zoom;
+      const y = (event.clientY - rect.top - pan.y) / zoom;
+      
+      setTempConnection(prev => ({
+        ...prev,
+        end: { x, y }
+      }));
+    }
+  };
+
+  const finishConnection = (targetNodeId) => {
+    if (isConnecting && connectionStart && targetNodeId !== connectionStart) {
+      const newConnection = {
+        id: `connection-${Date.now()}`,
+        start: connectionStart,
+        end: targetNodeId,
+        type: 'connector'
+      };
+      
+      setConnections(prev => [...prev, newConnection]);
+    }
+    
+    setIsConnecting(false);
+    setConnectionStart(null);
+    setTempConnection(null);
+  };
+
+  const cancelConnection = () => {
+    setIsConnecting(false);
+    setConnectionStart(null);
+    setTempConnection(null);
   };
 
   const renderShape = (shape) => {
@@ -2207,6 +2265,31 @@ useLayoutEffect(() => {
                               </div>
                             )}
                           </div>
+                          
+                          {/* Connection Button - Only for connector shapes */}
+                          {node.shapeType === 'connector' && (
+                            <button
+                              className={`node-toolbar-btn p-2 rounded-xl transition-colors duration-200 border ${
+                                isConnecting && connectionStart === node.id 
+                                  ? 'bg-blue-100 text-blue-700 border-blue-300' 
+                                  : 'hover:bg-blue-100 text-blue-700 border-blue-200 hover:border-blue-300'
+                              }`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isConnecting && connectionStart === node.id) {
+                                  cancelConnection();
+                                } else {
+                                  startConnection(node.id, e);
+                                }
+                              }}
+                              title={isConnecting && connectionStart === node.id ? "Cancel connection" : "Start connection"}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                              </svg>
+                            </button>
+                          )}
                             </>
                           )}
                         </div>
@@ -3197,6 +3280,52 @@ useLayoutEffect(() => {
                 </div>
               );
             })}
+            
+            {/* Connection lines overlay */}
+            <svg className="absolute inset-0 pointer-events-none" style={{ width: '100%', height: '100%', zIndex: 1 }}>
+              <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7" fill="#3B82F6" />
+                </marker>
+              </defs>
+              
+              {/* Render permanent connections */}
+              {connections.map(connection => {
+                const startNode = nodes.find(n => n.id === connection.start);
+                const endNode = nodes.find(n => n.id === connection.end);
+                
+                if (!startNode || !endNode) return null;
+                
+                return (
+                  <line
+                    key={connection.id}
+                    x1={startNode.x}
+                    y1={startNode.y}
+                    x2={endNode.x}
+                    y2={endNode.y}
+                    stroke="#3B82F6"
+                    strokeWidth="2"
+                    strokeDasharray="5,5"
+                    markerEnd="url(#arrowhead)"
+                  />
+                );
+              })}
+              
+              {/* Render temporary connection line */}
+              {tempConnection && (
+                <line
+                  x1={tempConnection.start.x}
+                  y1={tempConnection.start.y}
+                  x2={tempConnection.end.x}
+                  y2={tempConnection.end.y}
+                  stroke="#3B82F6"
+                  strokeWidth="2"
+                  strokeDasharray="3,3"
+                  opacity="0.7"
+                  markerEnd="url(#arrowhead)"
+                />
+              )}
+            </svg>
           </MindMapCanvas>
           
           {/* Collaborator selection dialog */}
