@@ -1681,24 +1681,25 @@ useLayoutEffect(() => {
                   key={node.id}
                   data-node-id={node.id}
                   ref={el => { nodeRefs.current[node.id] = el; }}
-                  className={`absolute rounded-xl shadow-lg cursor-move node node-text-wrap transition-all duration-200 ease-out hover:shadow-xl
-                    ${selectedNodes.includes(node.id) ? 'ring-2 ring-blue-500 ring-opacity-60' : ''}
-                    ${draggingNodeId === node.id ? 'dragging' : ''}
-                    ${node.completed ? 'border-2 border-green-400 bg-green-50/30' : ''}`}
+                  className={`absolute rounded-2xl shadow-lg cursor-move node node-text-wrap transition-all duration-300 ease-out hover:shadow-2xl backdrop-blur-sm
+                    ${selectedNodes.includes(node.id) ? 'ring-2 ring-blue-500/80 ring-offset-2 ring-offset-white/50' : ''}
+                    ${draggingNodeId === node.id ? 'dragging scale-105' : 'hover:scale-[1.02]'}
+                    ${node.completed ? 'border-2 border-green-400/60 bg-green-50/40' : 'border border-gray-200/60'}`}
                   style={{
                     left: node.x - nodeWidth / 2, // Center the node horizontally
                     top: node.y - 40, // Adjust vertical position for larger height
                     width: nodeWidth,
                     minHeight: 80, // Increased minimum height for better proportion
-                    background: `linear-gradient(135deg, ${node.color || '#ffffff'} 0%, ${adjustBrightness(node.color || '#ffffff', -5)} 100%)`,
-                    border: `2px solid ${adjustBrightness(node.color || '#ffffff', -15)}`,
+                    background: `linear-gradient(135deg, ${node.color || (isDarkMode ? '#374151' : '#ffffff')} 0%, ${adjustBrightness(node.color || (isDarkMode ? '#374151' : '#ffffff'), -3)} 100%)`,
+                    boxShadow: selectedNode === node.id 
+                      ? `0 20px 40px ${isDarkMode ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.15)'}, 0 0 0 1px rgba(59, 130, 246, 0.5)`
+                      : `0 10px 25px ${isDarkMode ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.08)'}`,
                     zIndex: selectedNode === node.id ? 50 : (searchQuery ? (isNodeMatching ? 20 : 10) : 10),
                     textAlign: 'center',
                     opacity: searchQuery ? (isNodeMatching ? 1 : 0.3) : 1,
                     position: 'relative',
-                    padding: '16px 20px',
+                    padding: '18px 22px',
                     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    transform: selectedNodes.includes(node.id) && draggingNodeId !== node.id ? 'translateY(-2px)' : 'translateY(0)',
                   }}
                   onClick={(e) => handleNodeClick(node.id, e)}
                   onMouseDown={(e) => {
@@ -2666,8 +2667,8 @@ useLayoutEffect(() => {
                   <div className={`flex flex-col items-center justify-center gap-2 h-full min-h-[48px] ${node.completed ? 'opacity-75' : ''}`}>
                     {/* Completion indicator */}
                     {node.completed && (
-                      <div className="absolute top-1 right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                        <Check size={12} className="text-white" />
+                      <div className="absolute -top-2 -right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-lg border-2 border-green-400">
+                        <Check size={10} className="text-white" />
                       </div>
                     )}
                     
@@ -2678,40 +2679,20 @@ useLayoutEffect(() => {
                       
                       return (
                         <div 
-                          className="absolute top-1 left-1 flex items-center gap-1" 
+                          className="absolute -top-2 -left-2 flex items-center justify-center" 
                           title={`Total Progress: ${progress.completed}/${progress.total} tasks completed (${progress.percentage}%)${progress.depth > 0 ? ` - ${progress.depth + 1} levels deep` : ''}`}
                         >
-                          {/* Progress circle */}
-                          <div className="relative w-6 h-6">
-                            <svg className="w-6 h-6 transform -rotate-90" viewBox="0 0 24 24">
-                              {/* Background circle */}
-                              <circle
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke={isDarkMode ? '#374151' : '#e5e7eb'}
-                                strokeWidth="3"
-                                fill="transparent"
-                              />
-                              {/* Progress circle */}
-                              <circle
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke={progress.percentage === 100 ? '#10b981' : '#3b82f6'}
-                                strokeWidth="3"
-                                fill="transparent"
-                                strokeDasharray={`${2 * Math.PI * 10}`}
-                                strokeDashoffset={`${2 * Math.PI * 10 * (1 - progress.percentage / 100)}`}
-                                className="transition-all duration-300"
-                              />
-                            </svg>
-                            {/* Progress text */}
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <span className={`text-xs font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                                {progress.completed}/{progress.total}
-                              </span>
-                            </div>
+                          {/* Simple clean badge */}
+                          <div className={`
+                            px-1.5 py-0.5 rounded-md text-xs font-medium shadow-sm transition-all duration-200
+                            ${progress.percentage === 100 
+                              ? isDarkMode ? 'bg-green-600/90 text-green-100 border border-green-500/50' : 'bg-green-100 text-green-700 border border-green-200'
+                              : progress.percentage >= 50 
+                                ? isDarkMode ? 'bg-blue-600/90 text-blue-100 border border-blue-500/50' : 'bg-blue-100 text-blue-700 border border-blue-200'
+                                : isDarkMode ? 'bg-orange-600/90 text-orange-100 border border-orange-500/50' : 'bg-orange-100 text-orange-700 border border-orange-200'
+                            }
+                          `}>
+                            {progress.completed}/{progress.total}
                           </div>
                         </div>
                       );
