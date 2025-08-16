@@ -1744,9 +1744,9 @@ useLayoutEffect(() => {
                   key={node.id}
                   data-node-id={node.id}
                   ref={el => { nodeRefs.current[node.id] = el; }}
-                  className={`absolute rounded-2xl shadow-lg cursor-move node node-text-wrap transition-all duration-300 ease-out hover:shadow-2xl backdrop-blur-sm
+                  className={`absolute rounded-2xl shadow-lg cursor-move node node-text-wrap backdrop-blur-sm
                     ${selectedNodes.includes(node.id) ? 'ring-2 ring-blue-500/80 ring-offset-2 ring-offset-white/50' : ''}
-                    ${draggingNodeId === node.id ? 'dragging scale-105' : 'hover:scale-[1.02]'}
+                    ${draggingNodeId === node.id ? 'dragging' : ''}
                     ${node.completed ? 'border-2 border-green-400/60 bg-green-50/40' : 'border border-gray-200/60'}`}
                   style={{
                     left: node.x - nodeWidth / 2, // Center the node horizontally
@@ -1805,13 +1805,22 @@ useLayoutEffect(() => {
                 >
                   {selectedNode === node.id && mode === 'cursor' && (
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-3" style={{ marginTop: '-15px' }}>
-                      <div className="enhanced-node-toolbar backdrop-blur-md bg-white/90 shadow-lg border border-white/20 rounded-2xl flex items-center p-2 gap-1 z-30">
+                      <div 
+                        className="enhanced-node-toolbar backdrop-blur-md bg-white/90 shadow-lg border border-white/20 rounded-2xl flex items-center p-2 gap-1 z-30"
+                        onMouseEnter={(e) => e.stopPropagation()}
+                        onMouseLeave={(e) => e.stopPropagation()}
+                        onMouseOver={(e) => e.stopPropagation()}
+                        onMouseOut={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onMouseUp={(e) => e.stopPropagation()}
+                      >
                         
                         {/* Visual Content Group */}
                         <div className="flex items-center gap-1">
                           {/* Complete Task Button - Always visible */}
                           <button
-                            className={`node-toolbar-btn p-2 rounded-xl hover:bg-white/60 transition-all duration-200 hover:scale-105 hover:shadow-md border ${node.completed ? 'text-green-600 bg-green-50 border-green-200' : 'text-gray-700 border-gray-200/60 hover:border-gray-300'}`}
+                            className={`node-toolbar-btn p-2 rounded-xl hover:bg-white/60 transition-colors duration-200 border ${node.completed ? 'text-green-600 bg-green-50 border-green-200' : 'text-gray-700 border-gray-200/60 hover:border-gray-300'}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleNodeCompletion(node.id);
@@ -1824,7 +1833,7 @@ useLayoutEffect(() => {
                           {/* Add Node Button - Only visible in collapsed state */}
                           {!isToolbarExpanded && (
                             <button
-                              className="node-toolbar-btn p-2 rounded-xl hover:bg-green-100 text-green-700 transition-all duration-200 hover:scale-105 hover:shadow-md border border-green-200 hover:border-green-300"
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-green-100 text-green-700 transition-colors duration-200 border border-green-200 hover:border-green-300"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 addChildNode(node.id);
@@ -1841,7 +1850,7 @@ useLayoutEffect(() => {
                           {/* Settings Button */}
                           <div className="relative">
                             <button
-                              className={`node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-300 hover:scale-105 hover:shadow-md transform border border-gray-200/60 hover:border-gray-300 ${isToolbarExpanded ? 'rotate-90' : ''}`}
+                              className={`node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-300 transform border border-gray-200/60 hover:border-gray-300 ${isToolbarExpanded ? 'rotate-90' : ''}`}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setIsToolbarExpanded(!isToolbarExpanded);
@@ -1859,7 +1868,7 @@ useLayoutEffect(() => {
                           {/* Background Color */}
                           <div className="relative">
                             <button
-                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md border border-gray-200/60 hover:border-gray-300"
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 wrappedSetNodes(nodes.map(n => 
@@ -1895,7 +1904,7 @@ useLayoutEffect(() => {
                           {/* Font Color */}
                           <div className="relative">
                             <button
-                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md border border-gray-200/60 hover:border-gray-300"
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 wrappedSetNodes(nodes.map(n => 
@@ -1942,7 +1951,7 @@ useLayoutEffect(() => {
                           {/* Attachment */}
                           <div className="relative">
                             <button
-                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md border border-gray-200/60 hover:border-gray-300"
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 wrappedSetNodes(nodes.map(n => 
@@ -2072,7 +2081,7 @@ useLayoutEffect(() => {
                           {/* Notes */}
                           <div className="relative">
                             <button
-                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md border border-gray-200/60 hover:border-gray-300"
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 wrappedSetNodes(nodes.map(n => 
@@ -2121,7 +2130,7 @@ useLayoutEffect(() => {
                           {/* Tags */}
                           <div className="relative">
                             <button
-                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md border border-gray-200/60 hover:border-gray-300"
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 wrappedSetNodes(nodes.map(n => 
@@ -2362,7 +2371,7 @@ useLayoutEffect(() => {
                           {/* Details (Priority/Status) */}
                           <div className="relative">
                             <button
-                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md border border-gray-200/60 hover:border-gray-300"
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 wrappedSetNodes(nodes.map(n => 
@@ -2452,7 +2461,7 @@ useLayoutEffect(() => {
                           {/* Due Date */}
                           <div className="relative">
                             <button
-                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md border border-gray-200/60 hover:border-gray-300"
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 wrappedSetNodes(nodes.map(n => 
@@ -2524,7 +2533,7 @@ useLayoutEffect(() => {
                           {/* Collaborator */}
                           <div className="relative">
                             <button
-                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-200 hover:scale-105 hover:shadow-md border border-gray-200/60 hover:border-gray-300"
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 wrappedSetNodes(nodes.map(n => 
@@ -2618,7 +2627,7 @@ useLayoutEffect(() => {
                         <div className="flex items-center gap-1">
                           {/* Add Node */}
                           <button
-                            className="node-toolbar-btn p-2 rounded-xl hover:bg-green-100 text-green-700 transition-all duration-200 hover:scale-105 hover:shadow-md border border-green-200 hover:border-green-300"
+                            className="node-toolbar-btn p-2 rounded-xl hover:bg-green-100 text-green-700 transition-colors duration-200 border border-green-200 hover:border-green-300"
                             onClick={(e) => {
                               e.stopPropagation();
                               addChildNode(node.id);
@@ -2635,7 +2644,7 @@ useLayoutEffect(() => {
                           {node.id === 'root' && (
                             <div className="relative">
                               <button
-                                className="node-toolbar-btn p-2 rounded-xl hover:bg-blue-100 text-blue-700 transition-all duration-200 hover:scale-105 hover:shadow-md border border-blue-200 hover:border-blue-300"
+                                className="node-toolbar-btn p-2 rounded-xl hover:bg-blue-100 text-blue-700 transition-colors duration-200 border border-blue-200 hover:border-blue-300"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   wrappedSetNodes(nodes.map(n => 
@@ -2680,7 +2689,7 @@ useLayoutEffect(() => {
                           {/* Delete Node */}
                           {node.id !== 'root' && (
                             <button
-                              className="node-toolbar-btn p-2 rounded-xl hover:bg-red-100 text-red-600 transition-all duration-200 hover:scale-105 hover:shadow-md border border-red-200 hover:border-red-300"
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-red-100 text-red-600 transition-colors duration-200 border border-red-200 hover:border-red-300"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 deleteNode(node.id);
