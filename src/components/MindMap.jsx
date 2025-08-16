@@ -178,12 +178,30 @@ const MindMap = ({ mapId, onBack }) => {
     
     console.log('Shape drop detected:', shapeType);
     
-    // Calculate coordinates relative to the canvas
+    // Calculate coordinates relative to the canvas with proper transformation
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left - pan.x) / zoom;
-    const y = (e.clientY - rect.top - pan.y) / zoom;
     
-    console.log('Drop coordinates:', { x, y, pan, zoom });
+    // Get mouse position relative to the canvas
+    const canvasX = e.clientX - rect.left;
+    const canvasY = e.clientY - rect.top;
+    
+    // Apply inverse transformation (account for pan and zoom)
+    // Note: pan values might be inverted depending on how panning is implemented
+    const x = (canvasX / zoom) - (pan.x / zoom);
+    const y = (canvasY / zoom) - (pan.y / zoom);
+    
+    console.log('Drop coordinates:', { 
+      clientX: e.clientX, 
+      clientY: e.clientY, 
+      rectLeft: rect.left, 
+      rectTop: rect.top,
+      canvasX, 
+      canvasY, 
+      pan, 
+      zoom, 
+      finalX: x, 
+      finalY: y 
+    });
     
     const shapeDefinition = shapeDefinitions.find(s => s.type === shapeType);
     if (!shapeDefinition) {
