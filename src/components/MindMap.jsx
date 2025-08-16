@@ -508,12 +508,14 @@ const getDescendantNodeIds = (parentId) => {
   };
 
   // Add this helper function at the top of the component
-  const findAvailablePosition = (nodes, centerX, centerY, radius = 200) => {
-    const angleStep = (2 * Math.PI) / 8; // Divide circle into 8 positions
-    let currentAngle = Math.random() * 2 * Math.PI; // Start at random angle
+  // Improved findAvailablePosition function with better spacing
+  const findAvailablePosition = (nodes, centerX, centerY, radius = 180) => {
+    const angleStep = (2 * Math.PI) / 12; // Divide circle into 12 positions for finer control
+    let currentAngle = 0; // Start at 0 degrees (right side)
     let currentRadius = radius;
     let attempts = 0;
-    const maxAttempts = 16; // Try different positions before increasing radius
+    const maxAttempts = 24; // Try more positions before increasing radius
+    const minDistance = 180; // Minimum distance between nodes
   
     while (attempts < maxAttempts) {
       const x = centerX + Math.cos(currentAngle) * currentRadius;
@@ -524,26 +526,30 @@ const getDescendantNodeIds = (parentId) => {
         const distance = Math.sqrt(
           Math.pow(node.x - x, 2) + Math.pow(node.y - y, 2)
         );
-        return distance > 200; // Minimum distance between nodes
+        return distance > minDistance;
       });
   
-      if (isFarEnough) {
+      // Also check if position is within viewport bounds
+      const isInBounds = x > 100 && x < window.innerWidth - 300 && 
+                        y > 100 && y < window.innerHeight - 200;
+  
+      if (isFarEnough && isInBounds) {
         return { x, y };
       }
   
       currentAngle += angleStep;
       attempts++;
   
-      // If we've tried all angles at current radius, increase radius and try again
-      if (attempts % 8 === 0) {
-        currentRadius += 100;
+      // If we've tried all angles at current radius, increase radius
+      if (attempts % 12 === 0) {
+        currentRadius += 120;
       }
     }
   
-    // If all else fails, return a position with increased radius
+    // If all else fails, return a fallback position
     return {
-      x: centerX + Math.cos(currentAngle) * (currentRadius + 200),
-      y: centerY + Math.sin(currentAngle) * (currentRadius + 200)
+      x: Math.max(100, Math.min(centerX + currentRadius, window.innerWidth - 300)),
+      y: Math.max(100, Math.min(centerY + currentRadius, window.innerHeight - 200))
     };
   };
   
@@ -576,26 +582,90 @@ const getDescendantNodeIds = (parentId) => {
     const childCount = existingChildren.length;
 
     const newId = `node-${Date.now()}`;
+    
     // Calculate dynamic parent width with updated formula
     const parentWidth = Math.min(400, Math.max(200, parent.text.length * 12));
     
-    // Position child to the right of parent with better spacing
-    const minSpacing = 220; // Increased spacing for larger nodes
-    const newX = parent.x + parentWidth/2 + minSpacing;
-    
-    // Improved vertical positioning for children
-    const verticalSpacing = 100; // Space between children
-    let newY;
+    // Better positioning to avoid stacking
+    let newX, newY;
     
     if (childCount === 0) {
-      // First child at same level as parent
+      // First child - place to the right of parent
+      newX = parent.x + parentWidth/2 + 140;
       newY = parent.y;
+    } else if (childCount === 1) {
+      // Second child - place below first child
+      newX = parent.x + parentWidth/2 + 140;
+      newY = parent.y + 120;
+    } else if (childCount === 2) {
+      // Third child - place above parent
+      newX = parent.x + parentWidth/2 + 140;
+      newY = parent.y - 120;
     } else {
-      // Alternate children above and below parent
-      const isEven = childCount % 2 === 0;
-      const offset = Math.ceil(childCount / 2) * verticalSpacing;
-      newY = parent.y + (isEven ? offset : -offset);
+      // For 4+ children, arrange in a proper circle around parent
+      const baseDistance = 140;
+      const childrenInCircle = Math.max(6, childCount + 1);
+      const angleStep = (2 * Math.PI) / childrenInCircle;
+      
+      // Start from right side (0 degrees) and go clockwise
+      let startAngle = 0;
+      if (childCount >= 3) {
+        // Skip the first 3 positions (right, bottom-right, top-right)
+        startAngle = angleStep * 3;
+      }
+      
+      const currentAngle = startAngle + (angleStep * (childCount - 3));
+      
+      // Increase distance slightly for more children to avoid crowding
+      const layerDistance = baseDistance + (Math.floor(childCount / 8) * 80);
+      
+      newX = parent.x + Math.cos(currentAngle) * layerDistance;
+      newY = parent.y + Math.sin(currentAngle) * layerDistance;
     }
+    
+    // Enhanced overlap checking with better collision resolution
+    const minDistance = 110;
+    let attempts = 0;
+    const maxAttempts = 8;
+    
+    while (attempts < maxAttempts) {
+      let hasOverlap = false;
+      let closestDistance = Infinity;
+      
+      for (const existingNode of nodes) {
+        if (existingNode.id === parent.id) continue;
+        
+        const distance = Math.sqrt(
+          Math.pow(newX - existingNode.x, 2) + Math.pow(newY - existingNode.y, 2)
+        );
+        
+        if (distance < minDistance) {
+          hasOverlap = true;
+          closestDistance = Math.min(closestDistance, distance);
+        }
+      }
+      
+      if (!hasOverlap) break;
+      
+      // Smart repositioning - find next available position
+      const currentAngle = Math.atan2(newY - parent.y, newX - parent.x);
+      const currentDistance = Math.sqrt(
+        Math.pow(newX - parent.x, 2) + Math.pow(newY - parent.y, 2)
+      );
+      
+      // Try rotating around parent to find free space
+      const rotationStep = Math.PI / 6; // 30 degrees
+      const newAngle = currentAngle + (rotationStep * (attempts + 1));
+      const adjustedDistance = Math.max(currentDistance, minDistance + 20);
+      
+      newX = parent.x + Math.cos(newAngle) * adjustedDistance;
+      newY = parent.y + Math.sin(newAngle) * adjustedDistance;
+      attempts++;
+    }
+    
+    // Keep within reasonable bounds
+    newX = Math.max(50, Math.min(newX, window.innerWidth - 250));
+    newY = Math.max(50, Math.min(newY, window.innerHeight - 150));
 
     const newNode = {
       id: newId,
@@ -609,14 +679,7 @@ const getDescendantNodeIds = (parentId) => {
       id: `conn-${Date.now()}`,
       from: parentId,
       to: newId
-    };    // console.log('DEBUG: Adding child node', {
-    //   parentId,
-    //   newId,
-    //   parentPos: { x: parent.x, y: parent.y },
-    //   childPos: { x: newX, y: newY },
-    //   childCount,
-    //   existingChildren: existingChildren.length
-    // });
+    };
 
     wrappedSetNodesAndConnections([...nodes, newNode], [...connections, newConnection]);
     // setSelectedNode(newId); // Do NOT select the new child node, keep focus on parent
