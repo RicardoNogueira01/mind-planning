@@ -1985,23 +1985,6 @@ useLayoutEffect(() => {
             setSelectedNode={setSelectedNode}
             setPan={setPan}
           />
-
-          {/* Dark Mode Toggle */}
-          <button
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className={`fixed top-4 right-4 z-50 p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl ${
-              isDarkMode 
-                ? 'bg-gray-800 text-yellow-300 hover:bg-gray-700' 
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
-            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          >
-            {isDarkMode ? (
-              <Sun size={20} />
-            ) : (
-              <Moon size={20} />
-            )}
-          </button>
                  
           {/* Wrapper for panned and zoomed content */}
           <MindMapCanvas
@@ -3384,6 +3367,25 @@ useLayoutEffect(() => {
             </span>
           </div>
         ))}
+        
+        {/* Dark Mode Toggle at bottom */}
+        <div className="mt-auto pt-4">
+          <button
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            className={`p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl ${
+              isDarkMode 
+                ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600' 
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {isDarkMode ? (
+              <Sun size={20} />
+            ) : (
+              <Moon size={20} />
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
