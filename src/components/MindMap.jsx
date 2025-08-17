@@ -3366,9 +3366,6 @@ useLayoutEffect(() => {
 
       {/* Shapes Panel */}
       <div className={`w-20 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg border-l ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex flex-col items-center py-4 gap-3`}>
-        <h3 className={`text-xs font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-2 transform rotate-90 whitespace-nowrap`}>
-          Shapes
-        </h3>
         
         {shapeDefinitions.map((shapeDef) => (
           <div
