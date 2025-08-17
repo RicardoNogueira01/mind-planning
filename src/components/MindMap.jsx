@@ -178,25 +178,26 @@ const MindMap = ({ mapId, onBack }) => {
     
     console.log('Shape drop detected:', shapeType);
     
-    // Calculate coordinates relative to the canvas with proper transformation
+    // Calculate coordinates in logical space (matching how node dragging works)
     const rect = e.currentTarget.getBoundingClientRect();
     
-    // Get mouse position relative to the canvas
-    const canvasX = e.clientX - rect.left;
-    const canvasY = e.clientY - rect.top;
+    // Mouse position relative to the container
+    const screenX = e.clientX - rect.left;
+    const screenY = e.clientY - rect.top;
     
-    // Apply inverse transformation (account for pan and zoom)
-    // Note: pan values might be inverted depending on how panning is implemented
-    const x = (canvasX / zoom) - (pan.x / zoom);
-    const y = (canvasY / zoom) - (pan.y / zoom);
+    // Convert screen coordinates to logical coordinates
+    // This matches the node dragging logic: divide by zoom to get logical coordinates
+    // Then account for the current pan offset to get the absolute logical position
+    const x = (screenX / zoom) - (pan.x / zoom);
+    const y = (screenY / zoom) - (pan.y / zoom);
     
     console.log('Drop coordinates:', { 
       clientX: e.clientX, 
       clientY: e.clientY, 
       rectLeft: rect.left, 
       rectTop: rect.top,
-      canvasX, 
-      canvasY, 
+      screenX, 
+      screenY, 
       pan, 
       zoom, 
       finalX: x, 
@@ -218,7 +219,7 @@ const MindMap = ({ mapId, onBack }) => {
       type: 'shape',
       shapeType: shapeType,
       backgroundColor: shapeDefinition.color,
-      fontColor: '#ffffff',
+      fontColor: '#ffffff', // White text works well on colored shape backgrounds
       completed: false,
       children: [],
       level: 0,
@@ -776,7 +777,8 @@ const getDescendantNodeIds = (parentId) => {
       text: title,
       x: window.innerWidth / 2,
       y: window.innerHeight / 2,
-      color: '#EEF2FF'
+      color: isDarkMode ? '#374151' : '#EEF2FF',
+      fontColor: isDarkMode ? '#f3f4f6' : '#2d3748'
     };
     
     wrappedSetNodes([rootNode]);
@@ -843,7 +845,8 @@ const getDescendantNodeIds = (parentId) => {
       text: '',
       x: x,
       y: y,
-      color: isDarkMode ? '#374151' : '#ffffff'
+      color: isDarkMode ? '#374151' : '#ffffff',
+      fontColor: isDarkMode ? '#f3f4f6' : '#2d3748'
     };
     
     wrappedSetNodesAndConnections([...nodes, newNode], connections);
@@ -949,7 +952,8 @@ const getDescendantNodeIds = (parentId) => {
       text: '',
       x: newX,
       y: newY,
-      color: parent.color
+      color: isDarkMode ? '#374151' : '#ffffff',
+      fontColor: isDarkMode ? '#f3f4f6' : '#2d3748'
     };
 
     const newConnection = {
@@ -3302,7 +3306,7 @@ useLayoutEffect(() => {
             {/* Connection lines overlay */}
             <svg className="absolute inset-0 pointer-events-none" style={{ width: '100%', height: '100%', zIndex: 1 }}>
               <defs>
-                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                <marker id="arrowhead" markerWidth="  10" markerHeight="7" refX="9" refY="3.5" orient="auto">
                   <polygon points="0 0, 10 3.5, 0 7" fill="#3B82F6" />
                 </marker>
               </defs>
