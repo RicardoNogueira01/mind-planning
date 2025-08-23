@@ -1720,6 +1720,7 @@ const handleNodeClick = (nodeId, e) => {
               <div style={{ fontSize: 11, fontWeight: 700, color: '#6B7280', margin: '6px 0' }}>Collaborators</div>
               <div style={{ marginBottom: 8 }}>
                 <input
+                  className="text-gray-900 placeholder-gray-500"
                   value={groupCollaboratorSearch[group.id] || ''}
                   onChange={(e) => setGroupCollaboratorSearch(prev => ({ ...prev, [group.id]: e.target.value }))}
                   placeholder="Search collaborators"
@@ -1728,6 +1729,8 @@ const handleNodeClick = (nodeId, e) => {
                     padding: '6px 8px',
                     borderRadius: 8,
                     border: '1px solid #E5E7EB',
+                    background: '#FFFFFF',
+                    color: '#111827',
                     fontSize: 12,
                     outline: 'none'
                   }}
