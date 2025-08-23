@@ -769,6 +769,14 @@ const getDescendantNodeIds = (parentId) => {
 
     // Add the new group
     setNodeGroups([...nodeGroups, newGroup]);
+    // Seed nodes with primary collaborator
+    const updatedNodes = nodes.map(n => {
+      if (!newGroup.nodeIds?.includes(n.id)) return n;
+      const current = Array.isArray(n.collaborators) ? [...n.collaborators] : [];
+      if (current.includes(collaborator.id)) return n;
+      return { ...n, collaborators: [...current, collaborator.id] };
+    });
+    wrappedSetNodes(updatedNodes);
     
     // Reset selection state
     setSelectedNodes([]);
@@ -786,19 +794,49 @@ const getDescendantNodeIds = (parentId) => {
   };
 
   const toggleCollaboratorInGroup = (groupId, collaboratorId) => {
+    const group = nodeGroups.find(g => g.id === groupId);
+    if (!group) return;
+    // Don't toggle the primary via checkbox
+    if (group.collaborator && group.collaborator.id === collaboratorId) return;
+
+    const has = Array.isArray(group.extraCollaborators) ? group.extraCollaborators.includes(collaboratorId) : false;
+
+    // Update groups state
     setNodeGroups(nodeGroups.map(g => {
       if (g.id !== groupId) return g;
-      const has = Array.isArray(g.extraCollaborators) ? g.extraCollaborators.includes(collaboratorId) : false;
       const extra = Array.isArray(g.extraCollaborators) ? [...g.extraCollaborators] : [];
-      if (has) {
-        return { ...g, extraCollaborators: extra.filter(id => id !== collaboratorId) };
-      }
-      return { ...g, extraCollaborators: [...extra, collaboratorId] };
+      return { ...g, extraCollaborators: has ? extra.filter(id => id !== collaboratorId) : [...extra, collaboratorId] };
     }));
+
+    // Also reflect on nodes: add/remove collaborator on each node in group
+    const updatedNodes = nodes.map(n => {
+      if (!group.nodeIds?.includes(n.id)) return n;
+      const current = Array.isArray(n.collaborators) ? [...n.collaborators] : [];
+      if (has) {
+        // Remove
+        const next = current.filter(id => id !== collaboratorId);
+        return { ...n, collaborators: next };
+      } else {
+        // Add if missing
+        if (current.includes(collaboratorId)) return n;
+        return { ...n, collaborators: [...current, collaboratorId] };
+      }
+    });
+    wrappedSetNodes(updatedNodes);
   };
 
   const setPrimaryCollaborator = (groupId, collaborator) => {
+    const group = nodeGroups.find(g => g.id === groupId);
+    if (!group) return;
     setNodeGroups(nodeGroups.map(g => g.id === groupId ? { ...g, collaborator } : g));
+    // Ensure all group nodes include the new primary collaborator
+    const updatedNodes = nodes.map(n => {
+      if (!group.nodeIds?.includes(n.id)) return n;
+      const current = Array.isArray(n.collaborators) ? [...n.collaborators] : [];
+      if (current.includes(collaborator.id)) return n;
+      return { ...n, collaborators: [...current, collaborator.id] };
+    });
+    wrappedSetNodes(updatedNodes);
   };
 
   const selectGroupNodes = (groupId) => {
@@ -1499,7 +1537,7 @@ const handleNodeClick = (nodeId, e) => {
       const badgeSize = 30;
       const badgeOffset = 15;
 
-      return (
+  return (
         <React.Fragment key={group.id}>
           {/* Non-interactive dashed area */}
           <div style={{
@@ -1516,7 +1554,7 @@ const handleNodeClick = (nodeId, e) => {
             boxShadow: `0 0 0 1px ${collaborator.color}20`
           }} />
 
-          {/* Clickable avatar (outside pointer-events:none box) */}
+          {/* Clickable primary avatar (outside pointer-events:none box) */}
           <div
             onClick={(e) => {
               e.stopPropagation();
@@ -1547,6 +1585,83 @@ const handleNodeClick = (nodeId, e) => {
           >
             {collaborator.initials}
           </div>
+
+          {/* Secondary collaborator avatars (shared group) */}
+          {Array.isArray(group.extraCollaborators) && group.extraCollaborators.length > 0 && (
+            (() => {
+              const smallSize = 22;
+              const gap = 6;
+              const maxShown = 3;
+              const extraObjs = group.extraCollaborators
+                .map(id => collaborators.find(c => c.id === id))
+                .filter(Boolean);
+              const shown = extraObjs.slice(0, maxShown);
+              const remaining = extraObjs.length - shown.length;
+              return (
+                <React.Fragment>
+                  {shown.map((c, idx) => (
+                    <div
+                      key={c.id}
+                      onClick={(e) => { e.stopPropagation(); setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id); }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      title={`${c.name}'s group settings`}
+                      style={{
+                        position: 'absolute',
+                        left: (boundingBox.x + boundingBox.width - badgeOffset) - ((idx + 1) * (smallSize + gap)),
+                        top: boundingBox.y - badgeOffset + (badgeSize - smallSize) / 2,
+                        width: smallSize,
+                        height: smallSize,
+                        borderRadius: '50%',
+                        backgroundColor: c.color,
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 'bold',
+                        fontSize: '0.65rem',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                        border: '2px solid white',
+                        cursor: 'pointer',
+                        zIndex: 6,
+                        pointerEvents: 'auto'
+                      }}
+                    >
+                      {c.initials}
+                    </div>
+                  ))}
+                  {remaining > 0 && (
+                    <div
+                      onClick={(e) => { e.stopPropagation(); setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id); }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      title={`+${remaining} more`}
+                      style={{
+                        position: 'absolute',
+                        left: (boundingBox.x + boundingBox.width - badgeOffset) - ((shown.length + 1) * (smallSize + gap)),
+                        top: boundingBox.y - badgeOffset + (badgeSize - smallSize) / 2,
+                        width: smallSize,
+                        height: smallSize,
+                        borderRadius: '50%',
+                        backgroundColor: '#6B7280',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 700,
+                        fontSize: '0.65rem',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                        border: '2px solid white',
+                        cursor: 'pointer',
+                        zIndex: 6,
+                        pointerEvents: 'auto'
+                      }}
+                    >
+                      +{remaining}
+                    </div>
+                  )}
+                </React.Fragment>
+              );
+            })()
+          )}
 
           {/* Popup menu for group actions (also outside) */}
           {openGroupMenuId === group.id && (
@@ -1643,7 +1758,12 @@ const handleNodeClick = (nodeId, e) => {
             border: `1px solid ${collaborator.color}`,
             boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
           }}>
-            {collaborator.name}'s Group
+            {(() => {
+              const extras = (group.extraCollaborators || []).map(id => collaborators.find(c => c.id === id)).filter(Boolean);
+              if (extras.length === 0) return `${collaborator.name}'s Group`;
+              if (extras.length === 1) return `${collaborator.name} & ${extras[0].name}`;
+              return `${collaborator.name} and ${extras.length} others`;
+            })()}
           </div>
         </React.Fragment>
       );
