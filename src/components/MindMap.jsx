@@ -33,6 +33,7 @@ const MindMap = ({ mapId, onBack }) => {
   const [nodeGroups, setNodeGroups] = useState([]);
   // UI: open group menu id (for collaborator group badge menu)
   const [openGroupMenuId, setOpenGroupMenuId] = useState(null);
+  const [groupCollaboratorSearch, setGroupCollaboratorSearch] = useState({}); // { [groupId]: string }
 
   // Close group menu on any outside click
   useEffect(() => {
@@ -45,6 +46,7 @@ const MindMap = ({ mapId, onBack }) => {
   // Dragging state for smooth animations
   const [draggingNodeId, setDraggingNodeId] = useState(null);
   const dragFrameRef = useRef(null);
+  const lastDragPosRef = useRef({}); // { [nodeId]: { x, y } }
   
   // Shapes panel state
   const [isDraggingShape, setIsDraggingShape] = useState(false);
@@ -1175,7 +1177,7 @@ const handleNodeClick = (nodeId, e) => {
       const nodeGroup = nodeGroups.find(group => group.nodeIds.includes(nodeId));
     
     // If node is in a group, constrain its movement to the group's bounding box
-    if (nodeGroup) {
+  if (nodeGroup) {
       const { boundingBox } = nodeGroup;
       const nodeWidth = 150; // Approximate node width (75px on each side)
       const nodeHeight = 50;  // Approximate node height (25px on each side)
@@ -1194,7 +1196,10 @@ const handleNodeClick = (nodeId, e) => {
       newY = constrainedY;
     }
 
-    const dx = newX - targetNode.x;
+  // Track last drag position for drop detection
+  lastDragPosRef.current[nodeId] = { x: newX, y: newY };
+
+  const dx = newX - targetNode.x;
     const dy = newY - targetNode.y;
 
     if (selectedNodes.includes(nodeId)) {
@@ -1713,27 +1718,58 @@ const handleNodeClick = (nodeId, e) => {
 
               {/* Add/Remove collaborators */}
               <div style={{ fontSize: 11, fontWeight: 700, color: '#6B7280', margin: '6px 0' }}>Collaborators</div>
+              <div style={{ marginBottom: 8 }}>
+                <input
+                  value={groupCollaboratorSearch[group.id] || ''}
+                  onChange={(e) => setGroupCollaboratorSearch(prev => ({ ...prev, [group.id]: e.target.value }))}
+                  placeholder="Search collaborators"
+                  style={{
+                    width: '100%',
+                    padding: '6px 8px',
+                    borderRadius: 8,
+                    border: '1px solid #E5E7EB',
+                    fontSize: 12,
+                    outline: 'none'
+                  }}
+                />
+              </div>
               <div style={{ maxHeight: 160, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {collaborators.map(c => (
-                  <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={Array.isArray(group.extraCollaborators) ? group.extraCollaborators.includes(c.id) : false}
-                      onChange={() => toggleCollaboratorInGroup(group.id, c.id)}
-                    />
-                    <span style={{ width: 22, height: 22, borderRadius: '9999px', background: c.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700 }}>{c.initials}</span>
-                    <span style={{ fontSize: 12, color: '#111827' }}>{c.name}</span>
-                    {c.id !== collaborator.id && (
-                      <button
-                        onClick={() => setPrimaryCollaborator(group.id, c)}
-                        style={{ marginLeft: 'auto', fontSize: 11, color: '#2563EB' }}
-                        title="Set as primary"
-                      >
-                        Make primary
-                      </button>
-                    )}
-                  </label>
-                ))}
+                {(() => {
+                  const q = (groupCollaboratorSearch[group.id] || '').toLowerCase().trim();
+                  const filtered = q
+                    ? collaborators.filter(c =>
+                        c.name.toLowerCase().includes(q) ||
+                        (c.initials || '').toLowerCase().includes(q)
+                      )
+                    : collaborators;
+                  return filtered.map(c => {
+                    const isPrimary = c.id === collaborator.id;
+                    const isChecked = isPrimary || (Array.isArray(group.extraCollaborators) ? group.extraCollaborators.includes(c.id) : false);
+                    return (
+                      <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          disabled={isPrimary}
+                          onChange={() => toggleCollaboratorInGroup(group.id, c.id)}
+                        />
+                        <span style={{ width: 22, height: 22, borderRadius: '9999px', background: c.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700 }}>{c.initials}</span>
+                        <span style={{ fontSize: 12, color: '#111827' }}>{c.name}</span>
+                        {isPrimary ? (
+                          <span style={{ marginLeft: 'auto', fontSize: 11, color: '#6B7280' }}>Primary</span>
+                        ) : (
+                          <button
+                            onClick={() => setPrimaryCollaborator(group.id, c)}
+                            style={{ marginLeft: 'auto', fontSize: 11, color: '#2563EB' }}
+                            title="Set as primary"
+                          >
+                            Make primary
+                          </button>
+                        )}
+                      </label>
+                    );
+                  });
+                })()}
               </div>
 
               {/* Close */}
@@ -2376,6 +2412,43 @@ useLayoutEffect(() => {
                         if (dragFrameRef.current) {
                           cancelAnimationFrame(dragFrameRef.current);
                           dragFrameRef.current = null;
+                        }
+                        // On drop: if node center is inside a group's bounding box,
+                        // assign it to that group and sync collaborators
+                        const latestPos = lastDragPosRef.current[node.id];
+                        if (latestPos && nodeGroups.length > 0) {
+                          // Find first group whose bounding box contains the node center
+                          const targetGroup = nodeGroups.find(g => {
+                            const bb = g.boundingBox;
+                            if (!bb) return false;
+                            return latestPos.x >= bb.x && latestPos.x <= bb.x + bb.width &&
+                                   latestPos.y >= bb.y && latestPos.y <= bb.y + bb.height;
+                          });
+                          if (targetGroup) {
+                            // 1) Move membership: remove from other groups, add to target if not already present
+                            setNodeGroups(prev => prev.map(g => {
+                              if (g.id === targetGroup.id) {
+                                if ((g.nodeIds || []).includes(node.id)) return g;
+                                return { ...g, nodeIds: [...(g.nodeIds || []), node.id] };
+                              }
+                              // remove from any other group
+                              if ((g.nodeIds || []).includes(node.id)) {
+                                return { ...g, nodeIds: g.nodeIds.filter(id => id !== node.id) };
+                              }
+                              return g;
+                            }));
+
+                            // 2) Update the node's collaborators to match the group's collaborators
+                            const targetIds = [
+                              targetGroup.collaborator?.id,
+                              ...((targetGroup.extraCollaborators || []))
+                            ].filter(Boolean);
+                            if (targetIds.length > 0) {
+                              wrappedSetNodes(nodes.map(n =>
+                                n.id === node.id ? { ...n, collaborators: Array.from(new Set(targetIds)) } : n
+                              ));
+                            }
+                          }
                         }
                         document.removeEventListener('mousemove', handleMouseMove);
                         document.removeEventListener('mouseup', handleMouseUp);
