@@ -3166,7 +3166,7 @@ useLayoutEffect(() => {
                           value={node.text}
                           onChange={(e) => updateNodeText(node.id, e.target.value)}
                           placeholder="Please introduce your task"
-                          className="bg-transparent outline-none w-full text-left resize-none overflow-hidden font-medium leading-snug"
+                          className="bg-transparent outline-none w-full text-center resize-none overflow-hidden font-medium leading-snug"
                           style={{ 
                             color: node.text ? (node.fontColor || (isDarkMode ? '#f3f4f6' : '#2d3748')) : (isDarkMode ? '#9ca3af' : '#6b7280'),
                             fontSize: '14px',
@@ -3205,7 +3205,7 @@ useLayoutEffect(() => {
                         />
                       ) : (
                         <div 
-                          className="w-full text-left cursor-text font-medium leading-snug px-1"
+                          className="w-full text-center cursor-text font-medium leading-snug px-1"
                           style={{ 
                             color: node.text ? (node.fontColor || (isDarkMode ? '#f3f4f6' : '#2d3748')) : (isDarkMode ? '#9ca3af' : '#6b7280'),
                             fontSize: '14px',
@@ -3225,7 +3225,7 @@ useLayoutEffect(() => {
                       )
                     ) : (
                       <div 
-                        className="font-medium text-left leading-snug px-1"
+                        className="font-medium text-center leading-snug px-1"
                         style={{ 
                           color: node.text ? (node.fontColor || (isDarkMode ? '#f3f4f6' : '#2d3748')) : (isDarkMode ? '#9ca3af' : '#6b7280'),
                           fontSize: '14px',
