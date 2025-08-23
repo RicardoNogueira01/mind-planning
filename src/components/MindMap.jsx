@@ -31,6 +31,15 @@ const MindMap = ({ mapId, onBack }) => {
   const [selectedNodes, setSelectedNodes] = useState([]);
   const [showCollaboratorDialog, setShowCollaboratorDialog] = useState(false);
   const [nodeGroups, setNodeGroups] = useState([]);
+  // UI: open group menu id (for collaborator group badge menu)
+  const [openGroupMenuId, setOpenGroupMenuId] = useState(null);
+
+  // Close group menu on any outside click
+  useEffect(() => {
+    const onWinClick = () => setOpenGroupMenuId(null);
+    window.addEventListener('click', onWinClick);
+    return () => window.removeEventListener('click', onWinClick);
+  }, []);
   const [lastSelectionRect, setLastSelectionRect] = useState(null);
   
   // Dragging state for smooth animations
@@ -770,6 +779,33 @@ const getDescendantNodeIds = (parentId) => {
     setMode('cursor');
     setSelectionType('simple');
   };
+
+  // Group management helpers
+  const deleteGroup = (groupId) => {
+    setNodeGroups(nodeGroups.filter(g => g.id !== groupId));
+  };
+
+  const toggleCollaboratorInGroup = (groupId, collaboratorId) => {
+    setNodeGroups(nodeGroups.map(g => {
+      if (g.id !== groupId) return g;
+      const has = Array.isArray(g.extraCollaborators) ? g.extraCollaborators.includes(collaboratorId) : false;
+      const extra = Array.isArray(g.extraCollaborators) ? [...g.extraCollaborators] : [];
+      if (has) {
+        return { ...g, extraCollaborators: extra.filter(id => id !== collaboratorId) };
+      }
+      return { ...g, extraCollaborators: [...extra, collaboratorId] };
+    }));
+  };
+
+  const setPrimaryCollaborator = (groupId, collaborator) => {
+    setNodeGroups(nodeGroups.map(g => g.id === groupId ? { ...g, collaborator } : g));
+  };
+
+  const selectGroupNodes = (groupId) => {
+    const group = nodeGroups.find(g => g.id === groupId);
+    if (!group) return;
+    setSelectedNodes(group.nodeIds || []);
+  };
     // Create a new mind map
   const createNewMap = (title = 'Central Idea') => {
     const rootNode = {
@@ -1460,47 +1496,143 @@ const handleNodeClick = (nodeId, e) => {
   const renderNodeGroups = () => {
     return nodeGroups.map(group => {
       const { boundingBox, collaborator } = group;
-      
+      const badgeSize = 30;
+      const badgeOffset = 15;
+
       return (
-        <div key={group.id} style={{
-          position: 'absolute',
-          left: boundingBox.x,
-          top: boundingBox.y,
-          width: boundingBox.width,
-          height: boundingBox.height,
-          border: `3px dashed ${collaborator.color}`,
-          borderRadius: '12px',
-          backgroundColor: `${collaborator.color}10`, // Very subtle background tint
-          pointerEvents: 'none',
-          zIndex: 4,
-          boxShadow: `0 0 0 1px ${collaborator.color}20` // Subtle outer glow
-        }}>
-          {/* Collaborator badge in top-right corner */}
+        <React.Fragment key={group.id}>
+          {/* Non-interactive dashed area */}
           <div style={{
             position: 'absolute',
-            top: -15,
-            right: -15,
-            width: 30,
-            height: 30,
-            borderRadius: '50%',
-            backgroundColor: collaborator.color,
-            color: 'white',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 'bold',
-            fontSize: '0.75rem',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-            border: '2px solid white'
-          }}>
+            left: boundingBox.x,
+            top: boundingBox.y,
+            width: boundingBox.width,
+            height: boundingBox.height,
+            border: `3px dashed ${collaborator.color}`,
+            borderRadius: '12px',
+            backgroundColor: `${collaborator.color}10`,
+            pointerEvents: 'none',
+            zIndex: 4,
+            boxShadow: `0 0 0 1px ${collaborator.color}20`
+          }} />
+
+          {/* Clickable avatar (outside pointer-events:none box) */}
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id);
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{
+              position: 'absolute',
+              left: boundingBox.x + boundingBox.width - badgeOffset,
+              top: boundingBox.y - badgeOffset,
+              width: badgeSize,
+              height: badgeSize,
+              borderRadius: '50%',
+              backgroundColor: collaborator.color,
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 'bold',
+              fontSize: '0.75rem',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+              border: '2px solid white',
+              cursor: 'pointer',
+              zIndex: 6,
+              pointerEvents: 'auto'
+            }}
+            title={`${collaborator.name}'s group settings`}
+          >
             {collaborator.initials}
           </div>
-          
-          {/* Add a subtle label at the bottom to indicate this is a constraint area */}
+
+          {/* Popup menu for group actions (also outside) */}
+          {openGroupMenuId === group.id && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              style={{
+                position: 'absolute',
+                left: boundingBox.x + boundingBox.width + 10,
+                top: boundingBox.y - badgeOffset,
+                width: 260,
+                background: '#fff',
+                border: '1px solid rgba(0,0,0,0.08)',
+                borderRadius: 12,
+                boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
+                padding: 12,
+                zIndex: 7,
+                pointerEvents: 'auto'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <span style={{
+                  width: 24, height: 24, borderRadius: '9999px',
+                  backgroundColor: collaborator.color, color: '#fff', fontSize: 12,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700
+                }}>
+                  {collaborator.initials}
+                </span>
+                <div style={{ fontSize: 12, color: '#111827', fontWeight: 600 }}>
+                  {collaborator.name}'s Group
+                </div>
+              </div>
+
+              {/* Quick actions */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+                <button
+                  onClick={() => { selectGroupNodes(group.id); setOpenGroupMenuId(null); }}
+                  style={{ padding: '8px 10px', borderRadius: 10, border: '1px solid #E5E7EB', background: '#F9FAFB', fontSize: 12, fontWeight: 600, color: '#111827' }}
+                >
+                  Select nodes
+                </button>
+                <button
+                  onClick={() => { deleteGroup(group.id); setOpenGroupMenuId(null); }}
+                  style={{ padding: '8px 10px', borderRadius: 10, border: '1px solid #FEE2E2', background: '#FEF2F2', fontSize: 12, fontWeight: 600, color: '#B91C1C' }}
+                >
+                  Delete group
+                </button>
+              </div>
+
+              {/* Add/Remove collaborators */}
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#6B7280', margin: '6px 0' }}>Collaborators</div>
+              <div style={{ maxHeight: 160, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {collaborators.map(c => (
+                  <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={Array.isArray(group.extraCollaborators) ? group.extraCollaborators.includes(c.id) : false}
+                      onChange={() => toggleCollaboratorInGroup(group.id, c.id)}
+                    />
+                    <span style={{ width: 22, height: 22, borderRadius: '9999px', background: c.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700 }}>{c.initials}</span>
+                    <span style={{ fontSize: 12, color: '#111827' }}>{c.name}</span>
+                    {c.id !== collaborator.id && (
+                      <button
+                        onClick={() => setPrimaryCollaborator(group.id, c)}
+                        style={{ marginLeft: 'auto', fontSize: 11, color: '#2563EB' }}
+                        title="Set as primary"
+                      >
+                        Make primary
+                      </button>
+                    )}
+                  </label>
+                ))}
+              </div>
+
+              {/* Close */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
+                <button onClick={() => setOpenGroupMenuId(null)} style={{ fontSize: 12, color: '#374151' }}>Close</button>
+              </div>
+            </div>
+          )}
+
+          {/* Subtle label */}
           <div style={{
             position: 'absolute',
-            bottom: -25,
-            left: '50%',
+            left: boundingBox.x + (boundingBox.width / 2),
+            top: boundingBox.y + boundingBox.height + 5,
             transform: 'translateX(-50%)',
             fontSize: '0.7rem',
             color: collaborator.color,
@@ -1513,7 +1645,7 @@ const handleNodeClick = (nodeId, e) => {
           }}>
             {collaborator.name}'s Group
           </div>
-        </div>
+        </React.Fragment>
       );
     });
   };

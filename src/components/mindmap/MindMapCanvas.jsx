@@ -10,7 +10,7 @@ const MindMapCanvas = ({
   children
 }) => {
   return (
-    <div 
+    <div
       className="absolute"
       style={{
         transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
@@ -19,13 +19,13 @@ const MindMapCanvas = ({
     >
       {/* Group bounding boxes */}
       {renderNodeGroups()}
-      
+
       {/* Connections between nodes */}
       {renderConnections}
-      
+
       {/* Selection rectangle */}
       {isSelecting && selectionRect && (
-        <div 
+        <div
           style={{
             position: 'absolute',
             left: selectionRect.x,
