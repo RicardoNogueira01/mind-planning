@@ -2001,11 +2001,8 @@ useLayoutEffect(() => {
               const isNodeMatching = searchQuery ? 
                 node.text.toLowerCase().includes(searchQuery.toLowerCase()) : true;
               
-              // Calculate dynamic width based on text length with better handling for long words
-              const textLength = node.text.length;
-              const hasLongWords = node.text.split(' ').some(word => word.length > 15);
-              const baseFactor = hasLongWords ? 10 : 12; // Reduce width multiplier for long words
-              const nodeWidth = Math.min(400, Math.max(200, textLength * baseFactor));
+              // Use fixed width to prevent layout disruption during text editing
+              const nodeWidth = 400; // Fixed width for stable layout
 
               // Define shape-specific styles
               const getShapeStyles = (shapeType) => {
@@ -2090,7 +2087,7 @@ useLayoutEffect(() => {
                     textAlign: 'center',
                     opacity: searchQuery ? (isNodeMatching ? 1 : 0.3) : 1,
                     position: 'relative',
-                    padding: '18px 22px',
+                    padding: '12px 16px',
                     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                     borderRadius: shapeStyles.borderRadius,
                     clipPath: shapeStyles.clipPath,
@@ -3095,7 +3092,7 @@ useLayoutEffect(() => {
                   )}
 
                   {/* Professional Node Content */}
-                  <div className={`flex flex-col items-center justify-center gap-2 h-full min-h-[48px] ${node.completed ? 'opacity-75' : ''}`}>
+                  <div className={`flex flex-col items-center justify-center gap-2 h-full min-h-[48px] w-full flex-1 ${node.completed ? 'opacity-75' : ''}`}>
                     {/* Completion indicator */}
                     {node.completed && (
                       <div className="absolute -top-2 -right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-lg border-2 border-green-400">
@@ -3166,8 +3163,10 @@ useLayoutEffect(() => {
                           value={node.text}
                           onChange={(e) => updateNodeText(node.id, e.target.value)}
                           placeholder="Please introduce your task"
-                          className="bg-transparent outline-none w-full text-center resize-none overflow-hidden font-medium leading-snug"
+                          className="bg-transparent outline-none w-full text-center resize-none overflow-hidden font-medium leading-snug px-1"
                           style={{ 
+                            display: 'block',
+                            maxWidth: '100%',
                             color: node.text ? (node.fontColor || (isDarkMode ? '#f3f4f6' : '#2d3748')) : (isDarkMode ? '#9ca3af' : '#6b7280'),
                             fontSize: '14px',
                             fontWeight: '500',
@@ -3177,7 +3176,8 @@ useLayoutEffect(() => {
                             overflowWrap: 'break-word',
                             wordBreak: 'break-word',
                             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                            minHeight: '40px'
+                            minHeight: '20px',
+                            padding: '0'
                           }}
                           onClick={(e) => e.stopPropagation()}
                           onFocus={(e) => {
@@ -3186,7 +3186,7 @@ useLayoutEffect(() => {
                             e.target.style.height = `${Math.max(40, e.target.scrollHeight)}px`;
                           }}
                           onBlur={() => {
-                            setEditingNode(null);
+                            setEditingNode(null);   
                             setIsEditing(false);
                           }}
                           onKeyDown={(e) => {
@@ -3207,6 +3207,8 @@ useLayoutEffect(() => {
                         <div 
                           className="w-full text-center cursor-text font-medium leading-snug px-1"
                           style={{ 
+                            display: 'block',
+                            maxWidth: '100%',
                             color: node.text ? (node.fontColor || (isDarkMode ? '#f3f4f6' : '#2d3748')) : (isDarkMode ? '#9ca3af' : '#6b7280'),
                             fontSize: '14px',
                             fontWeight: '500',
