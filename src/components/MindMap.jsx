@@ -978,7 +978,7 @@ const getDescendantNodeIds = (parentId) => {
     if (!parent) return;
 
     // Constants
-    const HORIZONTAL_GAP = 220;
+  const EDGE_GAP = 100; // desired gap between parent right edge and child left edge
     const VERTICAL_SPACING = 120;
     const MIN_DISTANCE = 130;
 
@@ -992,14 +992,14 @@ const getDescendantNodeIds = (parentId) => {
       // Determine the order based on up-to-date connections
       const currentChildCount = prevConns.filter(c => c.from === parentId).length;
 
-      // Compute base position using current nodes snapshot (parent size won't change between clicks)
-      const parentWidth = Math.min(400, Math.max(200, (parent.text || '').length * 12));
-      const baseX = parent.x + parentWidth / 2 + HORIZONTAL_GAP;
+  // Compute base X using displayed widths (nodes render at ~400px wide by default)
+  const PARENT_DISPLAY_W = 400;
+  const CHILD_DISPLAY_W = 400;
+  const baseX = parent.x + (PARENT_DISPLAY_W / 2) + EDGE_GAP + (CHILD_DISPLAY_W / 2);
 
-      // Symmetric vertical placement: 0, +1s, -1s, +2s, -2s, ...
-      const orderIndex = currentChildCount; // new child's index
-      const verticalSteps = orderIndex === 0 ? 0 : Math.ceil(orderIndex / 2) * (orderIndex % 2 === 1 ? 1 : -1);
-      const targetY = parent.y + verticalSteps * VERTICAL_SPACING;
+  // Place first child aligned with parent; others stack below
+  const orderIndex = currentChildCount; // 0-based
+  const targetY = parent.y + (orderIndex * VERTICAL_SPACING);
 
       let newX = baseX;
       let newY = targetY;
@@ -1024,10 +1024,10 @@ const getDescendantNodeIds = (parentId) => {
       let attempts = 0;
       let horizNudge = 0;
       while (!isValid(newX, newY, prevNodesSnapshot) && attempts < MAX_ATTEMPTS) {
-        const step = 20 * Math.ceil((attempts + 1) / 2);
-        const sign = (attempts % 2 === 0) ? 1 : -1;
-        newY = targetY + (sign === 1 ? step : -step);
-        if (attempts > 0 && attempts % 6 === 0) horizNudge += 30;
+        // Only nudge downward so siblings always follow below the first
+        const step = 24 * (attempts + 1);
+        newY = targetY + step;
+        if (attempts > 0 && attempts % 5 === 0) horizNudge += 30;
         newX = baseX + horizNudge;
         attempts++;
       }
