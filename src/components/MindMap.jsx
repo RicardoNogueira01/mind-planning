@@ -972,118 +972,98 @@ const getDescendantNodeIds = (parentId) => {
     wrappedSetNodesAndConnections([...nodes, newNode], connections);
     setSelectedNode(newId);
   };
-  // Update the addChildNode function to use similar logic
+  // Update the addChildNode function to be atomic and avoid stacking on rapid clicks
   const addChildNode = (parentId) => {
     const parent = nodes.find(n => n.id === parentId);
     if (!parent) return;
 
-    // Get existing children of this parent
-    const existingChildren = connections.filter(conn => conn.from === parentId);
-    const childCount = existingChildren.length;
+    // Constants
+    const HORIZONTAL_GAP = 220;
+    const VERTICAL_SPACING = 120;
+    const MIN_DISTANCE = 130;
 
+    // We'll compute connection and node in a single functional update chain to avoid stale state
     const newId = `node-${Date.now()}`;
-    
-    // Calculate dynamic parent width with updated formula
-    const parentWidth = Math.min(400, Math.max(200, parent.text.length * 12));
-    
-    // Better positioning to avoid stacking
-    let newX, newY;
-    
-    if (childCount === 0) {
-      // First child - place to the right of parent
-      newX = parent.x + parentWidth/2 + 140;
-      newY = parent.y;
-    } else if (childCount === 1) {
-      // Second child - place below first child
-      newX = parent.x + parentWidth/2 + 140;
-      newY = parent.y + 120;
-    } else if (childCount === 2) {
-      // Third child - place above parent
-      newX = parent.x + parentWidth/2 + 140;
-      newY = parent.y - 120;
-    } else {
-      // For 4+ children, arrange in a proper circle around parent
-      const baseDistance = 140;
-      const childrenInCircle = Math.max(6, childCount + 1);
-      const angleStep = (2 * Math.PI) / childrenInCircle;
-      
-      // Start from right side (0 degrees) and go clockwise
-      let startAngle = 0;
-      if (childCount >= 3) {
-        // Skip the first 3 positions (right, bottom-right, top-right)
-        startAngle = angleStep * 3;
-      }
-      
-      const currentAngle = startAngle + (angleStep * (childCount - 3));
-      
-      // Increase distance slightly for more children to avoid crowding
-      const layerDistance = baseDistance + (Math.floor(childCount / 8) * 80);
-      
-      newX = parent.x + Math.cos(currentAngle) * layerDistance;
-      newY = parent.y + Math.sin(currentAngle) * layerDistance;
-    }
-    
-    // Enhanced overlap checking with better collision resolution
-    const minDistance = 110;
-    let attempts = 0;
-    const maxAttempts = 8;
-    
-    while (attempts < maxAttempts) {
-      let hasOverlap = false;
-      let closestDistance = Infinity;
-      
-      for (const existingNode of nodes) {
-        if (existingNode.id === parent.id) continue;
-        
-        const distance = Math.sqrt(
-          Math.pow(newX - existingNode.x, 2) + Math.pow(newY - existingNode.y, 2)
-        );
-        
-        if (distance < minDistance) {
-          hasOverlap = true;
-          closestDistance = Math.min(closestDistance, distance);
+    const newConnId = `conn-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+
+    let computedNode = null;
+
+    setConnections(prevConns => {
+      // Determine the order based on up-to-date connections
+      const currentChildCount = prevConns.filter(c => c.from === parentId).length;
+
+      // Compute base position using current nodes snapshot (parent size won't change between clicks)
+      const parentWidth = Math.min(400, Math.max(200, (parent.text || '').length * 12));
+      const baseX = parent.x + parentWidth / 2 + HORIZONTAL_GAP;
+
+      // Symmetric vertical placement: 0, +1s, -1s, +2s, -2s, ...
+      const orderIndex = currentChildCount; // new child's index
+      const verticalSteps = orderIndex === 0 ? 0 : Math.ceil(orderIndex / 2) * (orderIndex % 2 === 1 ? 1 : -1);
+      const targetY = parent.y + verticalSteps * VERTICAL_SPACING;
+
+      let newX = baseX;
+      let newY = targetY;
+
+      // Collision check against existing nodes (prev snapshot)
+      const isValid = (x, y, prevNodes) => {
+        if (x < 50 || x > window.innerWidth - 250) return false;
+        if (y < 50 || y > window.innerHeight - 150) return false;
+        for (const existingNode of prevNodes) {
+          const dx = x - existingNode.x;
+          const dy = y - existingNode.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < MIN_DISTANCE) return false;
         }
+        return true;
+      };
+
+      // Use current nodes snapshot for collision checks
+      const prevNodesSnapshot = nodes; // acceptable for collision purposes
+
+      const MAX_ATTEMPTS = 24;
+      let attempts = 0;
+      let horizNudge = 0;
+      while (!isValid(newX, newY, prevNodesSnapshot) && attempts < MAX_ATTEMPTS) {
+        const step = 20 * Math.ceil((attempts + 1) / 2);
+        const sign = (attempts % 2 === 0) ? 1 : -1;
+        newY = targetY + (sign === 1 ? step : -step);
+        if (attempts > 0 && attempts % 6 === 0) horizNudge += 30;
+        newX = baseX + horizNudge;
+        attempts++;
       }
-      
-      if (!hasOverlap) break;
-      
-      // Smart repositioning - find next available position
-      const currentAngle = Math.atan2(newY - parent.y, newX - parent.x);
-      const currentDistance = Math.sqrt(
-        Math.pow(newX - parent.x, 2) + Math.pow(newY - parent.y, 2)
-      );
-      
-      // Try rotating around parent to find free space
-      const rotationStep = Math.PI / 6; // 30 degrees
-      const newAngle = currentAngle + (rotationStep * (attempts + 1));
-      const adjustedDistance = Math.max(currentDistance, minDistance + 20);
-      
-      newX = parent.x + Math.cos(newAngle) * adjustedDistance;
-      newY = parent.y + Math.sin(newAngle) * adjustedDistance;
-      attempts++;
-    }
-    
-    // Keep within reasonable bounds
-    newX = Math.max(50, Math.min(newX, window.innerWidth - 250));
-    newY = Math.max(50, Math.min(newY, window.innerHeight - 150));
 
-    const newNode = {
-      id: newId,
-      text: '',
-      x: newX,
-      y: newY,
-      color: isDarkMode ? '#374151' : '#ffffff',
-      fontColor: isDarkMode ? '#f3f4f6' : '#2d3748'
-    };
+      newX = Math.max(50, Math.min(newX, window.innerWidth - 250));
+      newY = Math.max(50, Math.min(newY, window.innerHeight - 150));
 
-    const newConnection = {
-      id: `conn-${Date.now()}`,
-      from: parentId,
-      to: newId
-    };
+      computedNode = {
+        id: newId,
+        text: '',
+        x: newX,
+        y: newY,
+        color: isDarkMode ? '#374151' : '#ffffff',
+        fontColor: isDarkMode ? '#f3f4f6' : '#2d3748',
+        _justAdded: true
+      };
 
-    wrappedSetNodesAndConnections([...nodes, newNode], [...connections, newConnection]);
-    // setSelectedNode(newId); // Do NOT select the new child node, keep focus on parent
+      return [...prevConns, { id: newConnId, from: parentId, to: newId }];
+    });
+
+    setNodes(prevNodes => {
+      // Append the node computed above; fallback if missing
+      const nodeToAdd = computedNode || {
+        id: newId,
+        text: '',
+        x: parent.x + 240,
+        y: parent.y,
+        color: isDarkMode ? '#374151' : '#ffffff',
+        fontColor: isDarkMode ? '#f3f4f6' : '#2d3748',
+        _justAdded: true
+      };
+      return [...prevNodes, nodeToAdd];
+    });
+
+    // Save history after both setters (best-effort, matches existing wrappers behavior)
+    saveToHistory();
   };
   
   // Update node text
@@ -2443,47 +2423,59 @@ useLayoutEffect(() => {
                     clipPath: shapeStyles.clipPath,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    transition: 'transform 160ms ease-out',
+                    transform: node._justAdded ? 'scale(0.96)' : 'scale(1)'
+                  }}
+                  onTransitionEnd={() => {
+                    if (node._justAdded) {
+                      Promise.resolve().then(() => {
+                        wrappedSetNodes(nodes.map(n => n.id === node.id ? { ...n, _justAdded: false } : n));
+                      });
+                    }
                   }}
                   onClick={(e) => handleNodeClick(node.id, e)}
-                  onMouseDown={(e) => {
-                    // Prevent moving the node if it is being edited
-                    if (editingNode === node.id) return;
+                  onPointerDownCapture={(e) => {
+                    // Ignore pointer capture if interacting with inner controls
+                    const el = e.target;
+                    if (el && el.closest && (el.closest('.node-toolbar-btn') || el.closest('button') || el.closest('input, textarea, select'))) {
+                      return;
+                    }
+                    // Prevent moving the node if it is being edited (text interaction only)
+                    if (editingNode === node.id || isEditing) return;
                     if (mode === 'cursor' && e.button === 0) {
-                      e.preventDefault(); // Prevent text selection during drag
-
+                      e.preventDefault();
+                      e.stopPropagation();
+                      try { e.currentTarget.setPointerCapture?.(e.pointerId); } catch {}
                       const startX = e.clientX;
                       const startY = e.clientY;
                       const startNodeX = node.x;
                       const startNodeY = node.y;
-                      
-                      // Set dragging state for smooth animations
+                      // Disable text selection while dragging
+                      const prevUserSelect = document.body.style.userSelect;
+                      document.body.style.userSelect = 'none';
+
                       setDraggingNodeId(node.id);
-                      
-                      const handleMouseMove = (moveEvent) => {
+
+                      const handlePointerMove = (moveEvent) => {
                         if (isPanning) return;
                         const dx = (moveEvent.clientX - startX) / zoom;
                         const dy = (moveEvent.clientY - startY) / zoom;
                         handleNodeDrag(node.id, startNodeX + dx, startNodeY + dy);
                       };
-                      
-                      const handleMouseUp = () => {
-                        // Clear dragging state
+
+                      const handlePointerUp = () => {
                         setDraggingNodeId(null);
-                        // Cancel any pending animation frame
                         if (dragFrameRef.current) {
                           cancelAnimationFrame(dragFrameRef.current);
                           dragFrameRef.current = null;
                         }
-                        // On drop: if node center is inside a group's bounding box,
-                        // assign it to that group and sync collaborators; otherwise, remove from any group
+                        // Drop membership/collaborators update
                         const latestPos = lastDragPosRef.current[node.id];
                         if (latestPos && nodeGroups.length > 0) {
-                          // Find first group whose bounding box contains the node center
                           const targetGroup = nodeGroups.find(g => {
                             const bb = g.boundingBox;
                             if (!bb) return false;
-                            // Shrink hit area slightly so you must be clearly inside to join; easier to remove near edges
                             const left = bb.x + GROUP_HIT_INSET;
                             const right = bb.x + bb.width - GROUP_HIT_INSET;
                             const top = bb.y + GROUP_HIT_INSET;
@@ -2492,43 +2484,34 @@ useLayoutEffect(() => {
                                    latestPos.y >= top && latestPos.y <= bottom;
                           });
                           if (targetGroup) {
-                            // 1) Move membership: remove from other groups, add to target if not already present
                             setNodeGroups(prev => prev.map(g => {
                               if (g.id === targetGroup.id) {
                                 if ((g.nodeIds || []).includes(node.id)) return g;
                                 return { ...g, nodeIds: [...(g.nodeIds || []), node.id] };
                               }
-                              // remove from any other group
                               if ((g.nodeIds || []).includes(node.id)) {
                                 return { ...g, nodeIds: g.nodeIds.filter(id => id !== node.id) };
                               }
                               return g;
                             }));
-                            // 2) Update the node's collaborators:
-                            //    - remove collaborators from groups the node leaves
-                            //    - add collaborators from the target group (union)
                             const groupsContainingNode = nodeGroups.filter(g => (g.nodeIds || []).includes(node.id));
                             const groupsLeaving = groupsContainingNode.filter(g => g.id !== targetGroup.id);
                             const collabsToRemove = Array.from(new Set(groupsLeaving.flatMap(g => [g.collaborator?.id, ...(g.extraCollaborators || [])].filter(Boolean))));
                             const targetIds = [targetGroup.collaborator?.id, ...((targetGroup.extraCollaborators || []))].filter(Boolean);
-
                             wrappedSetNodes(nodes.map(n => {
                               if (n.id !== node.id) return n;
                               const existing = Array.isArray(n.collaborators) ? n.collaborators : [];
                               const kept = existing.filter(id => !collabsToRemove.includes(id));
                               const merged = Array.from(new Set([...kept, ...targetIds]));
-                              // Also lock in the final dropped position so it doesn't snap back
                               const withPosition = latestPos ? { x: latestPos.x, y: latestPos.y } : {};
                               return { ...n, ...withPosition, collaborators: merged };
                             }));
                           } else {
-                            // Dropped outside all groups: remove membership from any group containing this node
                             setNodeGroups(prev => prev.map(g => (
                               (g.nodeIds || []).includes(node.id)
                                 ? { ...g, nodeIds: g.nodeIds.filter(id => id !== node.id) }
                                 : g
                             )));
-                            // Also remove collaborators that came from any groups it was in (not necessarily all)
                             const groupsContainingNode = nodeGroups.filter(g => (g.nodeIds || []).includes(node.id));
                             const collabsToRemove = Array.from(new Set(groupsContainingNode.flatMap(g => [g.collaborator?.id, ...(g.extraCollaborators || [])].filter(Boolean))));
                             if (collabsToRemove.length > 0) {
@@ -2542,12 +2525,14 @@ useLayoutEffect(() => {
                             }
                           }
                         }
-                        document.removeEventListener('mousemove', handleMouseMove);
-                        document.removeEventListener('mouseup', handleMouseUp);
+                        document.removeEventListener('pointermove', handlePointerMove);
+                        document.removeEventListener('pointerup', handlePointerUp);
+                        // restore text selection
+                        document.body.style.userSelect = prevUserSelect;
                       };
-                      
-                      document.addEventListener('mousemove', handleMouseMove, { passive: true });
-                      document.addEventListener('mouseup', handleMouseUp, { passive: true });
+
+                      document.addEventListener('pointermove', handlePointerMove, { passive: true });
+                      document.addEventListener('pointerup', handlePointerUp, { passive: true });
                     }
                   }}
                 >
