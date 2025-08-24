@@ -2854,6 +2854,22 @@ useLayoutEffect(() => {
                               </svg>
                             </button>
                           )}
+
+                          {/* Delete Node Button - Only visible in collapsed (quick) view */}
+                          {!isToolbarExpanded && node.id !== 'root' && (
+                            <button
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-red-100 text-red-700 transition-colors duration-200 border border-red-200 hover:border-red-300"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteNode(node.id);
+                              }}
+                              title="Delete node"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+
+                          {/* Delete is shown at the end when expanded */}
                           
                           {/* Settings Button */}
                           <div className="relative">
