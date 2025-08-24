@@ -2263,6 +2263,15 @@ const handleNodeClick = (nodeId, e) => {
   // Add this useEffect near your other useEffect hooks in MindMap.jsx
   useEffect(() => {
     const handleKeyDown = (e) => {  // Remove the : KeyboardEvent type annotation
+      // If the focus is on an editable field (e.g., search input, textareas), do nothing
+      const t = e.target;
+      if (t) {
+        const tag = (t.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select' || t.isContentEditable) {
+          return;
+        }
+      }
+
       if (e.key === 'Delete' || e.key === 'Backspace') {
         // Check if we have any selected nodes
         if (selectedNodes.length > 0) {
