@@ -26,7 +26,7 @@ const CollaboratorDialog = ({
 
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-25 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl border border-gray-200 p-6 w-80">
+  <div className="bg-white rounded-xl shadow-xl border border-gray-200 p-5 w-72">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Assign Collaborator</h3>
         <p className="text-sm text-gray-500 mb-4">
           {selectedNodes.length} {selectedNodes.length === 1 ? 'node' : 'nodes'} selected
