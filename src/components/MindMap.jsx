@@ -752,6 +752,38 @@ const getDescendantNodeIds = (parentId) => {
   // Collaborator selection mode
   const [selectionType, setSelectionType] = useState('simple'); // 'simple' or 'collaborator'
 
+  // Constants for group bounding box sizing
+  const NODE_HALF_WIDTH = 75;   // approx node half width used in hit/bounds
+  const NODE_HALF_HEIGHT = 25;  // approx node half height used in hit/bounds
+  const GROUP_PADDING = 20;     // padding around nodes inside a group
+  const MIN_GROUP_WIDTH = 520;  // minimum group width to keep drop target usable
+  const MIN_GROUP_HEIGHT = 530; // minimum group height to keep drop target usable
+
+  // Compute a tight bounding box around given nodes with padding and enforce minimum size.
+  // If fewer than 1 node is provided, return null and let caller decide.
+  const computeGroupBoundingBox = (groupNodes) => {
+    if (!Array.isArray(groupNodes) || groupNodes.length === 0) return null;
+    const minX = Math.min(...groupNodes.map(n => n.x - NODE_HALF_WIDTH));
+    const maxX = Math.max(...groupNodes.map(n => n.x + NODE_HALF_WIDTH));
+    const minY = Math.min(...groupNodes.map(n => n.y - NODE_HALF_HEIGHT));
+    const maxY = Math.max(...groupNodes.map(n => n.y + NODE_HALF_HEIGHT));
+
+    const rawX = minX - GROUP_PADDING;
+    const rawY = minY - GROUP_PADDING;
+    const rawW = (maxX - minX) + GROUP_PADDING * 2;
+    const rawH = (maxY - minY) + GROUP_PADDING * 2;
+
+    // Enforce minimum size by expanding from center
+    const centerX = rawX + rawW / 2;
+    const centerY = rawY + rawH / 2;
+    const width = Math.max(MIN_GROUP_WIDTH, rawW);
+    const height = Math.max(MIN_GROUP_HEIGHT, rawH);
+    const x = centerX - width / 2;
+    const y = centerY - height / 2;
+
+    return { x, y, width, height };
+  };
+
   // Assigning collaborator to selected nodes
   const assignCollaborator = (collaborator) => {
     // Create a new group with the selected nodes and collaborator
@@ -761,28 +793,10 @@ const getDescendantNodeIds = (parentId) => {
       collaborator
     };
 
-    // Use the last selection rectangle as the bounding box if available
-    if (lastSelectionRect) {
-      newGroup.boundingBox = {
-        x: lastSelectionRect.x,
-        y: lastSelectionRect.y,
-        width: lastSelectionRect.width,
-        height: lastSelectionRect.height
-      };
-    } else {
-      // Fallback: calculate bounding box from nodes
-      const groupNodes = nodes.filter(node => selectedNodes.includes(node.id));
-      const minX = Math.min(...groupNodes.map(node => node.x - 75));
-      const maxX = Math.max(...groupNodes.map(node => node.x + 75));
-      const minY = Math.min(...groupNodes.map(node => node.y - 25));
-      const maxY = Math.max(...groupNodes.map(node => node.y + 25));
-      newGroup.boundingBox = {
-        x: minX - 10,
-        y: minY - 10,
-        width: (maxX - minX) + 20,
-        height: (maxY - minY) + 20
-      };
-    }
+  // Compute bounding box from the contained nodes with padding and min size
+  const groupNodes = nodes.filter(node => selectedNodes.includes(node.id));
+  const bbox = computeGroupBoundingBox(groupNodes);
+  if (bbox) newGroup.boundingBox = bbox;
 
     // Add the new group
     setNodeGroups([...nodeGroups, newGroup]);
@@ -1186,30 +1200,7 @@ const handleNodeClick = (nodeId, e) => {
     
     // Use requestAnimationFrame for smooth updates
     dragFrameRef.current = requestAnimationFrame(() => {
-      const targetNode = nodes.find(n => n.id === nodeId);
-      
-      // Check if this node belongs to any collaborator group
-      const nodeGroup = nodeGroups.find(group => group.nodeIds.includes(nodeId));
-    
-    // If node is in a group, constrain its movement to the group's bounding box
-  if (nodeGroup) {
-      const { boundingBox } = nodeGroup;
-      const nodeWidth = 150; // Approximate node width (75px on each side)
-      const nodeHeight = 50;  // Approximate node height (25px on each side)
-      
-      // Constrain the new position to stay within the group's bounding box
-      const constrainedX = Math.max(
-        boundingBox.x + nodeWidth / 2, 
-        Math.min(newX, boundingBox.x + boundingBox.width - nodeWidth / 2)
-      );
-      const constrainedY = Math.max(
-        boundingBox.y + nodeHeight / 2,
-        Math.min(newY, boundingBox.y + boundingBox.height - nodeHeight / 2)
-      );
-      
-      newX = constrainedX;
-      newY = constrainedY;
-    }
+  const targetNode = nodes.find(n => n.id === nodeId);
 
   // Track last drag position for drop detection
   lastDragPosRef.current[nodeId] = { x: newX, y: newY };
@@ -1217,29 +1208,12 @@ const handleNodeClick = (nodeId, e) => {
   const dx = newX - targetNode.x;
     const dy = newY - targetNode.y;
 
-    if (selectedNodes.includes(nodeId)) {
+  if (selectedNodes.includes(nodeId)) {
       // Move all selected nodes by the same displacement, but constrain each one individually
       wrappedSetNodes(nodes.map(node => {
         if (selectedNodes.includes(node.id)) {
           let finalX = node.x + dx;
           let finalY = node.y + dy;
-          
-          // Check if this node is also in a group and constrain it
-          const selectedNodeGroup = nodeGroups.find(group => group.nodeIds.includes(node.id));
-          if (selectedNodeGroup) {
-            const { boundingBox } = selectedNodeGroup;
-            const nodeWidth = 150;
-            const nodeHeight = 50;
-            
-            finalX = Math.max(
-              boundingBox.x + nodeWidth / 2,
-              Math.min(finalX, boundingBox.x + boundingBox.width - nodeWidth / 2)
-            );
-            finalY = Math.max(
-              boundingBox.y + nodeHeight / 2,
-              Math.min(finalY, boundingBox.y + boundingBox.height - nodeHeight / 2)
-            );
-          }
           
           return {
             ...node,
@@ -1250,25 +1224,35 @@ const handleNodeClick = (nodeId, e) => {
         return node;
       }));
   
-      // Update group bounding boxes for all selected nodes
-      updateGroupBoundingBoxes(selectedNodes, dx, dy);
+  // Do not resize groups while dragging; groups remain fixed after creation
     } else {
       // Move only the single node with constraints already applied
       wrappedSetNodes(nodes.map(node => 
         node.id === nodeId ? { ...node, x: newX, y: newY } : node
       ));
       
-      // No need to update group bounding box since node stays within bounds
-      // The group bounding box should remain the same when nodes move within it
+  // Do not resize groups while dragging; groups remain fixed after creation
     }
     }); // Close requestAnimationFrame
   };
   
   // Helper function to update group bounding boxes
   const updateGroupBoundingBoxes = (affectedNodeIds, dx, dy) => {
-    // For constrained groups, we don't update the bounding box
-    // The nodes should stay within the original bounds set during collaborator assignment
-    // The bounding box remains fixed to maintain the grouping constraint
+    // Deprecated: now groups auto-resize; kept for backward compatibility
+    recalcGroupsForNodes(affectedNodeIds);
+  };
+
+  // Recalculate bounding boxes for any groups containing the given nodes
+  const recalcGroupsForNodes = (affectedNodeIds) => {
+    if (!Array.isArray(affectedNodeIds) || affectedNodeIds.length === 0) return;
+    setNodeGroups(prev => prev.map(group => {
+      const intersects = group.nodeIds.some(id => affectedNodeIds.includes(id));
+      if (!intersects) return group;
+      const groupNodes = nodes.filter(n => group.nodeIds.includes(n.id));
+      if (groupNodes.length === 0) return group;
+      const boundingBox = computeGroupBoundingBox(groupNodes);
+      return { ...group, boundingBox };
+    }));
   };
   
   // Helper function to update group bounding boxes for a single moved node
@@ -1334,18 +1318,9 @@ const handleNodeClick = (nodeId, e) => {
       group.nodeIds = updatedNodeIds;
       
       // Recalculate the bounding box
-      const groupNodes = updatedNodes.filter(node => updatedNodeIds.includes(node.id));
-      const minX = Math.min(...groupNodes.map(node => node.x - 75));
-      const maxX = Math.max(...groupNodes.map(node => node.x + 75));
-      const minY = Math.min(...groupNodes.map(node => node.y - 25));
-      const maxY = Math.max(...groupNodes.map(node => node.y + 25));
-      
-      group.boundingBox = {
-        x: minX - 10,
-        y: minY - 10,
-        width: (maxX - minX) + 20,
-        height: (maxY - minY) + 20
-      };
+  const groupNodes = updatedNodes.filter(node => updatedNodeIds.includes(node.id));
+  const bbox = computeGroupBoundingBox(groupNodes);
+  if (bbox) group.boundingBox = bbox;
       
       return true;
     });
@@ -1385,18 +1360,9 @@ const handleNodeClick = (nodeId, e) => {
       group.nodeIds = updatedNodeIds;
       
       // Recalculate bounding box
-      const groupNodes = updatedNodes.filter(node => updatedNodeIds.includes(node.id));
-      const minX = Math.min(...groupNodes.map(node => node.x - 75));
-      const maxX = Math.max(...groupNodes.map(node => node.x + 75));
-      const minY = Math.min(...groupNodes.map(node => node.y - 25));
-      const maxY = Math.max(...groupNodes.map(node => node.y + 25));
-      
-      group.boundingBox = {
-        x: minX - 10,
-        y: minY - 10,
-        width: (maxX - minX) + 20,
-        height: (maxY - minY) + 20
-      };
+  const groupNodes = updatedNodes.filter(node => updatedNodeIds.includes(node.id));
+  const bbox = computeGroupBoundingBox(groupNodes);
+  if (bbox) group.boundingBox = bbox;
       
       return true;
     });
@@ -2489,7 +2455,7 @@ useLayoutEffect(() => {
                           dragFrameRef.current = null;
                         }
                         // On drop: if node center is inside a group's bounding box,
-                        // assign it to that group and sync collaborators
+                        // assign it to that group and sync collaborators; otherwise, remove from any group
                         const latestPos = lastDragPosRef.current[node.id];
                         if (latestPos && nodeGroups.length > 0) {
                           // Find first group whose bounding box contains the node center
@@ -2523,6 +2489,13 @@ useLayoutEffect(() => {
                                 n.id === node.id ? { ...n, collaborators: Array.from(new Set(targetIds)) } : n
                               ));
                             }
+                          } else {
+                            // Dropped outside all groups: remove membership from any group containing this node
+                            setNodeGroups(prev => prev.map(g => (
+                              (g.nodeIds || []).includes(node.id)
+                                ? { ...g, nodeIds: g.nodeIds.filter(id => id !== node.id) }
+                                : g
+                            )));
                           }
                         }
                         document.removeEventListener('mousemove', handleMouseMove);
