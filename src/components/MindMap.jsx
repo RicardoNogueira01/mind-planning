@@ -1698,7 +1698,8 @@ const handleNodeClick = (nodeId, e) => {
                 borderRadius: 12,
                 boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
                 padding: 12,
-                zIndex: 7,
+                // Ensure the popup appears above any node (nodes can reach z-index ~50)
+                zIndex: 1000,
                 pointerEvents: 'auto',
                 // Counteract canvas zoom and apply user overlay scale so popup remains readable
                 transform: `scale(${(overlayUiScale || 1) / (zoom || 1)})`,
