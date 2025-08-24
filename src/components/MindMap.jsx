@@ -1679,14 +1679,18 @@ const handleNodeClick = (nodeId, e) => {
                 position: 'absolute',
                 left: boundingBox.x + boundingBox.width + 10,
                 top: boundingBox.y - badgeOffset,
-                width: 260,
+                // Responsive width that scales with viewport
+                width: 'clamp(260px, 26vw, 360px)',
                 background: '#fff',
                 border: '1px solid rgba(0,0,0,0.08)',
                 borderRadius: 12,
                 boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
                 padding: 12,
                 zIndex: 7,
-                pointerEvents: 'auto'
+                pointerEvents: 'auto',
+                // Counteract canvas zoom so popup remains readable
+                transform: `scale(${1 / (zoom || 1)})`,
+                transformOrigin: 'top left'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
