@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Search, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
+import { Search, X, Trash2 } from 'lucide-react';
 
 const MindMapSearchBar = ({
   searchQuery,
@@ -8,9 +9,16 @@ const MindMapSearchBar = ({
   setShowSearchList,
   nodes,
   setSelectedNode,
-  setPan
+  setPan,
+  deleteNode
 }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [confirm, setConfirm] = useState(null);
+
+  // Close confirm dialog if search is closed
+  useEffect(() => {
+    if (!isSearchOpen) setConfirm(null);
+  }, [isSearchOpen]);
   const handleNodeClick = (node) => {
     setSelectedNode(node.id);
     setShowSearchList(false);
@@ -88,6 +96,40 @@ const MindMapSearchBar = ({
       {/* Enhanced Search Results */}
       {isSearchOpen && showSearchList && searchQuery && (
         <div className="absolute left-14 right-0 mt-3 w-80 bg-white/95 backdrop-blur-lg shadow-2xl border border-gray-200/50 rounded-2xl p-3 max-h-96 overflow-y-auto">
+          {/* Optional confirm overlay */}
+          {confirm && (
+            <div className="absolute inset-0 bg-white/95 backdrop-blur-lg rounded-2xl border border-gray-200/60 shadow-2xl p-4 z-10 flex flex-col justify-between">
+              <div>
+                <h4 className="text-gray-900 font-semibold text-sm mb-1">Remove this node?</h4>
+                <p className="text-gray-600 text-sm">
+                  Are you sure you want to remove “<span className="font-medium text-gray-900">{confirm.text || 'Untitled'}</span>” from your mind map?
+                  This will delete the node and any connections linked to it. You can undo this from the toolbar if needed.
+                </p>
+              </div>
+              <div className="mt-3 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setConfirm(null)}
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm?.id) {
+                      deleteNode?.(confirm.id);
+                    }
+                    setConfirm(null);
+                    // Clear search and close list after deletion
+                    setSearchQuery('');
+                    setShowSearchList(false);
+                  }}
+                  className="px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-sm"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          )}
           {nodes
             .filter(node => node.text.toLowerCase().includes(searchQuery.toLowerCase()))
             .map(node => (
@@ -112,15 +154,16 @@ const MindMapSearchBar = ({
                     <span className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors duration-200">{node.text}</span>
                     {(node.priority || node.status) && (
                       <div className="flex gap-1 mt-1">
-                        {node.priority && (
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            node.priority === 'high' ? 'bg-red-100 text-red-600' :
-                            node.priority === 'medium' ? 'bg-yellow-100 text-yellow-600' :
-                            'bg-green-100 text-green-600'
-                          }`}>
-                            {node.priority}
-                          </span>
-                        )}
+                        {node.priority && (() => {
+                          let colorClass = 'bg-green-100 text-green-600';
+                          if (node.priority === 'high') colorClass = 'bg-red-100 text-red-600';
+                          else if (node.priority === 'medium') colorClass = 'bg-yellow-100 text-yellow-600';
+                          return (
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${colorClass}`}>
+                              {node.priority}
+                            </span>
+                          );
+                        })()}
                         {node.status && (
                           <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
                             {node.status}
@@ -139,6 +182,20 @@ const MindMapSearchBar = ({
                   }`}>
                     {node.id === 'root' ? 'Central' : 'Node'}
                   </span>
+                  {/* Delete icon (hidden for root) */}
+                  {node.id !== 'root' && (
+                    <button
+                      title="Delete node"
+                      className="p-1.5 rounded-md text-red-600 hover:bg-red-50 transition"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setConfirm({ id: node.id, text: node.text });
+                      }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
                 </div>
               </button>
             ))}
@@ -154,3 +211,22 @@ const MindMapSearchBar = ({
 };
 
 export default MindMapSearchBar;
+
+MindMapSearchBar.propTypes = {
+  searchQuery: PropTypes.string.isRequired,
+  setSearchQuery: PropTypes.func.isRequired,
+  showSearchList: PropTypes.bool.isRequired,
+  setShowSearchList: PropTypes.func.isRequired,
+  nodes: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    text: PropTypes.string,
+    emoji: PropTypes.string,
+    priority: PropTypes.string,
+    status: PropTypes.string,
+    x: PropTypes.number,
+    y: PropTypes.number
+  })).isRequired,
+  setSelectedNode: PropTypes.func.isRequired,
+  setPan: PropTypes.func.isRequired,
+  deleteNode: PropTypes.func
+};

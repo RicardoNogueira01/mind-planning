@@ -2550,6 +2550,7 @@ useLayoutEffect(() => {
             nodes={nodes}
             setSelectedNode={setSelectedNode}
             setPan={setPan}
+            deleteNode={deleteNode}
           />
                  
           {/* Wrapper for panned and zoomed content */}
