@@ -734,15 +734,14 @@ const getDescendantNodeIds = (parentId) => {
         }
       });
       const selectedIds = Array.from(selectedIdsSet);
-      // Update selected nodes
-      if (selectedIds.length > 0) {
+      if (selectionType === 'collaborator') {
+        // Always open collaborator dialog, even if no nodes were selected
         setSelectedNodes(selectedIds);
-        // Save the selection rectangle for later use
         setLastSelectionRect(selectionRect);
-        // Only show collaborator dialog in collaborator selection mode
-        if (selectionType === 'collaborator') {
-          setShowCollaboratorDialog(true);
-        }
+        setShowCollaboratorDialog(true);
+      } else if (selectedIds.length > 0) {
+        // In simple mode, only update selection if there are nodes
+        setSelectedNodes(selectedIds);
       }
     }
     setIsSelecting(false);
@@ -785,6 +784,18 @@ const getDescendantNodeIds = (parentId) => {
     return { x, y, width, height };
   };
 
+  // Build a bounding box from a selection rectangle with minimum size enforcement
+  const bboxFromSelectionRect = (rect) => {
+    if (!rect) return null;
+    const centerX = rect.x + rect.width / 2;
+    const centerY = rect.y + rect.height / 2;
+    const width = Math.max(MIN_GROUP_WIDTH, rect.width);
+    const height = Math.max(MIN_GROUP_HEIGHT, rect.height);
+    const x = centerX - width / 2;
+    const y = centerY - height / 2;
+    return { x, y, width, height };
+  };
+
   // Assigning collaborator to selected nodes
   const assignCollaborator = (collaborator) => {
     // Create a new group with the selected nodes and collaborator
@@ -794,9 +805,12 @@ const getDescendantNodeIds = (parentId) => {
       collaborator
     };
 
-  // Compute bounding box from the contained nodes with padding and min size
+  // Compute bounding box from nodes if any; otherwise use the selection rectangle with min size
   const groupNodes = nodes.filter(node => selectedNodes.includes(node.id));
-  const bbox = computeGroupBoundingBox(groupNodes);
+  let bbox = computeGroupBoundingBox(groupNodes);
+  if (!bbox) {
+    bbox = bboxFromSelectionRect(lastSelectionRect);
+  }
   if (bbox) newGroup.boundingBox = bbox;
 
     // Add the new group
@@ -1827,14 +1841,20 @@ const handleNodeClick = (nodeId, e) => {
             left: boundingBox.x + (boundingBox.width / 2),
             top: boundingBox.y + boundingBox.height + 5,
             transform: 'translateX(-50%)',
-            fontSize: '0.7rem',
+            fontSize: '0.8rem',
             color: collaborator.color,
             fontWeight: 'bold',
             backgroundColor: 'white',
-            padding: '2px 8px',
+            padding: '4px 10px',
             borderRadius: '4px',
             border: `1px solid ${collaborator.color}`,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            whiteSpace: 'nowrap',
+            // Allow the label to grow wider for long names
+            width: 'max-content',
+            maxWidth: 'clamp(180px, 30vw, 420px)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
           }}>
             {(() => {
               const extras = (group.extraCollaborators || []).map(id => collaborators.find(c => c.id === id)).filter(Boolean);
