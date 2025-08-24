@@ -1,3 +1,4 @@
+const GROUP_HIT_INSET = 12;   // inset for hit-testing: near-edge drops count as outside
 import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import { Link, Settings, Trash2, Check, Moon, Sun } from 'lucide-react';
 import MindMapManager from './MindMapManager';
@@ -2462,8 +2463,13 @@ useLayoutEffect(() => {
                           const targetGroup = nodeGroups.find(g => {
                             const bb = g.boundingBox;
                             if (!bb) return false;
-                            return latestPos.x >= bb.x && latestPos.x <= bb.x + bb.width &&
-                                   latestPos.y >= bb.y && latestPos.y <= bb.y + bb.height;
+                            // Shrink hit area slightly so you must be clearly inside to join; easier to remove near edges
+                            const left = bb.x + GROUP_HIT_INSET;
+                            const right = bb.x + bb.width - GROUP_HIT_INSET;
+                            const top = bb.y + GROUP_HIT_INSET;
+                            const bottom = bb.y + bb.height - GROUP_HIT_INSET;
+                            return latestPos.x >= left && latestPos.x <= right &&
+                                   latestPos.y >= top && latestPos.y <= bottom;
                           });
                           if (targetGroup) {
                             // 1) Move membership: remove from other groups, add to target if not already present
@@ -2478,17 +2484,23 @@ useLayoutEffect(() => {
                               }
                               return g;
                             }));
+                            // 2) Update the node's collaborators:
+                            //    - remove collaborators from groups the node leaves
+                            //    - add collaborators from the target group (union)
+                            const groupsContainingNode = nodeGroups.filter(g => (g.nodeIds || []).includes(node.id));
+                            const groupsLeaving = groupsContainingNode.filter(g => g.id !== targetGroup.id);
+                            const collabsToRemove = Array.from(new Set(groupsLeaving.flatMap(g => [g.collaborator?.id, ...(g.extraCollaborators || [])].filter(Boolean))));
+                            const targetIds = [targetGroup.collaborator?.id, ...((targetGroup.extraCollaborators || []))].filter(Boolean);
 
-                            // 2) Update the node's collaborators to match the group's collaborators
-                            const targetIds = [
-                              targetGroup.collaborator?.id,
-                              ...((targetGroup.extraCollaborators || []))
-                            ].filter(Boolean);
-                            if (targetIds.length > 0) {
-                              wrappedSetNodes(nodes.map(n =>
-                                n.id === node.id ? { ...n, collaborators: Array.from(new Set(targetIds)) } : n
-                              ));
-                            }
+                            wrappedSetNodes(nodes.map(n => {
+                              if (n.id !== node.id) return n;
+                              const existing = Array.isArray(n.collaborators) ? n.collaborators : [];
+                              const kept = existing.filter(id => !collabsToRemove.includes(id));
+                              const merged = Array.from(new Set([...kept, ...targetIds]));
+                              // Also lock in the final dropped position so it doesn't snap back
+                              const withPosition = latestPos ? { x: latestPos.x, y: latestPos.y } : {};
+                              return { ...n, ...withPosition, collaborators: merged };
+                            }));
                           } else {
                             // Dropped outside all groups: remove membership from any group containing this node
                             setNodeGroups(prev => prev.map(g => (
@@ -2496,6 +2508,18 @@ useLayoutEffect(() => {
                                 ? { ...g, nodeIds: g.nodeIds.filter(id => id !== node.id) }
                                 : g
                             )));
+                            // Also remove collaborators that came from any groups it was in (not necessarily all)
+                            const groupsContainingNode = nodeGroups.filter(g => (g.nodeIds || []).includes(node.id));
+                            const collabsToRemove = Array.from(new Set(groupsContainingNode.flatMap(g => [g.collaborator?.id, ...(g.extraCollaborators || [])].filter(Boolean))));
+                            if (collabsToRemove.length > 0) {
+                              wrappedSetNodes(nodes.map(n => {
+                                if (n.id !== node.id) return n;
+                                const existing = Array.isArray(n.collaborators) ? n.collaborators : [];
+                                const kept = existing.filter(id => !collabsToRemove.includes(id));
+                                const withPosition = latestPos ? { x: latestPos.x, y: latestPos.y } : {};
+                                return { ...n, ...withPosition, collaborators: kept };
+                              }));
+                            }
                           }
                         }
                         document.removeEventListener('mousemove', handleMouseMove);
