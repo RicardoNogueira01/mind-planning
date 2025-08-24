@@ -56,6 +56,20 @@ const MindMap = ({ mapId, onBack }) => {
   const [hudTagPickerForGroupId, setHudTagPickerForGroupId] = useState(null); // tag list inside HUD
   const [movingGroupId, setMovingGroupId] = useState(null); // when set, the group's dashed box becomes draggable
   const [isDraggingGroup, setIsDraggingGroup] = useState(false);
+  // UI hover affordance
+  const [hoveredNodeId, setHoveredNodeId] = useState(null);
+
+  // Fun visual FX options (persisted)
+  const [fxOptions, setFxOptions] = useState(() => {
+    try {
+      const raw = window.localStorage.getItem('fxOptions');
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return { enabled: true, ripple: true, tagShimmer: true, springy: true };
+  });
+  useEffect(() => {
+    try { window.localStorage.setItem('fxOptions', JSON.stringify(fxOptions)); } catch {}
+  }, [fxOptions]);
 
   // Global key to dismiss HUD / move mode
   useEffect(() => {
@@ -2548,6 +2562,8 @@ useLayoutEffect(() => {
             undo={undo}
             redo={redo}
             onBack={onBack}
+            fxOptions={fxOptions}
+            setFxOptions={setFxOptions}
           />
           
           {/* Enhanced Search Section */}
@@ -2649,6 +2665,8 @@ useLayoutEffect(() => {
                     ${selectedNodes.includes(node.id) ? 'ring-2 ring-blue-500/80 ring-offset-2 ring-offset-white/50' : ''}
                     ${draggingNodeId === node.id ? 'dragging' : ''}
                     ${node.completed ? 'border-2 border-green-400/60 bg-green-50/40' : 'border border-gray-200/60'}`}
+                  onMouseEnter={() => setHoveredNodeId(node.id)}
+                  onMouseLeave={() => setHoveredNodeId(prev => (prev === node.id ? null : prev))}
                   style={{
                     left: node.x - displayWidth / 2, // Center the node horizontally
                     top: node.y - (shapeStyles.height === 'auto' ? 40 : shapeStyles.height / 2), // Adjust vertical position
@@ -2656,9 +2674,9 @@ useLayoutEffect(() => {
                     height: shapeStyles.height,
                     minHeight: shapeStyles.height === 'auto' ? 80 : shapeStyles.height,
                     background: `linear-gradient(135deg, ${node.backgroundColor || node.color || (isDarkMode ? '#374151' : '#ffffff')} 0%, ${adjustBrightness(node.backgroundColor || node.color || (isDarkMode ? '#374151' : '#ffffff'), -3)} 100%)`,
-                    boxShadow: selectedNode === node.id 
-                      ? `0 20px 40px ${isDarkMode ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.15)'}, 0 0 0 1px rgba(59, 130, 246, 0.5)`
-                      : `0 10px 25px ${isDarkMode ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.08)'}`,
+                    boxShadow: (selectedNode === node.id || hoveredNodeId === node.id)
+                      ? `0 22px 45px ${isDarkMode ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.18)'}, 0 0 0 1px rgba(59, 130, 246, ${selectedNode === node.id ? 0.5 : 0.25})`
+                      : `0 10px 24px ${isDarkMode ? 'rgba(0,0,0,0.30)' : 'rgba(0,0,0,0.10)'}`,
                     zIndex: selectedNode === node.id ? 50 : (searchQuery ? (isNodeMatching ? 20 : 10) : 10),
                     textAlign: 'center',
                     opacity: searchQuery ? (isNodeMatching ? 1 : 0.3) : 1,
@@ -2670,8 +2688,19 @@ useLayoutEffect(() => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    transition: 'transform 160ms ease-out',
-                    transform: node._justAdded ? 'scale(0.96)' : 'scale(1)'
+                    willChange: 'transform, box-shadow, opacity',
+                    transition: `transform ${fxOptions.enabled && fxOptions.springy ? '340ms cubic-bezier(0.34, 1.56, 0.64, 1)' : '240ms cubic-bezier(0.22, 1, 0.36, 1)'}, box-shadow 240ms ease, opacity 220ms ease`,
+                    transform: (() => {
+                      const justAdded = node._justAdded;
+                      const isHovered = hoveredNodeId === node.id && draggingNodeId !== node.id && !isPanning;
+                      let scale = justAdded ? 0.9 : 1;
+                      let translateY = justAdded ? 6 : 0;
+                      if (isHovered) {
+                        scale *= 1.02;
+                        translateY -= 2;
+                      }
+                      return `translateY(${translateY}px) scale(${scale})`;
+                    })()
                   }}
                   onTransitionEnd={() => {
                     if (node._justAdded) {
@@ -3739,8 +3768,28 @@ useLayoutEffect(() => {
                     </div>
                   )}
 
+                  {/* Selection ripple FX */}
+                  {fxOptions.enabled && fxOptions.ripple && selectedNode === node.id && (
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-ripple"
+                      style={{
+                        width: Math.max(120, typeof shapeStyles.width === 'number' ? shapeStyles.width : 120),
+                        height: Math.max(120, typeof shapeStyles.height === 'number' ? shapeStyles.height : 120),
+                        backgroundColor: (() => {
+                          const base = node.backgroundColor || node.color || (isDarkMode ? '#6366f1' : '#3b82f6');
+                          const num = parseInt(base.replace('#',''), 16);
+                          const r = (num >> 16) & 255;
+                          const g = (num >> 8) & 255;
+                          const b = num & 255;
+                          return `rgba(${r}, ${g}, ${b}, 0.20)`;
+                        })()
+                      }}
+                    />
+                  )}
+
                   {/* Professional Node Content */}
-                  <div className={`flex flex-col items-center justify-center gap-2 h-full min-h-[48px] w-full flex-1 ${node.completed ? 'opacity-75' : ''}`}>
+                  <div className={`relative z-10 flex flex-col items-center justify-center gap-2 h-full min-h-[48px] w-full flex-1 ${node.completed ? 'opacity-75' : ''}`}>
                     {/* Completion indicator */}
                     {node.completed && (
                       <div className="absolute -top-2 -right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-lg border-2 border-green-400">
@@ -3790,7 +3839,14 @@ useLayoutEffect(() => {
                               key={tagId}
                               className="px-1.5 py-0.5 rounded text-xs font-medium truncate min-w-0 flex-shrink"
                               style={{
-                                backgroundColor: tag.color,
+                                ...(fxOptions.enabled && fxOptions.tagShimmer
+                                  ? {
+                                      backgroundImage: `linear-gradient(90deg, ${adjustBrightness(tag.color, 14)} 0%, ${tag.color} 40%, ${adjustBrightness(tag.color, 14)} 80%)`,
+                                      backgroundSize: '200% 100%',
+                                      animation: 'shimmer 1600ms linear infinite'
+                                    }
+                                  : { backgroundColor: tag.color }
+                                ),
                                 color: '#ffffff',
                                 fontSize: '10px',
                                 maxWidth: '60px'
@@ -3816,7 +3872,7 @@ useLayoutEffect(() => {
                             display: 'block',
                             maxWidth: '100%',
                             color: node.text ? (node.fontColor || (isDarkMode ? '#f3f4f6' : '#2d3748')) : (isDarkMode ? '#9ca3af' : '#6b7280'),
-                            fontSize: '14px',
+                            fontSize: '18px',
                             fontWeight: '500',
                             lineHeight: '1.4',
                             whiteSpace: 'pre-wrap',
@@ -3858,7 +3914,7 @@ useLayoutEffect(() => {
                             display: 'block',
                             maxWidth: '100%',
                             color: node.text ? (node.fontColor || (isDarkMode ? '#f3f4f6' : '#2d3748')) : (isDarkMode ? '#9ca3af' : '#6b7280'),
-                            fontSize: '14px',
+                            fontSize: '18px',
                             fontWeight: '500',
                             lineHeight: '1.4',
                             wordWrap: 'break-word',
@@ -3878,7 +3934,7 @@ useLayoutEffect(() => {
                         className="font-medium text-center leading-snug px-1"
                         style={{ 
                           color: node.text ? (node.fontColor || (isDarkMode ? '#f3f4f6' : '#2d3748')) : (isDarkMode ? '#9ca3af' : '#6b7280'),
-                          fontSize: '14px',
+                          fontSize: '18px',
                           fontWeight: '500',
                           lineHeight: '1.4',
                           wordWrap: 'break-word',
