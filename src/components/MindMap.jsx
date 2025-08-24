@@ -978,7 +978,7 @@ const getDescendantNodeIds = (parentId) => {
     if (!parent) return;
 
   // Constants
-  const H_OFFSET_FROM_PARENT_RIGHT = 140; // child center is 140px to the right of parent's right edge
+  const GAP_BETWEEN_EDGES = 110; // gap from parent's right edge to child's left edge
     const VERTICAL_SPACING = 120;
     const MIN_DISTANCE = 130;
 
@@ -992,15 +992,24 @@ const getDescendantNodeIds = (parentId) => {
       // Determine the order based on up-to-date connections
       const currentChildCount = prevConns.filter(c => c.from === parentId).length;
 
-  // Compute base X using measured canvas-local width for the parent to be robust to zoom/pan
+  // Compute base X using measured canvas-local width for the parent
   const parentPos = nodePositions[parentId];
   const parentHalfW = parentPos ? parentPos.width / 2 : 200; // fallback to half of default width
-  const baseX = parent.x + parentHalfW + H_OFFSET_FROM_PARENT_RIGHT; // same for all siblings
+  const DEFAULT_CHILD_HALF_W = 200; // default child half width (~400px child width)
+  // Place child so its left edge is GAP_BETWEEN_EDGES to the right of parent's right edge
+  const baseX = parent.x + parentHalfW + GAP_BETWEEN_EDGES + DEFAULT_CHILD_HALF_W;
 
-  // Always use the parent's current Y as the anchor; children stack below
-  const orderIndex = currentChildCount; // 0-based index for the new child
-  const anchorY = parent.y;
-  const targetY = anchorY + (orderIndex * VERTICAL_SPACING);
+      // First child aligned with parent; siblings stack below the FIRST child
+      const orderIndex = currentChildCount; // 0-based index for the new child
+      let anchorY = parent.y;
+      if (orderIndex > 0) {
+        const firstChildConn = prevConns.find(c => c.from === parentId);
+        if (firstChildConn) {
+          const firstChildNode = nodes.find(n => n.id === firstChildConn.to);
+          if (firstChildNode) anchorY = firstChildNode.y;
+        }
+      }
+      const targetY = anchorY + (orderIndex * VERTICAL_SPACING);
 
       let newX = baseX;
       let newY = targetY;
@@ -1022,13 +1031,44 @@ const getDescendantNodeIds = (parentId) => {
       const MAX_ATTEMPTS = 24;
       let attempts = 0;
       let horizNudge = 0;
-      while (!isValid(newX, newY, prevNodesSnapshot) && attempts < MAX_ATTEMPTS) {
-        // Only nudge downward so siblings always follow below the first
-        const step = 24 * (attempts + 1);
-        newY = targetY + step;
-        if (attempts > 0 && attempts % 5 === 0) horizNudge += 30;
-        newX = baseX + horizNudge;
-        attempts++;
+
+      // First child: try to keep same Y as the parent by nudging horizontally a bit first
+      if (orderIndex === 0 && !isValid(newX, newY, prevNodesSnapshot)) {
+        const magnitudes = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 360, 420, 480, 540, 600];
+        const horizontalSteps = [];
+        for (const m of magnitudes) {
+          if (m === 0) { horizontalSteps.push(0); continue; }
+          horizontalSteps.push(-m, m);
+        }
+        let foundSameRow = false;
+        for (const h of horizontalSteps) {
+          const candidateX = baseX + h;
+          if (isValid(candidateX, targetY, prevNodesSnapshot)) {
+            newX = candidateX;
+            newY = targetY;
+            foundSameRow = true;
+            break;
+          }
+        }
+        if (!foundSameRow) {
+          // Fall back to downward nudging if no same-row slot is available
+          while (!isValid(newX, newY, prevNodesSnapshot) && attempts < MAX_ATTEMPTS) {
+            const step = 24 * (attempts + 1);
+            newY = targetY + step;
+            if (attempts > 0 && attempts % 5 === 0) horizNudge += 30;
+            newX = baseX + horizNudge;
+            attempts++;
+          }
+        }
+      } else {
+        // For siblings, nudge downward only so they stack below
+        while (!isValid(newX, newY, prevNodesSnapshot) && attempts < MAX_ATTEMPTS) {
+          const step = 24 * (attempts + 1);
+          newY = targetY + step;
+          if (attempts > 0 && attempts % 5 === 0) horizNudge += 30;
+          newX = baseX + horizNudge;
+          attempts++;
+        }
       }
 
   // No viewport clamping: positions are in canvas coordinates and should not depend on pan/zoom
