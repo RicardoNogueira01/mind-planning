@@ -51,6 +51,25 @@ const MindMap = ({ mapId, onBack }) => {
     try { window.localStorage.setItem('overlayUiScale', String(overlayUiScale)); } catch {}
   }, [overlayUiScale]);
 
+  // Lightweight overlays and modes
+  const [hudGroupId, setHudGroupId] = useState(null); // shows the small quick-actions HUD near a group
+  const [hudTagPickerForGroupId, setHudTagPickerForGroupId] = useState(null); // tag list inside HUD
+  const [movingGroupId, setMovingGroupId] = useState(null); // when set, the group's dashed box becomes draggable
+  const [isDraggingGroup, setIsDraggingGroup] = useState(false);
+
+  // Global key to dismiss HUD / move mode
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setHudGroupId(null);
+        setHudTagPickerForGroupId(null);
+        setMovingGroupId(null);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   // Close group menu on any outside click
   useEffect(() => {
     const onWinClick = () => setOpenGroupMenuId(null);
@@ -794,6 +813,49 @@ const getDescendantNodeIds = (parentId) => {
     const x = centerX - width / 2;
     const y = centerY - height / 2;
     return { x, y, width, height };
+  };
+
+  // Zoom helper to bring a rectangle into view (keeps current zoom limits)
+  const zoomToRect = (rect, padding = 80) => {
+    if (!rect) return;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const targetW = rect.width + padding * 2;
+    const targetH = rect.height + padding * 2;
+    const scaleX = vw / Math.max(1, targetW);
+    const scaleY = vh / Math.max(1, targetH);
+    const nextZoom = Math.max(0.5, Math.min(2, Math.min(scaleX, scaleY)));
+    setZoom(nextZoom);
+    const centerX = rect.x + rect.width / 2;
+    const centerY = rect.y + rect.height / 2;
+    // Convert so that rect center moves to viewport center
+    setPan({ x: vw / 2 - centerX * nextZoom, y: vh / 2 - centerY * nextZoom });
+  };
+
+  // HUD actions
+  const addTagToAllInGroup = (groupId, tagId) => {
+    const group = nodeGroups.find(g => g.id === groupId);
+    if (!group) return;
+    wrappedSetNodes(nodes.map(n => {
+      if (!group.nodeIds?.includes(n.id)) return n;
+      const prev = Array.isArray(n.tags) ? n.tags : [];
+      return prev.includes(tagId) ? n : { ...n, tags: [...prev, tagId] };
+    }));
+  };
+
+  const assignCollaboratorToAllInGroup = (groupId, collaboratorId) => {
+    const group = nodeGroups.find(g => g.id === groupId);
+    if (!group) return;
+    wrappedSetNodes(nodes.map(n => {
+      if (!group.nodeIds?.includes(n.id)) return n;
+      const prev = Array.isArray(n.collaborators) ? n.collaborators : [];
+      return prev.includes(collaboratorId) ? n : { ...n, collaborators: [...prev, collaboratorId] };
+    }));
+  };
+
+  const deleteGroupById = (groupId) => {
+    setNodeGroups(nodeGroups.filter(g => g.id !== groupId));
+    setHudGroupId(null);
   };
 
   // Assigning collaborator to selected nodes
@@ -1558,20 +1620,83 @@ const handleNodeClick = (nodeId, e) => {
 
   return (
         <React.Fragment key={group.id}>
-          {/* Non-interactive dashed area */}
+          {/* Group dashed area; gets highlighted when moving */}
           <div style={{
             position: 'absolute',
             left: boundingBox.x,
             top: boundingBox.y,
             width: boundingBox.width,
             height: boundingBox.height,
-            border: `3px dashed ${collaborator.color}`,
+            border: movingGroupId === group.id ? `3px solid ${collaborator.color}` : `3px dashed ${collaborator.color}`,
             borderRadius: '12px',
-            backgroundColor: `${collaborator.color}10`,
+            background: movingGroupId === group.id
+              ? `repeating-linear-gradient(45deg, ${collaborator.color}10, ${collaborator.color}10 10px, transparent 10px, transparent 20px)`
+              : `${collaborator.color}10`,
             pointerEvents: 'none',
             zIndex: 4,
-            boxShadow: `0 0 0 1px ${collaborator.color}20`
+            boxShadow: movingGroupId === group.id
+              ? `0 0 0 2px ${collaborator.color}40, 0 10px 30px ${collaborator.color}33`
+              : `0 0 0 1px ${collaborator.color}20`,
+            transition: 'box-shadow 120ms ease-out, border 120ms ease-out, background 120ms ease-out'
           }} />
+
+          {/* If movingGroupId matches, render a draggable overlay for the group box */}
+          {movingGroupId === group.id && (
+            <div
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                const start = { x: e.clientX, y: e.clientY };
+                const startBB = { ...group.boundingBox };
+                const onMove = (ev) => {
+                  const dx = (ev.clientX - start.x) / (zoom || 1);
+                  const dy = (ev.clientY - start.y) / (zoom || 1);
+                  setIsDraggingGroup(true);
+                  setNodeGroups(prev => prev.map(g => g.id === group.id ? { ...g, boundingBox: { ...startBB, x: startBB.x + dx, y: startBB.y + dy } } : g));
+                };
+                const onUp = () => {
+                  window.removeEventListener('pointermove', onMove);
+                  window.removeEventListener('pointerup', onUp);
+                  setIsDraggingGroup(false);
+                  setMovingGroupId(null);
+                };
+                window.addEventListener('pointermove', onMove);
+                window.addEventListener('pointerup', onUp);
+              }}
+              style={{
+                position: 'absolute',
+                left: boundingBox.x,
+                top: boundingBox.y,
+                width: boundingBox.width,
+                height: boundingBox.height,
+                cursor: isDraggingGroup ? 'grabbing' : 'grab',
+                zIndex: 1002,
+                background: 'transparent'
+              }}
+            />
+          )}
+
+          {/* Drag hint pill when in move mode */}
+          {movingGroupId === group.id && (
+            <div
+              style={{
+                position: 'absolute',
+                left: boundingBox.x + 10,
+                top: Math.max(boundingBox.y - 36, 10),
+                background: '#111827',
+                color: '#fff',
+                padding: '6px 10px',
+                borderRadius: 999,
+                fontSize: 12,
+                fontWeight: 600,
+                boxShadow: '0 6px 20px rgba(0,0,0,0.25)',
+                zIndex: 1003,
+                transform: `scale(${(overlayUiScale || 1) / (zoom || 1)})`,
+                transformOrigin: 'left bottom'
+              }}
+            >
+              Drag to move group — Esc to cancel
+            </div>
+          )}
 
           {/* Clickable primary avatar (outside pointer-events:none box) */}
           <div
@@ -1734,12 +1859,19 @@ const handleNodeClick = (nodeId, e) => {
               </div>
 
               {/* Quick actions */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 10 }}>
                 <button
-                  onClick={() => { selectGroupNodes(group.id); setOpenGroupMenuId(null); }}
+                  onClick={() => { setHudGroupId(group.id); setOpenGroupMenuId(null); zoomToRect(group.boundingBox); }}
                   style={{ padding: '8px 10px', borderRadius: 10, border: '1px solid #E5E7EB', background: '#F9FAFB', fontSize: 12, fontWeight: 600, color: '#111827' }}
                 >
-                  Select nodes
+                  Quick actions HUD
+                </button>
+                <button
+                  onClick={() => { setMovingGroupId(group.id); setOpenGroupMenuId(null); }}
+                  title="Temporarily ignore contents; drag the dashed box to move it"
+                  style={{ padding: '8px 10px', borderRadius: 10, border: '1px solid #DBEAFE', background: '#EFF6FF', fontSize: 12, fontWeight: 600, color: '#1D4ED8' }}
+                >
+                  Move group
                 </button>
                 <button
                   onClick={() => { deleteGroup(group.id); setOpenGroupMenuId(null); }}
@@ -1850,6 +1982,72 @@ const handleNodeClick = (nodeId, e) => {
               {/* Close */}
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
                 <button onClick={() => setOpenGroupMenuId(null)} style={{ fontSize: 12, color: '#374151' }}>Close</button>
+              </div>
+            </div>
+          )}
+
+          {/* Small selection HUD near the group with quick actions */}
+          {hudGroupId === group.id && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: 'absolute',
+                left: boundingBox.x + boundingBox.width + 12,
+                top: boundingBox.y + 8,
+                background: '#ffffff',
+                border: '1px solid #E5E7EB',
+                borderRadius: 10,
+                padding: 10,
+                boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+                zIndex: 1001,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                transform: `scale(${(overlayUiScale || 1) / (zoom || 1)})`,
+                transformOrigin: 'top left'
+              }}
+            >
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button
+                  onClick={() => setHudTagPickerForGroupId(g => g === group.id ? null : group.id)}
+                  style={{ padding: '6px 8px', borderRadius: 8, border: '1px solid #E5E7EB', background: '#F9FAFB', fontSize: 12, fontWeight: 600, color: '#111827' }}
+                >
+                  Add tag to all
+                </button>
+                <button
+                  onClick={() => {
+                    // pick the primary collaborator of the popup's group
+                    if (group.collaborator) {
+                      assignCollaboratorToAllInGroup(group.id, group.collaborator.id);
+                    }
+                  }}
+                  style={{ padding: '6px 8px', borderRadius: 8, border: '1px solid #DBEAFE', background: '#EFF6FF', fontSize: 12, fontWeight: 600, color: '#1D4ED8' }}
+                >
+                  Assign collaborator to all
+                </button>
+              </div>
+              {hudTagPickerForGroupId === group.id && (
+                <div style={{ marginTop: 6, display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 6 }}>
+                  {globalTags.map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => { addTagToAllInGroup(group.id, t.id); setHudTagPickerForGroupId(null); }}
+                      title={t.title || 'Tag'}
+                      style={{ padding: '6px 8px', borderRadius: 8, border: `1px solid ${t.color}55`, background: `${t.color}15`, fontSize: 12, color: '#111827' }}
+                    >
+                      <span style={{ display: 'inline-block', width: 8, height: 8, background: t.color, borderRadius: 999, marginRight: 6 }} />
+                      {t.title || 'Tag'}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => { deleteGroupById(group.id); }}
+                  style={{ marginTop: 6, padding: '6px 8px', borderRadius: 8, border: '1px solid #FEE2E2', background: '#FEF2F2', fontSize: 12, fontWeight: 600, color: '#B91C1C' }}
+                >
+                  Delete
+                </button>
               </div>
             </div>
           )}
