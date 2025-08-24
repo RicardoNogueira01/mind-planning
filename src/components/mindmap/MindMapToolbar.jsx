@@ -203,6 +203,34 @@ const MindMapToolbar = ({
                   disabled={!fxOptions?.enabled}
                 />
               </div>
+              <div className="h-px bg-gray-200 my-2" />
+              <div className="flex items-center justify-between py-1">
+                <span className="text-sm text-gray-700">Gradient border</span>
+                <input
+                  type="checkbox"
+                  checked={!!fxOptions?.gradientRing}
+                  onChange={(e) => setFxOptions({ ...fxOptions, gradientRing: e.target.checked })}
+                  disabled={!fxOptions?.enabled}
+                />
+              </div>
+              <div className="flex items-center justify-between py-1">
+                <span className="text-sm text-gray-700">Progress ring</span>
+                <input
+                  type="checkbox"
+                  checked={!!fxOptions?.progressRing}
+                  onChange={(e) => setFxOptions({ ...fxOptions, progressRing: e.target.checked })}
+                  disabled={!fxOptions?.enabled}
+                />
+              </div>
+              <div className="flex items-center justify-between py-1">
+                <span className="text-sm text-gray-700">Focus mode</span>
+                <input
+                  type="checkbox"
+                  checked={!!fxOptions?.focusMode}
+                  onChange={(e) => setFxOptions({ ...fxOptions, focusMode: e.target.checked })}
+                  disabled={!fxOptions?.enabled}
+                />
+              </div>
             </div>
           </details>
         </div>

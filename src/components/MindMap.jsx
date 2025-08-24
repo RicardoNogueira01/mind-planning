@@ -71,13 +71,34 @@ const MindMap = ({ mapId, onBack }) => {
   const [fxOptions, setFxOptions] = useState(() => {
     try {
       const raw = window.localStorage.getItem('fxOptions');
-      if (raw) return JSON.parse(raw);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return {
+          enabled: parsed.enabled ?? true,
+          ripple: parsed.ripple ?? true,
+          tagShimmer: parsed.tagShimmer ?? true,
+          springy: parsed.springy ?? true,
+          gradientRing: parsed.gradientRing ?? true,
+          progressRing: parsed.progressRing ?? true,
+          focusMode: parsed.focusMode ?? true
+        };
+      }
     } catch {}
-    return { enabled: true, ripple: true, tagShimmer: true, springy: true };
+    return { enabled: true, ripple: true, tagShimmer: true, springy: true, gradientRing: true, progressRing: true, focusMode: true };
   });
   useEffect(() => {
     try { window.localStorage.setItem('fxOptions', JSON.stringify(fxOptions)); } catch {}
   }, [fxOptions]);
+
+  // Respect prefers-reduced-motion: disable motion-heavy FX automatically
+  useEffect(() => {
+    try {
+      const mq = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
+      if (mq && mq.matches) {
+        setFxOptions(prev => ({ ...prev, springy: false, ripple: false }));
+      }
+    } catch {}
+  }, []);
 
   // Global key to dismiss HUD / move mode
   useEffect(() => {
@@ -751,6 +772,32 @@ const getDescendantNodeIds = (parentId) => {
   }
   return Array.from(descendants);
 };
+
+// Helper to get all ancestor node IDs for a given node
+const getAncestorNodeIds = (childId) => {
+  const ancestors = new Set();
+  const stack = [childId];
+  while (stack.length > 0) {
+    const currentId = stack.pop();
+    const parentConnections = connections.filter(conn => conn.to === currentId);
+    for (const conn of parentConnections) {
+      if (!ancestors.has(conn.from)) {
+        ancestors.add(conn.from);
+        stack.push(conn.from);
+      }
+    }
+  }
+  return Array.from(ancestors);
+};
+
+// Related nodes set for focus mode (selected + ancestors + descendants)
+const relatedNodeIds = useMemo(() => {
+  if (!selectedNode) return new Set();
+  const set = new Set([selectedNode]);
+  getDescendantNodeIds(selectedNode).forEach(id => set.add(id));
+  getAncestorNodeIds(selectedNode).forEach(id => set.add(id));
+  return set;
+}, [selectedNode, connections]);
 
   // Handle the end of panning or selection
   const stopPanning = () => {
@@ -1634,7 +1681,7 @@ const handleNodeClick = (nodeId, e) => {
                 stroke={isDarkMode ? "#9ca3af" : "#64748B"}
                 strokeWidth={2}
                 fill="none"
-                strokeOpacity={0.8}
+                strokeOpacity={(fxOptions.enabled && fxOptions.focusMode && selectedNode) ? ((relatedNodeIds.has(conn.from) || relatedNodeIds.has(conn.to)) ? 0.85 : 0.22) : 0.8}
                 style={{
                   transition: 'all 0.15s ease-out'
                 }}
@@ -1644,7 +1691,7 @@ const handleNodeClick = (nodeId, e) => {
         })}
       </svg>
     );
-  }, [nodes, connections, nodePositions]);
+  }, [nodes, connections, nodePositions, fxOptions, selectedNode, relatedNodeIds, isDarkMode]);
   // Render the group bounding boxes and collaborator icons
   const renderNodeGroups = () => {
     return nodeGroups.map(group => {
@@ -2676,6 +2723,7 @@ useLayoutEffect(() => {
 
               const shapeStyles = node.shapeType ? getShapeStyles(node.shapeType) : getShapeStyles('default');
               const displayWidth = shapeStyles.width || nodeWidth;
+              const isFocusDimmed = !!(fxOptions.enabled && fxOptions.focusMode && selectedNode && !relatedNodeIds.has(node.id));
 
               return (
                 <div
@@ -2694,13 +2742,30 @@ useLayoutEffect(() => {
                     width: shapeStyles.width,
                     height: shapeStyles.height,
                     minHeight: shapeStyles.height === 'auto' ? 80 : shapeStyles.height,
-                    background: `linear-gradient(135deg, ${node.backgroundColor || node.color || (isDarkMode ? '#374151' : '#ffffff')} 0%, ${adjustBrightness(node.backgroundColor || node.color || (isDarkMode ? '#374151' : '#ffffff'), -3)} 100%)`,
+                    // Gradient ring + inner glow
+                    border: fxOptions.enabled && fxOptions.gradientRing && (!node.shapeType || node.shapeType === 'default') ? '1px solid transparent' : undefined,
+                    backgroundImage: (() => {
+                      const base = `linear-gradient(135deg, ${node.backgroundColor || node.color || (isDarkMode ? '#374151' : '#ffffff')} 0%, ${adjustBrightness(node.backgroundColor || node.color || (isDarkMode ? '#374151' : '#ffffff'), -3)} 100%)`;
+                      if (fxOptions.enabled && fxOptions.gradientRing && (!node.shapeType || node.shapeType === 'default')) {
+                        const ringStart = isDarkMode ? '#7c3aed' : '#60a5fa';
+                        const ringEnd = isDarkMode ? '#22d3ee' : '#a78bfa';
+                        const ring = `linear-gradient(135deg, ${ringStart}, ${ringEnd})`;
+                        return `${base}, ${ring}`;
+                      }
+                      return base;
+                    })(),
+                    backgroundOrigin: fxOptions.enabled && fxOptions.gradientRing && (!node.shapeType || node.shapeType === 'default') ? 'border-box' : undefined,
+                    backgroundClip: fxOptions.enabled && fxOptions.gradientRing && (!node.shapeType || node.shapeType === 'default') ? 'padding-box, border-box' : undefined,
                     boxShadow: (selectedNode === node.id || hoveredNodeId === node.id)
                       ? `0 22px 45px ${isDarkMode ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.18)'}, 0 0 0 1px rgba(59, 130, 246, ${selectedNode === node.id ? 0.5 : 0.25})`
-                      : `0 10px 24px ${isDarkMode ? 'rgba(0,0,0,0.30)' : 'rgba(0,0,0,0.10)'}`,
+                      : `0 10px 24px ${isDarkMode ? 'rgba(0,0,0,0.30)' : 'rgba(0,0,0,0.10)'}${fxOptions.enabled ? ', inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -8px 20px rgba(0,0,0,0.04)' : ''}`,
                     zIndex: selectedNode === node.id ? 50 : (searchQuery ? (isNodeMatching ? 20 : 10) : 10),
                     textAlign: 'center',
-                    opacity: searchQuery ? (isNodeMatching ? 1 : 0.3) : 1,
+                    opacity: (() => {
+                      const bySearch = searchQuery ? (isNodeMatching ? 1 : 0.3) : 1;
+                      const byFocus = isFocusDimmed ? 0.32 : 1;
+                      return Math.min(bySearch, byFocus);
+                    })(),
                     position: 'relative',
                     padding: '12px 16px',
                     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -2832,6 +2897,22 @@ useLayoutEffect(() => {
                     }
                   }}
                 >
+                  {/* Progress ring chip for parent nodes */}
+                  {fxOptions.enabled && fxOptions.progressRing && connections.some(c => c.from === node.id) && (
+                    (() => {
+                      const prog = getNodeProgress(node.id);
+                      const pct = Math.max(0, Math.min(100, prog?.percentage ?? 0));
+                      const size = 22; const stroke = 3; const r = (size - stroke) / 2; const c = 2 * Math.PI * r; const offset = c * (1 - pct / 100);
+                      return (
+                        <div style={{ position: 'absolute', top: 6, left: 6 }} title={`${pct}% complete`}>
+                          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+                            <circle cx={size/2} cy={size/2} r={r} stroke={isDarkMode ? '#374151' : '#e5e7eb'} strokeWidth={stroke} fill={isDarkMode ? '#111827' : '#ffffff'} />
+                            <circle cx={size/2} cy={size/2} r={r} stroke={node.completed ? '#10b981' : '#3b82f6'} strokeWidth={stroke} fill="transparent" strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round" />
+                          </svg>
+                        </div>
+                      );
+                    })()
+                  )}
                   {selectedNode === node.id && mode === 'cursor' && (
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-3" style={{ marginTop: '-15px' }}>
                       <div 
