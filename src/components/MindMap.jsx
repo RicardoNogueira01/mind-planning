@@ -6,6 +6,7 @@ import MindMapToolbar from './mindmap/MindMapToolbar';
 import MindMapSearchBar from './mindmap/MindMapSearchBar';
 import CollaboratorDialog from './mindmap/CollaboratorDialog';
 import MindMapCanvas from './mindmap/MindMapCanvas';
+import { COLLAB_PAGE_SIZE } from './mindmap/constants';
 
 const layoutOptions = [
   { id: 'tree', name: 'Tree Layout', icon: 'diagram-tree' },
@@ -34,6 +35,7 @@ const MindMap = ({ mapId, onBack }) => {
   // UI: open group menu id (for collaborator group badge menu)
   const [openGroupMenuId, setOpenGroupMenuId] = useState(null);
   const [groupCollaboratorSearch, setGroupCollaboratorSearch] = useState({}); // { [groupId]: string }
+  const [groupCollaboratorPage, setGroupCollaboratorPage] = useState({}); // { [groupId]: number }
 
   // Close group menu on any outside click
   useEffect(() => {
@@ -1722,7 +1724,11 @@ const handleNodeClick = (nodeId, e) => {
                 <input
                   className="text-gray-900 placeholder-gray-500"
                   value={groupCollaboratorSearch[group.id] || ''}
-                  onChange={(e) => setGroupCollaboratorSearch(prev => ({ ...prev, [group.id]: e.target.value }))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setGroupCollaboratorSearch(prev => ({ ...prev, [group.id]: val }));
+                    setGroupCollaboratorPage(prev => ({ ...prev, [group.id]: 1 }));
+                  }}
                   placeholder="Search collaborators"
                   style={{
                     width: '100%',
@@ -1736,7 +1742,7 @@ const handleNodeClick = (nodeId, e) => {
                   }}
                 />
               </div>
-              <div style={{ maxHeight: 160, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ maxHeight: 200, overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {(() => {
                   const q = (groupCollaboratorSearch[group.id] || '').toLowerCase().trim();
                   const filtered = q
@@ -1745,7 +1751,15 @@ const handleNodeClick = (nodeId, e) => {
                         (c.initials || '').toLowerCase().includes(q)
                       )
                     : collaborators;
-                  return filtered.map(c => {
+
+                  const pageSize = COLLAB_PAGE_SIZE;
+                  const page = Math.max(1, groupCollaboratorPage[group.id] || 1);
+                  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+                  const currentPage = Math.min(page, totalPages);
+                  const start = (currentPage - 1) * pageSize;
+                  const pageItems = filtered.slice(start, start + pageSize);
+
+                  const list = pageItems.map(c => {
                     const isPrimary = c.id === collaborator.id;
                     const isChecked = isPrimary || (Array.isArray(group.extraCollaborators) ? group.extraCollaborators.includes(c.id) : false);
                     return (
@@ -1772,6 +1786,33 @@ const handleNodeClick = (nodeId, e) => {
                       </label>
                     );
                   });
+
+                  return (
+                    <React.Fragment>
+                      <div style={{ maxHeight: 160, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {list}
+                      </div>
+                      {totalPages > 1 && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+                          <button
+                            onClick={() => setGroupCollaboratorPage(prev => ({ ...prev, [group.id]: Math.max(1, currentPage - 1) }))}
+                            disabled={currentPage === 1}
+                            style={{ fontSize: 12, color: currentPage === 1 ? '#9CA3AF' : '#2563EB' }}
+                          >
+                            Prev
+                          </button>
+                          <span style={{ fontSize: 12, color: '#6B7280' }}>Page {currentPage} / {totalPages}</span>
+                          <button
+                            onClick={() => setGroupCollaboratorPage(prev => ({ ...prev, [group.id]: Math.min(totalPages, currentPage + 1) }))}
+                            disabled={currentPage === totalPages}
+                            style={{ fontSize: 12, color: currentPage === totalPages ? '#9CA3AF' : '#2563EB' }}
+                          >
+                            Next
+                          </button>
+                        </div>
+                      )}
+                    </React.Fragment>
+                  );
                 })()}
               </div>
 

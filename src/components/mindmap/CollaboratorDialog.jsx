@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
+import { COLLAB_PAGE_SIZE } from './constants';
+import PropTypes from 'prop-types';
 
 const CollaboratorDialog = ({
   showCollaboratorDialog,
@@ -8,6 +10,13 @@ const CollaboratorDialog = ({
   collaborators,
   assignCollaborator
 }) => {
+  const [page, setPage] = useState(1);
+  const pageSize = COLLAB_PAGE_SIZE;
+  const filtered = collaborators; // placeholder for future search
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pageItems = useMemo(() => filtered.slice((currentPage - 1) * pageSize, (currentPage - 1) * pageSize + pageSize), [filtered, currentPage]);
+
   if (!showCollaboratorDialog) return null;
 
   const handleCancel = () => {
@@ -23,8 +32,8 @@ const CollaboratorDialog = ({
           {selectedNodes.length} {selectedNodes.length === 1 ? 'node' : 'nodes'} selected
         </p>
         
-        <div className="grid grid-cols-2 gap-3">
-          {collaborators.map(collab => (
+  <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto">
+          {pageItems.map(collab => (
             <button
               key={collab.id}
               className="flex flex-col items-center justify-center p-3 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-colors"
@@ -40,6 +49,25 @@ const CollaboratorDialog = ({
             </button>
           ))}
         </div>
+  {totalPages > 1 && (
+          <div className="mt-3 flex items-center justify-between">
+            <button
+              className={`text-sm ${currentPage === 1 ? 'text-gray-400' : 'text-blue-600'}`}
+              disabled={currentPage === 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+            >
+              Prev
+            </button>
+            <span className="text-sm text-gray-600">Page {currentPage} / {totalPages}</span>
+            <button
+              className={`text-sm ${currentPage === totalPages ? 'text-gray-400' : 'text-blue-600'}`}
+              disabled={currentPage === totalPages}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            >
+              Next
+            </button>
+          </div>
+        )}
         
         <div className="mt-6 flex justify-end">
           <button
@@ -55,3 +83,17 @@ const CollaboratorDialog = ({
 };
 
 export default CollaboratorDialog;
+
+CollaboratorDialog.propTypes = {
+  showCollaboratorDialog: PropTypes.bool.isRequired,
+  setShowCollaboratorDialog: PropTypes.func.isRequired,
+  selectedNodes: PropTypes.arrayOf(PropTypes.string).isRequired,
+  setSelectedNodes: PropTypes.func.isRequired,
+  collaborators: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    initials: PropTypes.string,
+    name: PropTypes.string.isRequired,
+    color: PropTypes.string
+  })).isRequired,
+  assignCollaborator: PropTypes.func.isRequired
+};
