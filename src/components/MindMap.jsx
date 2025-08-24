@@ -36,6 +36,19 @@ const MindMap = ({ mapId, onBack }) => {
   const [openGroupMenuId, setOpenGroupMenuId] = useState(null);
   const [groupCollaboratorSearch, setGroupCollaboratorSearch] = useState({}); // { [groupId]: string }
   const [groupCollaboratorPage, setGroupCollaboratorPage] = useState({}); // { [groupId]: number }
+  // Overlay UI scale to improve readability independent of canvas zoom
+  const [overlayUiScale, setOverlayUiScale] = useState(() => {
+    try {
+      const v = window.localStorage.getItem('overlayUiScale');
+      const n = v ? parseFloat(v) : NaN;
+      return Number.isFinite(n) && n > 0 ? n : 1.4;
+    } catch {
+      return 1.4;
+    }
+  });
+  useEffect(() => {
+    try { window.localStorage.setItem('overlayUiScale', String(overlayUiScale)); } catch {}
+  }, [overlayUiScale]);
 
   // Close group menu on any outside click
   useEffect(() => {
@@ -1688,21 +1701,35 @@ const handleNodeClick = (nodeId, e) => {
                 padding: 12,
                 zIndex: 7,
                 pointerEvents: 'auto',
-                // Counteract canvas zoom so popup remains readable
-                transform: `scale(${1 / (zoom || 1)})`,
+                // Counteract canvas zoom and apply user overlay scale so popup remains readable
+                transform: `scale(${(overlayUiScale || 1) / (zoom || 1)})`,
                 transformOrigin: 'top left'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <span style={{
-                  width: 24, height: 24, borderRadius: '9999px',
-                  backgroundColor: collaborator.color, color: '#fff', fontSize: 12,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700
-                }}>
-                  {collaborator.initials}
-                </span>
-                <div style={{ fontSize: 12, color: '#111827', fontWeight: 600 }}>
-                  {collaborator.name}'s Group
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{
+                    width: 24, height: 24, borderRadius: '9999px',
+                    backgroundColor: collaborator.color, color: '#fff', fontSize: 12,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700
+                  }}>
+                    {collaborator.initials}
+                  </span>
+                  <div style={{ fontSize: 12, color: '#111827', fontWeight: 600 }}>
+                    {collaborator.name}'s Group
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <button
+                    onClick={() => setOverlayUiScale(s => Math.max(0.8, Math.round((s - 0.1) * 10) / 10))}
+                    title="Decrease popup size"
+                    style={{ fontSize: 12, color: '#374151' }}
+                  >A-</button>
+                  <button
+                    onClick={() => setOverlayUiScale(s => Math.min(2.0, Math.round((s + 0.1) * 10) / 10))}
+                    title="Increase popup size"
+                    style={{ fontSize: 12, color: '#111827' }}
+                  >A+</button>
                 </div>
               </div>
 
