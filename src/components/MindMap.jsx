@@ -977,8 +977,8 @@ const getDescendantNodeIds = (parentId) => {
     const parent = nodes.find(n => n.id === parentId);
     if (!parent) return;
 
-    // Constants
-  const EDGE_GAP = 100; // desired gap between parent right edge and child left edge
+  // Constants
+  const H_OFFSET_FROM_PARENT_RIGHT = 140; // child center is 140px to the right of parent's right edge
     const VERTICAL_SPACING = 120;
     const MIN_DISTANCE = 130;
 
@@ -992,22 +992,21 @@ const getDescendantNodeIds = (parentId) => {
       // Determine the order based on up-to-date connections
       const currentChildCount = prevConns.filter(c => c.from === parentId).length;
 
-  // Compute base X using displayed widths (nodes render at ~400px wide by default)
-  const PARENT_DISPLAY_W = 400;
-  const CHILD_DISPLAY_W = 400;
-  const baseX = parent.x + (PARENT_DISPLAY_W / 2) + EDGE_GAP + (CHILD_DISPLAY_W / 2);
+  // Compute base X using measured canvas-local width for the parent to be robust to zoom/pan
+  const parentPos = nodePositions[parentId];
+  const parentHalfW = parentPos ? parentPos.width / 2 : 200; // fallback to half of default width
+  const baseX = parent.x + parentHalfW + H_OFFSET_FROM_PARENT_RIGHT; // same for all siblings
 
-  // Place first child aligned with parent; others stack below
-  const orderIndex = currentChildCount; // 0-based
-  const targetY = parent.y + (orderIndex * VERTICAL_SPACING);
+  // Always use the parent's current Y as the anchor; children stack below
+  const orderIndex = currentChildCount; // 0-based index for the new child
+  const anchorY = parent.y;
+  const targetY = anchorY + (orderIndex * VERTICAL_SPACING);
 
       let newX = baseX;
       let newY = targetY;
 
-      // Collision check against existing nodes (prev snapshot)
+  // Collision check against existing nodes (prev snapshot), independent of pan/zoom
       const isValid = (x, y, prevNodes) => {
-        if (x < 50 || x > window.innerWidth - 250) return false;
-        if (y < 50 || y > window.innerHeight - 150) return false;
         for (const existingNode of prevNodes) {
           const dx = x - existingNode.x;
           const dy = y - existingNode.y;
@@ -1032,8 +1031,7 @@ const getDescendantNodeIds = (parentId) => {
         attempts++;
       }
 
-      newX = Math.max(50, Math.min(newX, window.innerWidth - 250));
-      newY = Math.max(50, Math.min(newY, window.innerHeight - 150));
+  // No viewport clamping: positions are in canvas coordinates and should not depend on pan/zoom
 
       computedNode = {
         id: newId,
@@ -2184,12 +2182,11 @@ useLayoutEffect(() => {
       const canvasRect = canvasRef.current?.getBoundingClientRect();
       
       if (canvasRect) {
-        // Convert screen coordinates to canvas coordinates, accounting for pan/zoom
-        // Since both nodes and SVG are in the same transformed container, we need to convert back to the untransformed space
-        const localLeft = (rect.left - canvasRect.left - pan.x) / zoom;
-        const localTop = (rect.top - canvasRect.top - pan.y) / zoom;
-        const localWidth = rect.width / zoom;
-        const localHeight = rect.height / zoom;
+  // Convert screen coordinates to canvas coordinates using current transform
+  const localLeft = (rect.left - canvasRect.left - pan.x) / zoom;
+  const localTop = (rect.top - canvasRect.top - pan.y) / zoom;
+  const localWidth = rect.width / zoom;
+  const localHeight = rect.height / zoom;
         
         positions[node.id] = {
           left: localLeft,
@@ -2220,7 +2217,7 @@ useLayoutEffect(() => {
       };
     }  });
   setNodePositions(positions);
-}, [nodes, pan, zoom]); // Include pan and zoom as dependencies since they affect measurements
+}, [nodes, pan, zoom]);
 
   return (
     <div className={`flex w-full h-screen overflow-hidden transition-colors duration-300 ${
