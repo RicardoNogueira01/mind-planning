@@ -58,6 +58,14 @@ const MindMap = ({ mapId, onBack }) => {
   const [isDraggingGroup, setIsDraggingGroup] = useState(false);
   // UI hover affordance
   const [hoveredNodeId, setHoveredNodeId] = useState(null);
+  // Confirm delete dialog for quick node delete
+  const [confirmDelete, setConfirmDelete] = useState(null); // { id, text }
+  // When confirming deletion, allow optionally deleting all descendants
+  const [deleteDescendants, setDeleteDescendants] = useState(false);
+  useEffect(() => {
+    // Reset checkbox each time modal opens/closes
+    if (confirmDelete) setDeleteDescendants(false);
+  }, [confirmDelete]);
 
   // Fun visual FX options (persisted)
   const [fxOptions, setFxOptions] = useState(() => {
@@ -1482,7 +1490,19 @@ const handleNodeClick = (nodeId, e) => {
     setNodeGroups(updatedGroups);
     setSelectedNodes([]);
     setSelectedNode(null);
-  };  // Render connections between nodes
+  };
+
+  // Helper exposed to children (e.g., search) to delete a node and all its descendants
+  const deleteNodeCascade = (nodeId) => {
+    if (nodeId === 'root') {
+      alert("Cannot delete the central idea node");
+      return;
+    }
+    const ids = [nodeId, ...getDescendantNodeIds(nodeId)];
+    deleteNodes(ids);
+  };
+
+  // Render connections between nodes
   const renderConnections = useMemo(() => {
     // console.log('DEBUG: Rendering connections', { connectionsCount: connections.length, connections, nodesCount: nodes.length });
     
@@ -2576,6 +2596,7 @@ useLayoutEffect(() => {
             setSelectedNode={setSelectedNode}
             setPan={setPan}
             deleteNode={deleteNode}
+            deleteNodeCascade={deleteNodeCascade}
           />
                  
           {/* Wrapper for panned and zoomed content */}
@@ -2856,12 +2877,12 @@ useLayoutEffect(() => {
                           )}
 
                           {/* Delete Node Button - Only visible in collapsed (quick) view */}
-                          {!isToolbarExpanded && node.id !== 'root' && (
+          {!isToolbarExpanded && node.id !== 'root' && (
                             <button
                               className="node-toolbar-btn p-2 rounded-xl hover:bg-red-100 text-red-700 transition-colors duration-200 border border-red-200 hover:border-red-300"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                deleteNode(node.id);
+            setConfirmDelete({ id: node.id, text: node.text });
                               }}
                               title="Delete node"
                             >
@@ -4055,6 +4076,64 @@ useLayoutEffect(() => {
             </svg>
           </MindMapCanvas>
           
+          {/* Global centered confirm modal for quick delete */}
+          {confirmDelete && (
+            <div className="fixed inset-0 z-[1200]">
+              <button
+                type="button"
+                aria-label="Close confirmation dialog"
+                className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+                onClick={() => setConfirmDelete(null)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setConfirmDelete(null);
+                  }
+                }}
+              />
+              <div className="absolute inset-0 grid place-items-center p-4">
+                <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-gray-200 p-5">
+                  <h4 className="text-gray-900 font-semibold text-base mb-2">Remove this node?</h4>
+                  <p className="text-gray-600 text-sm">
+                    Are you sure you want to remove “<span className="font-medium text-gray-900">{confirmDelete.text || 'Untitled'}</span>” from your mind map?
+                    This will delete the node and any connections linked to it. You can undo this from the toolbar if needed.
+                  </p>
+                  <label className="mt-3 flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={deleteDescendants}
+                      onChange={(e) => setDeleteDescendants(e.target.checked)}
+                    />
+                    {' '}Also delete all descendants
+                  </label>
+                  <div className="mt-4 flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => setConfirmDelete(null)}
+                      className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirmDelete?.id) {
+                          if (deleteDescendants) {
+                            deleteNodeCascade(confirmDelete.id);
+                          } else {
+                            deleteNode(confirmDelete.id);
+                          }
+                        }
+                        setConfirmDelete(null);
+                      }}
+                      className="px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-sm"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Collaborator selection dialog */}
           <CollaboratorDialog
             showCollaboratorDialog={showCollaboratorDialog}

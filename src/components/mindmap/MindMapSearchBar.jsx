@@ -10,15 +10,20 @@ const MindMapSearchBar = ({
   nodes,
   setSelectedNode,
   setPan,
-  deleteNode
+  deleteNode,
+  deleteNodeCascade
 }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [confirm, setConfirm] = useState(null);
+  const [deleteDescendants, setDeleteDescendants] = useState(false);
 
   // Close confirm dialog if search is closed
   useEffect(() => {
     if (!isSearchOpen) setConfirm(null);
   }, [isSearchOpen]);
+  useEffect(() => {
+    if (confirm) setDeleteDescendants(false);
+  }, [confirm]);
   const handleNodeClick = (node) => {
     setSelectedNode(node.id);
     setShowSearchList(false);
@@ -195,6 +200,14 @@ const MindMapSearchBar = ({
                 Are you sure you want to remove “<span className="font-medium text-gray-900">{confirm.text || 'Untitled'}</span>” from your mind map?
                 This will delete the node and any connections linked to it. You can undo this from the toolbar if needed.
               </p>
+              <label className="mt-3 flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={deleteDescendants}
+                  onChange={(e) => setDeleteDescendants(e.target.checked)}
+                />
+                {' '}Also delete all descendants
+              </label>
               <div className="mt-4 flex items-center justify-end gap-2">
                 <button
                   onClick={() => setConfirm(null)}
@@ -204,7 +217,13 @@ const MindMapSearchBar = ({
                 </button>
                 <button
                   onClick={() => {
-                    if (confirm?.id) deleteNode?.(confirm.id);
+                    if (confirm?.id) {
+                      if (deleteDescendants && typeof deleteNodeCascade === 'function') {
+                        deleteNodeCascade(confirm.id);
+                      } else {
+                        deleteNode?.(confirm.id);
+                      }
+                    }
                     setConfirm(null);
                     setSearchQuery('');
                     setShowSearchList(false);
@@ -240,5 +259,6 @@ MindMapSearchBar.propTypes = {
   })).isRequired,
   setSelectedNode: PropTypes.func.isRequired,
   setPan: PropTypes.func.isRequired,
-  deleteNode: PropTypes.func
+  deleteNode: PropTypes.func,
+  deleteNodeCascade: PropTypes.func
 };
