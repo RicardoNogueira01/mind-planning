@@ -96,40 +96,6 @@ const MindMapSearchBar = ({
       {/* Enhanced Search Results */}
       {isSearchOpen && showSearchList && searchQuery && (
         <div className="absolute left-14 right-0 mt-3 w-80 bg-white/95 backdrop-blur-lg shadow-2xl border border-gray-200/50 rounded-2xl p-3 max-h-96 overflow-y-auto">
-          {/* Optional confirm overlay */}
-          {confirm && (
-            <div className="absolute inset-0 bg-white/95 backdrop-blur-lg rounded-2xl border border-gray-200/60 shadow-2xl p-4 z-10 flex flex-col justify-between">
-              <div>
-                <h4 className="text-gray-900 font-semibold text-sm mb-1">Remove this node?</h4>
-                <p className="text-gray-600 text-sm">
-                  Are you sure you want to remove “<span className="font-medium text-gray-900">{confirm.text || 'Untitled'}</span>” from your mind map?
-                  This will delete the node and any connections linked to it. You can undo this from the toolbar if needed.
-                </p>
-              </div>
-              <div className="mt-3 flex items-center justify-end gap-2">
-                <button
-                  onClick={() => setConfirm(null)}
-                  className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    if (confirm?.id) {
-                      deleteNode?.(confirm.id);
-                    }
-                    setConfirm(null);
-                    // Clear search and close list after deletion
-                    setSearchQuery('');
-                    setShowSearchList(false);
-                  }}
-                  className="px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-sm"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          )}
           {nodes
             .filter(node => node.text.toLowerCase().includes(searchQuery.toLowerCase()))
             .map(node => (
@@ -204,6 +170,52 @@ const MindMapSearchBar = ({
               No nodes found matching "{searchQuery}"
             </div>
           )}
+        </div>
+      )}
+
+      {/* Global centered confirm modal */}
+      {confirm && (
+        <div className="fixed inset-0 z-[1100]">
+          <button
+            type="button"
+            aria-label="Close confirmation dialog"
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            onClick={() => setConfirm(null)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setConfirm(null);
+              }
+            }}
+          />
+          <div className="absolute inset-0 grid place-items-center p-4">
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-gray-200 p-5">
+              <h4 className="text-gray-900 font-semibold text-base mb-2">Remove this node?</h4>
+              <p className="text-gray-600 text-sm">
+                Are you sure you want to remove “<span className="font-medium text-gray-900">{confirm.text || 'Untitled'}</span>” from your mind map?
+                This will delete the node and any connections linked to it. You can undo this from the toolbar if needed.
+              </p>
+              <div className="mt-4 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setConfirm(null)}
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm?.id) deleteNode?.(confirm.id);
+                    setConfirm(null);
+                    setSearchQuery('');
+                    setShowSearchList(false);
+                  }}
+                  className="px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-sm"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
