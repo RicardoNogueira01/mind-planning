@@ -1,5 +1,6 @@
 const GROUP_HIT_INSET = 12;   // inset for hit-testing: near-edge drops count as outside
 import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, Settings, Trash2, Check, Moon, Sun } from 'lucide-react';
 import MindMapManager from './MindMapManager';
 import RoundColorPicker from './RoundColorPicker';
@@ -2204,6 +2205,16 @@ const handleNodeClick = (nodeId, e) => {
   // Add near the other state declarations
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchList, setShowSearchList] = useState(false);
+  // Refs to anchor toolbar buttons for portalized popups
+  const tagBtnRefs = useRef({}); // { [nodeId]: HTMLElement | null }
+  const bgBtnRefs = useRef({});
+  const fontBtnRefs = useRef({});
+  const attachBtnRefs = useRef({});
+  const notesBtnRefs = useRef({});
+  const detailsBtnRefs = useRef({});
+  const dateBtnRefs = useRef({});
+  const collabBtnRefs = useRef({});
+  const layoutBtnRefs = useRef({});
 
   const applyLayout = (nodeId, layoutType) => {
     const parentNode = nodes.find(n => n.id === nodeId);
@@ -2321,6 +2332,15 @@ const handleNodeClick = (nodeId, e) => {
   
     wrappedSetNodes(updatedNodes);
   };
+
+  // Detect if any node popup is open to adjust global stacking and interactions
+  const anyNodeHasPopupOpen = useMemo(() => {
+    return nodes.some(n => (
+      n.showEmojiPopup || n.showBgColorPopup || n.showFontColorPopup || n.showAttachmentPopup ||
+      n.showNotesPopup || n.showDetailsPopup || n.showDatePopup || n.showCollaboratorPopup ||
+      n.showLayoutPopup || n.showTagsPopup
+    ));
+  }, [nodes]);
   
   // Helper function to get node level in the hierarchy
   const getNodeLevel = (nodeId) => {
@@ -2724,6 +2744,9 @@ useLayoutEffect(() => {
               const shapeStyles = node.shapeType ? getShapeStyles(node.shapeType) : getShapeStyles('default');
               const displayWidth = shapeStyles.width || nodeWidth;
               const isFocusDimmed = !!(fxOptions.enabled && fxOptions.focusMode && selectedNode && !relatedNodeIds.has(node.id));
+              const hasAnyPopup = !!(node.showEmojiPopup || node.showBgColorPopup || node.showFontColorPopup ||
+                node.showAttachmentPopup || node.showNotesPopup || node.showDetailsPopup || node.showDatePopup ||
+                node.showCollaboratorPopup || node.showLayoutPopup || node.showTagsPopup);
 
               return (
                 <div
@@ -2759,7 +2782,10 @@ useLayoutEffect(() => {
                     boxShadow: (selectedNode === node.id || hoveredNodeId === node.id)
                       ? `0 22px 45px ${isDarkMode ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.18)'}, 0 0 0 1px rgba(59, 130, 246, ${selectedNode === node.id ? 0.5 : 0.25})`
                       : `0 10px 24px ${isDarkMode ? 'rgba(0,0,0,0.30)' : 'rgba(0,0,0,0.10)'}${fxOptions.enabled ? ', inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -8px 20px rgba(0,0,0,0.04)' : ''}`,
-                    zIndex: selectedNode === node.id ? 50 : (searchQuery ? (isNodeMatching ? 20 : 10) : 10),
+                    // If this node has any popup open, raise its stacking context; otherwise, if any popup is open on another node, push this node far below
+                    zIndex: hasAnyPopup ? 3000 : (anyNodeHasPopupOpen ? 1 : (selectedNode === node.id ? 50 : (searchQuery ? (isNodeMatching ? 20 : 10) : 10))),
+                    // Disable interactions on other nodes while a popup is open to avoid accidental overlap interactions
+                    pointerEvents: anyNodeHasPopupOpen && !hasAnyPopup ? 'none' : 'auto',
                     textAlign: 'center',
                     opacity: (() => {
                       const bySearch = searchQuery ? (isNodeMatching ? 1 : 0.3) : 1;
@@ -2916,7 +2942,8 @@ useLayoutEffect(() => {
                   {selectedNode === node.id && mode === 'cursor' && (
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-3" style={{ marginTop: '-15px' }}>
                       <div 
-                        className="enhanced-node-toolbar backdrop-blur-md bg-white/90 shadow-lg border border-white/20 rounded-2xl flex items-center p-2 gap-1 z-30"
+                        className="enhanced-node-toolbar backdrop-blur-md bg-white/90 shadow-lg border border-white/20 rounded-2xl flex items-center p-2 gap-1"
+                        style={{ zIndex: hasAnyPopup ? 3600 : 3200 }}
                         onMouseEnter={(e) => e.stopPropagation()}
                         onMouseLeave={(e) => e.stopPropagation()}
                         onMouseOver={(e) => e.stopPropagation()}
@@ -2992,8 +3019,9 @@ useLayoutEffect(() => {
                             <>
                           
                           {/* Background Color */}
-                          <div className="relative">
+              <div className="relative">
                             <button
+                ref={(el) => { bgBtnRefs.current[node.id] = el; }}
                               className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -3008,28 +3036,29 @@ useLayoutEffect(() => {
                                 <path d="M3 9h18"></path>
                               </svg>
                             </button>
-                            {node.showBgColorPopup && (
-                              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2">
+                            {node.showBgColorPopup && (() => {
+                              const anchor = bgBtnRefs.current[node.id];
+                              const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
+                              return createPortal(
                                 <RoundColorPicker
                                   currentColor={node.color || '#FFFFFF'}
                                   onColorSelect={(color) => {
-                                    wrappedSetNodes(nodes.map(n => 
-                                      n.id === node.id ? { ...n, color, showBgColorPopup: false } : n
-                                    ));
+                                    wrappedSetNodes(nodes.map(n => n.id === node.id ? { ...n, color, showBgColorPopup: false } : n));
                                   }}
                                   onClose={() => {
-                                    wrappedSetNodes(nodes.map(n => 
-                                      n.id === node.id ? { ...n, showBgColorPopup: false } : n
-                                    ));
+                                    wrappedSetNodes(nodes.map(n => n.id === node.id ? { ...n, showBgColorPopup: false } : n));
                                   }}
-                                />
-                              </div>
-                            )}
+                                  anchorRect={rect}
+                                />,
+                                document.body
+                              );
+                            })()}
                           </div>
                           
                           {/* Font Color */}
-                          <div className="relative">
+              <div className="relative">
                             <button
+                ref={(el) => { fontBtnRefs.current[node.id] = el; }}
                               className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -3044,23 +3073,23 @@ useLayoutEffect(() => {
                                 <path d="M9 4h6l-3 9z"></path>
                               </svg>
                             </button>
-                            {node.showFontColorPopup && (
-                              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2">
+                            {node.showFontColorPopup && (() => {
+                              const anchor = fontBtnRefs.current[node.id];
+                              const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
+                              return createPortal(
                                 <RoundColorPicker
                                   currentColor={node.fontColor || '#000000'}
                                   onColorSelect={(color) => {
-                                    wrappedSetNodes(nodes.map(n => 
-                                      n.id === node.id ? { ...n, fontColor: color, showFontColorPopup: false } : n
-                                    ));
+                                    wrappedSetNodes(nodes.map(n => n.id === node.id ? { ...n, fontColor: color, showFontColorPopup: false } : n));
                                   }}
                                   onClose={() => {
-                                    wrappedSetNodes(nodes.map(n => 
-                                      n.id === node.id ? { ...n, showFontColorPopup: false } : n
-                                    ));
+                                    wrappedSetNodes(nodes.map(n => n.id === node.id ? { ...n, showFontColorPopup: false } : n));
                                   }}
-                                />
-                              </div>
-                            )}
+                                  anchorRect={rect}
+                                />,
+                                document.body
+                              );
+                            })()}
                           </div>
                           
                           {/* Connection Button - Only for connector shapes */}
@@ -3100,8 +3129,9 @@ useLayoutEffect(() => {
                         {isToolbarExpanded && (
                         <div className="flex items-center gap-1">
                           {/* Attachment */}
-                          <div className="relative">
+              <div className="relative">
                             <button
+                ref={(el) => { attachBtnRefs.current[node.id] = el; }}
                               className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -3115,12 +3145,14 @@ useLayoutEffect(() => {
                                 <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
                               </svg>
                             </button>
-                            {node.showAttachmentPopup && (
-                              <div 
-                                className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" 
-                                style={{ minWidth: '450px', maxWidth: '500px' }} 
-                                onClick={stopClickPropagation}
-                              >
+                            {node.showAttachmentPopup && (() => {
+                              const anchor = attachBtnRefs.current[node.id];
+                              const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
+                              const popupWidth = 480;
+                              const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
+                              const top = Math.max(8, rect.bottom + 8);
+                              return createPortal(
+                                <div className="node-popup" style={{ position: 'fixed', left, top, minWidth: popupWidth, maxWidth: 500, zIndex: 5000 }} onClick={stopClickPropagation}>
                                 <h4>Attachments</h4>
                                 
                                 {/* Search filter only */}
@@ -3225,13 +3257,16 @@ useLayoutEffect(() => {
                                     </div>
                                   )}
                                 </div>
-                              </div>
-                            )}
+                                </div>,
+                                document.body
+                              );
+                            })()}
                           </div>
                           
                           {/* Notes */}
-                          <div className="relative">
+              <div className="relative">
                             <button
+                ref={(el) => { notesBtnRefs.current[node.id] = el; }}
                               className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -3249,8 +3284,14 @@ useLayoutEffect(() => {
                                 <line x1="10" y1="9" x2="8" y2="9"></line>
                               </svg>
                             </button>
-                            {node.showNotesPopup && (
-                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={stopClickPropagation}>
+                            {node.showNotesPopup && (() => {
+                              const anchor = notesBtnRefs.current[node.id];
+                              const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
+                              const popupWidth = 360;
+                              const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
+                              const top = Math.max(8, rect.bottom + 8);
+                              return createPortal(
+                                <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={stopClickPropagation}>
                                 <h4>Notes</h4>
                                 <textarea
                                   className="w-full p-3 border border-gray-300 rounded-lg text-sm h-32 resize-none text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left"
@@ -3274,13 +3315,16 @@ useLayoutEffect(() => {
                                     Done
                                   </button>
                                 </div>
-                              </div>
-                            )}
+                                </div>,
+                                document.body
+                              );
+                            })()}
                           </div>
                           
                           {/* Tags */}
-                          <div className="relative">
+              <div className="relative">
                             <button
+                ref={(el) => { tagBtnRefs.current[node.id] = el; }}
                               className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -3295,8 +3339,18 @@ useLayoutEffect(() => {
                                 <line x1="7" y1="7" x2="7.01" y2="7"></line>
                               </svg>
                             </button>
-                            {node.showTagsPopup && (
-                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2 w-80 max-h-96" onClick={stopClickPropagation}>
+                            {node.showTagsPopup && (() => {
+                              const anchor = tagBtnRefs.current[node.id];
+                              const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2 - 160, top: 80, width: 0, height: 0, bottom: 100 };
+                              const popupWidth = 320; // w-80
+                              const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
+                              const top = Math.max(8, rect.bottom + 8);
+                              return createPortal(
+                                <div
+                                  className="node-popup"
+                                  style={{ position: 'fixed', left, top, width: popupWidth, maxHeight: '24rem', zIndex: 5000 }}
+                                  onClick={stopClickPropagation}
+                                >
                                 <h4>Manage Tags</h4>
                                 
                                 {/* Tags list */}
@@ -3505,8 +3559,10 @@ useLayoutEffect(() => {
                                     + Add New Tag
                                   </button>
                                 )}
-                              </div>
-                            )}
+                                </div>,
+                                document.body
+                              );
+                            })()}
                           </div>
                         </div>
                         )}
@@ -3520,8 +3576,9 @@ useLayoutEffect(() => {
                         {isToolbarExpanded && (
                         <div className="flex items-center gap-1">
                           {/* Details (Priority/Status) */}
-                          <div className="relative">
+              <div className="relative">
                             <button
+                ref={(el) => { detailsBtnRefs.current[node.id] = el; }}
                               className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -3537,8 +3594,14 @@ useLayoutEffect(() => {
                                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
                               </svg>
                             </button>
-                            {node.showDetailsPopup && (
-                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={stopClickPropagation}>
+                            {node.showDetailsPopup && (() => {
+                              const anchor = detailsBtnRefs.current[node.id];
+                              const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
+                              const popupWidth = 360;
+                              const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
+                              const top = Math.max(8, rect.bottom + 8);
+                              return createPortal(
+                                <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={stopClickPropagation}>
                                 <h4>Details</h4>
                                 <div className="flex flex-col gap-3">
                                   <div>
@@ -3605,13 +3668,16 @@ useLayoutEffect(() => {
                                     Done
                                   </button>
                                 </div>
-                              </div>
-                            )}
+                                </div>,
+                                document.body
+                              );
+                            })()}
                           </div>
                           
                           {/* Due Date */}
-                          <div className="relative">
+              <div className="relative">
                             <button
+                ref={(el) => { dateBtnRefs.current[node.id] = el; }}
                               className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -3628,8 +3694,14 @@ useLayoutEffect(() => {
                                 <line x1="3" y1="10" x2="21" y2="10"></line>
                               </svg>
                             </button>
-                            {node.showDatePopup && (
-                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={stopClickPropagation}>
+                            {node.showDatePopup && (() => {
+                              const anchor = dateBtnRefs.current[node.id];
+                              const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
+                              const popupWidth = 320;
+                              const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
+                              const top = Math.max(8, rect.bottom + 8);
+                              return createPortal(
+                                <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={stopClickPropagation}>
                                 <h4>Due Date</h4>
                                 <div>
                                   <input
@@ -3677,13 +3749,16 @@ useLayoutEffect(() => {
                                     </div>
                                   )}
                                 </div>
-                              </div>
-                            )}
+                                </div>,
+                                document.body
+                              );
+                            })()}
                           </div>
                           
                           {/* Collaborator */}
-                          <div className="relative">
+              <div className="relative">
                             <button
+                ref={(el) => { collabBtnRefs.current[node.id] = el; }}
                               className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -3700,8 +3775,14 @@ useLayoutEffect(() => {
                                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                               </svg>
                             </button>
-                            {node.showCollaboratorPopup && (
-                              <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={stopClickPropagation}>
+                            {node.showCollaboratorPopup && (() => {
+                              const anchor = collabBtnRefs.current[node.id];
+                              const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
+                              const popupWidth = 360;
+                              const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
+                              const top = Math.max(8, rect.bottom + 8);
+                              return createPortal(
+                                <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={stopClickPropagation}>
                                 <h4 className="text-sm font-semibold text-gray-900 mb-3">Assign Collaborators</h4>
                                 <input
                                   type="text"
@@ -3762,8 +3843,10 @@ useLayoutEffect(() => {
                                     Done
                                   </button>
                                 </div>
-                              </div>
-                            )}
+                                </div>,
+                                document.body
+                              );
+                            })()}
                           </div>
                         </div>
                         )}
@@ -3792,9 +3875,10 @@ useLayoutEffect(() => {
                           </button>
                           
                           {/* Layout Button (Root only) */}
-                          {node.id === 'root' && (
+          {node.id === 'root' && (
                             <div className="relative">
                               <button
+            ref={(el) => { layoutBtnRefs.current[node.id] = el; }}
                                 className="node-toolbar-btn p-2 rounded-xl hover:bg-blue-100 text-blue-700 transition-colors duration-200 border border-blue-200 hover:border-blue-300"
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -3810,8 +3894,14 @@ useLayoutEffect(() => {
                                   <line x1="9" y1="21" x2="9" y2="9"></line>
                                 </svg>
                               </button>
-                              {node.showLayoutPopup && (
-                                <div className="node-popup absolute top-full left-1/2 -translate-x-1/2 mt-2" onClick={stopClickPropagation}>
+                              {node.showLayoutPopup && (() => {
+                                const anchor = layoutBtnRefs.current[node.id];
+                                const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
+                                const popupWidth = 340;
+                                const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
+                                const top = Math.max(8, rect.bottom + 8);
+                                return createPortal(
+                                  <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={stopClickPropagation}>
                                   <h4>Choose Layout</h4>
                                   <div className="grid grid-cols-2 gap-2">
                                     {layoutOptions.map(layout => (
@@ -3832,8 +3922,10 @@ useLayoutEffect(() => {
                                       </button>
                                     ))}
                                   </div>
-                                </div>
-                              )}
+                                  </div>,
+                                  document.body
+                                );
+                              })()}
                             </div>
                           )}
                           

@@ -1,15 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { Check } from 'lucide-react';
 
 const RoundColorPicker = ({ 
   currentColor, 
   onColorSelect, 
   onClose, 
-  position = 'bottom-left' 
+  position = 'bottom-left',
+  anchorRect // optional DOMRect to render as fixed portal
 }) => {
   const [selectedColor, setSelectedColor] = useState(currentColor);
   const [customColor, setCustomColor] = useState('');
-  const canvasRef = useRef(null);
   const containerRef = useRef(null);
 
   // Color wheel data - arranged in a circular pattern
@@ -77,19 +78,24 @@ const RoundColorPicker = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onClose]);
 
+  const fixedPos = anchorRect ? {
+    position: 'fixed',
+    left: Math.max(8, Math.min(anchorRect.left - 20, window.innerWidth - 280 - 8)),
+    top: Math.max(8, anchorRect.bottom + 8),
+    zIndex: 5000
+  } : null;
+
   return (
-    <div 
+    <dialog 
       ref={containerRef}
-      className="node-popup absolute"
+      className={`node-popup ${anchorRect ? '' : 'absolute'}`}
       style={{
         width: '280px',
         height: '320px',
-        top: '100%',
-        left: '0',
-        marginTop: '8px',
-        zIndex: 50
+        ...(anchorRect ? fixedPos : { top: '100%', left: '0', marginTop: '8px', zIndex: 4000 })
       }}
-      onClick={e => e.stopPropagation()}
+      open
+  tabIndex={-1}
     >
       {/* Header */}
       <div className="text-center mb-4">
@@ -111,7 +117,7 @@ const RoundColorPicker = ({
 
         {/* Color rings */}
         {colorRings.map((ring, ringIndex) => (
-          <div key={ringIndex} className="absolute inset-0">
+          <div key={`ring-${ring[0]}-${ring.length}`} className="absolute inset-0">
             {ring.map((color, colorIndex) => {
               const position = getColorPosition(ringIndex, colorIndex, ring.length);
               const isSelected = selectedColor === color;
@@ -166,8 +172,23 @@ const RoundColorPicker = ({
           </button>
         </div>
       </div>
-    </div>
+  </dialog>
   );
 };
 
 export default RoundColorPicker;
+
+RoundColorPicker.propTypes = {
+  currentColor: PropTypes.string.isRequired,
+  onColorSelect: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
+  position: PropTypes.string,
+  anchorRect: PropTypes.shape({
+    left: PropTypes.number,
+    right: PropTypes.number,
+    top: PropTypes.number,
+    bottom: PropTypes.number,
+    width: PropTypes.number,
+    height: PropTypes.number
+  })
+};
