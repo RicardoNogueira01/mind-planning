@@ -2,6 +2,10 @@ const GROUP_HIT_INSET = 12;   // inset for hit-testing: near-edge drops count as
 import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, Settings, Trash2, Check, Moon, Sun } from 'lucide-react';
+import { getShapeStyles } from './mindmap/getShapeStyles';
+import { adjustBrightness } from '../utils/color';
+import { computeBezierPath } from './mindmap/connectionGeometry';
+import { shapeBuilders } from './mindmap/builders';
 import MindMapManager from './MindMapManager';
 import RoundColorPicker from './RoundColorPicker';
 import MindMapToolbar from './mindmap/MindMapToolbar';
@@ -147,105 +151,7 @@ const MindMap = ({ mapId, onBack }) => {
     { type: 'connector', name: 'Connector', color: '#6B7280', icon: '→' }
   ];
 
-  // --- Shape Builders: create nodes and edges for semantic shapes ---
-  const genId = (prefix = 'node') => `${prefix}-${Date.now()}-${Math.floor(Math.random()*1e5)}`;
-
-  // Helper to build a basic standard node (non-shaped)
-  const buildStandardNode = (x, y, text = '') => ({
-    id: genId('node'),
-    text,
-    x,
-    y,
-    color: isDarkMode ? '#374151' : '#ffffff',
-    fontColor: isDarkMode ? '#f3f4f6' : '#2d3748'
-  });
-
-  // Helper to build a shaped node (uses shapeType styles)
-  const buildShapedNode = (x, y, shapeType, baseColor, label = '') => ({
-    id: genId('node'),
-    text: label,
-    x,
-    y,
-    type: 'shape',
-    shapeType,
-    backgroundColor: baseColor,
-    fontColor: '#ffffff'
-  });
-
-  // Returns { nodes: [], connections: [] }
-  const shapeBuilders = {
-    // Circle -> Start node (single)
-    circle: (x, y) => {
-      const def = shapeDefinitions.find(s => s.type === 'circle');
-      const start = buildShapedNode(x, y, 'circle', def?.color || '#3B82F6', 'Start');
-      const first = buildStandardNode(x + 240, y, 'First step');
-      return {
-        nodes: [start, first],
-        connections: [{ id: genId('conn'), from: start.id, to: first.id, label: 'Start' }]
-      };
-    },
-    // Hexagon -> Action node (single)
-    hexagon: (x, y) => {
-      const def = shapeDefinitions.find(s => s.type === 'hexagon');
-      const action = buildShapedNode(x, y, 'hexagon', def?.color || '#10B981', 'Action');
-      const success = buildStandardNode(x + 260, y - 60, 'Success');
-      const failure = buildStandardNode(x + 260, y + 60, 'Failure');
-      return {
-        nodes: [action, success, failure],
-        connections: [
-          { id: genId('conn'), from: action.id, to: success.id, label: 'Success' },
-          { id: genId('conn'), from: action.id, to: failure.id, label: 'Failure' }
-        ]
-      };
-    },
-    // Rhombus -> If with True/False children
-    rhombus: (x, y) => {
-      const def = shapeDefinitions.find(s => s.type === 'rhombus');
-      const ifNode = buildShapedNode(x, y, 'rhombus', def?.color || '#F59E0B', 'If condition');
-      // children to the right (lobster claw: wider X and larger Y offsets)
-      const trueNode = buildStandardNode(x + 420, y - 120, 'True');
-      const falseNode = buildStandardNode(x + 420, y + 120, 'False');
-      const conn1 = { id: genId('conn'), from: ifNode.id, to: trueNode.id, label: 'True' };
-      const conn2 = { id: genId('conn'), from: ifNode.id, to: falseNode.id, label: 'False' };
-      return { nodes: [ifNode, trueNode, falseNode], connections: [conn1, conn2] };
-    },
-    // Pentagon -> Switch with Case1, Case2, Otherwise
-  pentagon: (x, y) => {
-      const def = shapeDefinitions.find(s => s.type === 'pentagon');
-      const sw = buildShapedNode(x, y, 'pentagon', def?.color || '#EF4444', 'Switch');
-      const case1 = buildStandardNode(x + 280, y - 90, 'Case 1');
-      const case2 = buildStandardNode(x + 280, y + 0, 'Case 2');
-      const otherwise = buildStandardNode(x + 280, y + 90, 'Otherwise');
-      return {
-        nodes: [sw, case1, case2, otherwise],
-        connections: [
-      { id: genId('conn'), from: sw.id, to: case1.id, label: 'Case 1' },
-      { id: genId('conn'), from: sw.id, to: case2.id, label: 'Case 2' },
-      { id: genId('conn'), from: sw.id, to: otherwise.id, label: 'Otherwise' }
-        ]
-      };
-    },
-    // Ellipse -> Loop with Body/Exit
-  ellipse: (x, y) => {
-      const def = shapeDefinitions.find(s => s.type === 'ellipse');
-      const loop = buildShapedNode(x, y, 'ellipse', def?.color || '#8B5CF6', 'Loop');
-      const body = buildStandardNode(x + 260, y - 50, 'Body');
-      const exit = buildStandardNode(x + 260, y + 50, 'Exit');
-      return {
-        nodes: [loop, body, exit],
-        connections: [
-      { id: genId('conn'), from: loop.id, to: body.id, label: 'True' },
-      { id: genId('conn'), from: loop.id, to: exit.id, label: 'False' }
-        ]
-      };
-    },
-    // Connector -> just a shaped connector block (single)
-    connector: (x, y) => {
-      const def = shapeDefinitions.find(s => s.type === 'connector');
-      const connNode = buildShapedNode(x, y, 'connector', def?.color || '#6B7280', 'Connector');
-      return { nodes: [connNode], connections: [] };
-    }
-  };
+  // Shape builders are now imported from './mindmap/builders'
   
   // Canvas pan and zoom state
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -311,15 +217,7 @@ const MindMap = ({ mapId, onBack }) => {
     ]
   };
 
-  // Helper function to adjust color brightness for gradients
-  const adjustBrightness = (hex, percent) => {
-    const num = parseInt(hex.replace("#", ""), 16);
-    const amt = Math.round(2.55 * percent);
-    const R = Math.max(0, Math.min(255, (num >> 16) + amt));
-    const G = Math.max(0, Math.min(255, (num >> 8 & 0x00FF) + amt));
-    const B = Math.max(0, Math.min(255, (num & 0x0000FF) + amt));
-    return "#" + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
-  };
+  // adjustBrightness is now imported from src/utils/color
 
   // Global tags state
   const [globalTags, setGlobalTags] = useState([
@@ -403,7 +301,9 @@ const MindMap = ({ mapId, onBack }) => {
       return;
     }
 
-    const { nodes: builtNodes, connections: builtConns } = builder(x, y);
+  // Resolve base color per shape type using local shapeDefinitions
+  const getColor = (t) => shapeDefinitions.find(s => s.type === t)?.color;
+  const { nodes: builtNodes, connections: builtConns } = builder(x, y, getColor);
 
     // Append to existing state atomically and save history
     const nextNodes = [...nodes, ...builtNodes];
@@ -1759,31 +1659,7 @@ const handleNodeClick = (nodeId, e) => {
             return { x, y };
           };
 
-          // Calculate centers for angle calculation
-          const fromCenterX = (fromPos.left + fromPos.right) / 2;
-          const fromCenterY = (fromPos.top + fromPos.bottom) / 2;
-          const toCenterX = (toPos.left + toPos.right) / 2;
-          const toCenterY = (toPos.top + toPos.bottom) / 2;
-
-          // Get exact perimeter points for smooth connection
-          const startPoint = getPerimeterPoint(fromPos, toCenterX, toCenterY);
-          const endPoint = getPerimeterPoint(toPos, fromCenterX, fromCenterY);
-
-          // Create smooth curve with control points
-          const dx = endPoint.x - startPoint.x;
-          const dy = endPoint.y - startPoint.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          // Control points for smooth curve - adjusted for better curves
-          const controlDistance = Math.min(distance * 0.4, 120);
-          // Add subtle vertical bias based on relative Y for a nicer flare
-          const verticalBias = Math.sign(dy) * Math.min(Math.abs(dy) * 0.15, 60);
-          const controlPoint1X = startPoint.x + dx * 0.25;
-          const controlPoint1Y = startPoint.y + dy * 0.2 - verticalBias * 0.3;
-          const controlPoint2X = endPoint.x - dx * 0.25;
-          const controlPoint2Y = endPoint.y - dy * 0.2 + verticalBias * 0.3;
-
-          const pathData = `M ${startPoint.x} ${startPoint.y} C ${controlPoint1X} ${controlPoint1Y}, ${controlPoint2X} ${controlPoint2Y}, ${endPoint.x} ${endPoint.y}`;
+          const { d: pathData, start: startPoint, end: endPoint, label: labelPoint } = computeBezierPath(fromPos, toPos);
           
           return (
             <g key={conn.id}>
@@ -1800,8 +1676,8 @@ const handleNodeClick = (nodeId, e) => {
               />
               {conn.label && (
                 <text
-                  x={(startPoint.x + endPoint.x) / 2}
-                  y={(startPoint.y + endPoint.y) / 2 - 6}
+                  x={labelPoint.x}
+                  y={labelPoint.y - 6}
                   textAnchor="middle"
                   fontSize={12}
                   fill={isDarkMode ? '#e5e7eb' : '#334155'}
@@ -2807,62 +2683,8 @@ useLayoutEffect(() => {
               // Use fixed width to prevent layout disruption during text editing
               const nodeWidth = 400; // Fixed width for stable layout
 
-              // Define shape-specific styles
-              const getShapeStyles = (shapeType) => {
-                const baseColor = node.backgroundColor || node.color || (isDarkMode ? '#374151' : '#ffffff');
-                
-                switch (shapeType) {
-                  case 'circle':
-                    return {
-                      borderRadius: '50%',
-                      width: 200,
-                      height: 200,
-                      clipPath: 'none'
-                    };
-                  case 'hexagon':
-                    return {
-                      borderRadius: '8px',
-                      clipPath: 'polygon(50% 0%, 93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%)',
-                      width: 200,
-                      height: 200
-                    };
-                  case 'rhombus':
-                    return {
-                      borderRadius: '4px',
-                      clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-                      width: 200,
-                      height: 200
-                    };
-                  case 'pentagon':
-                    return {
-                      borderRadius: '8px',
-                      clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
-                      width: 200,
-                      height: 200
-                    };
-                  case 'ellipse':
-                    return {
-                      borderRadius: '50%',
-                      width: 200,
-                      height: 100,
-                      clipPath: 'none'
-                    };
-                  case 'connector':
-                    return {
-                      borderRadius: '40px',
-                      width: 200,
-                      height: 80,
-                      clipPath: 'none'
-                    };
-                  default:
-                    return {
-                      borderRadius: '16px',
-                      width: nodeWidth,
-                      height: 'auto',
-                      clipPath: 'none'
-                    };
-                }
-              };
+              // Use pure helper to resolve shape-specific styles
+              
 
               const shapeStyles = node.shapeType ? getShapeStyles(node.shapeType) : getShapeStyles('default');
               const displayWidth = shapeStyles.width || nodeWidth;
