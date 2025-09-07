@@ -15,6 +15,11 @@ import MindMapCanvas from './mindmap/MindMapCanvas';
 import { COLLAB_PAGE_SIZE } from './mindmap/constants';
 import ShapePalette from './mindmap/ShapePalette';
 import ProgressRingChip from './mindmap/ProgressRingChip';
+import NodeToolbarPrimary from './mindmap/NodeToolbarPrimary';
+import NodeToolbarSettingsToggle from './mindmap/NodeToolbarSettingsToggle';
+import NodeToolbarContentGroup from './mindmap/NodeToolbarContentGroup';
+import NodeToolbarMetaGroup from './mindmap/NodeToolbarMetaGroup';
+import NodeToolbarLayout from './mindmap/NodeToolbarLayout';
 
 const layoutOptions = [
   { id: 'tree', name: 'Tree Layout', icon: 'diagram-tree' },
@@ -31,6 +36,23 @@ const MindMap = ({ mapId, onBack }) => {
   const [selectedNode, setSelectedNode] = useState(null);
   const [showNewMapPrompt, setShowNewMapPrompt] = useState(!mapId); // Show prompt only if no mapId
   const canvasRef = useRef(null);
+  // Canvas transform and interaction state
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [isPanning, setIsPanning] = useState(false);
+  const lastMousePosRef = useRef({ x: 0, y: 0 });
+  // Node DOM refs and measured positions
+  const nodeRefs = useRef({});
+  const [nodePositions, setNodePositions] = useState({});
+  // App theme (persisted)
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    try { return localStorage.getItem('isDarkMode') === 'true'; } catch { return false; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem('isDarkMode', String(isDarkMode)); } catch {}
+  }, [isDarkMode]);
+  // Node toolbar expand/collapse state
+  const [isToolbarExpanded, setIsToolbarExpanded] = useState(false);
   
   // Selection mode state
   const [mode, setMode] = useState('cursor');
@@ -40,10 +62,62 @@ const MindMap = ({ mapId, onBack }) => {
   const [selectedNodes, setSelectedNodes] = useState([]);
   const [showCollaboratorDialog, setShowCollaboratorDialog] = useState(false);
   const [nodeGroups, setNodeGroups] = useState([]);
+  // Global tags available for all nodes
+  const [globalTags, setGlobalTags] = useState([]);
   // UI: open group menu id (for collaborator group badge menu)
   const [openGroupMenuId, setOpenGroupMenuId] = useState(null);
   const [groupCollaboratorSearch, setGroupCollaboratorSearch] = useState({}); // { [groupId]: string }
   const [groupCollaboratorPage, setGroupCollaboratorPage] = useState({}); // { [groupId]: number }
+  // Simulated current user - in a real app this would come from auth context
+  const currentUser = 'Current User';
+  // Available collaborators for assignment (could come from a real source later)
+  const collaborators = useMemo(() => ([
+    { id: 'jd', name: 'John Doe', initials: 'JD', color: '#3B82F6' },
+    { id: 'ak', name: 'Alex Kim', initials: 'AK', color: '#10B981' },
+    { id: 'mr', name: 'Maria Rodriguez', initials: 'MR', color: '#F59E0B' },
+    { id: 'ts', name: 'Taylor Smith', initials: 'TS', color: '#8B5CF6' },
+  ]), []);
+  // Helpers/state used by the content toolbar popups (must be declared before render usage)
+  const stopClickPropagation = (e) => { e.stopPropagation(); };
+  const [attachmentFilters, setAttachmentFilters] = useState({ search: '' });
+  const attachBtnRefs = useRef({});
+  const notesBtnRefs = useRef({});
+  const tagBtnRefs = useRef({});
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState('#2563EB');
+  const handleAttachment = (e, nodeId) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const newAttachment = {
+        id: Date.now(),
+        name: file.name,
+        dateAdded: new Date().toISOString(),
+        addedBy: currentUser,
+        type: file.name.split('.').pop().toLowerCase(),
+      };
+      wrappedSetNodes(nodes.map(n => n.id === nodeId ? { ...n, attachments: [...(n.attachments || []), newAttachment] } : n));
+      // reset input value to allow re-uploading same file
+      try { e.target.value = ''; } catch {}
+    }
+  };
+  const removeAttachment = (nodeId, attachmentId) => {
+    wrappedSetNodes(nodes.map(n => n.id === nodeId ? { ...n, attachments: (n.attachments || []).filter(a => a.id !== attachmentId) } : n));
+  };
+  const addTagToNode = (nodeId, name, color) => {
+    const trimmed = (name || '').trim();
+    if (!trimmed) return;
+    let tag = globalTags.find(t => (t.name || t.title || '').toLowerCase() === trimmed.toLowerCase());
+    if (!tag) {
+      tag = { id: `tag-${Date.now()}`, name: trimmed, title: trimmed, color: color || '#2563EB' };
+      setGlobalTags([...globalTags, tag]);
+    }
+    const tagId = tag.id;
+    wrappedSetNodes(nodes.map(n => {
+      if (n.id !== nodeId) return n;
+      const prev = Array.isArray(n.tags) ? n.tags : [];
+      return prev.includes(tagId) ? n : { ...n, tags: [...prev, tagId] };
+    }));
+  };
   // Overlay UI scale to improve readability independent of canvas zoom
   const [overlayUiScale, setOverlayUiScale] = useState(() => {
     try {
@@ -143,216 +217,180 @@ const MindMap = ({ mapId, onBack }) => {
   const [connectionStart, setConnectionStart] = useState(null);
   const [tempConnection, setTempConnection] = useState(null);
 
-  // Shape definitions with different colors
-  const shapeDefinitions = [
-    { type: 'circle', name: 'Start', color: '#3B82F6', icon: '○' },
-    { type: 'hexagon', name: 'Action', color: '#10B981', icon: '⬢' },
-    { type: 'rhombus', name: 'Rhombus', color: '#F59E0B', icon: '♦' },
-    { type: 'pentagon', name: 'Pentagon', color: '#EF4444', icon: '⬟' },
-    { type: 'ellipse', name: 'Ellipse', color: '#8B5CF6', icon: '⬮' },
-    { type: 'connector', name: 'Connector', color: '#6B7280', icon: '→' }
-  ];
-
-  // Shape builders are now imported from './mindmap/builders'
-  
-  // Canvas pan and zoom state
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [isPanning, setIsPanning] = useState(false);
-  const lastMousePosRef = useRef({ x: 0, y: 0 });
-  
-  // Node toolbar expansion state
-  const [isToolbarExpanded, setIsToolbarExpanded] = useState(false);
-  
-  // Dark mode state
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  
-    // Collaborator options
-  const collaborators = [
-    { id: 'jd', initials: 'JD', name: 'John Doe', color: '#3B82F6' },
-    { id: 'ak', initials: 'AK', name: 'Alex Kim', color: '#10B981' },
-    { id: 'mr', initials: 'MR', name: 'Maria Rodriguez', color: '#F59E0B' },
-    { id: 'ts', initials: 'TS', name: 'Taylor Smith', color: '#8B5CF6' }
-  ];
-
-  // Comprehensive color palette for both background and font colors
-  const colorPalette = {
-    // Basic colors
-    basic: [
-      '#FFFFFF', '#F8F9FA', '#E9ECEF', '#DEE2E6', '#CED4DA', '#ADB5BD', '#6C757D', '#495057', '#343A40', '#212529', '#000000'
-    ],
-    // Red spectrum
-    reds: [
-      '#FFF5F5', '#FED7D7', '#FEB2B2', '#FC8181', '#F56565', '#E53E3E', '#C53030', '#9B2C2C', '#742A2A', '#63171B', '#1A202C'
-    ],
-    // Orange spectrum
-    oranges: [
-      '#FFFAF0', '#FEEBC8', '#FBD38D', '#F6AD55', '#ED8936', '#DD6B20', '#C05621', '#9C4221', '#7B341E', '#652B19', '#1A202C'
-    ],
-    // Yellow spectrum
-    yellows: [
-      '#FFFFF0', '#FEFCBF', '#FAF089', '#F6E05E', '#ECC94B', '#D69E2E', '#B7791F', '#975A16', '#744210', '#5F370E', '#1A202C'
-    ],
-    // Green spectrum
-    greens: [
-      '#F0FFF4', '#C6F6D5', '#9AE6B4', '#68D391', '#48BB78', '#38A169', '#2F855A', '#276749', '#22543D', '#1C4532', '#1A202C'
-    ],
-    // Teal spectrum
-    teals: [
-      '#E6FFFA', '#B2F5EA', '#81E6D9', '#4FD1C7', '#38B2AC', '#319795', '#2C7A7B', '#285E61', '#234E52', '#1D4044', '#1A202C'
-    ],
-    // Blue spectrum
-    blues: [
-      '#EBF8FF', '#BEE3F8', '#90CDF4', '#63B3ED', '#4299E1', '#3182CE', '#2B77CB', '#2C5282', '#2A4365', '#1A365D', '#1A202C'
-    ],
-    // Indigo spectrum
-    indigos: [
-      '#EBF4FF', '#C3DAFE', '#A3BFFA', '#7F9CF5', '#667EEA', '#5A67D8', '#4C51BF', '#434190', '#3C366B', '#322659', '#1A202C'
-    ],
-    // Purple spectrum
-    purples: [
-      '#FAF5FF', '#E9D8FD', '#D6BCFA', '#B794F6', '#9F7AEA', '#805AD5', '#6B46C1', '#553C9A', '#44337A', '#322659', '#1A202C'
-    ],
-    // Pink spectrum
-    pinks: [
-      '#FFF5F7', '#FED7E2', '#FBB6CE', '#F687B3', '#ED64A6', '#D53F8C', '#B83280', '#97266D', '#702459', '#521B41', '#1A202C'
-    ]
-  };
-
-  // adjustBrightness is now imported from src/utils/color
-
-  // Global tags state
-  const [globalTags, setGlobalTags] = useState([
-    { id: 'tag-1', title: '', color: '#DC2626' },
-    { id: 'tag-2', title: '', color: '#2563EB' },
-    { id: 'tag-3', title: '', color: '#7C3AED' },
-    { id: 'tag-4', title: '', color: '#059669' },
-    { id: 'tag-5', title: '', color: '#D97706' },
-    { id: 'tag-6', title: '', color: '#DB2777' }  ]);
-  // Tag editing state
-  const [editingTag, setEditingTag] = useState(null);
-  
-  // Node positions for connections
-  const nodeRefs = useRef({});
-  const [nodePositions, setNodePositions] = useState({});
-  
-  // Function to delete a tag and remove it from all nodes
-  const deleteTag = (tagId) => {
-    // Remove tag from all nodes
-    wrappedSetNodes(nodes.map(node => ({
-      ...node,
-      tags: Array.isArray(node.tags) ? node.tags.filter(id => id !== tagId) : []
-    })));
-    
-    // Remove tag from global tags
-    setGlobalTags(globalTags.filter(tag => tag.id !== tagId));
-  };
-
-  // Shape handling functions
-  const handleShapeDragStart = (e, shapeType) => {
-    console.log('Starting drag for shape:', shapeType);
-    e.dataTransfer.setData('text/plain', shapeType);
-    e.dataTransfer.effectAllowed = 'copy';
-    setIsDraggingShape(true);
-    setDraggedShapeType(shapeType);
+  // Drag & Drop: allow dropping shapes onto the canvas
+  const handleShapeDragOver = (e) => {
+    // Allow drop
+    e.preventDefault();
+    try { e.dataTransfer.dropEffect = 'copy'; } catch {}
   };
 
   const handleShapeDrop = (e) => {
     e.preventDefault();
-    
-    const shapeType = e.dataTransfer.getData('text/plain');
-    if (!shapeType) {
-      console.log('Drop rejected: no shape type in data transfer');
-      return;
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    // Convert screen coords to canvas-local coords (account for pan/zoom)
+    const x = (e.clientX - rect.left - pan.x) / (zoom || 1);
+    const y = (e.clientY - rect.top - pan.y) / (zoom || 1);
+
+    // Try to read a custom MIME type first; fallback to plain text
+    let droppedType = '';
+    try { droppedType = e.dataTransfer.getData('application/x-shape-type') || ''; } catch {}
+    if (!droppedType) {
+      try { droppedType = e.dataTransfer.getData('text/plain') || ''; } catch {}
     }
-    
-    console.log('Shape drop detected:', shapeType);
-    
-    // Calculate coordinates in logical space (matching how node dragging works)
-    const rect = e.currentTarget.getBoundingClientRect();
-    
-    // Mouse position relative to the container
-    const screenX = e.clientX - rect.left;
-    const screenY = e.clientY - rect.top;
-    
-    // Convert screen coordinates to logical coordinates
-    // This matches the node dragging logic: divide by zoom to get logical coordinates
-    // Then account for the current pan offset to get the absolute logical position
-    const x = (screenX / zoom) - (pan.x / zoom);
-    const y = (screenY / zoom) - (pan.y / zoom);
-    
-    console.log('Drop coordinates:', { 
-      clientX: e.clientX, 
-      clientY: e.clientY, 
-      rectLeft: rect.left, 
-      rectTop: rect.top,
-      screenX, 
-      screenY, 
-      pan, 
-      zoom, 
-      finalX: x, 
-      finalY: y 
-    });
-    
-    // Use a builder for this shape if available
-    const builder = shapeBuilders[shapeType];
-    if (!builder) {
-      console.log('No builder found for shape type:', shapeType);
-      setIsDraggingShape(false);
-      setDraggedShapeType(null);
+    droppedType = (droppedType || '').trim();
+
+    const defaultShapeColors = {
+      circle: '#3B82F6',
+      hexagon: '#10B981',
+      rhombus: '#F59E0B',
+      pentagon: '#EF4444',
+      ellipse: '#8B5CF6',
+      connector: '#6B7280',
+    };
+    const getColor = (t) => defaultShapeColors[t] || (isDarkMode ? '#374151' : '#ffffff');
+
+    if (droppedType && shapeBuilders && shapeBuilders[droppedType]) {
+      const built = shapeBuilders[droppedType](x, y, getColor);
+      const newNodes = Array.isArray(built?.nodes) ? built.nodes : [];
+      const newConns = Array.isArray(built?.connections) ? built.connections : [];
+      wrappedSetNodesAndConnections([...nodes, ...newNodes], [...connections, ...newConns]);
+      if (built?.mainId) setSelectedNode(built.mainId);
       return;
     }
 
-  // Resolve base color per shape type using local shapeDefinitions
-  const getColor = (t) => shapeDefinitions.find(s => s.type === t)?.color;
-  const { nodes: builtNodes, connections: builtConns } = builder(x, y, getColor);
-
-    // Append to existing state atomically and save history
-    const nextNodes = [...nodes, ...builtNodes];
-    const nextConns = [...connections, ...builtConns];
-    wrappedSetNodesAndConnections(nextNodes, nextConns);
-
-    // Select the primary built node (first) for quick edits
-    if (builtNodes && builtNodes.length > 0) setSelectedNode(builtNodes[0].id);
-
-    setIsDraggingShape(false);
-    setDraggedShapeType(null);
+    // Fallback: create a simple default node at drop position
+    const newId = `node-${Date.now()}`;
+    const newNode = {
+      id: newId,
+      text: droppedType || '',
+      x,
+      y,
+      color: isDarkMode ? '#374151' : '#ffffff',
+      fontColor: isDarkMode ? '#f3f4f6' : '#2d3748'
+    };
+    wrappedSetNodesAndConnections([...nodes, newNode], connections);
+    setSelectedNode(newId);
   };
 
-  const handleShapeDragOver = (e) => {
-    if (isDraggingShape) {
-      e.preventDefault(); // This is crucial for allowing drop
-      e.dataTransfer.dropEffect = "copy";
-    }
+  // Provide a drag start helper for the shapes palette tiles
+  const handleShapeDragStart = (e, type) => {
+    try {
+      e.dataTransfer.setData('application/x-shape-type', type);
+      e.dataTransfer.setData('text/plain', type);
+      e.dataTransfer.effectAllowed = 'copy';
+    } catch {}
   };
-
-  // Connection handling functions
-  const startConnection = (nodeId, event) => {
-    event.stopPropagation();
-    setIsConnecting(true);
-    setConnectionStart(nodeId);
-    
-    const startNode = nodes.find(n => n.id === nodeId);
-    if (startNode) {
-      setTempConnection({
-        start: { x: startNode.x, y: startNode.y },
-        end: { x: event.clientX, y: event.clientY }
-      });
-    }
-  };
-
-  const updateTempConnection = (event) => {
-    if (isConnecting && connectionStart && tempConnection) {
-      const rect = event.currentTarget.getBoundingClientRect();
-      const x = (event.clientX - rect.left - pan.x) / zoom;
-      const y = (event.clientY - rect.top - pan.y) / zoom;
-      
-      setTempConnection(prev => ({
-        ...prev,
-        end: { x, y }
-      }));
-    }
-  };
+                        {/* Content Management Group - only show when expanded */}
+                        {isToolbarExpanded && (
+                          <NodeToolbarContentGroup
+                            node={node}
+                            isDarkMode={isDarkMode}
+                            attachBtnRef={(el) => { attachBtnRefs.current[node.id] = el; }}
+                            onToggleAttachment={(e) => {
+                              e.stopPropagation();
+                              wrappedSetNodes(nodes.map(n => 
+                                n.id === node.id ? { ...n, showAttachmentPopup: !n.showAttachmentPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
+                              ));
+                            }}
+                            renderAttachmentPopup={() => node.showAttachmentPopup ? (() => {
+                              const anchor = attachBtnRefs.current[node.id];
+                              const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
+                              const popupWidth = 480;
+                              const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
+                              const top = Math.max(8, rect.bottom + 8);
+                              return createPortal(
+                                <div className="node-popup" style={{ position: 'fixed', left, top, minWidth: popupWidth, maxWidth: 500, zIndex: 5000 }} onClick={stopClickPropagation}>
+                                  <h4>Attachments</h4>
+                                  <div className="mb-4">
+                                    <label className="block text-xs font-medium text-gray-700 mb-1">Search by name</label>
+                                    <input type="text" placeholder="Search by name..." className="w-full p-2 text-sm border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left" value={attachmentFilters.search}
+                                      onChange={(e) => setAttachmentFilters({ ...attachmentFilters, search: e.target.value })}
+                                      onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()} onFocus={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()} />
+                                  </div>
+                                  <div className="mb-4">
+                                    <label className="block text-xs font-medium text-gray-700 mb-2">Add new file</label>
+                                    <input type="file" accept=".xlsx,.xls,.doc,.docx,.pdf" className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-300 rounded-lg p-2"
+                                      onChange={(e) => handleAttachment(e, node.id)} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()} onFocus={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()} />
+                                  </div>
+                                  <div className="max-h-64 overflow-y-auto">
+                                    {node.attachments && node.attachments.length > 0 ? (
+                                      <div className="space-y-2">
+                                        {node.attachments.filter(attachment => attachment.name.toLowerCase().includes((attachmentFilters.search || '').toLowerCase())).map(attachment => (
+                                          <div key={attachment.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-200">
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-xs text-gray-600">{attachment.type}</span>
+                                              <span className="text-sm text-gray-900 font-medium">{attachment.name}</span>
+                                            </div>
+                                            <button className="text-xs text-red-600 hover:underline" onClick={(e) => { e.stopPropagation(); removeAttachment(node.id, attachment.id); }}>Remove</button>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div className="text-xs text-gray-500">No attachments</div>
+                                    )}
+                                  </div>
+                                </div>,
+                                document.body
+                              );
+                            })() : null}
+                            notesBtnRef={(el) => { notesBtnRefs.current[node.id] = el; }}
+                            onToggleNotes={(e) => {
+                              e.stopPropagation();
+                              wrappedSetNodes(nodes.map(n => 
+                                n.id === node.id ? { ...n, showNotesPopup: !n.showNotesPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
+                              ));
+                            }}
+                            renderNotesPopup={() => node.showNotesPopup ? (() => {
+                              const anchor = notesBtnRefs.current[node.id];
+                              const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
+                              const popupWidth = 420;
+                              const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
+                              const top = Math.max(8, rect.bottom + 8);
+                              return createPortal(
+                                <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={stopClickPropagation}>
+                                  <textarea className="w-full p-2 text-sm border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Add your notes here..." value={node.notes || ''}
+                                    onChange={(e) => wrappedSetNodes(nodes.map(n => n.id === node.id ? { ...n, notes: e.target.value } : n))}
+                                    onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()} onFocus={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()} />
+                                  <div className="mt-2 flex justify-end">
+                                    <button className="px-2 py-1 text-xs rounded-lg border border-gray-200 bg-white hover:bg-gray-50" onClick={(e) => { e.stopPropagation(); wrappedSetNodes(nodes.map(n => n.id === node.id ? { ...n, showNotesPopup: false } : n)); }}>Close</button>
+                                  </div>
+                                </div>,
+                                document.body
+                              );
+                            })() : null}
+                            tagsBtnRef={(el) => { tagBtnRefs.current[node.id] = el; }}
+                            onToggleTags={(e) => {
+                              e.stopPropagation();
+                              wrappedSetNodes(nodes.map(n => 
+                                n.id === node.id ? { ...n, showTagsPopup: !n.showTagsPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false } : n
+                              ));
+                            }}
+                            renderTagsPopup={() => node.showTagsPopup ? (() => {
+                              const anchor = tagBtnRefs.current[node.id];
+                              const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
+                              const popupWidth = 420;
+                              const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
+                              const top = Math.max(8, rect.bottom + 8);
+                              return createPortal(
+                                <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={stopClickPropagation}>
+                                  <div className="flex flex-wrap gap-1 mb-2">
+                                    {globalTags.map(tag => (
+                                      <span key={tag.id} className="px-2 py-1 text-xs rounded-lg border" style={{ backgroundColor: `${tag.color}20`, color: tag.color }}>{tag.name}</span>
+                                    ))}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <input type="text" placeholder="New tag name..." className="flex-1 p-2 text-sm border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" value={newTagName}
+                                      onChange={(e) => setNewTagName(e.target.value)} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()} onFocus={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()} />
+                                    <input type="color" value={newTagColor} onChange={(e) => setNewTagColor(e.target.value)} className="w-10 h-10 p-0 border border-gray-300 rounded" onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()} onFocus={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()} />
+                                    <button className="px-2 py-1 text-xs rounded-lg border border-gray-200 bg-white hover:bg-gray-50" onClick={(e) => { e.stopPropagation(); addTagToNode(node.id, newTagName, newTagColor); setNewTagName(''); }}>Add tag</button>
+                                  </div>
+                                </div>,
+                                document.body
+                              );
+                            })() : null}
+                          />
+                        )}
 
   const finishConnection = (targetNodeId) => {
     if (isConnecting && connectionStart && targetNodeId !== connectionStart) {
@@ -560,6 +598,8 @@ const MindMap = ({ mapId, onBack }) => {
       return () => clearTimeout(timeoutId);
     }
   }, [mapId, nodes, connections, nodeGroups, globalTags]);
+
+  // (moved helper/state definitions further down to avoid duplicates)
   
   // Click outside to close popups
   useEffect(() => {
@@ -2132,50 +2172,15 @@ const handleNodeClick = (nodeId, e) => {
     });
   };
 
-  // First, modify how attachments are stored in the node. Instead of a single attachment,
-  // Simulated current user - in a real app this would come from auth context
-  const currentUser = 'Current User'; // This should be replaced with actual logged-in user info
-
-  // Helper function to stop click propagation (keep for onClick events)
-  const stopClickPropagation = (e) => {
-    e.stopPropagation();
-  };
-
-  // we'll store an array of attachment objects
-  const handleAttachment = (e, nodeId) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const newAttachment = {
-        id: Date.now(),
-        name: file.name,
-        dateAdded: new Date().toISOString(),
-        addedBy: currentUser, // Automatically use the current logged-in user
-        type: file.name.split('.').pop().toLowerCase(),
-      };
-
-      wrappedSetNodes(nodes.map(n => 
-        n.id === nodeId ? {
-          ...n,
-          attachments: [...(n.attachments || []), newAttachment]
-        } : n
-      ));
-    }
-  };
-
-  // Add this state at component level
-  const [attachmentFilters, setAttachmentFilters] = useState({
-    search: ''
-  });
+  // (duplicates removed: currentUser, stopClickPropagation, handleAttachment, attachmentFilters)
 
   // Add near the other state declarations
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchList, setShowSearchList] = useState(false);
   // Refs to anchor toolbar buttons for portalized popups
-  const tagBtnRefs = useRef({}); // { [nodeId]: HTMLElement | null }
+  // (tagBtnRefs, attachBtnRefs, notesBtnRefs declared earlier to satisfy early usage)
   const bgBtnRefs = useRef({});
   const fontBtnRefs = useRef({});
-  const attachBtnRefs = useRef({});
-  const notesBtnRefs = useRef({});
   const detailsBtnRefs = useRef({});
   const dateBtnRefs = useRef({});
   const collabBtnRefs = useRef({});
@@ -2919,18 +2924,10 @@ useLayoutEffect(() => {
                           {/* Delete is shown at the end when expanded */}
                           
                           {/* Settings Button */}
-                          <div className="relative">
-                            <button
-                              className={`node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-300 transform border border-gray-200/60 hover:border-gray-300 ${isToolbarExpanded ? 'rotate-90' : ''}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setIsToolbarExpanded(!isToolbarExpanded);
-                              }}
-                              title="Settings"
-                            >
-                              <Settings size={16} />
-                            </button>
-                          </div>
+                          <NodeToolbarSettingsToggle
+                            isToolbarExpanded={isToolbarExpanded}
+                            onToggle={() => setIsToolbarExpanded(!isToolbarExpanded)}
+                          />
                           
                           {/* Show other buttons only when expanded */}
                           {isToolbarExpanded && (
@@ -2973,43 +2970,14 @@ useLayoutEffect(() => {
                             })()}
                           </div>
                           
-                          {/* Font Color */}
-              <div className="relative">
-                            <button
-                ref={(el) => { fontBtnRefs.current[node.id] = el; }}
-                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                wrappedSetNodes(nodes.map(n => 
-                                  n.id === node.id ? { ...n, showFontColorPopup: !n.showFontColorPopup, showEmojiPopup: false, showBgColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
-                                ));
-                              }}
-                              title="Font color"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M4 20h16"></path>
-                                <path d="M9 4h6l-3 9z"></path>
-                              </svg>
-                            </button>
-                            {node.showFontColorPopup && (() => {
-                              const anchor = fontBtnRefs.current[node.id];
-                              const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
-                              return createPortal(
-                                <RoundColorPicker
-                                  currentColor={node.fontColor || '#000000'}
-                                  onColorSelect={(color) => {
-                                    wrappedSetNodes(nodes.map(n => n.id === node.id ? { ...n, fontColor: color, showFontColorPopup: false } : n));
-                                  }}
-                                  onClose={() => {
-                                    wrappedSetNodes(nodes.map(n => n.id === node.id ? { ...n, showFontColorPopup: false } : n));
-                                  }}
-                                  anchorRect={rect}
-                                />,
-                                document.body
-                              );
-                            })()}
-                          </div>
-                          
+                          {/* Visual Content Group */}
+                          <NodeToolbarPrimary
+                            node={node}
+                            isToolbarExpanded={isToolbarExpanded}
+                            onToggleComplete={(id) => toggleNodeCompletion(id)}
+                            onAddChild={(id) => addChildNode(id)}
+                            onRequestDelete={(n) => setConfirmDelete({ id: n.id, text: n.text })}
+                          />
                           {/* Connection Button - Only for connector shapes */}
                           {node.shapeType === 'connector' && (
                             <button
@@ -3537,26 +3505,15 @@ useLayoutEffect(() => {
                         {/* Project Management Group - only show when expanded */}
                         {isToolbarExpanded && (
                         <div className="flex items-center gap-1">
-                          {/* Details (Priority/Status) */}
-              <div className="relative">
-                            <button
-                ref={(el) => { detailsBtnRefs.current[node.id] = el; }}
-                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                wrappedSetNodes(nodes.map(n => 
-                                  n.id === node.id ? { ...n, showDetailsPopup: !n.showDetailsPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
-                                ));
-                              }}
-                              title="Details (Priority/Status)"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="16" x2="12" y2="12"></line>
-                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                              </svg>
-                            </button>
-                            {node.showDetailsPopup && (() => {
+                          <NodeToolbarMetaGroup
+                            detailsBtnRef={(el) => { detailsBtnRefs.current[node.id] = el; }}
+                            onToggleDetails={(e) => {
+                              e.stopPropagation();
+                              wrappedSetNodes(nodes.map(n =>
+                                n.id === node.id ? { ...n, showDetailsPopup: !n.showDetailsPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDatePopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
+                              ));
+                            }}
+                            renderDetailsPopup={() => node.showDetailsPopup && (() => {
                               const anchor = detailsBtnRefs.current[node.id];
                               const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
                               const popupWidth = 360;
@@ -3564,99 +3521,84 @@ useLayoutEffect(() => {
                               const top = Math.max(8, rect.bottom + 8);
                               return createPortal(
                                 <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={stopClickPropagation}>
-                                <h4>Details</h4>
-                                <div className="flex flex-col gap-3">
-                                  <div>
-                                    <label className="block text-xs font-medium text-gray-700 mb-1">Priority</label>
-                                    <select 
-                                      className="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                      value={node.priority || 'medium'}
-                                      onChange={(e) => wrappedSetNodes(nodes.map(n => 
-                                        n.id === node.id ? { ...n, priority: e.target.value } : n
+                                  <h4>Details</h4>
+                                  <div className="flex flex-col gap-3">
+                                    <div>
+                                      <label className="block text-xs font-medium text-gray-700 mb-1">Priority</label>
+                                      <select
+                                        className="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={node.priority || 'medium'}
+                                        onChange={(e) => wrappedSetNodes(nodes.map(n =>
+                                          n.id === node.id ? { ...n, priority: e.target.value } : n
+                                        ))}
+                                        onClick={e => e.stopPropagation()}
+                                        onMouseDown={e => e.stopPropagation()}
+                                        onFocus={e => e.stopPropagation()}
+                                        onKeyDown={e => e.stopPropagation()}
+                                      >
+                                        <option value="low">Low</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="high">High</option>
+                                        <option value="urgent">Urgent</option>
+                                      </select>
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                                      <select
+                                        className="w-full p-2 border rounded-md text-sm text-black"
+                                        value={node.status || 'not-started'}
+                                        onChange={(e) => wrappedSetNodes(nodes.map(n =>
+                                          n.id === node.id ? { ...n, status: e.target.value } : n
+                                        ))}
+                                        onClick={e => e.stopPropagation()}
+                                        onMouseDown={e => e.stopPropagation()}
+                                        onFocus={e => e.stopPropagation()}
+                                        onKeyDown={e => e.stopPropagation()}
+                                      >
+                                        <option value="not-started">Not Started</option>
+                                        <option value="in-progress">In Progress</option>
+                                        <option value="review">Review</option>
+                                        <option value="completed">Completed</option>
+                                      </select>
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
+                                      <textarea
+                                        className="w-full p-2 border rounded-md text-sm h-24 resize-none text-black text-left"
+                                        placeholder="Additional details..."
+                                        value={node.description || ''}
+                                        onChange={(e) => wrappedSetNodes(nodes.map(n =>
+                                          n.id === node.id ? { ...n, description: e.target.value } : n
+                                        ))}
+                                        onClick={e => e.stopPropagation()}
+                                        onMouseDown={e => e.stopPropagation()}
+                                        onFocus={e => e.stopPropagation()}
+                                        onKeyDown={e => e.stopPropagation()}
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="flex justify-end mt-2">
+                                    <button
+                                      className="px-3 py-1 text-sm bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100"
+                                      onClick={() => wrappedSetNodes(nodes.map(n =>
+                                        n.id === node.id ? { ...n, showDetailsPopup: false } : n
                                       ))}
-                                      onClick={e => e.stopPropagation()}
-                                      onMouseDown={e => e.stopPropagation()}
-                                      onFocus={e => e.stopPropagation()}
-                                      onKeyDown={e => e.stopPropagation()}
                                     >
-                                      <option value="low">Low</option>
-                                      <option value="medium">Medium</option>
-                                      <option value="high">High</option>
-                                      <option value="urgent">Urgent</option>
-                                    </select>
+                                      Done
+                                    </button>
                                   </div>
-                                  <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
-                                    <select 
-                                      className="w-full p-2 border rounded-md text-sm text-black"
-                                      value={node.status || 'not-started'}
-                                      onChange={(e) => wrappedSetNodes(nodes.map(n => 
-                                        n.id === node.id ? { ...n, status: e.target.value } : n
-                                      ))}
-                                      onClick={e => e.stopPropagation()}
-                                      onMouseDown={e => e.stopPropagation()}
-                                      onFocus={e => e.stopPropagation()}
-                                      onKeyDown={e => e.stopPropagation()}
-                                    >
-                                      <option value="not-started">Not Started</option>
-                                      <option value="in-progress">In Progress</option>
-                                      <option value="review">Review</option>
-                                      <option value="completed">Completed</option>
-                                    </select>
-                                  </div>
-                                  <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
-                                    <textarea
-                                      className="w-full p-2 border rounded-md text-sm h-24 resize-none text-black text-left"
-                                      placeholder="Additional details..."
-                                      value={node.description || ''}
-                                      onChange={(e) => wrappedSetNodes(nodes.map(n => 
-                                        n.id === node.id ? { ...n, description: e.target.value } : n
-                                      ))}
-                                      onClick={e => e.stopPropagation()}
-                                      onMouseDown={e => e.stopPropagation()}
-                                      onFocus={e => e.stopPropagation()}
-                                      onKeyDown={e => e.stopPropagation()}
-                                    />
-                                  </div>
-                                </div>
-                                <div className="flex justify-end mt-2">
-                                  <button 
-                                    className="px-3 py-1 text-sm bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100"
-                                    onClick={() => wrappedSetNodes(nodes.map(n => 
-                                      n.id === node.id ? { ...n, showDetailsPopup: false } : n
-                                    ))}
-                                  >
-                                    Done
-                                  </button>
-                                </div>
                                 </div>,
                                 document.body
                               );
                             })()}
-                          </div>
-                          
-                          {/* Due Date */}
-              <div className="relative">
-                            <button
-                ref={(el) => { dateBtnRefs.current[node.id] = el; }}
-                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                wrappedSetNodes(nodes.map(n => 
-                                  n.id === node.id ? { ...n, showDatePopup: !n.showDatePopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
-                                ));
-                              }}
-                              title="Set due date"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
-                                <line x1="16" y1="2" x2="16" y2="6"></line>
-                                <line x1="8" y1="2" x2="8" y2="6"></line>
-                                <line x1="3" y1="10" x2="21" y2="10"></line>
-                              </svg>
-                            </button>
-                            {node.showDatePopup && (() => {
+                            dateBtnRef={(el) => { dateBtnRefs.current[node.id] = el; }}
+                            onToggleDate={(e) => {
+                              e.stopPropagation();
+                              wrappedSetNodes(nodes.map(n =>
+                                n.id === node.id ? { ...n, showDatePopup: !n.showDatePopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showCollaboratorPopup: false, showTagsPopup: false } : n
+                              ));
+                            }}
+                            renderDatePopup={() => node.showDatePopup && (() => {
                               const anchor = dateBtnRefs.current[node.id];
                               const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
                               const popupWidth = 320;
@@ -3664,80 +3606,61 @@ useLayoutEffect(() => {
                               const top = Math.max(8, rect.bottom + 8);
                               return createPortal(
                                 <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={stopClickPropagation}>
-                                <h4>Due Date</h4>
-                                <div>
-                                  <input
-                                    type="date"
-                                    className="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left"
-                                    value={node.dueDate || ''}
-                                    onChange={(e) => wrappedSetNodes(nodes.map(n => 
-                                      n.id === node.id ? { ...n, dueDate: e.target.value } : n
-                                    ))}
-                                  />
-                                  {node.dueDate && (
-                                    <div className="mt-2 flex justify-between items-center">
-                                      {(() => {
-                                        const dueDate = new Date(node.dueDate);
-                                        const today = new Date();
-                                        today.setHours(0, 0, 0, 0);
-                                        dueDate.setHours(0, 0, 0, 0);
-                                        
-                                        const diffTime = dueDate.getTime() - today.getTime();
-                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                        
-                                        let statusText = '';
-                                        let statusClass = '';
-                                        
-                                        if (diffDays < 0) {
-                                          statusText = `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''}`;
-                                          statusClass = 'bg-red-200 text-red-800 font-medium';
-                                        } else if (diffDays === 0) {
-                                          statusText = 'Due today';
-                                          statusClass = 'bg-red-200 text-red-800 font-medium';
-                                        } else if (diffDays <= 3) {
-                                          statusText = `Due in ${diffDays} day${diffDays !== 1 ? 's' : ''}`;
-                                          statusClass = 'bg-orange-200 text-orange-800 font-medium';
-                                        } else {
-                                          statusText = `Due in ${diffDays} days`;
-                                          statusClass = 'bg-green-200 text-green-800 font-medium';
-                                        }
-                                        
-                                        return (
-                                          <span className={`px-2 py-0.5 rounded-full ${statusClass}`}>
-                                            {statusText}
-                                          </span>
-                                        );
-                                      })()}
-                                    </div>
-                                  )}
-                                </div>
+                                  <h4>Due Date</h4>
+                                  <div>
+                                    <input
+                                      type="date"
+                                      className="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left"
+                                      value={node.dueDate || ''}
+                                      onChange={(e) => wrappedSetNodes(nodes.map(n =>
+                                        n.id === node.id ? { ...n, dueDate: e.target.value } : n
+                                      ))}
+                                    />
+                                    {node.dueDate && (
+                                      <div className="mt-2 flex justify-between items-center">
+                                        {(() => {
+                                          const dueDate = new Date(node.dueDate);
+                                          const today = new Date();
+                                          today.setHours(0, 0, 0, 0);
+                                          dueDate.setHours(0, 0, 0, 0);
+                                          const diffTime = dueDate.getTime() - today.getTime();
+                                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                          let statusText = '';
+                                          let statusClass = '';
+                                          if (diffDays < 0) {
+                                            statusText = `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''}`;
+                                            statusClass = 'bg-red-200 text-red-800 font-medium';
+                                          } else if (diffDays === 0) {
+                                            statusText = 'Due today';
+                                            statusClass = 'bg-red-200 text-red-800 font-medium';
+                                          } else if (diffDays <= 3) {
+                                            statusText = `Due in ${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+                                            statusClass = 'bg-orange-200 text-orange-800 font-medium';
+                                          } else {
+                                            statusText = `Due in ${diffDays} days`;
+                                            statusClass = 'bg-green-200 text-green-800 font-medium';
+                                          }
+                                          return (
+                                            <span className={`px-2 py-0.5 rounded-full ${statusClass}`}>
+                                              {statusText}
+                                            </span>
+                                          );
+                                        })()}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>,
                                 document.body
                               );
                             })()}
-                          </div>
-                          
-                          {/* Collaborator */}
-              <div className="relative">
-                            <button
-                ref={(el) => { collabBtnRefs.current[node.id] = el; }}
-                              className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                wrappedSetNodes(nodes.map(n => 
-                                  n.id === node.id ? { ...n, showCollaboratorPopup: !n.showCollaboratorPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showTagsPopup: false } : n
-                                ));
-                              }}
-                              title="Assign collaborator"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="9" cy="7" r="4"></circle>
-                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                              </svg>
-                            </button>
-                            {node.showCollaboratorPopup && (() => {
+                            collabBtnRef={(el) => { collabBtnRefs.current[node.id] = el; }}
+                            onToggleCollaborator={(e) => {
+                              e.stopPropagation();
+                              wrappedSetNodes(nodes.map(n =>
+                                n.id === node.id ? { ...n, showCollaboratorPopup: !n.showCollaboratorPopup, showEmojiPopup: false, showBgColorPopup: false, showFontColorPopup: false, showAttachmentPopup: false, showNotesPopup: false, showDetailsPopup: false, showDatePopup: false, showTagsPopup: false } : n
+                              ));
+                            }}
+                            renderCollaboratorPopup={() => node.showCollaboratorPopup && (() => {
                               const anchor = collabBtnRefs.current[node.id];
                               const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
                               const popupWidth = 360;
@@ -3745,71 +3668,71 @@ useLayoutEffect(() => {
                               const top = Math.max(8, rect.bottom + 8);
                               return createPortal(
                                 <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={stopClickPropagation}>
-                                <h4 className="text-sm font-semibold text-gray-900 mb-3">Assign Collaborators</h4>
-                                <input
-                                  type="text"
-                                  className="w-full p-2 mb-3 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left"
-                                  placeholder="Search collaborators..."
-                                  value={node.collaboratorSearch || ''}
-                                  onChange={e => wrappedSetNodes(nodes.map(n =>
-                                    n.id === node.id ? { ...n, collaboratorSearch: e.target.value } : n
-                                  ))}
-                                  onClick={e => e.stopPropagation()}
-                                  onMouseDown={e => e.stopPropagation()}
-                                  onFocus={e => e.stopPropagation()}
-                                  onSelect={e => e.stopPropagation()}
-                                  onKeyDown={e => e.stopPropagation()}
-                                  autoFocus
-                                />
-                                <div className="max-h-48 overflow-y-auto flex flex-col gap-1">
-                                  {collaborators.filter(c =>
-                                    !node.collaboratorSearch || c.name.toLowerCase().includes(node.collaboratorSearch.toLowerCase()) || c.initials.toLowerCase().includes(node.collaboratorSearch.toLowerCase())
-                                  ).map(collab => (
-                                    <label key={collab.id} className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors duration-150">
-                                      <input
-                                        type="checkbox"
-                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                        checked={Array.isArray(node.collaborators) && node.collaborators.includes(collab.id)}
-                                        onChange={e => {
-                                          wrappedSetNodes(nodes.map(n => {
-                                            if (n.id !== node.id) return n;
-                                            let newCollabs = Array.isArray(n.collaborators) ? [...n.collaborators] : [];
-                                            if (e.target.checked) {
-                                              if (!newCollabs.includes(collab.id)) newCollabs.push(collab.id);
-                                            } else {
-                                              newCollabs = newCollabs.filter(id => id !== collab.id);
-                                            }
-                                            return { ...n, collaborators: newCollabs };
-                                          }));
-                                        }}
-                                      />
-                                      <span 
-                                        className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm" 
-                                        style={{ backgroundColor: collab.color }}
-                                      >
-                                        {collab.initials}
-                                      </span>
-                                      <span className="text-sm font-medium text-gray-700">{collab.name}</span>
-                                    </label>
-                                  ))}
-                                </div>
-                                <div className="flex justify-end mt-3 pt-3 border-t border-gray-100">
-                                  <button
-                                    className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-150"
-                                    onClick={() => {
-                                      wrappedSetNodes(nodes.map(n => 
-                                        n.id === node.id ? { ...n, showCollaboratorPopup: false } : n
-                                      ));
-                                    }}
-                                  >
-                                    Done
-                                  </button>
-                                </div>
+                                  <h4 className="text-sm font-semibold text-gray-900 mb-3">Assign Collaborators</h4>
+                                  <input
+                                    type="text"
+                                    className="w-full p-2 mb-3 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left"
+                                    placeholder="Search collaborators..."
+                                    value={node.collaboratorSearch || ''}
+                                    onChange={e => wrappedSetNodes(nodes.map(n =>
+                                      n.id === node.id ? { ...n, collaboratorSearch: e.target.value } : n
+                                    ))}
+                                    onClick={e => e.stopPropagation()}
+                                    onMouseDown={e => e.stopPropagation()}
+                                    onFocus={e => e.stopPropagation()}
+                                    onSelect={e => e.stopPropagation()}
+                                    onKeyDown={e => e.stopPropagation()}
+                                    autoFocus
+                                  />
+                                  <div className="max-h-48 overflow-y-auto flex flex-col gap-1">
+                                    {collaborators.filter(c =>
+                                      !node.collaboratorSearch || c.name.toLowerCase().includes(node.collaboratorSearch.toLowerCase()) || c.initials.toLowerCase().includes(node.collaboratorSearch.toLowerCase())
+                                    ).map(collab => (
+                                      <label key={collab.id} className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors duration-150">
+                                        <input
+                                          type="checkbox"
+                                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                          checked={Array.isArray(node.collaborators) && node.collaborators.includes(collab.id)}
+                                          onChange={e => {
+                                            wrappedSetNodes(nodes.map(n => {
+                                              if (n.id !== node.id) return n;
+                                              let newCollabs = Array.isArray(n.collaborators) ? [...n.collaborators] : [];
+                                              if (e.target.checked) {
+                                                if (!newCollabs.includes(collab.id)) newCollabs.push(collab.id);
+                                              } else {
+                                                newCollabs = newCollabs.filter(id => id !== collab.id);
+                                              }
+                                              return { ...n, collaborators: newCollabs };
+                                            }));
+                                          }}
+                                        />
+                                        <span
+                                          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm"
+                                          style={{ backgroundColor: collab.color }}
+                                        >
+                                          {collab.initials}
+                                        </span>
+                                        <span className="text-sm font-medium text-gray-700">{collab.name}</span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                  <div className="flex justify-end mt-3 pt-3 border-t border-gray-100">
+                                    <button
+                                      className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-150"
+                                      onClick={() => {
+                                        wrappedSetNodes(nodes.map(n =>
+                                          n.id === node.id ? { ...n, showCollaboratorPopup: false } : n
+                                        ));
+                                      }}
+                                    >
+                                      Done
+                                    </button>
+                                  </div>
                                 </div>,
                                 document.body
                               );
                             })()}
-                          </div>
+                          />
                         </div>
                         )}
                         
@@ -3838,58 +3761,45 @@ useLayoutEffect(() => {
                           
                           {/* Layout Button (Root only) */}
           {node.id === 'root' && (
-                            <div className="relative">
-                              <button
-            ref={(el) => { layoutBtnRefs.current[node.id] = el; }}
-                                className="node-toolbar-btn p-2 rounded-xl hover:bg-blue-100 text-blue-700 transition-colors duration-200 border border-blue-200 hover:border-blue-300"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  wrappedSetNodes(nodes.map(n => 
-                                    n.id === node.id ? { ...n, showLayoutPopup: !n.showLayoutPopup } : n
-                                  ));
-                                }}
-                                title="Change layout"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                  <line x1="3" y1="9" x2="21" y2="9"></line>
-                                  <line x1="9" y1="21" x2="9" y2="9"></line>
-                                </svg>
-                              </button>
-                              {node.showLayoutPopup && (() => {
-                                const anchor = layoutBtnRefs.current[node.id];
-                                const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
-                                const popupWidth = 340;
-                                const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
-                                const top = Math.max(8, rect.bottom + 8);
-                                return createPortal(
-                                  <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={stopClickPropagation}>
-                                  <h4>Choose Layout</h4>
-                                  <div className="grid grid-cols-2 gap-2">
-                                    {layoutOptions.map(layout => (
-                                      <button
-                                        key={layout.id}
-                                        className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-md text-sm"
-                                        onClick={() => {
-                                          applyLayout(node.id, layout.id);
-                                          wrappedSetNodes(nodes.map(n => 
-                                            n.id === node.id ? { ...n, showLayoutPopup: false } : n
-                                          ));
-                                        }}
-                                      >
-                                        <span className="text-gray-500">
-                                          <i className={`lucide lucide-${layout.icon}`}></i>
-                                        </span>
-                                        {layout.name}
-                                      </button>
-                                    ))}
-                                  </div>
-                                  </div>,
-                                  document.body
-                                );
-                              })()}
-                            </div>
-                          )}
+            <NodeToolbarLayout
+              shouldRender={true}
+              layoutBtnRef={(el) => { layoutBtnRefs.current[node.id] = el; }}
+              onToggleLayout={(e) => {
+                e.stopPropagation();
+                wrappedSetNodes(nodes.map(n => n.id === node.id ? { ...n, showLayoutPopup: !n.showLayoutPopup } : n));
+              }}
+              renderLayoutPopup={() => node.showLayoutPopup && (() => {
+                const anchor = layoutBtnRefs.current[node.id];
+                const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
+                const popupWidth = 340;
+                const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
+                const top = Math.max(8, rect.bottom + 8);
+                return createPortal(
+                  <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={stopClickPropagation}>
+                    <h4>Choose Layout</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {layoutOptions.map(layout => (
+                        <button
+                          key={layout.id}
+                          className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-md text-sm"
+                          onClick={() => {
+                            applyLayout(node.id, layout.id);
+                            wrappedSetNodes(nodes.map(n => n.id === node.id ? { ...n, showLayoutPopup: false } : n));
+                          }}
+                        >
+                          <span className="text-gray-500">
+                            <i className={`lucide lucide-${layout.icon}`}></i>
+                          </span>
+                          {layout.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>,
+                  document.body
+                );
+              })()}
+            />
+          )}
                           
                           {/* Delete Node */}
                           {node.id !== 'root' && (
@@ -4283,46 +4193,20 @@ useLayoutEffect(() => {
       
       </div>
 
-      {/* Shapes Panel */}
-      <div className={`w-20 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg border-l ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex flex-col items-center py-4 gap-3`}>
-        
-        {shapeDefinitions.map((shapeDef) => (
-          <div
-            key={shapeDef.type}
-            className={`w-14 h-14 rounded-lg border-2 cursor-grab active:cursor-grabbing transition-all duration-200 hover:scale-105 hover:shadow-md flex items-center justify-center`}
-            style={{ 
-              backgroundColor: shapeDef.color,
-              borderColor: isDarkMode ? '#374151' : '#e5e7eb'
-            }}
-            draggable={true}
-            onDragStart={(e) => handleShapeDragStart(e, shapeDef.type)}
-            title={shapeDef.name}
-          >
-            <span className="text-white text-xl font-bold select-none">
-              {shapeDef.icon}
-            </span>
-          </div>
-        ))}
-        
-        {/* Dark Mode Toggle at bottom */}
-        <div className="mt-auto pt-4">
-          <button
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className={`p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl ${
-              isDarkMode 
-                ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600' 
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          >
-            {isDarkMode ? (
-              <Sun size={20} />
-            ) : (
-              <Moon size={20} />
-            )}
-          </button>
-        </div>
-      </div>
+      {/* Shapes Palette Sidebar */}
+      <ShapePalette
+        shapeDefinitions={useMemo(() => ([
+          { type: 'circle',    name: 'Circle',    color: '#3B82F6', icon: '●' },
+          { type: 'hexagon',   name: 'Hexagon',   color: '#10B981', icon: '⬡' },
+          { type: 'rhombus',   name: 'Rhombus',   color: '#F59E0B', icon: '◆' },
+          { type: 'pentagon',  name: 'Pentagon',  color: '#EF4444', icon: '⬟' },
+          { type: 'ellipse',   name: 'Ellipse',   color: '#8B5CF6', icon: '◐' },
+          { type: 'connector', name: 'Connector', color: '#6B7280', icon: '↔' },
+        ]), [])}
+        isDarkMode={isDarkMode}
+        onShapeDragStart={handleShapeDragStart}
+        onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+      />
     </div>
   );
 };
