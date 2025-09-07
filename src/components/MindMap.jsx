@@ -2871,15 +2871,16 @@ useLayoutEffect(() => {
                 node.showAttachmentPopup || node.showNotesPopup || node.showDetailsPopup || node.showDatePopup ||
                 node.showCollaboratorPopup || node.showLayoutPopup || node.showTagsPopup);
 
+              const isShaped = !!node.shapeType && node.shapeType !== 'default';
               return (
                 <div
                   key={node.id}
                   data-node-id={node.id}
                   ref={el => { nodeRefs.current[node.id] = el; }}
                   className={`absolute shadow-lg cursor-move node node-text-wrap backdrop-blur-sm
-                    ${selectedNodes.includes(node.id) ? 'ring-2 ring-blue-500/80 ring-offset-2 ring-offset-white/50' : ''}
+                    ${!isShaped && selectedNodes.includes(node.id) ? 'ring-2 ring-blue-500/80 ring-offset-2 ring-offset-white/50' : ''}
                     ${draggingNodeId === node.id ? 'dragging' : ''}
-                    ${node.completed ? 'border-2 border-green-400/60 bg-green-50/40' : 'border border-gray-200/60'}`}
+                    ${!isShaped ? (node.completed ? 'border-2 border-green-400/60 bg-green-50/40' : 'border border-gray-200/60') : ''}`}
                   onMouseEnter={() => setHoveredNodeId(node.id)}
                   onMouseLeave={() => setHoveredNodeId(prev => (prev === node.id ? null : prev))}
                   style={{
@@ -2888,23 +2889,35 @@ useLayoutEffect(() => {
                     width: shapeStyles.width,
                     height: shapeStyles.height,
                     minHeight: shapeStyles.height === 'auto' ? 80 : shapeStyles.height,
-                    // Gradient ring + inner glow
-                    border: fxOptions.enabled && fxOptions.gradientRing && (!node.shapeType || node.shapeType === 'default') ? '1px solid transparent' : undefined,
-                    backgroundImage: (() => {
-                      const base = `linear-gradient(135deg, ${node.backgroundColor || node.color || (isDarkMode ? '#374151' : '#ffffff')} 0%, ${adjustBrightness(node.backgroundColor || node.color || (isDarkMode ? '#374151' : '#ffffff'), -3)} 100%)`;
-                      if (fxOptions.enabled && fxOptions.gradientRing && (!node.shapeType || node.shapeType === 'default')) {
+                    overflow: isShaped ? 'hidden' : undefined,
+                    // Background: shaped nodes use solid color; default nodes use subtle gradient (and optional ring)
+                    border: fxOptions.enabled && fxOptions.gradientRing && (!isShaped) ? '1px solid transparent' : undefined,
+                    backgroundColor: isShaped ? (node.backgroundColor || node.color || (isDarkMode ? '#374151' : '#ffffff')) : undefined,
+                    backgroundImage: !isShaped ? (() => {
+                      const baseColor = node.backgroundColor || node.color || (isDarkMode ? '#374151' : '#ffffff');
+                      const base = `linear-gradient(135deg, ${baseColor} 0%, ${adjustBrightness(baseColor, -3)} 100%)`;
+                      if (fxOptions.enabled && fxOptions.gradientRing) {
                         const ringStart = isDarkMode ? '#7c3aed' : '#60a5fa';
                         const ringEnd = isDarkMode ? '#22d3ee' : '#a78bfa';
                         const ring = `linear-gradient(135deg, ${ringStart}, ${ringEnd})`;
                         return `${base}, ${ring}`;
                       }
                       return base;
+                    })() : undefined,
+                    backgroundOrigin: fxOptions.enabled && fxOptions.gradientRing && (!isShaped) ? 'border-box' : undefined,
+                    backgroundClip: fxOptions.enabled && fxOptions.gradientRing && (!isShaped) ? 'padding-box, border-box' : undefined,
+                    boxShadow: (() => {
+                      const outerStrong = `0 22px 45px ${isDarkMode ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.18)'}`;
+                      const outerSoft = `0 10px 24px ${isDarkMode ? 'rgba(0,0,0,0.30)' : 'rgba(0,0,0,0.10)'}`;
+                      if (isShaped) {
+                        // Shaped nodes: no inner highlights, no blue selection ring — keep color flat
+                        return (selectedNode === node.id || hoveredNodeId === node.id) ? outerStrong : outerSoft;
+                      }
+                      // Default rectangular nodes keep subtle inner highlights and selection ring
+                      return (selectedNode === node.id || hoveredNodeId === node.id)
+                        ? `${outerStrong}, 0 0 0 1px rgba(59, 130, 246, ${selectedNode === node.id ? 0.5 : 0.25})`
+                        : `${outerSoft}${fxOptions.enabled ? ', inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -8px 20px rgba(0,0,0,0.04)' : ''}`;
                     })(),
-                    backgroundOrigin: fxOptions.enabled && fxOptions.gradientRing && (!node.shapeType || node.shapeType === 'default') ? 'border-box' : undefined,
-                    backgroundClip: fxOptions.enabled && fxOptions.gradientRing && (!node.shapeType || node.shapeType === 'default') ? 'padding-box, border-box' : undefined,
-                    boxShadow: (selectedNode === node.id || hoveredNodeId === node.id)
-                      ? `0 22px 45px ${isDarkMode ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.18)'}, 0 0 0 1px rgba(59, 130, 246, ${selectedNode === node.id ? 0.5 : 0.25})`
-                      : `0 10px 24px ${isDarkMode ? 'rgba(0,0,0,0.30)' : 'rgba(0,0,0,0.10)'}${fxOptions.enabled ? ', inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -8px 20px rgba(0,0,0,0.04)' : ''}`,
                     // If this node has any popup open, raise its stacking context; otherwise, if any popup is open on another node, push this node far below
                     zIndex: hasAnyPopup ? 3000 : (anyNodeHasPopupOpen ? 1 : (selectedNode === node.id ? 50 : (searchQuery ? (isNodeMatching ? 20 : 10) : 10))),
                     // Disable interactions on other nodes while a popup is open to avoid accidental overlap interactions
@@ -3047,21 +3060,25 @@ useLayoutEffect(() => {
                   }}
                 >
                   {/* Progress ring chip for parent nodes */}
-                  {fxOptions.enabled && fxOptions.progressRing && connections.some(c => c.from === node.id) && (
+                  {(() => {
+                    const showProgress = fxOptions.enabled && fxOptions.progressRing && connections.some(c => c.from === node.id);
+                    return showProgress ? (
                     (() => {
                       const prog = getNodeProgress(node.id);
                       const pct = Math.max(0, Math.min(100, prog?.percentage ?? 0));
                       const size = 22; const stroke = 3; const r = (size - stroke) / 2; const c = 2 * Math.PI * r; const offset = c * (1 - pct / 100);
+                      const baseFill = (!node.shapeType || node.shapeType === 'default') ? (isDarkMode ? '#111827' : '#ffffff') : 'transparent';
                       return (
                         <div style={{ position: 'absolute', top: 6, left: 6 }} title={`${pct}% complete`}>
                           <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-                            <circle cx={size/2} cy={size/2} r={r} stroke={isDarkMode ? '#374151' : '#e5e7eb'} strokeWidth={stroke} fill={isDarkMode ? '#111827' : '#ffffff'} />
+                            <circle cx={size/2} cy={size/2} r={r} stroke={isDarkMode ? '#374151' : '#e5e7eb'} strokeWidth={stroke} fill={baseFill} />
                             <circle cx={size/2} cy={size/2} r={r} stroke={node.completed ? '#10b981' : '#3b82f6'} strokeWidth={stroke} fill="transparent" strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round" />
                           </svg>
                         </div>
                       );
                     })()
-                  )}
+                    ) : null;
+                  })()}
                   {selectedNode === node.id && mode === 'cursor' && (
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-3" style={{ marginTop: '-15px' }}>
                       <div 
