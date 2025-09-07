@@ -14,6 +14,7 @@ import CollaboratorDialog from './mindmap/CollaboratorDialog';
 import MindMapCanvas from './mindmap/MindMapCanvas';
 import { COLLAB_PAGE_SIZE } from './mindmap/constants';
 import ShapePalette from './mindmap/ShapePalette';
+import ProgressRingChip from './mindmap/ProgressRingChip';
 
 const layoutOptions = [
   { id: 'tree', name: 'Tree Layout', icon: 'diagram-tree' },
@@ -2849,22 +2850,12 @@ useLayoutEffect(() => {
                   {/* Progress ring chip for parent nodes */}
                   {(() => {
                     const showProgress = fxOptions.enabled && fxOptions.progressRing && !isShaped && connections.some(c => c.from === node.id);
-                    return showProgress ? (
-                    (() => {
-                      const prog = getNodeProgress(node.id);
-                      const pct = Math.max(0, Math.min(100, prog?.percentage ?? 0));
-                      const size = 22; const stroke = 3; const r = (size - stroke) / 2; const c = 2 * Math.PI * r; const offset = c * (1 - pct / 100);
-                      const baseFill = (!node.shapeType || node.shapeType === 'default') ? (isDarkMode ? '#111827' : '#ffffff') : 'transparent';
-                      return (
-                        <div style={{ position: 'absolute', top: 6, left: 6 }} title={`${pct}% complete`}>
-                          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-                            <circle cx={size/2} cy={size/2} r={r} stroke={isDarkMode ? '#374151' : '#e5e7eb'} strokeWidth={stroke} fill={baseFill} />
-                            <circle cx={size/2} cy={size/2} r={r} stroke={node.completed ? '#10b981' : '#3b82f6'} strokeWidth={stroke} fill="transparent" strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round" />
-                          </svg>
-                        </div>
-                      );
-                    })()
-                    ) : null;
+                    if (!showProgress) return null;
+                    const prog = getNodeProgress(node.id);
+                    const pct = Math.max(0, Math.min(100, prog?.percentage ?? 0));
+                    return (
+                      <ProgressRingChip pct={pct} isDarkMode={isDarkMode} shapeType={node.shapeType} completed={!!node.completed} />
+                    );
                   })()}
                   {selectedNode === node.id && mode === 'cursor' && (
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-3" style={{ marginTop: '-15px' }}>
