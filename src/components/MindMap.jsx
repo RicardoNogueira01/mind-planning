@@ -2815,35 +2815,35 @@ useLayoutEffect(() => {
                   case 'circle':
                     return {
                       borderRadius: '50%',
-                      width: 120,
-                      height: 120,
+                      width: 200,
+                      height: 200,
                       clipPath: 'none'
                     };
                   case 'hexagon':
                     return {
                       borderRadius: '8px',
                       clipPath: 'polygon(50% 0%, 93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%)',
-                      width: 120,
-                      height: 120
+                      width: 200,
+                      height: 200
                     };
                   case 'rhombus':
                     return {
                       borderRadius: '4px',
                       clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-                      width: 120,
-                      height: 120
+                      width: 200,
+                      height: 200
                     };
                   case 'pentagon':
                     return {
                       borderRadius: '8px',
                       clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
-                      width: 120,
-                      height: 120
+                      width: 200,
+                      height: 200
                     };
                   case 'ellipse':
                     return {
                       borderRadius: '50%',
-                      width: 160,
+                      width: 200,
                       height: 100,
                       clipPath: 'none'
                     };
@@ -3061,7 +3061,7 @@ useLayoutEffect(() => {
                 >
                   {/* Progress ring chip for parent nodes */}
                   {(() => {
-                    const showProgress = fxOptions.enabled && fxOptions.progressRing && connections.some(c => c.from === node.id);
+                    const showProgress = fxOptions.enabled && fxOptions.progressRing && !isShaped && connections.some(c => c.from === node.id);
                     return showProgress ? (
                     (() => {
                       const prog = getNodeProgress(node.id);
