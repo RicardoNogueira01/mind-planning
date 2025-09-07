@@ -13,6 +13,7 @@ import MindMapSearchBar from './mindmap/MindMapSearchBar';
 import CollaboratorDialog from './mindmap/CollaboratorDialog';
 import MindMapCanvas from './mindmap/MindMapCanvas';
 import { COLLAB_PAGE_SIZE } from './mindmap/constants';
+import ShapePalette from './mindmap/ShapePalette';
 
 const layoutOptions = [
   { id: 'tree', name: 'Tree Layout', icon: 'diagram-tree' },
@@ -390,42 +391,6 @@ const MindMap = ({ mapId, onBack }) => {
               cx={x + width/2}
               cy={y + height/2}
               r={width/2}
-              fill={color}
-              stroke="#fff"
-              strokeWidth="2"
-              className="cursor-move"
-            />
-          );
-        case 'hexagon':
-          const hexPoints = [
-            [x + width/2, y],
-            [x + width*0.87, y + height*0.25],
-            [x + width*0.87, y + height*0.75],
-            [x + width/2, y + height],
-            [x + width*0.13, y + height*0.75],
-            [x + width*0.13, y + height*0.25]
-          ].map(point => point.join(',')).join(' ');
-          return (
-            <polygon
-              key={id}
-              points={hexPoints}
-              fill={color}
-              stroke="#fff"
-              strokeWidth="2"
-              className="cursor-move"
-            />
-          );
-        case 'rhombus':
-          const rhombusPoints = [
-            [x + width/2, y],
-            [x + width, y + height/2],
-            [x + width/2, y + height],
-            [x, y + height/2]
-          ].map(point => point.join(',')).join(' ');
-          return (
-            <polygon
-              key={id}
-              points={rhombusPoints}
               fill={color}
               stroke="#fff"
               strokeWidth="2"
