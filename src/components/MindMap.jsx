@@ -139,13 +139,113 @@ const MindMap = ({ mapId, onBack }) => {
 
   // Shape definitions with different colors
   const shapeDefinitions = [
-    { type: 'circle', name: 'Circle', color: '#3B82F6', icon: '○' },
-    { type: 'hexagon', name: 'Hexagon', color: '#10B981', icon: '⬢' },
+    { type: 'circle', name: 'Start', color: '#3B82F6', icon: '○' },
+    { type: 'hexagon', name: 'Action', color: '#10B981', icon: '⬢' },
     { type: 'rhombus', name: 'Rhombus', color: '#F59E0B', icon: '♦' },
     { type: 'pentagon', name: 'Pentagon', color: '#EF4444', icon: '⬟' },
     { type: 'ellipse', name: 'Ellipse', color: '#8B5CF6', icon: '⬮' },
     { type: 'connector', name: 'Connector', color: '#6B7280', icon: '→' }
   ];
+
+  // --- Shape Builders: create nodes and edges for semantic shapes ---
+  const genId = (prefix = 'node') => `${prefix}-${Date.now()}-${Math.floor(Math.random()*1e5)}`;
+
+  // Helper to build a basic standard node (non-shaped)
+  const buildStandardNode = (x, y, text = '') => ({
+    id: genId('node'),
+    text,
+    x,
+    y,
+    color: isDarkMode ? '#374151' : '#ffffff',
+    fontColor: isDarkMode ? '#f3f4f6' : '#2d3748'
+  });
+
+  // Helper to build a shaped node (uses shapeType styles)
+  const buildShapedNode = (x, y, shapeType, baseColor, label = '') => ({
+    id: genId('node'),
+    text: label,
+    x,
+    y,
+    type: 'shape',
+    shapeType,
+    backgroundColor: baseColor,
+    fontColor: '#ffffff'
+  });
+
+  // Returns { nodes: [], connections: [] }
+  const shapeBuilders = {
+    // Circle -> Start node (single)
+    circle: (x, y) => {
+      const def = shapeDefinitions.find(s => s.type === 'circle');
+      const start = buildShapedNode(x, y, 'circle', def?.color || '#3B82F6', 'Start');
+      const first = buildStandardNode(x + 240, y, 'First step');
+      return {
+        nodes: [start, first],
+        connections: [{ id: genId('conn'), from: start.id, to: first.id, label: 'Start' }]
+      };
+    },
+    // Hexagon -> Action node (single)
+    hexagon: (x, y) => {
+      const def = shapeDefinitions.find(s => s.type === 'hexagon');
+      const action = buildShapedNode(x, y, 'hexagon', def?.color || '#10B981', 'Action');
+      const success = buildStandardNode(x + 260, y - 60, 'Success');
+      const failure = buildStandardNode(x + 260, y + 60, 'Failure');
+      return {
+        nodes: [action, success, failure],
+        connections: [
+          { id: genId('conn'), from: action.id, to: success.id, label: 'Success' },
+          { id: genId('conn'), from: action.id, to: failure.id, label: 'Failure' }
+        ]
+      };
+    },
+    // Rhombus -> If with True/False children
+    rhombus: (x, y) => {
+      const def = shapeDefinitions.find(s => s.type === 'rhombus');
+      const ifNode = buildShapedNode(x, y, 'rhombus', def?.color || '#F59E0B', 'If condition');
+      // children to the right (lobster claw: wider X and larger Y offsets)
+      const trueNode = buildStandardNode(x + 420, y - 120, 'True');
+      const falseNode = buildStandardNode(x + 420, y + 120, 'False');
+      const conn1 = { id: genId('conn'), from: ifNode.id, to: trueNode.id, label: 'True' };
+      const conn2 = { id: genId('conn'), from: ifNode.id, to: falseNode.id, label: 'False' };
+      return { nodes: [ifNode, trueNode, falseNode], connections: [conn1, conn2] };
+    },
+    // Pentagon -> Switch with Case1, Case2, Otherwise
+  pentagon: (x, y) => {
+      const def = shapeDefinitions.find(s => s.type === 'pentagon');
+      const sw = buildShapedNode(x, y, 'pentagon', def?.color || '#EF4444', 'Switch');
+      const case1 = buildStandardNode(x + 280, y - 90, 'Case 1');
+      const case2 = buildStandardNode(x + 280, y + 0, 'Case 2');
+      const otherwise = buildStandardNode(x + 280, y + 90, 'Otherwise');
+      return {
+        nodes: [sw, case1, case2, otherwise],
+        connections: [
+      { id: genId('conn'), from: sw.id, to: case1.id, label: 'Case 1' },
+      { id: genId('conn'), from: sw.id, to: case2.id, label: 'Case 2' },
+      { id: genId('conn'), from: sw.id, to: otherwise.id, label: 'Otherwise' }
+        ]
+      };
+    },
+    // Ellipse -> Loop with Body/Exit
+  ellipse: (x, y) => {
+      const def = shapeDefinitions.find(s => s.type === 'ellipse');
+      const loop = buildShapedNode(x, y, 'ellipse', def?.color || '#8B5CF6', 'Loop');
+      const body = buildStandardNode(x + 260, y - 50, 'Body');
+      const exit = buildStandardNode(x + 260, y + 50, 'Exit');
+      return {
+        nodes: [loop, body, exit],
+        connections: [
+      { id: genId('conn'), from: loop.id, to: body.id, label: 'True' },
+      { id: genId('conn'), from: loop.id, to: exit.id, label: 'False' }
+        ]
+      };
+    },
+    // Connector -> just a shaped connector block (single)
+    connector: (x, y) => {
+      const def = shapeDefinitions.find(s => s.type === 'connector');
+      const connNode = buildShapedNode(x, y, 'connector', def?.color || '#6B7280', 'Connector');
+      return { nodes: [connNode], connections: [] };
+    }
+  };
   
   // Canvas pan and zoom state
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -294,40 +394,25 @@ const MindMap = ({ mapId, onBack }) => {
       finalY: y 
     });
     
-    const shapeDefinition = shapeDefinitions.find(s => s.type === shapeType);
-    if (!shapeDefinition) {
-      console.log('Shape definition not found for type:', shapeType);
+    // Use a builder for this shape if available
+    const builder = shapeBuilders[shapeType];
+    if (!builder) {
+      console.log('No builder found for shape type:', shapeType);
+      setIsDraggingShape(false);
+      setDraggedShapeType(null);
       return;
     }
-    
-    // Create a new node with the shape properties
-    const newNode = {
-      id: `node-${Date.now()}`,
-      text: `${shapeDefinition.name} Node`, // More descriptive initial text
-      x: x,
-      y: y,
-      type: 'shape',
-      shapeType: shapeType,
-      backgroundColor: shapeDefinition.color,
-      fontColor: '#ffffff', // White text works well on colored shape backgrounds
-      completed: false,
-      children: [],
-      level: 0,
-      width: 120,
-      height: 80,
-      notes: '', // Add notes field
-      tags: [] // Add tags field
-    };
-    
-    console.log('Creating new shape node:', newNode);
-    
-    // Add the new node to the nodes array
-    setNodes(prevNodes => {
-      const newNodes = [...prevNodes, newNode];
-      console.log('Updated nodes array with shape:', newNodes);
-      return newNodes;
-    });
-    
+
+    const { nodes: builtNodes, connections: builtConns } = builder(x, y);
+
+    // Append to existing state atomically and save history
+    const nextNodes = [...nodes, ...builtNodes];
+    const nextConns = [...connections, ...builtConns];
+    wrappedSetNodesAndConnections(nextNodes, nextConns);
+
+    // Select the primary built node (first) for quick edits
+    if (builtNodes && builtNodes.length > 0) setSelectedNode(builtNodes[0].id);
+
     setIsDraggingShape(false);
     setDraggedShapeType(null);
   };
@@ -1235,6 +1320,30 @@ const relatedNodeIds = useMemo(() => {
     // Save history after both setters (best-effort, matches existing wrappers behavior)
     saveToHistory();
   };
+
+  // Add a labeled child edge for Switch-like nodes (used when node.shapeType === 'pentagon')
+  const addChildNodeWithLabel = (parentId, labelText) => {
+    const parent = nodes.find(n => n.id === parentId);
+    if (!parent) return;
+
+    const siblings = connections.filter(c => c.from === parentId).length;
+    const baseX = parent.x + 320;
+    const baseY = parent.y + (siblings * 90) - 90; // stack cases vertically around parent
+
+    const newId = `node-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+    const newConnId = `conn-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+    const child = {
+      id: newId,
+      text: labelText || `Case ${siblings + 1}`,
+      x: baseX,
+      y: baseY,
+      color: isDarkMode ? '#374151' : '#ffffff',
+      fontColor: isDarkMode ? '#f3f4f6' : '#2d3748'
+    };
+
+    wrappedSetNodesAndConnections([...nodes, child], [...connections, { id: newConnId, from: parentId, to: newId, label: labelText || `Case ${siblings + 1}` }]);
+    setSelectedNode(newId);
+  };
   
   // Update node text
   const updateNodeText = (nodeId, text) => {
@@ -1666,11 +1775,13 @@ const handleNodeClick = (nodeId, e) => {
           const distance = Math.sqrt(dx * dx + dy * dy);
           
           // Control points for smooth curve - adjusted for better curves
-          const controlDistance = Math.min(distance * 0.4, 100);
+          const controlDistance = Math.min(distance * 0.4, 120);
+          // Add subtle vertical bias based on relative Y for a nicer flare
+          const verticalBias = Math.sign(dy) * Math.min(Math.abs(dy) * 0.15, 60);
           const controlPoint1X = startPoint.x + dx * 0.25;
-          const controlPoint1Y = startPoint.y + dy * 0.1;
+          const controlPoint1Y = startPoint.y + dy * 0.2 - verticalBias * 0.3;
           const controlPoint2X = endPoint.x - dx * 0.25;
-          const controlPoint2Y = endPoint.y - dy * 0.1;
+          const controlPoint2Y = endPoint.y - dy * 0.2 + verticalBias * 0.3;
 
           const pathData = `M ${startPoint.x} ${startPoint.y} C ${controlPoint1X} ${controlPoint1Y}, ${controlPoint2X} ${controlPoint2Y}, ${endPoint.x} ${endPoint.y}`;
           
@@ -1687,6 +1798,18 @@ const handleNodeClick = (nodeId, e) => {
                   transition: 'all 0.15s ease-out'
                 }}
               />
+              {conn.label && (
+                <text
+                  x={(startPoint.x + endPoint.x) / 2}
+                  y={(startPoint.y + endPoint.y) / 2 - 6}
+                  textAnchor="middle"
+                  fontSize={12}
+                  fill={isDarkMode ? '#e5e7eb' : '#334155'}
+                  opacity={(fxOptions.enabled && fxOptions.focusMode && selectedNode) ? ((relatedNodeIds.has(conn.from) || relatedNodeIds.has(conn.to)) ? 0.9 : 0.35) : 0.9}
+                >
+                  {conn.label}
+                </text>
+              )}
             </g>
           );
         })}
@@ -3113,6 +3236,50 @@ useLayoutEffect(() => {
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
                                 <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                              </svg>
+                            </button>
+                          )}
+
+                          {/* Action helper: add Success/Failure branches */}
+                          {node.shapeType === 'hexagon' && (
+                            <>
+                              <button
+                                className="node-toolbar-btn p-2 rounded-xl hover:bg-emerald-100 text-emerald-700 transition-colors duration-200 border border-emerald-200 hover:border-emerald-300"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  addChildNodeWithLabel(node.id, 'Success');
+                                }}
+                                title="Add Success branch"
+                              >
+                                ✓
+                              </button>
+                              <button
+                                className="node-toolbar-btn p-2 rounded-xl hover:bg-rose-100 text-rose-700 transition-colors duration-200 border border-rose-200 hover:border-rose-300"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  addChildNodeWithLabel(node.id, 'Failure');
+                                }}
+                                title="Add Failure branch"
+                              >
+                                ✕
+                              </button>
+                            </>
+                          )}
+
+                          {/* Switch helper: Add Case button when pentagon */}
+                          {node.shapeType === 'pentagon' && (
+                            <button
+                              className="node-toolbar-btn p-2 rounded-xl hover:bg-indigo-100 text-indigo-700 transition-colors duration-200 border border-indigo-200 hover:border-indigo-300"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const nextIndex = connections.filter(c => c.from === node.id).length + 1;
+                                addChildNodeWithLabel(node.id, `Case ${nextIndex}`);
+                              }}
+                              title="Add Case"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 5v14" />
+                                <path d="M5 12h14" />
                               </svg>
                             </button>
                           )}
