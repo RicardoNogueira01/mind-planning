@@ -108,13 +108,13 @@ export default function MindMap({ mapId, onBack }) {
   
   const NODE_WIDTH = 200;
   const NODE_HEIGHT = 56;
-  const MARGIN = 20;
+  const MARGIN = 25; // 25px spacing between nodes
   
   /**
    * Check if position is valid (not occupied by another node)
    */
   const isPositionAvailable = (x, y, excludeId = null) => {
-    const COLLISION_DISTANCE = 100; // Must be this far from other nodes
+    const COLLISION_DISTANCE = 80; // Reduced for tighter spacing
     return !nodes.some(n => {
       if (excludeId && n.id === excludeId) return false;
       const dx = n.x - x;
@@ -171,9 +171,10 @@ export default function MindMap({ mapId, onBack }) {
 
   /**
    * Position children hierarchically:
-   * - 1st child: to the RIGHT of parent (20px margin)
-   * - 2nd+ children: BELOW first child (vertically stacked)
-   * - If child of child: same pattern repeats (to the right)
+   * - ALL children go to the RIGHT of previous node (horizontal chain)
+   * - First child: to the RIGHT of parent
+   * - Second child: to the RIGHT of first child
+   * - Third child: to the RIGHT of second child (etc.)
    * - Collision avoidance: spider web pattern if no space
    */
   const findStackedChildPosition = (parentId, preferredX, preferredY) => {
@@ -185,7 +186,7 @@ export default function MindMap({ mapId, onBack }) {
     );
 
     if (childrenOfParent.length === 0) {
-      // FIRST CHILD: to the RIGHT of parent with 20px margin
+      // FIRST CHILD: to the RIGHT of parent
       const firstChildX = parent.x + NODE_WIDTH + MARGIN;
       const firstChildY = parent.y;
       
@@ -198,12 +199,11 @@ export default function MindMap({ mapId, onBack }) {
       }
     }
 
-    // SECOND+ CHILDREN: BELOW first child (vertical stack)
-    const firstChild = childrenOfParent[0];
+    // NEXT CHILDREN: to the RIGHT of the last child (horizontal chain)
     const lastChild = childrenOfParent.at(-1);
     
-    const nextChildX = firstChild.x;
-    const nextChildY = lastChild.y + NODE_HEIGHT + MARGIN;
+    const nextChildX = lastChild.x + NODE_WIDTH + MARGIN;
+    const nextChildY = lastChild.y;
     
     // Check if position is available, otherwise use spider web
     if (isPositionAvailable(nextChildX, nextChildY)) {
