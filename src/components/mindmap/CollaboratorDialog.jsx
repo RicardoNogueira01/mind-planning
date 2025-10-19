@@ -8,7 +8,9 @@ const CollaboratorDialog = ({
   selectedNodes,
   setSelectedNodes,
   collaborators,
-  assignCollaborator
+  assignCollaborator,
+  collaboratorNodeId,
+  setCollaboratorNodeId
 }) => {
   const [page, setPage] = useState(1);
   const pageSize = COLLAB_PAGE_SIZE;
@@ -21,6 +23,7 @@ const CollaboratorDialog = ({
 
   const handleCancel = () => {
     setSelectedNodes([]);
+    setCollaboratorNodeId(null);
     setShowCollaboratorDialog(false);
   };
 
@@ -29,7 +32,7 @@ const CollaboratorDialog = ({
   <div className="bg-white rounded-xl shadow-xl border border-gray-200 p-5 w-72">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Assign Collaborator</h3>
         <p className="text-sm text-gray-500 mb-4">
-          {selectedNodes.length} {selectedNodes.length === 1 ? 'node' : 'nodes'} selected
+          {collaboratorNodeId ? 'Assigning to node' : `${selectedNodes.length} ${selectedNodes.length === 1 ? 'node' : 'nodes'} selected`}
         </p>
         
   <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto">
@@ -37,7 +40,15 @@ const CollaboratorDialog = ({
             <button
               key={collab.id}
               className="flex flex-col items-center justify-center p-3 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-colors"
-              onClick={() => assignCollaborator(collab)}
+              onClick={() => {
+                if (collaboratorNodeId) {
+                  assignCollaborator(collaboratorNodeId, collab.id);
+                  setCollaboratorNodeId(null);
+                } else {
+                  assignCollaborator(collab);
+                }
+                setShowCollaboratorDialog(false);
+              }}
             >
               <div 
                 className="w-10 h-10 rounded-full flex items-center justify-center text-white mb-2"
@@ -95,5 +106,7 @@ CollaboratorDialog.propTypes = {
     name: PropTypes.string.isRequired,
     color: PropTypes.string
   })).isRequired,
-  assignCollaborator: PropTypes.func.isRequired
+  assignCollaborator: PropTypes.func.isRequired,
+  collaboratorNodeId: PropTypes.string,
+  setCollaboratorNodeId: PropTypes.func
 };

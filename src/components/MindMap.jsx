@@ -50,6 +50,7 @@ export default function MindMap({ mapId, onBack }) {
   const [draggingNodeId, setDraggingNodeId] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [showCollaboratorDialog, setShowCollaboratorDialog] = useState(false);
+  const [collaboratorNodeId, setCollaboratorNodeId] = useState(null); // Track which node the collaborator dialog is for
   const [collaborators] = useState([
     { id: 'c1', name: 'Alice' },
     { id: 'c2', name: 'Bob' },
@@ -561,7 +562,7 @@ export default function MindMap({ mapId, onBack }) {
 
                       <button
                         className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
-                        onClick={(e) => { e.stopPropagation(); setShowCollaboratorDialog(true); }}
+                        onClick={(e) => { e.stopPropagation(); setCollaboratorNodeId(node.id); setShowCollaboratorDialog(true); }}
                         title="Assign collaborator"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -635,6 +636,8 @@ export default function MindMap({ mapId, onBack }) {
         setSelectedNodes={setSelectedNodes}
         collaborators={collaborators}
         assignCollaborator={assignCollaborator}
+        collaboratorNodeId={collaboratorNodeId}
+        setCollaboratorNodeId={setCollaboratorNodeId}
       />
     </div>
   );
