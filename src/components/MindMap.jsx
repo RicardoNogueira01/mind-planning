@@ -23,7 +23,14 @@ import ProgressRingChip from './mindmap/ProgressRingChip';
 export default function MindMap({ mapId, onBack }) {
   // Minimal, compiling scaffold to restore the app while we refactor
   const [nodes, setNodes] = useState([
-    { id: 'root', text: 'Central Idea', x: Math.round(window.innerWidth / 2), y: Math.round(window.innerHeight / 2) }
+    { 
+      id: 'root', 
+      text: 'Central Idea', 
+      x: Math.round(window.innerWidth / 2), 
+      y: Math.round(window.innerHeight / 2),
+      bgColor: '#ffffff',
+      fontColor: '#2d3748'
+    }
   ]);
   const [connections, setConnections] = useState([]);
   const [zoom] = useState(1);
@@ -224,7 +231,7 @@ export default function MindMap({ mapId, onBack }) {
       text: 'Idea', 
       x, 
       y,
-      color: isDarkMode ? '#374151' : '#ffffff',
+      bgColor: isDarkMode ? '#374151' : '#ffffff',
       fontColor: isDarkMode ? '#f3f4f6' : '#2d3748'
     };
     setNodes([...nodes, newNode]);
@@ -297,7 +304,7 @@ export default function MindMap({ mapId, onBack }) {
       text: 'New Node', 
       x, 
       y,
-      color: isDarkMode ? '#374151' : '#ffffff',
+      bgColor: isDarkMode ? '#374151' : '#ffffff',
       fontColor: isDarkMode ? '#f3f4f6' : '#2d3748'
     };
     setNodes(nodes.concat([child]));
