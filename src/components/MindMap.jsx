@@ -20,6 +20,11 @@ import CollaboratorDialog from './mindmap/CollaboratorDialog';
 import { shapeBuilders } from './mindmap/builders';
 import ProgressRingChip from './mindmap/ProgressRingChip';
 
+// Hooks
+import { useNodePositioning } from '../hooks/useNodePositioning';
+import { useNodeOperations } from '../hooks/useNodeOperations';
+import { useDragging } from '../hooks/useDragging';
+
 export default function MindMap({ mapId, onBack }) {
   // Minimal, compiling scaffold to restore the app while we refactor
   const [nodes, setNodes] = useState([
@@ -54,8 +59,6 @@ export default function MindMap({ mapId, onBack }) {
   const notesBtnRefs = useRef({});
   const tagBtnRefs = useRef({});
   const layoutBtnRefs = useRef({});
-  const [draggingNodeId, setDraggingNodeId] = useState(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [showCollaboratorDialog, setShowCollaboratorDialog] = useState(false);
   const [collaboratorNodeId, setCollaboratorNodeId] = useState(null); // Track which node the collaborator dialog is for
   const [collaborators] = useState([
@@ -68,183 +71,39 @@ export default function MindMap({ mapId, onBack }) {
   const fontBtnRefs = useRef({}); // Font color button refs
   const emojiBtnRefs = useRef({}); // Emoji button refs
 
-  // Simple pan state for the canvas
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [isPanning, setIsPanning] = useState(false);
-  const panRef = useRef({ startX: 0, startY: 0 });
+  // Canvas ref
   const canvasRef = useRef(null);
 
-  const startPanning = (e) => {
-    // Ignore mouse down from toolbar buttons or popups
-    if (e.target.closest('.node-toolbar-btn') || e.target.closest('.node-popup')) return;
-    // Node drag takes precedence when clicking on a node wrapper
-    const target = e.target.closest('[data-node-id]');
-    if (target) {
-      const id = target.getAttribute('data-node-id');
-      const node = nodes.find(n => n.id === id);
-      if (node) {
-        const rect = canvasRef.current.getBoundingClientRect();
-        setDraggingNodeId(id);
-        setDragOffset({ x: e.clientX - rect.left - (node.x + pan.x), y: e.clientY - rect.top - (node.y + pan.y) });
-        return;
-      }
-    }
-    if (mode !== 'pan') return;
-    if (e.target !== canvasRef.current) return;
-    setIsPanning(true);
-    panRef.current = { startX: e.clientX - pan.x, startY: e.clientY - pan.y };
-  };
-  const handlePanning = (e) => {
-    // Ignore while interacting with popups
-    if (e.target.closest('.node-popup')) return;
-    if (draggingNodeId) {
-      const rect = canvasRef.current.getBoundingClientRect();
-      const newX = e.clientX - rect.left - pan.x - dragOffset.x;
-      const newY = e.clientY - rect.top - pan.y - dragOffset.y;
-      setNodes(prev => prev.map(n => n.id === draggingNodeId ? { ...n, x: newX, y: newY } : n));
-      return;
-    }
-    if (!isPanning) return;
-    setPan({ x: e.clientX - panRef.current.startX, y: e.clientY - panRef.current.startY });
-  };
-  const stopPanning = () => { setIsPanning(false); setDraggingNodeId(null); };
+  // ============================================
+  // HOOKS: Extract business logic
+  // ============================================
+  const positioning = useNodePositioning(nodes, connections);
+  
+  const nodeOps = useNodeOperations(
+    nodes,
+    connections,
+    setNodes,
+    setConnections,
+    isDarkMode,
+    positioning.findStackedPosition,
+    positioning.findStackedChildPosition
+  );
+
+  const dragging = useDragging(nodes, setNodes, canvasRef, mode);
 
   // ============================================
-  // HIERARCHICAL NODE POSITIONING WITH SPIDER WEB
+  // UI INTERACTION: Reference dragging state
   // ============================================
-  
-  const NODE_WIDTH = 200;
-  const NODE_HEIGHT = 56;
-  const MARGIN = 25; // 25px spacing between nodes
-  
-  /**
-   * Check if position is valid (not occupied by another node)
-   */
-  const isPositionAvailable = (x, y, excludeId = null) => {
-    const COLLISION_DISTANCE = 80; // Reduced for tighter spacing
-    return !nodes.some(n => {
-      if (excludeId && n.id === excludeId) return false;
-      const dx = n.x - x;
-      const dy = n.y - y;
-      const distance = Math.hypot(dx, dy);
-      return distance < COLLISION_DISTANCE;
-    });
-  };
+  const { draggingNodeId, pan, setPan } = dragging;
 
-  /**
-   * Find available position around parent in spider web pattern
-   * Tries: right, down-right, down, down-left, left, up-left, up, up-right
-   */
-  const findAvailablePosition = (centerX, centerY, radius = 300) => {
-    const angles = [0, 45, 90, 135, 180, 225, 270, 315]; // 8 directions
-    const radii = [radius, radius * 1.5, radius * 2, radius * 2.5];
-    
-    for (const r of radii) {
-      for (const angle of angles) {
-        const rad = (angle * Math.PI) / 180;
-        const x = centerX + Math.cos(rad) * r;
-        const y = centerY + Math.sin(rad) * r;
-        
-        if (isPositionAvailable(x, y)) {
-          return { x, y };
-        }
-      }
-    }
-    
-    // Fallback: return a position anyway
-    return { x: centerX + radius, y: centerY };
-  };
+  // ============================================
+  // POSITIONING HANDLED BY HOOKS
+  // (see useNodePositioning and useNodeOperations)
+  // ============================================
 
-  /**
-   * Stack new nodes below existing ones with 20px margin
-   */
-  const findStackedPosition = (baseX = null, baseY = null) => {
-    if (nodes.length === 0) {
-      return { 
-        x: baseX ?? Math.round(window.innerWidth / 2), 
-        y: baseY ?? Math.round(window.innerHeight / 2) 
-      };
-    }
-
-    // Find the lowest Y position among all nodes
-    let lowestY = Math.max(...nodes.map(n => n.y));
-    
-    // Stack the new node below the lowest one
-    return {
-      x: baseX ?? Math.round(window.innerWidth / 2),
-      y: lowestY + NODE_HEIGHT + MARGIN
-    };
-  };
-
-  /**
-   * Position children hierarchically:
-   * - ALL children go to the RIGHT of previous node (horizontal chain)
-   * - First child: to the RIGHT of parent
-   * - Second child: to the RIGHT of first child
-   * - Third child: to the RIGHT of second child (etc.)
-   * - Collision avoidance: spider web pattern if no space
-   */
-  const findStackedChildPosition = (parentId, preferredX, preferredY) => {
-    const parent = nodes.find(n => n.id === parentId);
-    if (!parent) return { x: preferredX, y: preferredY };
-
-    const childrenOfParent = nodes.filter(n => 
-      connections.some(c => c.from === parentId && c.to === n.id)
-    );
-
-    if (childrenOfParent.length === 0) {
-      // FIRST CHILD: to the RIGHT of parent
-      const firstChildX = parent.x + NODE_WIDTH + MARGIN;
-      const firstChildY = parent.y;
-      
-      // Check if position is available, otherwise use spider web
-      if (isPositionAvailable(firstChildX, firstChildY)) {
-        return { x: firstChildX, y: firstChildY };
-      } else {
-        // Use spider web pattern to find available space
-        return findAvailablePosition(parent.x, parent.y);
-      }
-    }
-
-    // NEXT CHILDREN: to the RIGHT of the last child (horizontal chain)
-    const lastChild = childrenOfParent.at(-1);
-    
-    const nextChildX = lastChild.x + NODE_WIDTH + MARGIN;
-    const nextChildY = lastChild.y;
-    
-    // Check if position is available, otherwise use spider web
-    if (isPositionAvailable(nextChildX, nextChildY)) {
-      return { x: nextChildX, y: nextChildY };
-    } else {
-      // Use spider web pattern to find available space around parent
-      return findAvailablePosition(parent.x, parent.y);
-    }
-  };
-
-  // Toolbar-required handlers with simple stacking
-  const addStandaloneNode = () => {
-    const { x, y } = findStackedPosition();
-    
-    const id = `node-${Date.now()}`;
-    const newNode = { 
-      id, 
-      text: 'Idea', 
-      x, 
-      y,
-      bgColor: isDarkMode ? '#374151' : '#ffffff',
-      fontColor: isDarkMode ? '#f3f4f6' : '#2d3748'
-    };
-    setNodes([...nodes, newNode]);
-  };
-
-  const deleteNodes = (ids) => {
-    if (!ids?.length) return;
-    const idSet = new Set(ids);
-    setNodes(nodes.filter(n => !idSet.has(n.id)));
-    setConnections(connections.filter(c => !idSet.has(c.from) && !idSet.has(c.to)));
-    setSelectedNodes([]);
-  };
-
+  // ============================================
+  // NODE OPERATIONS (via hooks)
+  // ============================================
   const undo = () => {};
   const redo = () => {};
 
@@ -288,47 +147,28 @@ export default function MindMap({ mapId, onBack }) {
     return map;
   }, [nodes]);
 
-  // Node toolbar actions
-  const onToggleComplete = (id) => setNodes(nodes.map(n => n.id === id ? { ...n, completed: !n.completed } : n));
-  const updateNodeText = (id, text) => setNodes(nodes.map(n => n.id === id ? { ...n, text } : n));
-  const onAddChild = (parentId) => {
-    const parent = nodes.find(n => n.id === parentId) || nodes[0];
-    if (!parent) return;
-
-    // Use simple stacking logic to find a valid position for the child node
-    const { x, y } = findStackedChildPosition(parentId, parent.x + 210, parent.y);
-
-    const id = `node-${Date.now()}`;
-    const child = { 
-      id, 
-      text: 'New Node', 
-      x, 
-      y,
-      bgColor: isDarkMode ? '#374151' : '#ffffff',
-      fontColor: isDarkMode ? '#f3f4f6' : '#2d3748'
-    };
-    setNodes(nodes.concat([child]));
-    setConnections(connections.concat([{ id: `conn-${Date.now()}`, from: parentId, to: id }]));
-  };
-  const onRequestDelete = (node) => deleteNodes([node.id]);
+  // ============================================
+  // NODE TOOLBAR ACTIONS (via hooks)
+  // ============================================
+  const onToggleComplete = nodeOps.toggleNodeComplete;
+  const updateNodeText = nodeOps.updateNodeText;
+  const onAddChild = nodeOps.addChildNode;
+  const onRequestDelete = (node) => nodeOps.deleteNodes([node.id]);
+  const addStandaloneNode = nodeOps.addStandaloneNode;
   const startConnection = (id) => setConnectionFrom(id);
   const cancelConnection = () => setConnectionFrom(null);
 
-  // Small helpers to update node data without deep nesting
-  const updateNode = (id, patchOrFn) => {
-    setNodes(prev => prev.map(n => {
-      if (n.id !== id) return n;
-      if (typeof patchOrFn === 'function') return patchOrFn(n);
-      return { ...n, ...patchOrFn };
-    }));
-  };
+  // ============================================
+  // NODE DATA UPDATES (via hooks)
+  // ============================================
+  const updateNode = nodeOps.updateNode;
   const setNodeField = (id, key, value) => updateNode(id, { [key]: value });
   const addNodeTag = (id, tag) => updateNode(id, n => ({ ...n, tags: [ ...(n.tags || []), tag ] }));
 
-  const deleteNode = (id) => deleteNodes([id]);
+  const deleteNode = (id) => nodeOps.deleteNodes([id]);
   const deleteNodeCascade = (id) => {
     const desc = new Set(getDescendantNodeIds(connections, id));
-    deleteNodes([id, ...Array.from(desc)]);
+    nodeOps.deleteNodes([id, ...Array.from(desc)]);
   };
 
   // Popup state helpers
@@ -439,10 +279,10 @@ export default function MindMap({ mapId, onBack }) {
       <div
         className="flex-1 relative overflow-hidden"
         ref={canvasRef}
-        onMouseDown={startPanning}
-        onMouseMove={handlePanning}
-        onMouseUp={stopPanning}
-        onMouseLeave={stopPanning}
+        onMouseDown={dragging.startPanning}
+        onMouseMove={dragging.handlePanning}
+        onMouseUp={dragging.stopPanning}
+        onMouseLeave={dragging.stopPanning}
         role="application"
         tabIndex={0}
         aria-label="Mind map canvas"
@@ -457,7 +297,7 @@ export default function MindMap({ mapId, onBack }) {
             setSelectionType={setSelectionType}
             selectedNodes={selectedNodes}
             addStandaloneNode={addStandaloneNode}
-            deleteNodes={deleteNodes}
+            deleteNodes={nodeOps.deleteNodes}
             historyIndex={historyIndex}
             history={history}
             undo={undo}
@@ -903,7 +743,7 @@ export default function MindMap({ mapId, onBack }) {
                   {isNodeToolbarExpanded(node.id) && node.id !== 'root' && (
                     <button
                       className="node-toolbar-btn p-2 rounded-xl hover:bg-red-100 text-red-600 transition-colors duration-200 border border-red-200 hover:border-red-300"
-                      onClick={(e) => { e.stopPropagation(); deleteNodes([node.id]); }}
+                      onClick={(e) => { e.stopPropagation(); nodeOps.deleteNodes([node.id]); }}
                       title="Delete node"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
