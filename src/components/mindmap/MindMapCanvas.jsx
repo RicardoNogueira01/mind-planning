@@ -17,11 +17,14 @@ const MindMapCanvas = ({
         transformOrigin: '0 0'
       }}
     >
+      {/* Connections between nodes - render FIRST (behind nodes) */}
+      {/* Use position: relative to allow connections SVG to fill the space */}
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+        {renderConnections}
+      </div>
+
       {/* Group bounding boxes */}
       {renderNodeGroups()}
-
-      {/* Connections between nodes */}
-      {renderConnections}
 
       {/* Selection rectangle */}
       {isSelecting && selectionRect && (
@@ -40,8 +43,10 @@ const MindMapCanvas = ({
         />
       )}
 
-      {/* Nodes - passed as children for now to keep complexity manageable */}
-      {children}
+      {/* Nodes - passed as children (renders on top with zIndex 10) */}
+      <div style={{ position: 'relative', zIndex: 10 }}>
+        {children}
+      </div>
     </div>
   );
 };

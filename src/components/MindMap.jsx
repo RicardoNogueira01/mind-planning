@@ -36,7 +36,7 @@ export default function MindMap({ mapId, onBack }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchList, setShowSearchList] = useState(false);
   const [connectionFrom, setConnectionFrom] = useState(null);
-  const [isToolbarExpanded, setIsToolbarExpanded] = useState(false); // Global toolbar expansion
+  const [expandedNodeToolbars, setExpandedNodeToolbars] = useState({}); // { [nodeId]: bool } - Per-node toolbar expansion
   const [popupOpenFor, setPopupOpenFor] = useState({}); // { [nodeId]: { [popupName]: bool } }
   const [isDarkMode, setIsDarkMode] = useState(false);
 
@@ -143,7 +143,18 @@ export default function MindMap({ mapId, onBack }) {
 
   const nodePositions = React.useMemo(() => {
     const map = {};
-    nodes.forEach(n => { map[n.id] = { x: n.x, y: n.y }; });
+    // Calculate node rectangles for connection routing
+    // Nodes are rendered as: left: x - 100, top: y - 28, minWidth: 200, height: ~56
+    const NODE_WIDTH = 200;
+    const NODE_HEIGHT = 56;
+    nodes.forEach(n => { 
+      map[n.id] = {
+        left: n.x - NODE_WIDTH / 2,    // x - 100
+        top: n.y - NODE_HEIGHT / 2,    // y - 28
+        right: n.x + NODE_WIDTH / 2,   // x + 100
+        bottom: n.y + NODE_HEIGHT / 2  // y + 28
+      };
+    });
     return map;
   }, [nodes]);
 
@@ -190,6 +201,15 @@ export default function MindMap({ mapId, onBack }) {
     setPopupOpenFor(prev => ({
       ...prev,
       [nodeId]: { ...(prev[nodeId] || {}), [popupName]: false }
+    }));
+  };
+
+  // Toolbar expansion helpers - per-node
+  const isNodeToolbarExpanded = (nodeId) => expandedNodeToolbars[nodeId] === true;
+  const toggleNodeToolbar = (nodeId) => {
+    setExpandedNodeToolbars(prev => ({
+      ...prev,
+      [nodeId]: !isNodeToolbarExpanded(nodeId)
     }));
   };
   const selectBgColor = (id, color) => { 
@@ -330,7 +350,7 @@ export default function MindMap({ mapId, onBack }) {
                   {/* PRIMARY GROUP - always visible */}
                   <NodeToolbarPrimary
                     node={node}
-                    isToolbarExpanded={isToolbarExpanded}
+                    isToolbarExpanded={isNodeToolbarExpanded(node.id)}
                     onToggleComplete={onToggleComplete}
                     onAddChild={onAddChild}
                     onRequestDelete={onRequestDelete}
@@ -345,7 +365,7 @@ export default function MindMap({ mapId, onBack }) {
                   />
 
                   {/* Visual group when expanded */}
-                  {isToolbarExpanded && (
+                  {isNodeToolbarExpanded(node.id) && (
                     <>
                       <NodeToolbarBackgroundColor
                         isOpen={isPopupOpen(node.id, 'bgColor')}
@@ -366,17 +386,17 @@ export default function MindMap({ mapId, onBack }) {
 
                   {/* Settings toggle */}
                   <NodeToolbarSettingsToggle
-                    isToolbarExpanded={isToolbarExpanded}
-                    onToggle={() => setIsToolbarExpanded(!isToolbarExpanded)}
+                    isToolbarExpanded={isNodeToolbarExpanded(node.id)}
+                    onToggle={() => toggleNodeToolbar(node.id)}
                   />
 
                   {/* Divider */}
-                  {isToolbarExpanded && (
+                  {isNodeToolbarExpanded(node.id) && (
                     <div className="w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
                   )}
 
                   {/* Content group when expanded */}
-                  {isToolbarExpanded && (
+                  {isNodeToolbarExpanded(node.id) && (
                     <div className="flex items-center gap-1">
                       <button
                         ref={(el) => { attachBtnRefs.current[node.id] = el; }}
@@ -469,12 +489,12 @@ export default function MindMap({ mapId, onBack }) {
                   )}
 
                   {/* Divider */}
-                  {isToolbarExpanded && (
+                  {isNodeToolbarExpanded(node.id) && (
                     <div className="w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
                   )}
 
                   {/* Meta group when expanded */}
-                  {isToolbarExpanded && (
+                  {isNodeToolbarExpanded(node.id) && (
                     <div className="flex items-center gap-1">
                       <button
                         ref={(el) => { detailsBtnRefs.current[node.id] = el; }}
@@ -576,12 +596,12 @@ export default function MindMap({ mapId, onBack }) {
                   )}
 
                   {/* Divider */}
-                  {isToolbarExpanded && (
+                  {isNodeToolbarExpanded(node.id) && (
                     <div className="w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
                   )}
 
                   {/* Layout button (root only) */}
-                  {node.id === 'root' && isToolbarExpanded && (
+                  {node.id === 'root' && isNodeToolbarExpanded(node.id) && (
                     <NodeToolbarLayout
                       shouldRender={true}
                       layoutBtnRef={(el) => { layoutBtnRefs.current[node.id] = el; }}
@@ -591,7 +611,7 @@ export default function MindMap({ mapId, onBack }) {
                   )}
 
                   {/* Delete when expanded and not root */}
-                  {isToolbarExpanded && node.id !== 'root' && (
+                  {isNodeToolbarExpanded(node.id) && node.id !== 'root' && (
                     <button
                       className="node-toolbar-btn p-2 rounded-xl hover:bg-red-100 text-red-600 transition-colors duration-200 border border-red-200 hover:border-red-300"
                       onClick={(e) => { e.stopPropagation(); deleteNodes([node.id]); }}
