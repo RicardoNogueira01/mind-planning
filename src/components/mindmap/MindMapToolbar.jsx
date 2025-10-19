@@ -19,7 +19,7 @@ const MindMapToolbar = ({
   setFxOptions
 }) => {
   return (
-    <div className="absolute top-4 left-4 z-20 bg-white/95 backdrop-blur-lg shadow-xl border border-gray-200/50 rounded-2xl p-3">
+    <div className="absolute top-4 left-4 z-20 bg-white/95 shadow-xl border border-gray-200/50 rounded-2xl p-3">
       <div className="flex items-center gap-1">
         
         {/* Back to Dashboard Button */}
@@ -167,7 +167,7 @@ const MindMapToolbar = ({
                 <span className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full ${fxOptions?.enabled ? 'bg-emerald-400 ring-2 ring-white' : 'bg-gray-300'}`} />
               </button>
             </summary>
-            <div className="absolute mt-2 left-0 bg-white/95 backdrop-blur-lg shadow-xl border border-gray-200/60 rounded-xl p-3 w-60 z-50">
+            <div className="absolute mt-2 left-0 bg-white/95 shadow-xl border border-gray-200/60 rounded-xl p-3 w-60 z-50">
               <div className="flex items-center justify-between py-1">
                 <span className="text-sm text-gray-700">Enable fun mode</span>
                 <input
