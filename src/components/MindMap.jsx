@@ -1,5 +1,6 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions, jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex */
 import React, { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import MindMapToolbar from './mindmap/MindMapToolbar';
 import MindMapCanvas from './mindmap/MindMapCanvas';
@@ -18,7 +19,6 @@ import ShapePalette from './mindmap/ShapePalette';
 import CollaboratorDialog from './mindmap/CollaboratorDialog';
 import { shapeBuilders } from './mindmap/builders';
 import ProgressRingChip from './mindmap/ProgressRingChip';
-import AnchoredPopover from './mindmap/AnchoredPopover';
 
 export default function MindMap({ mapId, onBack }) {
   // Minimal, compiling scaffold to restore the app while we refactor
@@ -56,6 +56,10 @@ export default function MindMap({ mapId, onBack }) {
     { id: 'c2', name: 'Bob' },
     { id: 'c3', name: 'Charlie' }
   ]);
+  const [attachmentFilters, setAttachmentFilters] = useState({ search: '' }); // Attachment search/filter state
+  const bgBtnRefs = useRef({}); // Background color button refs
+  const fontBtnRefs = useRef({}); // Font color button refs
+  const emojiBtnRefs = useRef({}); // Emoji button refs
 
   // Simple pan state for the canvas
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -219,6 +223,37 @@ export default function MindMap({ mapId, onBack }) {
     setNodes(nodes.map(n => n.id === id ? { ...n, fontColor: color } : n)); 
   };
 
+  // Attachment handlers
+  const handleAttachment = (e, nodeId) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const newAttachment = {
+      id: `att-${Date.now()}`,
+      name: file.name,
+      dateAdded: new Date().toISOString(),
+      addedBy: 'current-user',
+      type: file.name.split('.').pop().toLowerCase(),
+    };
+    setNodes(nodes.map(n => 
+      n.id === nodeId 
+        ? { ...n, attachments: [...(n.attachments || []), newAttachment] } 
+        : n
+    ));
+    try { e.target.value = ''; } catch {}
+  };
+
+  const removeAttachment = (nodeId, attachmentId) => {
+    setNodes(nodes.map(n => 
+      n.id === nodeId 
+        ? { ...n, attachments: (n.attachments || []).filter(a => a.id !== attachmentId) } 
+        : n
+    ));
+  };
+
+  const setNodeEmoji = (nodeId, emoji) => {
+    setNodes(nodes.map(n => n.id === nodeId ? { ...n, emoji } : n));
+  };
+
   // Collaborators
   const assignCollaborator = (nodeId, collaboratorId) => {
     setNodes(nodes.map(n => n.id === nodeId ? { ...n, collaboratorId } : n));
@@ -344,7 +379,8 @@ export default function MindMap({ mapId, onBack }) {
                   <ProgressRingChip pct={node.completed ? 100 : 0} isDarkMode={isDarkMode} shapeType={node.shapeType} completed={!!node.completed} />
                 </div>
               )}
-              {/* Per-node toolbar overlay - ALWAYS visible, matches pre-refactor */}
+              {/* Per-node toolbar overlay - Only visible when node is selected */}
+              {selectedNodes.includes(node.id) && (
               <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 -translate-y-full mb-3 z-20" style={{ marginTop: '-15px' }}>
                 <div className="enhanced-node-toolbar backdrop-blur-md bg-white/90 shadow-lg border border-white/20 rounded-2xl flex items-center p-2 gap-1">
                   {/* PRIMARY GROUP - always visible */}
@@ -408,17 +444,47 @@ export default function MindMap({ mapId, onBack }) {
                           <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
                         </svg>
                       </button>
-                      {isPopupOpen(node.id, 'attach') && (
-                        <AnchoredPopover anchorEl={attachBtnRefs.current[node.id]} onClose={() => closePopup(node.id, 'attach')}>
-                          <div className="space-y-2">
-                            <h4 className="font-medium text-gray-800">Attachments</h4>
-                            <button className="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Upload…</button>
-                            {(node.attachments || []).length === 0 && (
-                              <div className="text-sm text-gray-500">No attachments yet</div>
-                            )}
-                          </div>
-                        </AnchoredPopover>
-                      )}
+                      {isPopupOpen(node.id, 'attach') && (() => {
+                        const anchor = attachBtnRefs.current[node.id];
+                        const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
+                        const popupWidth = 480;
+                        const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
+                        const top = Math.max(8, rect.bottom + 8);
+                        return createPortal(
+                          <div className="node-popup" style={{ position: 'fixed', left, top, minWidth: popupWidth, maxWidth: 500, zIndex: 5000 }} onClick={(e) => e.stopPropagation()}>
+                            <h4 className="font-medium text-gray-800 mb-3">Attachments</h4>
+                            <div className="mb-4">
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Search by name</label>
+                              <input type="text" placeholder="Search by name..." className="w-full p-2 text-sm border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left" value={attachmentFilters.search}
+                                onChange={(e) => setAttachmentFilters({ ...attachmentFilters, search: e.target.value })}
+                                onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onFocus={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} />
+                            </div>
+                            <div className="mb-4">
+                              <label className="block text-xs font-medium text-gray-700 mb-2">Add new file</label>
+                              <input type="file" accept=".xlsx,.xls,.doc,.docx,.pdf" className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-300 rounded-lg p-2"
+                                onChange={(e) => handleAttachment(e, node.id)} onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onFocus={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} />
+                            </div>
+                            <div className="max-h-64 overflow-y-auto">
+                              {node.attachments && node.attachments.length > 0 ? (
+                                <div className="space-y-2">
+                                  {node.attachments.filter(attachment => attachment.name.toLowerCase().includes((attachmentFilters.search || '').toLowerCase())).map(attachment => (
+                                    <div key={attachment.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-200">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs text-gray-600">{attachment.type}</span>
+                                        <span className="text-sm text-gray-900 font-medium">{attachment.name}</span>
+                                      </div>
+                                      <button className="text-xs text-red-600 hover:underline" onClick={(e) => { e.stopPropagation(); removeAttachment(node.id, attachment.id); }}>Remove</button>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-xs text-gray-500">No attachments</div>
+                              )}
+                            </div>
+                          </div>,
+                          document.body
+                        );
+                      })()}
                       
                       <button
                         ref={(el) => { notesBtnRefs.current[node.id] = el; }}
@@ -434,20 +500,59 @@ export default function MindMap({ mapId, onBack }) {
                           <line x1="10" y1="9" x2="8" y2="9"></line>
                         </svg>
                       </button>
-                      {isPopupOpen(node.id, 'notes') && (
-                        <AnchoredPopover anchorEl={notesBtnRefs.current[node.id]} onClose={() => closePopup(node.id, 'notes')}>
-                          <div className="space-y-2">
-                            <h4 className="font-medium text-gray-800">Notes</h4>
-                            <textarea
-                              className="w-full border rounded px-2 py-1 text-sm"
-                              rows={6}
-                              value={node.notes || ''}
-                              id={`notes-${node.id}`}
-                              onChange={(e) => setNodeField(node.id, 'notes', e.target.value)}
+                      {isPopupOpen(node.id, 'notes') && (() => {
+                        const anchor = notesBtnRefs.current[node.id];
+                        const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
+                        const popupWidth = 420;
+                        const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
+                        const top = Math.max(8, rect.bottom + 8);
+                        return createPortal(
+                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={(e) => e.stopPropagation()}>
+                            <h4 className="font-medium text-gray-800 mb-3">Notes</h4>
+                            <textarea className="w-full p-2 text-sm border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"  placeholder="Add your notes here..." value={node.notes || ''}
+                              onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, notes: e.target.value } : n))}
+                              onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onFocus={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}
                             />
-                          </div>
-                        </AnchoredPopover>
-                      )}
+                            <div className="mt-2 flex justify-end">
+                              <button className="px-2 py-1 text-xs rounded-lg border border-gray-200 bg-white hover:bg-gray-50" onClick={(e) => { e.stopPropagation(); setNodes(nodes.map(n => n.id === node.id ? { ...n, showNotesPopup: false } : n)); }}>Close</button>
+                            </div>
+                          </div>,
+                          document.body
+                        );
+                      })()}
+
+                      <button
+                        ref={(el) => { emojiBtnRefs.current[node.id] = el; }}
+                        className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
+                        onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'emoji'); }}
+                        title="Add emoji"
+                      >
+                        {node.emoji || '😊'}
+                      </button>
+                      {isPopupOpen(node.id, 'emoji') && (() => {
+                        const emojis = ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '😜', '😛', '😲', '😮', '😯', '😨', '😰', '😢', '😭', '😱', '😖', '😣', '😞', '😓', '😩', '😫', '🥱', '😤', '😡', '😠', '🤬', '😈', '👿', '💀', '☠️', '💩', '🤡', '👹', '👺', '👻', '👽', '👾', '🤖'];
+                        const anchor = emojiBtnRefs.current[node.id];
+                        const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
+                        const popupWidth = 280;
+                        const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
+                        const top = Math.max(8, rect.bottom + 8);
+                        return createPortal(
+                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000, backgroundColor: 'white', borderRadius: '8px', padding: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
+                            <div className="grid grid-cols-6 gap-1">
+                              {emojis.map(emoji => (
+                                <button
+                                  key={emoji}
+                                  className="p-1 text-lg hover:bg-gray-100 rounded cursor-pointer"
+                                  onClick={(e) => { e.stopPropagation(); setNodeEmoji(node.id, emoji); togglePopup(node.id, 'emoji'); }}
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          </div>,
+                          document.body
+                        );
+                      })()}
 
                       <button
                         ref={(el) => { tagBtnRefs.current[node.id] = el; }}
@@ -460,31 +565,48 @@ export default function MindMap({ mapId, onBack }) {
                           <line x1="7" y1="7" x2="7.01" y2="7"></line>
                         </svg>
                       </button>
-                      {isPopupOpen(node.id, 'tags') && (
-                        <AnchoredPopover anchorEl={tagBtnRefs.current[node.id]} onClose={() => closePopup(node.id, 'tags')}>
-                          <div className="space-y-2">
-                            <h4 className="font-medium text-gray-800">Tags</h4>
-                            <div className="flex gap-2 flex-wrap">
-                              {(node.tags || []).map((t) => (
-                                <span key={t} className="px-2 py-1 text-xs rounded-full bg-gray-100 border text-gray-700">{t}</span>
-                              ))}
+                      {isPopupOpen(node.id, 'tags') && (() => {
+                        const anchor = tagBtnRefs.current[node.id];
+                        const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
+                        const popupWidth = 300;
+                        const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
+                        const top = Math.max(8, rect.bottom + 8);
+                        return createPortal(
+                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000, maxHeight: '400px', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+                            <h4 className="font-medium text-gray-800 mb-3">Tags</h4>
+                            <div className="mb-3">
+                              {(node.tags || []).length > 0 ? (
+                                <div className="flex gap-2 flex-wrap mb-3">
+                                  {(node.tags || []).map((t) => (
+                                    <span key={t} className="px-2 py-1 text-xs rounded-full bg-blue-100 border border-blue-200 text-blue-700 flex items-center gap-1">
+                                      {t}
+                                      <button className="text-blue-500 hover:text-blue-700 text-xs" onClick={(e) => { e.stopPropagation(); setNodes(nodes.map(n => n.id === node.id ? { ...n, tags: (n.tags || []).filter(tag => tag !== t) } : n)); }}>×</button>
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-xs text-gray-500 mb-3">No tags yet</div>
+                              )}
                             </div>
                             <input
                               type="text"
                               placeholder="Add tag and press Enter"
-                              className="w-full border rounded px-2 py-1 text-sm"
-                              id={`tags-${node.id}`}
+                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                                   const tag = e.currentTarget.value.trim();
-                                  addNodeTag(node.id, tag);
+                                  setNodes(nodes.map(n => n.id === node.id ? { ...n, tags: [...(n.tags || []), tag] } : n));
                                   e.currentTarget.value = '';
                                 }
                               }}
+                              onClick={(e) => e.stopPropagation()}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onFocus={(e) => e.stopPropagation()}
                             />
-                          </div>
-                        </AnchoredPopover>
-                      )}
+                          </div>,
+                          document.body
+                        );
+                      })()}
                     </div>
                   )}
 
@@ -508,49 +630,60 @@ export default function MindMap({ mapId, onBack }) {
                           <line x1="12" y1="8" x2="12.01" y2="8"></line>
                         </svg>
                       </button>
-                      {isPopupOpen(node.id, 'details') && (
-                        <AnchoredPopover anchorEl={detailsBtnRefs.current[node.id]} onClose={() => closePopup(node.id, 'details')}>
-                          <div className="space-y-2">
-                            <h4 className="font-medium text-gray-800">Details</h4>
-                            <div className="flex gap-2 items-center">
-                              <label className="text-sm text-gray-600 w-20" htmlFor={`priority-${node.id}`}>Priority</label>
-                              <select
-                                className="flex-1 border rounded px-2 py-1 text-sm"
-                                value={node.priority || 'normal'}
-                                id={`priority-${node.id}`}
-                                onChange={(e) => setNodeField(node.id, 'priority', e.target.value)}
-                              >
-                                <option value="low">Low</option>
-                                <option value="normal">Normal</option>
-                                <option value="high">High</option>
-                              </select>
+                      {isPopupOpen(node.id, 'details') && (() => {
+                        const anchor = detailsBtnRefs.current[node.id];
+                        const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
+                        const popupWidth = 340;
+                        const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
+                        const top = Math.max(8, rect.bottom + 8);
+                        return createPortal(
+                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={(e) => e.stopPropagation()}>
+                            <h4 className="font-medium text-gray-800 mb-3">Details</h4>
+                            <div className="space-y-3">
+                              <div>
+                                <label className="text-sm text-gray-600 block mb-1">Priority</label>
+                                <select
+                                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  value={node.priority || 'normal'}
+                                  onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, priority: e.target.value } : n))}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <option value="low">Low</option>
+                                  <option value="normal">Normal</option>
+                                  <option value="high">High</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="text-sm text-gray-600 block mb-1">Status</label>
+                                <select
+                                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  value={node.status || 'todo'}
+                                  onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, status: e.target.value } : n))}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <option value="todo">To do</option>
+                                  <option value="doing">Doing</option>
+                                  <option value="done">Done</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="text-sm text-gray-600 block mb-1">Description</label>
+                                <textarea
+                                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  rows={3}
+                                  value={node.description || ''}
+                                  onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, description: e.target.value } : n))}
+                                  onClick={(e) => e.stopPropagation()}
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  onFocus={(e) => e.stopPropagation()}
+                                  onKeyDown={(e) => e.stopPropagation()}
+                                />
+                              </div>
                             </div>
-                            <div className="flex gap-2 items-center">
-                              <label className="text-sm text-gray-600 w-20" htmlFor={`status-${node.id}`}>Status</label>
-                              <select
-                                className="flex-1 border rounded px-2 py-1 text-sm"
-                                value={node.status || 'todo'}
-                                id={`status-${node.id}`}
-                                onChange={(e) => setNodeField(node.id, 'status', e.target.value)}
-                              >
-                                <option value="todo">To do</option>
-                                <option value="doing">Doing</option>
-                                <option value="done">Done</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="text-sm text-gray-600" htmlFor={`description-${node.id}`}>Description</label>
-                              <textarea
-                                className="w-full border rounded px-2 py-1 text-sm"
-                                rows={3}
-                                value={node.description || ''}
-                                id={`description-${node.id}`}
-                                onChange={(e) => setNodeField(node.id, 'description', e.target.value)}
-                              />
-                            </div>
-                          </div>
-                        </AnchoredPopover>
-                      )}
+                          </div>,
+                          document.body
+                        );
+                      })()}
 
                       <button
                         ref={(el) => { dateBtnRefs.current[node.id] = el; }}
@@ -565,20 +698,36 @@ export default function MindMap({ mapId, onBack }) {
                           <line x1="3" y1="10" x2="21" y2="10"></line>
                         </svg>
                       </button>
-                      {isPopupOpen(node.id, 'date') && (
-                        <AnchoredPopover anchorEl={dateBtnRefs.current[node.id]} onClose={() => closePopup(node.id, 'date')} width={220}>
-                          <div className="space-y-2">
-                            <h4 className="font-medium text-gray-800">Due date</h4>
+                      {isPopupOpen(node.id, 'date') && (() => {
+                        const anchor = dateBtnRefs.current[node.id];
+                        const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
+                        const popupWidth = 220;
+                        const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
+                        const top = Math.max(8, rect.bottom + 8);
+                        return createPortal(
+                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={(e) => e.stopPropagation()}>
+                            <h4 className="font-medium text-gray-800 mb-3">Due date</h4>
                             <input
                               type="date"
-                              className="w-full border rounded px-2 py-1 text-sm"
+                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                               value={node.dueDate || ''}
-                              id={`duedate-${node.id}`}
-                              onChange={(e) => setNodeField(node.id, 'dueDate', e.target.value)}
+                              onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, dueDate: e.target.value } : n))}
+                              onClick={(e) => e.stopPropagation()}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onFocus={(e) => e.stopPropagation()}
                             />
-                          </div>
-                        </AnchoredPopover>
-                      )}
+                            {node.dueDate && (
+                              <button
+                                className="mt-2 text-xs text-red-600 hover:text-red-700 w-full py-1 hover:bg-red-50 rounded"
+                                onClick={(e) => { e.stopPropagation(); setNodes(nodes.map(n => n.id === node.id ? { ...n, dueDate: '' } : n)); }}
+                              >
+                                Clear date
+                              </button>
+                            )}
+                          </div>,
+                          document.body
+                        );
+                      })()}
 
                       <button
                         className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
@@ -627,6 +776,7 @@ export default function MindMap({ mapId, onBack }) {
                   )}
                 </div>
               </div>
+              )}
             </NodeCard>
           ))}
         </MindMapCanvas>
