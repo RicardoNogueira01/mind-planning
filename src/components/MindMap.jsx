@@ -237,16 +237,51 @@ export default function MindMap({ mapId, onBack }) {
     setNodes(nodes.map(n => n.id === nodeId ? { ...n, collaboratorId } : n));
   };
 
-  // Shape palette quick-add handlers (click adds at center; full DnD can be added later)
-  const handleShapeDragStart = (shape) => {
+  // Shape palette drag start handler - stores shape type in drag data
+  const handleShapeDragStart = (e, shapeType) => {
+    // Store shape type in drag data so drop handler can retrieve it
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'copy';
+      e.dataTransfer.setData('application/x-shape-type', shapeType);
+    }
+  };
+
+  // Shape palette drop handler - adds shape at drop location on canvas
+  const handleShapeDrop = (e, shapeType) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     const getColor = (type) => (type === 'node' ? '#F3F4F6' : '#E5E7EB');
-    const cx = Math.round(window.innerWidth / 2) - pan.x;
-    const cy = Math.round(window.innerHeight / 2) - pan.y;
-    const builder = shapeBuilders[shape.type] || shapeBuilders.connector;
-    const { nodes: newNodes, connections: newConns, mainId } = builder(cx, cy, getColor);
-    setNodes(prev => prev.concat(newNodes));
-    setConnections(prev => prev.concat(newConns));
-    setSelectedNodes([mainId]);
+    
+    // Calculate canvas coordinates from viewport coordinates
+    if (canvasRef.current) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const canvasX = e.clientX - rect.left - pan.x;
+      const canvasY = e.clientY - rect.top - pan.y;
+      
+      const builder = shapeBuilders[shapeType] || shapeBuilders.connector;
+      const { nodes: newNodes, connections: newConns, mainId } = builder(canvasX, canvasY, getColor);
+      setNodes(prev => prev.concat(newNodes));
+      setConnections(prev => prev.concat(newConns));
+      setSelectedNodes([mainId]);
+    }
+  };
+
+  // Canvas drag over handler - required to allow drops
+  const handleCanvasDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  };
+
+  // Canvas drop handler - retrieves shape type from drag data
+  const handleCanvasDrop = (e) => {
+    const shapeType = e.dataTransfer?.getData('application/x-shape-type');
+    if (shapeType) {
+      handleShapeDrop(e, shapeType);
+    }
   };
 
   // Persistence per mapId (minimal)
@@ -283,6 +318,8 @@ export default function MindMap({ mapId, onBack }) {
         onMouseMove={dragging.handlePanning}
         onMouseUp={dragging.stopPanning}
         onMouseLeave={dragging.stopPanning}
+        onDragOver={handleCanvasDragOver}
+        onDrop={handleCanvasDrop}
         role="application"
         tabIndex={0}
         aria-label="Mind map canvas"
@@ -762,7 +799,7 @@ export default function MindMap({ mapId, onBack }) {
         </MindMapCanvas>
       </div>
       {/* Shapes Palette Sidebar */}
-      <div className="w-64 border-l bg-white p-3">
+      <div className="w-fit border-l bg-white">
         <ShapePalette
           shapeDefinitions={React.useMemo(() => ([
             { type: 'circle',    name: 'Circle',    color: '#3B82F6', icon: '●' },

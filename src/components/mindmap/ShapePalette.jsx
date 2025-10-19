@@ -19,7 +19,11 @@ export default function ShapePalette({ shapeDefinitions, isDarkMode, onShapeDrag
           }}
           draggable={true}
           aria-label={`Drag ${shapeDef.name}`}
-          onDragStart={(e) => onShapeDragStart?.(e, shapeDef.type)}
+          onDragStart={(e) => {
+            e.dataTransfer.effectAllowed = 'copy';
+            e.dataTransfer.setData('application/x-shape-type', shapeDef.type);
+            onShapeDragStart?.(e, shapeDef.type);
+          }}
           title={shapeDef.name}
         >
           <span className="text-white text-xl font-bold select-none">{shapeDef.icon}</span>
