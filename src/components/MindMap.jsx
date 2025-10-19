@@ -102,13 +102,79 @@ export default function MindMap({ mapId, onBack }) {
   };
   const stopPanning = () => { setIsPanning(false); setDraggingNodeId(null); };
 
-  // Toolbar-required handlers (minimal stubs)
+  // ============================================
+  // SIMPLE NODE STACKING LOGIC (10px margin)
+  // ============================================
+  
+  /**
+   * Stack new nodes below existing ones with 10px margin
+   * Simple approach: find lowest node and stack below it
+   */
+  const findStackedPosition = (baseX = null, baseY = null) => {
+    const NODE_HEIGHT = 56; // Approximate node height
+    const MARGIN = 10; // 10px margin between nodes
+    
+    if (nodes.length === 0) {
+      return { 
+        x: baseX ?? Math.round(window.innerWidth / 2), 
+        y: baseY ?? Math.round(window.innerHeight / 2) 
+      };
+    }
+
+    // Find the lowest Y position among all nodes
+    let lowestY = Math.max(...nodes.map(n => n.y));
+    
+    // Stack the new node below the lowest one
+    return {
+      x: baseX ?? Math.round(window.innerWidth / 2),
+      y: lowestY + NODE_HEIGHT + MARGIN
+    };
+  };
+
+  /**
+   * Stack new child nodes horizontally from the parent with 10px margin
+   * If too many children, wrap to next row
+   */
+  const findStackedChildPosition = (parentId, preferredX, preferredY) => {
+    const parent = nodes.find(n => n.id === parentId);
+    if (!parent) return { x: preferredX, y: preferredY };
+
+    const NODE_WIDTH = 200; // Approximate node width
+    const MARGIN = 10;
+    const childrenOfParent = nodes.filter(n => 
+      connections.some(c => c.from === parentId && c.to === n.id)
+    );
+
+    if (childrenOfParent.length === 0) {
+      // First child: place to the right of parent
+      return {
+        x: parent.x + NODE_WIDTH + MARGIN,
+        y: parent.y
+      };
+    }
+
+    // Stack horizontally: place to the right of the last child
+    const lastChild = childrenOfParent[childrenOfParent.length - 1];
+    return {
+      x: lastChild.x + NODE_WIDTH + MARGIN,
+      y: lastChild.y
+    };
+  };
+
+  // Toolbar-required handlers with simple stacking
   const addStandaloneNode = () => {
+    const { x, y } = findStackedPosition();
+    
     const id = `node-${Date.now()}`;
-    const last = nodes[nodes.length - 1] || nodes[0];
-    const newNode = { id, text: 'Idea', x: last.x + 240, y: last.y };
+    const newNode = { 
+      id, 
+      text: 'Idea', 
+      x, 
+      y,
+      color: isDarkMode ? '#374151' : '#ffffff',
+      fontColor: isDarkMode ? '#f3f4f6' : '#2d3748'
+    };
     setNodes([...nodes, newNode]);
-    setConnections([...connections, { id: `conn-${Date.now()}`, from: last.id, to: id }]);
   };
 
   const deleteNodes = (ids) => {
@@ -167,8 +233,20 @@ export default function MindMap({ mapId, onBack }) {
   const updateNodeText = (id, text) => setNodes(nodes.map(n => n.id === id ? { ...n, text } : n));
   const onAddChild = (parentId) => {
     const parent = nodes.find(n => n.id === parentId) || nodes[0];
+    if (!parent) return;
+
+    // Use simple stacking logic to find a valid position for the child node
+    const { x, y } = findStackedChildPosition(parentId, parent.x + 210, parent.y);
+
     const id = `node-${Date.now()}`;
-    const child = { id, text: 'New Node', x: parent.x + 240, y: parent.y };
+    const child = { 
+      id, 
+      text: 'New Node', 
+      x, 
+      y,
+      color: isDarkMode ? '#374151' : '#ffffff',
+      fontColor: isDarkMode ? '#f3f4f6' : '#2d3748'
+    };
     setNodes(nodes.concat([child]));
     setConnections(connections.concat([{ id: `conn-${Date.now()}`, from: parentId, to: id }]));
   };
@@ -310,24 +388,26 @@ export default function MindMap({ mapId, onBack }) {
         aria-label="Mind map canvas"
         style={{ cursor: cursorStyle }}
       >
-        {/* Toolbar overlay */
-        }
-        <MindMapToolbar
-          mode={mode}
-          setMode={setMode}
-          selectionType={selectionType}
-          setSelectionType={setSelectionType}
-          selectedNodes={selectedNodes}
-          addStandaloneNode={addStandaloneNode}
-          deleteNodes={deleteNodes}
-          historyIndex={historyIndex}
-          history={history}
-          undo={undo}
-          redo={redo}
-          onBack={onBack}
-          fxOptions={fxOptions}
-          setFxOptions={setFxOptions}
-        />
+        {/* Toolbar rendered via Portal to avoid parent stacking context issues */}
+        {createPortal(
+          <MindMapToolbar
+            mode={mode}
+            setMode={setMode}
+            selectionType={selectionType}
+            setSelectionType={setSelectionType}
+            selectedNodes={selectedNodes}
+            addStandaloneNode={addStandaloneNode}
+            deleteNodes={deleteNodes}
+            historyIndex={historyIndex}
+            history={history}
+            undo={undo}
+            redo={redo}
+            onBack={onBack}
+            fxOptions={fxOptions}
+            setFxOptions={setFxOptions}
+          />,
+          document.body
+        )}
 
         {/* Search Bar */}
         <MindMapSearchBar
