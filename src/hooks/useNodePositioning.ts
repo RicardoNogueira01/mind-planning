@@ -4,14 +4,13 @@
  */
 
 import { useCallback } from 'react';
-import type { Node, Position, Connection } from '../types/mindmap';
+import type { Node, Position } from '../types/mindmap';
 
-const NODE_WIDTH = 200;
 const NODE_HEIGHT = 56;
 const MARGIN = 25; // 25px spacing between nodes
 const COLLISION_DISTANCE = 80; // Reduced for tighter spacing
 
-export function useNodePositioning(nodes: Node[], connections: Connection[]) {
+export function useNodePositioning(nodes: Node[]) {
   /**
    * Check if position is valid (not occupied by another node)
    */
@@ -72,50 +71,18 @@ export function useNodePositioning(nodes: Node[], connections: Connection[]) {
 
   /**
    * Position children hierarchically:
-   * - ALL children go to the RIGHT of previous node (horizontal chain)
-   * - First child: to the RIGHT of parent
-   * - Second child: to the RIGHT of first child
-   * - Third child: to the RIGHT of second child (etc.)
-   * - Collision avoidance: spider web pattern if no space
+   * - Uses spider web pattern (radiates in all directions around parent)
+   * - Creates natural mind map layout
+   * - First child, second child, etc. all spread around parent
    */
   const findStackedChildPosition = useCallback((parentId: string, preferredX: number, preferredY: number): Position => {
     const parent = nodes.find(n => n.id === parentId);
     if (!parent) return { x: preferredX, y: preferredY };
 
-    const childrenOfParent = nodes.filter(n => 
-      connections.some(c => c.from === parentId && c.to === n.id)
-    );
-
-    if (childrenOfParent.length === 0) {
-      // FIRST CHILD: to the RIGHT of parent
-      const firstChildX = parent.x + NODE_WIDTH + MARGIN;
-      const firstChildY = parent.y;
-      
-      // Check if position is available, otherwise use spider web
-      if (isPositionAvailable(firstChildX, firstChildY)) {
-        return { x: firstChildX, y: firstChildY };
-      } else {
-        // Use spider web pattern to find available space
-        return findAvailablePosition(parent.x, parent.y);
-      }
-    }
-
-    // NEXT CHILDREN: to the RIGHT of the last child (horizontal chain)
-    const lastChild = childrenOfParent[childrenOfParent.length - 1];
-    
-    if (!lastChild) return { x: preferredX, y: preferredY };
-    
-    const nextChildX = lastChild.x + NODE_WIDTH + MARGIN;
-    const nextChildY = lastChild.y;
-    
-    // Check if position is available, otherwise use spider web
-    if (isPositionAvailable(nextChildX, nextChildY)) {
-      return { x: nextChildX, y: nextChildY };
-    } else {
-      // Use spider web pattern to find available space around parent
-      return findAvailablePosition(parent.x, parent.y);
-    }
-  }, [nodes, connections, isPositionAvailable, findAvailablePosition]);
+    // Use spider web pattern for all children (radiates in all directions around parent)
+    // This creates a natural mind map layout like the image
+    return findAvailablePosition(parent.x, parent.y);
+  }, [nodes, findAvailablePosition]);
 
   return {
     isPositionAvailable,

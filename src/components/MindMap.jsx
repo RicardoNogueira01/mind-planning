@@ -77,7 +77,7 @@ export default function MindMap({ mapId, onBack }) {
   // ============================================
   // HOOKS: Extract business logic
   // ============================================
-  const positioning = useNodePositioning(nodes, connections);
+  const positioning = useNodePositioning(nodes);
   
   const nodeOps = useNodeOperations(
     nodes,
