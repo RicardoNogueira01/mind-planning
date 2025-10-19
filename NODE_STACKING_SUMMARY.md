@@ -4,7 +4,7 @@
 
 **Problem:** Nodes were stacking directly on top of each other, making them hard to see/interact with
 
-**Solution:** Implemented simple, predictable stacking with exactly 10px margins
+**Solution:** Implemented simple, predictable stacking with **20px margins** and hierarchical vertical layout
 
 ---
 
@@ -12,15 +12,16 @@
 
 ### Standalone Nodes (Add Idea button)
 - Finds the **lowest existing node** on screen
-- Places new node **below it** with 10px gap
+- Places new node **below it** with 20px gap
 - All centered horizontally
-- Simple vertical list
+- Creates clean vertical column
 
-### Child Nodes (Add Child button)
-- Finds the **rightmost sibling child** of parent
-- Places new node **to its right** with 10px gap
-- Maintains same vertical level (horizontal row)
-- Keeps parent-child tree structure clear
+### Child Nodes (Add Child button) ⭐ NEW
+- Finds the **last child** of the parent
+- Places new node **below it** with 20px gap
+- Maintains same X position as parent (vertical stack)
+- Creates organized parent-child hierarchies
+- **Each parent has its own column of children**
 
 ---
 
@@ -32,42 +33,50 @@ Two core functions in `MindMap.jsx`:
 // Stack standalone nodes vertically
 findStackedPosition(baseX, baseY)
 
-// Stack child nodes horizontally
+// Stack child nodes VERTICALLY below siblings
 findStackedChildPosition(parentId, prefX, prefY)
 ```
 
-Both configured with `MARGIN = 10px`
+Both configured with `MARGIN = 20px`
 
 ---
 
 ## Visual Behavior
 
 ```
-Adding standalone nodes:
-┌──────────┐
-│ Node 1   │
-│ (gap)    │
-│ Node 2   │
-│ (gap)    │
-│ Node 3   │
-└──────────┘
+Standalone nodes:
+┌──────────────────┐
+│ Node 1           │
+│ (20px gap)       │
+│ Node 2           │
+│ (20px gap)       │
+│ Node 3           │
+└──────────────────┘
 
-Adding children to same parent:
-         ┌──────────┬──────────┬──────────┐
-         │ Child1   │ Child2   │ Child3   │
-         │ (gap)    │ (gap)    │ (gap)    │
-         └──────────┴──────────┴──────────┘
-              ↑
-         Connected to Parent
+Parent-Child Hierarchy:
+┌──────────┐
+│ Parent   │
+└────┬─────┘
+     │ (20px gap)
+     │
+┌────▼──────┐
+│ Child 1   │
+│ (20px gap)│
+│ Child 2   │
+│ (20px gap)│
+│ Child 3   │
+└───────────┘
+    (all same X)
 ```
 
 ---
 
 ## Testing Checklist
 
-- [ ] Add 5+ standalone nodes → verify stack vertically
-- [ ] Add 3+ children to same parent → verify stack horizontally  
-- [ ] Click rapidly → verify consistent 10px spacing
+- [ ] Add 5+ standalone nodes → verify stack vertically with 20px gaps
+- [ ] Add 3+ children to same parent → verify stack vertically below parent
+- [ ] Children stay aligned under parent (same X position)
+- [ ] Click rapidly → verify consistent 20px spacing
 - [ ] Nodes are clearly separate, not overlapping ✓
 
 ---
@@ -84,7 +93,7 @@ All changes compiled successfully with no critical errors.
 ## Modified Files
 
 - `src/components/MindMap.jsx`
-  - `findStackedPosition()` - lines 113-133
-  - `findStackedChildPosition()` - lines 138-162
-  - `addStandaloneNode()` - lines 167-180
-  - `onAddChild()` - lines 238-258
+  - `findStackedPosition()` - MARGIN updated to 20px
+  - `findStackedChildPosition()` - Now stacks VERTICALLY with 20px margin
+  - `addStandaloneNode()` - uses updated stacking
+  - `onAddChild()` - uses updated stacking

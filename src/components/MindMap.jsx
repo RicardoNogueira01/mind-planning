@@ -103,17 +103,55 @@ export default function MindMap({ mapId, onBack }) {
   const stopPanning = () => { setIsPanning(false); setDraggingNodeId(null); };
 
   // ============================================
-  // SIMPLE NODE STACKING LOGIC (10px margin)
+  // HIERARCHICAL NODE POSITIONING WITH SPIDER WEB
   // ============================================
   
+  const NODE_WIDTH = 200;
+  const NODE_HEIGHT = 56;
+  const MARGIN = 20;
+  
   /**
-   * Stack new nodes below existing ones with 10px margin
-   * Simple approach: find lowest node and stack below it
+   * Check if position is valid (not occupied by another node)
+   */
+  const isPositionAvailable = (x, y, excludeId = null) => {
+    const COLLISION_DISTANCE = 100; // Must be this far from other nodes
+    return !nodes.some(n => {
+      if (excludeId && n.id === excludeId) return false;
+      const dx = n.x - x;
+      const dy = n.y - y;
+      const distance = Math.hypot(dx, dy);
+      return distance < COLLISION_DISTANCE;
+    });
+  };
+
+  /**
+   * Find available position around parent in spider web pattern
+   * Tries: right, down-right, down, down-left, left, up-left, up, up-right
+   */
+  const findAvailablePosition = (centerX, centerY, radius = 300) => {
+    const angles = [0, 45, 90, 135, 180, 225, 270, 315]; // 8 directions
+    const radii = [radius, radius * 1.5, radius * 2, radius * 2.5];
+    
+    for (const r of radii) {
+      for (const angle of angles) {
+        const rad = (angle * Math.PI) / 180;
+        const x = centerX + Math.cos(rad) * r;
+        const y = centerY + Math.sin(rad) * r;
+        
+        if (isPositionAvailable(x, y)) {
+          return { x, y };
+        }
+      }
+    }
+    
+    // Fallback: return a position anyway
+    return { x: centerX + radius, y: centerY };
+  };
+
+  /**
+   * Stack new nodes below existing ones with 20px margin
    */
   const findStackedPosition = (baseX = null, baseY = null) => {
-    const NODE_HEIGHT = 56; // Approximate node height
-    const MARGIN = 10; // 10px margin between nodes
-    
     if (nodes.length === 0) {
       return { 
         x: baseX ?? Math.round(window.innerWidth / 2), 
@@ -132,33 +170,48 @@ export default function MindMap({ mapId, onBack }) {
   };
 
   /**
-   * Stack new child nodes horizontally from the parent with 10px margin
-   * If too many children, wrap to next row
+   * Position children hierarchically:
+   * - 1st child: to the RIGHT of parent (20px margin)
+   * - 2nd+ children: BELOW first child (vertically stacked)
+   * - If child of child: same pattern repeats (to the right)
+   * - Collision avoidance: spider web pattern if no space
    */
   const findStackedChildPosition = (parentId, preferredX, preferredY) => {
     const parent = nodes.find(n => n.id === parentId);
     if (!parent) return { x: preferredX, y: preferredY };
 
-    const NODE_WIDTH = 200; // Approximate node width
-    const MARGIN = 10;
     const childrenOfParent = nodes.filter(n => 
       connections.some(c => c.from === parentId && c.to === n.id)
     );
 
     if (childrenOfParent.length === 0) {
-      // First child: place to the right of parent
-      return {
-        x: parent.x + NODE_WIDTH + MARGIN,
-        y: parent.y
-      };
+      // FIRST CHILD: to the RIGHT of parent with 20px margin
+      const firstChildX = parent.x + NODE_WIDTH + MARGIN;
+      const firstChildY = parent.y;
+      
+      // Check if position is available, otherwise use spider web
+      if (isPositionAvailable(firstChildX, firstChildY)) {
+        return { x: firstChildX, y: firstChildY };
+      } else {
+        // Use spider web pattern to find available space
+        return findAvailablePosition(parent.x, parent.y);
+      }
     }
 
-    // Stack horizontally: place to the right of the last child
-    const lastChild = childrenOfParent[childrenOfParent.length - 1];
-    return {
-      x: lastChild.x + NODE_WIDTH + MARGIN,
-      y: lastChild.y
-    };
+    // SECOND+ CHILDREN: BELOW first child (vertical stack)
+    const firstChild = childrenOfParent[0];
+    const lastChild = childrenOfParent.at(-1);
+    
+    const nextChildX = firstChild.x;
+    const nextChildY = lastChild.y + NODE_HEIGHT + MARGIN;
+    
+    // Check if position is available, otherwise use spider web
+    if (isPositionAvailable(nextChildX, nextChildY)) {
+      return { x: nextChildX, y: nextChildY };
+    } else {
+      // Use spider web pattern to find available space around parent
+      return findAvailablePosition(parent.x, parent.y);
+    }
   };
 
   // Toolbar-required handlers with simple stacking
