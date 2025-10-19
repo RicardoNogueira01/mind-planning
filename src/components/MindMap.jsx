@@ -521,7 +521,7 @@ export default function MindMap({ mapId, onBack }) {
               )}
               {/* Per-node toolbar overlay - Only visible when node is selected */}
               {selectedNodes.includes(node.id) && (
-              <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 -translate-y-full mb-3 z-20" style={{ marginTop: '-15px' }}>
+              <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-full z-20" style={{ top: '-25px' }}>
                 <div className="enhanced-node-toolbar backdrop-blur-md bg-white/90 shadow-lg border border-white/20 rounded-2xl flex items-center p-2 gap-1">
                   {/* PRIMARY GROUP - always visible */}
                   <NodeToolbarPrimary
