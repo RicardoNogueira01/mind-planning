@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions, jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex */
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import MindMapToolbar from './mindmap/MindMapToolbar';
@@ -42,12 +42,19 @@ export default function MindMap({ mapId, onBack }) {
   const [mode, setMode] = useState('cursor'); // 'cursor' | 'pan'
   const [selectionType, setSelectionType] = useState('simple');
   const [selectedNodes, setSelectedNodes] = useState([]);
-  const [history] = useState([]);
-  const [historyIndex] = useState(-1);
+  const [history, setHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
   const [fxOptions, setFxOptions] = useState({ enabled: false });
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchList, setShowSearchList] = useState(false);
   const [connectionFrom, setConnectionFrom] = useState(null);
+  
+  // Collaborator selection mode state
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionRect, setSelectionRect] = useState(null);
+  const [selectionStart, setSelectionStart] = useState({ x: 0, y: 0 });
+  const [nodeGroups, setNodeGroups] = useState([]); // Groups of nodes assigned to collaborators with visual shapes
+  
   const [expandedNodeToolbars, setExpandedNodeToolbars] = useState({}); // { [nodeId]: bool } - Per-node toolbar expansion
   const [popupOpenFor, setPopupOpenFor] = useState({}); // { [nodeId]: { [popupName]: bool } }
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -62,9 +69,10 @@ export default function MindMap({ mapId, onBack }) {
   const [showCollaboratorDialog, setShowCollaboratorDialog] = useState(false);
   const [collaboratorNodeId, setCollaboratorNodeId] = useState(null); // Track which node the collaborator dialog is for
   const [collaborators] = useState([
-    { id: 'c1', name: 'Alice' },
-    { id: 'c2', name: 'Bob' },
-    { id: 'c3', name: 'Charlie' }
+    { id: 'jd', initials: 'JD', name: 'John Doe', color: '#3B82F6' },
+    { id: 'ak', initials: 'AK', name: 'Alex Kim', color: '#10B981' },
+    { id: 'mr', initials: 'MR', name: 'Maria Rodriguez', color: '#F59E0B' },
+    { id: 'ts', initials: 'TS', name: 'Taylor Smith', color: '#8B5CF6' }
   ]);
   const [attachmentFilters, setAttachmentFilters] = useState({ search: '' }); // Attachment search/filter state
   const bgBtnRefs = useRef({}); // Background color button refs
@@ -94,7 +102,123 @@ export default function MindMap({ mapId, onBack }) {
   // ============================================
   // UI INTERACTION: Reference dragging state
   // ============================================
-  const { draggingNodeId, pan, setPan } = dragging;
+  const { draggingNodeId, pan, setPan, isPanning } = dragging;
+
+  // ============================================
+  // AUTO-SAVE HISTORY ON CHANGES
+  // ============================================
+  useEffect(() => {
+    // Skip initial empty history
+    if (history.length === 0 && historyIndex === -1) {
+      setHistory([{ nodes: structuredClone(nodes), connections: structuredClone(connections) }]);
+      setHistoryIndex(0);
+    } else if (history.length > 0) {
+      // Check if current state differs from last saved state
+      const lastState = history[historyIndex];
+      if (lastState && (JSON.stringify(lastState.nodes) !== JSON.stringify(nodes) || JSON.stringify(lastState.connections) !== JSON.stringify(connections))) {
+        const newHistory = history.slice(0, historyIndex + 1);
+        newHistory.push({ nodes: structuredClone(nodes), connections: structuredClone(connections) });
+        if (newHistory.length > 50) {
+          newHistory.shift();
+        } else {
+          setHistoryIndex(newHistory.length - 1);
+        }
+        setHistory(newHistory);
+      }
+    }
+  }, [nodes, connections, history, historyIndex]);
+
+  // ============================================
+  // HISTORY MANAGEMENT
+  // ============================================
+  const undo = () => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      const previousState = history[newIndex];
+      setNodes(structuredClone(previousState.nodes));
+      setConnections(structuredClone(previousState.connections));
+      setHistoryIndex(newIndex);
+    }
+  };
+
+  const redo = () => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      const nextState = history[newIndex];
+      setNodes(structuredClone(nextState.nodes));
+      setConnections(structuredClone(nextState.connections));
+      setHistoryIndex(newIndex);
+    }
+  };
+
+  // ============================================
+  // COLLABORATOR SELECTION MODE
+  // ============================================
+  const startSelection = (e) => {
+    if (mode === 'cursor' && selectionType === 'collaborator') {
+      e.preventDefault(); // Prevent page scrolling or text selection
+      setIsSelecting(true);
+      const rect = canvasRef.current.getBoundingClientRect();
+      const x = (e.clientX - rect.left - pan.x);
+      const y = (e.clientY - rect.top - pan.y);
+      setSelectionStart({ x, y });
+      setSelectionRect({ x, y, width: 0, height: 0 });
+    }
+  };
+
+  const updateSelection = (e) => {
+    if (isSelecting) {
+      e.preventDefault(); // Prevent page scrolling or text selection
+      const rect = canvasRef.current.getBoundingClientRect();
+      const currentX = (e.clientX - rect.left - pan.x);
+      const currentY = (e.clientY - rect.top - pan.y);
+      // Calculate width and height before deciding position
+      const width = Math.abs(currentX - selectionStart.x);
+      const height = Math.abs(currentY - selectionStart.y);
+      // Set rectangle position and size to ensure it covers the selection area
+      setSelectionRect({
+        x: Math.min(currentX, selectionStart.x),
+        y: Math.min(currentY, selectionStart.y),
+        width: width,
+        height: height
+      });
+    }
+  };
+
+  const stopSelection = () => {
+    if (isSelecting && selectionRect) {
+      // Find nodes within the selection rectangle
+      const selectedIds = nodes.filter(node => {
+        // Calculate node bounds (from current node rendering logic)
+        const nodeWidth = Math.min(350, Math.max(150, node.text.length * 10));
+        const nodeHeight = 60;
+        const nodeLeft = node.x - nodeWidth / 2;
+        const nodeRight = node.x + nodeWidth / 2;
+        const nodeTop = node.y - nodeHeight / 2;
+        const nodeBottom = node.y + nodeHeight / 2;
+
+        // Check if node overlaps with selection rectangle
+        const isInside = (
+          nodeRight >= selectionRect.x &&
+          nodeLeft <= selectionRect.x + selectionRect.width &&
+          nodeBottom >= selectionRect.y &&
+          nodeTop <= selectionRect.y + selectionRect.height
+        );
+
+        return isInside;
+      }).map(node => node.id);
+
+      // Update selected nodes
+      if (selectedIds.length > 0) {
+        setSelectedNodes(selectedIds);
+        // Show collaborator dialog to assign all selected nodes
+        setShowCollaboratorDialog(true);
+      }
+    }
+
+    setIsSelecting(false);
+    setSelectionRect(null);
+  };
 
   // ============================================
   // POSITIONING HANDLED BY HOOKS
@@ -104,8 +228,6 @@ export default function MindMap({ mapId, onBack }) {
   // ============================================
   // NODE OPERATIONS (via hooks)
   // ============================================
-  const undo = () => {};
-  const redo = () => {};
 
   const toggleSelectNode = (id) => {
     // If in the middle of creating a connection, connect to the clicked node
@@ -233,8 +355,81 @@ export default function MindMap({ mapId, onBack }) {
   };
 
   // Collaborators
-  const assignCollaborator = (nodeId, collaboratorId) => {
-    setNodes(nodes.map(n => n.id === nodeId ? { ...n, collaboratorId } : n));
+  const assignCollaborator = (collaborator) => {
+    // Create a new group with the selected nodes and collaborator
+    const newGroup = {
+      id: `group-${Date.now()}`,
+      nodeIds: [...selectedNodes],
+      collaborator
+    };
+    
+    // Calculate bounding box for the group
+    const groupNodes = nodes.filter(node => selectedNodes.includes(node.id));
+    const minX = Math.min(...groupNodes.map(node => node.x - 75));
+    const maxX = Math.max(...groupNodes.map(node => node.x + 75));
+    const minY = Math.min(...groupNodes.map(node => node.y - 25));
+    const maxY = Math.max(...groupNodes.map(node => node.y + 25));
+    
+    const boundingBox = {
+      x: minX - 10,
+      y: minY - 10,
+      width: (maxX - minX) + 20,
+      height: (maxY - minY) + 20
+    };
+    
+    newGroup.boundingBox = boundingBox;
+    
+    // Add the new group
+    setNodeGroups([...nodeGroups, newGroup]);
+    
+    // Reset selection state
+    setSelectedNodes([]);
+    setShowCollaboratorDialog(false);
+    
+    // Switch back to simple selection mode
+    setMode('cursor');
+    setSelectionType('simple');
+  };
+
+  // Render node groups as visual shapes with collaborator badges
+  const renderNodeGroups = () => {
+    return nodeGroups.map(group => {
+      const { boundingBox, collaborator } = group;
+      
+      return (
+        <div key={group.id} style={{
+          position: 'absolute',
+          left: boundingBox.x,
+          top: boundingBox.y,
+          width: boundingBox.width,
+          height: boundingBox.height,
+          border: `2px dashed ${collaborator.color}`,
+          borderRadius: '8px',
+          pointerEvents: 'none',
+          zIndex: 4
+        }}>
+          {/* Collaborator badge in top-right corner */}
+          <div style={{
+            position: 'absolute',
+            top: -15,
+            right: -15,
+            width: 30,
+            height: 30,
+            borderRadius: '50%',
+            backgroundColor: collaborator.color,
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 'bold',
+            fontSize: '0.75rem',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+          }}>
+            {collaborator.initials}
+          </div>
+        </div>
+      );
+    });
   };
 
   // Shape palette drag start handler - stores shape type in drag data
@@ -314,10 +509,29 @@ export default function MindMap({ mapId, onBack }) {
       <div
         className="flex-1 relative overflow-hidden"
         ref={canvasRef}
-        onMouseDown={dragging.startPanning}
-        onMouseMove={dragging.handlePanning}
-        onMouseUp={dragging.stopPanning}
-        onMouseLeave={dragging.stopPanning}
+        onMouseDown={(e) => {
+          // Check if in collaborator selection mode
+          if (mode === 'cursor' && selectionType === 'collaborator') {
+            startSelection(e);
+          } else {
+            dragging.startPanning(e);
+          }
+        }}
+        onMouseMove={(e) => {
+          if (isSelecting) {
+            updateSelection(e);
+          } else {
+            dragging.handlePanning(e);
+          }
+        }}
+        onMouseUp={() => {
+          stopSelection();
+          dragging.stopPanning();
+        }}
+        onMouseLeave={() => {
+          stopSelection();
+          dragging.stopPanning();
+        }}
         onDragOver={handleCanvasDragOver}
         onDrop={handleCanvasDrop}
         role="application"
@@ -797,6 +1011,26 @@ export default function MindMap({ mapId, onBack }) {
             </NodeCard>
           ))}
         </MindMapCanvas>
+
+        {/* Selection Rectangle for Collaborator Mode */}
+        {isSelecting && selectionRect && (
+          <div 
+            style={{
+              position: 'absolute',
+              left: `${selectionRect.x}px`,
+              top: `${selectionRect.y}px`,
+              width: `${selectionRect.width}px`,
+              height: `${selectionRect.height}px`,
+              border: '2px dashed #6366F1',
+              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+              zIndex: 6,
+              pointerEvents: 'none'
+            }}
+          />
+        )}
+
+        {/* Render collaborator groups */}
+        {renderNodeGroups()}
       </div>
       {/* Shapes Palette Sidebar */}
       <div className="w-fit border-l bg-white">
