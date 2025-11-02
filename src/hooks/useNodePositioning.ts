@@ -79,9 +79,12 @@ export function useNodePositioning(nodes: Node[]) {
     const parent = nodes.find(n => n.id === parentId);
     if (!parent) return { x: preferredX, y: preferredY };
 
-    // Use spider web pattern for all children (radiates in all directions around parent)
+    // Calculate the radius based on the preferred position
+    const radius = Math.abs(preferredX - parent.x);
+    
+    // Use spider web pattern for all children with the specified radius
     // This creates a natural mind map layout like the image
-    return findAvailablePosition(parent.x, parent.y);
+    return findAvailablePosition(parent.x, parent.y, radius);
   }, [nodes, findAvailablePosition]);
 
   return {

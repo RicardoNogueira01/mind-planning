@@ -16,7 +16,7 @@ export function useNodeOperations(
   findStackedPosition: (baseX?: number | null, baseY?: number | null) => Position,
   findStackedChildPosition: (parentId: string, preferredX: number, preferredY: number) => Position
 ) {
-  const NODE_WIDTH = 200;
+  const NODE_WIDTH = 300; // Updated to match actual node width
   const NODE_HEIGHT = 56;
 
   const addStandaloneNode = useCallback(() => {
@@ -38,7 +38,7 @@ export function useNodeOperations(
     const parent = nodes.find(n => n.id === parentId) || nodes[0];
     if (!parent) return;
 
-    const { x, y } = findStackedChildPosition(parentId, parent.x + NODE_WIDTH + 25, parent.y);
+    const { x, y } = findStackedChildPosition(parentId, parent.x + NODE_WIDTH + 40, parent.y);
 
     const id = `node-${Date.now()}`;
     const child: Node = { 

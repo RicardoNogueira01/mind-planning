@@ -1084,7 +1084,7 @@ export default function MindMap({ mapId, onBack }) {
                 
                 return (
                   <div 
-                    className="absolute top-2 left-2 flex items-center gap-1 z-20"
+                    className="absolute top-3 left-3 flex items-center gap-1 z-20"
                     title={`Total Progress: ${progress.completed}/${progress.total} tasks completed (${progress.percentage}%) - ${progress.depth + 1} levels deep`}
                   >
                     <div className="relative w-8 h-8">
@@ -1124,7 +1124,7 @@ export default function MindMap({ mapId, onBack }) {
 
               {/* Completion Checkmark (top-right) - Shows when task is marked complete */}
               {node.completed && (
-                <div className="absolute top-2 right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center z-20 shadow-sm">
+                <div className="absolute top-3 right-3 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center z-20 shadow-sm">
                   <Check size={14} className="text-white" />
                 </div>
               )}
@@ -1592,10 +1592,10 @@ export default function MindMap({ mapId, onBack }) {
           <div 
             style={{
               position: 'absolute',
-              left: `${selectionRect.x}px`,
-              top: `${selectionRect.y}px`,
-              width: `${selectionRect.width}px`,
-              height: `${selectionRect.height}px`,
+              left: `${selectionRect.x * zoom + dragging.pan.x}px`,
+              top: `${selectionRect.y * zoom + dragging.pan.y}px`,
+              width: `${selectionRect.width * zoom}px`,
+              height: `${selectionRect.height * zoom}px`,
               border: '2px dashed #6366F1',
               backgroundColor: 'rgba(99, 102, 241, 0.1)',
               zIndex: 6,
