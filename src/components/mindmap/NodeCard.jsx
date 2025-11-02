@@ -18,11 +18,15 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
+    // Ctrl+Enter or Cmd+Enter saves the text
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
       handleSaveText();
     } else if (e.key === 'Escape') {
       setIsEditing(false);
+      setEditText(node.text || ''); // Reset to original text
     }
+    // Regular Enter key creates a new line (default textarea behavior)
   };
 
   // Calculate opacity and zIndex based on search
@@ -33,9 +37,10 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
     <div
       className={`absolute rounded-lg ${selected ? 'ring-2 ring-blue-400/70' : ''}`}
       style={{ 
-        left: node.x - 100, 
-        top: node.y - 28, 
-        minWidth: 200, 
+        left: node.x - 150, 
+        top: node.y - 42, 
+        minWidth: 300,
+        maxWidth: 300, 
         position: 'absolute',
         opacity,
         zIndex,
@@ -45,7 +50,7 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
     >
       <button
         type="button"
-        className={`w-full px-3 py-2 rounded-lg border text-left ${
+        className={`w-full px-4 py-4 rounded-lg border text-left ${
           selected ? 'bg-blue-50 border-blue-400 shadow-md' : 'bg-white border-gray-200 shadow'
         }`}
         onClick={(e) => {
@@ -65,10 +70,11 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
             onBlur={handleSaveText}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
-            rows={2}
+            rows={3}
+            placeholder="Type here... (Ctrl+Enter to save, Esc to cancel)"
           />
         ) : (
-          <div className="text-center text-gray-800 font-medium">{node.text || 'New Node'}</div>
+          <div className="text-center text-gray-800 font-medium whitespace-pre-wrap">{node.text || 'New Node'}</div>
         )}
       </button>
       {children}

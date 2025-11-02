@@ -2,6 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
+import { Check, Download, X } from 'lucide-react';
 import MindMapToolbar from './mindmap/MindMapToolbar';
 import MindMapCanvas from './mindmap/MindMapCanvas';
 import NodeCard from './mindmap/NodeCard';
@@ -329,6 +330,68 @@ export default function MindMap({ mapId, onBack }) {
   const cancelConnection = () => setConnectionFrom(null);
 
   // ============================================
+  // PROGRESS TRACKING FUNCTIONS
+  // ============================================
+  
+  // Calculate max depth of node hierarchy
+  const getMaxDepth = (nodeId, visited = new Set(), currentDepth = 0) => {
+    if (visited.has(nodeId)) return currentDepth;
+    visited.add(nodeId);
+    
+    const children = connections
+      .filter(conn => conn.from === nodeId)
+      .map(conn => conn.to);
+    
+    if (children.length === 0) return currentDepth;
+    
+    const childDepths = children.map(childId =>
+      getMaxDepth(childId, new Set(visited), currentDepth + 1)
+    );
+    
+    return Math.max(...childDepths);
+  };
+
+  // Get progress statistics for a node (counts all descendants)
+  const getNodeProgress = (nodeId) => {
+    // Recursive helper to get all descendants with cycle detection
+    const getAllDescendants = (parentId, visited = new Set()) => {
+      if (visited.has(parentId)) return [];
+      visited.add(parentId);
+      
+      const directChildren = connections
+        .filter(conn => conn.from === parentId)
+        .map(conn => nodes.find(node => node.id === conn.to))
+        .filter(Boolean);
+      
+      let allDescendants = [...directChildren];
+      directChildren.forEach(child => {
+        const childDescendants = getAllDescendants(child.id, new Set(visited));
+        allDescendants = [...allDescendants, ...childDescendants];
+      });
+      
+      return allDescendants;
+    };
+    
+    const allDescendants = getAllDescendants(nodeId);
+    if (allDescendants.length === 0) return null;
+    
+    // Remove duplicates
+    const uniqueDescendants = allDescendants.filter((node, index, self) =>
+      index === self.findIndex(n => n.id === node.id)
+    );
+    
+    const completedDescendants = uniqueDescendants.filter(d => d.completed).length;
+    const totalDescendants = uniqueDescendants.length;
+    
+    return {
+      completed: completedDescendants,
+      total: totalDescendants,
+      percentage: Math.round((completedDescendants / totalDescendants) * 100),
+      depth: getMaxDepth(nodeId)
+    };
+  };
+
+  // ============================================
   // NODE DATA UPDATES (via hooks)
   // ============================================
   const updateNode = nodeOps.updateNode;
@@ -344,9 +407,24 @@ export default function MindMap({ mapId, onBack }) {
   // Popup state helpers
   const isPopupOpen = (nodeId, popupName) => popupOpenFor[nodeId]?.[popupName] === true;
   const togglePopup = (nodeId, popupName) => {
+    const isCurrentlyOpen = isPopupOpen(nodeId, popupName);
+    
+    // Close all popups for this node, then open the requested one (if it was closed)
     setPopupOpenFor(prev => ({
       ...prev,
-      [nodeId]: { ...(prev[nodeId] || {}), [popupName]: !isPopupOpen(nodeId, popupName) }
+      [nodeId]: {
+        bgColor: false,
+        fontColor: false,
+        attach: false,
+        notes: false,
+        emoji: false,
+        tags: false,
+        details: false,
+        date: false,
+        collaborator: false,
+        layout: false,
+        [popupName]: !isCurrentlyOpen // Toggle the requested popup
+      }
     }));
   };
   const closePopup = (nodeId, popupName) => {
@@ -375,18 +453,26 @@ export default function MindMap({ mapId, onBack }) {
   const handleAttachment = (e, nodeId) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const newAttachment = {
-      id: `att-${Date.now()}`,
-      name: file.name,
-      dateAdded: new Date().toISOString(),
-      addedBy: 'current-user',
-      type: file.name.split('.').pop().toLowerCase(),
+    
+    // Read file as base64 to store it
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const newAttachment = {
+        id: `att-${Date.now()}`,
+        name: file.name,
+        dateAdded: new Date().toISOString(),
+        addedBy: 'current-user',
+        type: file.name.split('.').pop().toLowerCase(),
+        data: event.target.result, // Store the file data
+        size: file.size,
+      };
+      setNodes(nodes.map(n => 
+        n.id === nodeId 
+          ? { ...n, attachments: [...(n.attachments || []), newAttachment] } 
+          : n
+      ));
     };
-    setNodes(nodes.map(n => 
-      n.id === nodeId 
-        ? { ...n, attachments: [...(n.attachments || []), newAttachment] } 
-        : n
-    ));
+    reader.readAsDataURL(file);
     try { e.target.value = ''; } catch {}
   };
 
@@ -396,6 +482,18 @@ export default function MindMap({ mapId, onBack }) {
         ? { ...n, attachments: (n.attachments || []).filter(a => a.id !== attachmentId) } 
         : n
     ));
+  };
+
+  const downloadAttachment = (attachment) => {
+    if (!attachment.data) return;
+    
+    // Create a temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = attachment.data;
+    link.download = attachment.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const setNodeEmoji = (nodeId, emoji) => {
@@ -981,10 +1079,67 @@ export default function MindMap({ mapId, onBack }) {
                   // allow dragging via startPanning handler; nothing here
                 }}
               >
+              {/* Progress Indicator (top-left) - Shows completion count for parent nodes */}
+              {(() => {
+                const progress = getNodeProgress(node.id);
+                if (!progress || node.completed) return null;
+                
+                return (
+                  <div 
+                    className="absolute top-2 left-2 flex items-center gap-1 z-20"
+                    title={`Total Progress: ${progress.completed}/${progress.total} tasks completed (${progress.percentage}%) - ${progress.depth + 1} levels deep`}
+                  >
+                    <div className="relative w-8 h-8">
+                      <svg className="w-8 h-8 transform -rotate-90" viewBox="0 0 32 32">
+                        {/* Background circle */}
+                        <circle 
+                          cx="16" 
+                          cy="16" 
+                          r="13" 
+                          stroke="#d1d5db" 
+                          strokeWidth="3" 
+                          fill="white" 
+                        />
+                        {/* Progress arc */}
+                        <circle 
+                          cx="16" 
+                          cy="16" 
+                          r="13"
+                          stroke={progress.percentage === 100 ? '#10b981' : '#3b82f6'}
+                          strokeWidth="3" 
+                          fill="transparent"
+                          strokeDasharray={`${2 * Math.PI * 13}`}
+                          strokeDashoffset={`${2 * Math.PI * 13 * (1 - progress.percentage / 100)}`}
+                          className="transition-all duration-300"
+                        />
+                      </svg>
+                      {/* Centered count text */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-xs font-bold text-gray-700">
+                          {progress.completed}/{progress.total}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Completion Checkmark (top-right) - Shows when task is marked complete */}
+              {node.completed && (
+                <div className="absolute top-2 right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center z-20 shadow-sm">
+                  <Check size={14} className="text-white" />
+                </div>
+              )}
+
               {/* Progress ring (fun) */}
               {fxOptions?.progressRing && (
                 <div className="absolute -top-3 -left-3">
-                  <ProgressRingChip pct={node.completed ? 100 : 0} isDarkMode={isDarkMode} shapeType={node.shapeType} completed={!!node.completed} />
+                  <ProgressRingChip 
+                    pct={getNodeProgress(node.id)?.percentage ?? (node.completed ? 100 : 0)} 
+                    isDarkMode={isDarkMode} 
+                    shapeType={node.shapeType} 
+                    completed={!!node.completed} 
+                  />
                 </div>
               )}
               
@@ -1105,12 +1260,27 @@ export default function MindMap({ mapId, onBack }) {
                               {node.attachments && node.attachments.length > 0 ? (
                                 <div className="space-y-2">
                                   {node.attachments.filter(attachment => attachment.name.toLowerCase().includes((attachmentFilters.search || '').toLowerCase())).map(attachment => (
-                                    <div key={attachment.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-200">
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-xs text-gray-600">{attachment.type}</span>
-                                        <span className="text-sm text-gray-900 font-medium">{attachment.name}</span>
+                                    <div key={attachment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
+                                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                                        <span className="text-xs text-white bg-blue-500 px-2 py-1 rounded font-medium uppercase">{attachment.type}</span>
+                                        <span className="text-sm text-gray-900 font-medium truncate">{attachment.name}</span>
                                       </div>
-                                      <button className="text-xs text-red-600 hover:underline" onClick={(e) => { e.stopPropagation(); removeAttachment(node.id, attachment.id); }}>Remove</button>
+                                      <div className="flex items-center gap-1 ml-2">
+                                        <button 
+                                          className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors" 
+                                          onClick={(e) => { e.stopPropagation(); downloadAttachment(attachment); }}
+                                          title="Download file"
+                                        >
+                                          <Download size={16} />
+                                        </button>
+                                        <button 
+                                          className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition-colors" 
+                                          onClick={(e) => { e.stopPropagation(); removeAttachment(node.id, attachment.id); }}
+                                          title="Remove file"
+                                        >
+                                          <X size={16} />
+                                        </button>
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
