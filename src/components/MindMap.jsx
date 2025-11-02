@@ -304,15 +304,15 @@ export default function MindMap({ mapId, onBack }) {
   const nodePositions = React.useMemo(() => {
     const map = {};
     // Calculate node rectangles for connection routing
-    // Nodes are rendered as: left: x - 100, top: y - 28, minWidth: 200, height: ~56
-    const NODE_WIDTH = 200;
-    const NODE_HEIGHT = 56;
+    // Nodes are rendered as: left: x - 150, top: y - 42, minWidth: 300, height: ~88 (with padding)
+    const NODE_WIDTH = 300;  // Updated to match actual node width
+    const NODE_HEIGHT = 88;  // Updated to match actual node height with padding
     nodes.forEach(n => { 
       map[n.id] = {
-        left: n.x - NODE_WIDTH / 2,    // x - 100
-        top: n.y - NODE_HEIGHT / 2,    // y - 28
-        right: n.x + NODE_WIDTH / 2,   // x + 100
-        bottom: n.y + NODE_HEIGHT / 2  // y + 28
+        left: n.x - NODE_WIDTH / 2,    // x - 150
+        top: n.y - NODE_HEIGHT / 2,    // y - 44
+        right: n.x + NODE_WIDTH / 2,   // x + 150
+        bottom: n.y + NODE_HEIGHT / 2  // y + 44
       };
     });
     return map;

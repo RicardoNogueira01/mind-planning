@@ -54,47 +54,67 @@ export function getPerimeterPoint(rect: Rect, targetX: number, targetY: number) 
 /**
  * Compute a smooth cubic bezier path between two rectangles. Returns the path d string,
  * start/end points, and a suggested label position (midpoint of start and end).
- * Connects from right edge of parent to middle-left of child with horizontal curves.
- * Start point is distributed along the parent's right edge based on child's vertical position.
+ * Intelligently chooses start point on parent node to create smoothest path to child.
  */
 export function computeBezierPath(fromRect: Rect, toRect: Rect) {
   // End at middle-left of child node
+  const childCenterX = (toRect.left + toRect.right) / 2;
   const childCenterY = (toRect.top + toRect.bottom) / 2;
   const end = {
     x: toRect.left,
     y: childCenterY
   };
   
-  // Start from right edge of parent, but Y position depends on where child is
-  // Clamp the Y position to stay within parent's bounds (with some padding)
-  const parentTop = fromRect.top + 10; // 10px padding from top
-  const parentBottom = fromRect.bottom - 10; // 10px padding from bottom
-  const startY = Math.max(parentTop, Math.min(parentBottom, childCenterY));
+  // Determine best starting edge based on child position relative to parent
+  const parentCenterX = (fromRect.left + fromRect.right) / 2;
+  const parentCenterY = (fromRect.top + fromRect.bottom) / 2;
   
-  const start = {
-    x: fromRect.right,
-    y: startY
-  };
+  const dx = childCenterX - parentCenterX;
+  const dy = childCenterY - parentCenterY;
+  
+  let start;
+  
+  // Choose the edge that points most directly toward the child
+  // This creates natural, smooth curves
+  if (Math.abs(dx) > Math.abs(dy)) {
+    // Child is more horizontal from parent - use right edge
+    // Position varies along the edge based on child's Y
+    const startY = parentCenterY + (dy * 0.7); // 70% of the way toward child's Y
+    start = {
+      x: fromRect.right,
+      y: Math.max(fromRect.top + 15, Math.min(fromRect.bottom - 15, startY))
+    };
+  } else if (dy > 0) {
+    // Child is below parent - start from bottom edge
+    const startX = parentCenterX + (dx * 0.5); // Shift X toward child
+    start = {
+      x: Math.max(fromRect.left + 15, Math.min(fromRect.right - 15, startX)),
+      y: fromRect.bottom
+    };
+  } else {
+    // Child is above parent - start from top edge
+    const startX = parentCenterX + (dx * 0.5); // Shift X toward child
+    start = {
+      x: Math.max(fromRect.left + 15, Math.min(fromRect.right - 15, startX)),
+      y: fromRect.top
+    };
+  }
 
-  const dx = end.x - start.x;
-  const dy = end.y - start.y;
+  const deltaX = end.x - start.x;
+  const deltaY = end.y - start.y;
   
-  // Create horizontal bezier curves that route around nodes
-  // Use a large fixed offset to ensure curves don't overlap with other nodes
-  const minHorizontalOffset = 100; // Minimum offset to route around nodes
-  const horizontalOffset = Math.max(Math.abs(dx) * 0.6, minHorizontalOffset);
+  // Create gentle, direct curves
+  // Reduce curvature for cleaner, more direct connections
+  const horizontalOffset = Math.abs(deltaX) * 0.4; // Use 40% of horizontal distance (reduced from 60%)
+  const verticalOffset = Math.abs(deltaY) * 0.15; // Minimal vertical offset (reduced from 30%)
   
-  // For vertical spacing, add offset proportional to the vertical distance
-  // This creates smoother curves when nodes are far apart vertically
-  const verticalOffset = Math.abs(dy) * 0.3;
-  
-  // First control point - extends far to the right and slightly toward target Y
+  // First control point - gentle curve from start
   const c1x = start.x + horizontalOffset;
-  const c1y = start.y + (dy > 0 ? verticalOffset : -verticalOffset);
+  const c1y = start.y + (deltaY > 0 ? verticalOffset : -verticalOffset);
   
-  // Second control point - extends far to the left and slightly toward target Y
+  // Second control point - gentle curve to end
   const c2x = end.x - horizontalOffset;
-  const c2y = end.y - (dy > 0 ? verticalOffset : -verticalOffset);
+  const c2y = end.y - (deltaY > 0 ? verticalOffset : -verticalOffset);
 
   const d = `M ${start.x} ${start.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${end.x} ${end.y}`;
   const label = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
