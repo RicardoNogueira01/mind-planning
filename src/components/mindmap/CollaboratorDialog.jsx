@@ -10,14 +10,37 @@ const CollaboratorDialog = ({
   collaborators,
   assignCollaborator,
   collaboratorNodeId,
-  setCollaboratorNodeId
+  setCollaboratorNodeId,
+  nodes
 }) => {
   const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
   const pageSize = COLLAB_PAGE_SIZE;
-  const filtered = collaborators; // placeholder for future search
+  
+  // Filter collaborators by search query
+  const filtered = useMemo(() => {
+    if (!searchQuery) return collaborators;
+    const query = searchQuery.toLowerCase();
+    return collaborators.filter(c => 
+      c.name.toLowerCase().includes(query) || 
+      (c.initials && c.initials.toLowerCase().includes(query))
+    );
+  }, [collaborators, searchQuery]);
+  
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const pageItems = useMemo(() => filtered.slice((currentPage - 1) * pageSize, (currentPage - 1) * pageSize + pageSize), [filtered, currentPage]);
+  
+  // Get current node's collaborators for checkbox mode
+  const currentNode = useMemo(() => {
+    if (!collaboratorNodeId || !nodes) return null;
+    return nodes.find(n => n.id === collaboratorNodeId);
+  }, [collaboratorNodeId, nodes]);
+  
+  const nodeCollaborators = useMemo(() => {
+    if (!currentNode) return [];
+    return Array.isArray(currentNode.collaborators) ? currentNode.collaborators : [];
+  }, [currentNode]);
 
   if (!showCollaboratorDialog) return null;
 
@@ -30,35 +53,77 @@ const CollaboratorDialog = ({
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-25 backdrop-blur-sm flex items-center justify-center z-50">
   <div className="bg-white rounded-xl shadow-xl border border-gray-200 p-5 w-72">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Assign Collaborator</h3>
-        <p className="text-sm text-gray-500 mb-4">
-          {collaboratorNodeId ? 'Assigning to node' : `${selectedNodes.length} ${selectedNodes.length === 1 ? 'node' : 'nodes'} selected`}
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          {collaboratorNodeId ? 'Assign Collaborators' : 'Assign Collaborator to Group'}
+        </h3>
+        <p className="text-sm text-gray-500 mb-3">
+          {collaboratorNodeId ? 'Select collaborators for this node' : `${selectedNodes.length} ${selectedNodes.length === 1 ? 'node' : 'nodes'} selected`}
         </p>
         
-  <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto">
-          {pageItems.map(collab => (
-            <button
-              key={collab.id}
-              className="flex flex-col items-center justify-center p-3 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-colors"
-              onClick={() => {
-                if (collaboratorNodeId) {
-                  assignCollaborator(collaboratorNodeId, collab.id);
-                  setCollaboratorNodeId(null);
-                } else {
-                  assignCollaborator(collab);
-                }
-                setShowCollaboratorDialog(false);
-              }}
-            >
-              <div 
-                className="w-10 h-10 rounded-full flex items-center justify-center text-white mb-2"
-                style={{ backgroundColor: collab.color }}
-              >
-                {collab.initials}
-              </div>
-              <span className="text-sm text-gray-700">{collab.name}</span>
-            </button>
-          ))}
+        {/* Search input */}
+        <input
+          type="text"
+          className="w-full p-2 mb-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Search collaborators..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          autoFocus
+        />
+        
+        {/* Collaborator list - checkboxes for single node, buttons for group */}
+        <div className="max-h-64 overflow-y-auto">
+          {collaboratorNodeId ? (
+            // Checkbox mode for individual node assignment
+            <div className="flex flex-col gap-1">
+              {pageItems.map(collab => {
+                const isSelected = nodeCollaborators.includes(collab.id);
+                return (
+                  <label 
+                    key={collab.id} 
+                    className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => {
+                        assignCollaborator(collaboratorNodeId, collab.id);
+                      }}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span 
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" 
+                      style={{ backgroundColor: collab.color, color: 'white' }}
+                    >
+                      {collab.initials}
+                    </span>
+                    <span className="text-sm text-gray-700">{collab.name}</span>
+                  </label>
+                );
+              })}
+            </div>
+          ) : (
+            // Button mode for group creation
+            <div className="grid grid-cols-2 gap-3">
+              {pageItems.map(collab => (
+                <button
+                  key={collab.id}
+                  className="flex flex-col items-center justify-center p-3 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-colors"
+                  onClick={() => {
+                    assignCollaborator(collab);
+                    setShowCollaboratorDialog(false);
+                  }}
+                >
+                  <div 
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white mb-2"
+                    style={{ backgroundColor: collab.color }}
+                  >
+                    {collab.initials}
+                  </div>
+                  <span className="text-sm text-gray-700">{collab.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
   {totalPages > 1 && (
           <div className="mt-3 flex items-center justify-between">
@@ -80,7 +145,18 @@ const CollaboratorDialog = ({
           </div>
         )}
         
-        <div className="mt-6 flex justify-end">
+        <div className="mt-6 flex justify-end gap-2">
+          {collaboratorNodeId && (
+            <button
+              className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
+              onClick={() => {
+                setCollaboratorNodeId(null);
+                setShowCollaboratorDialog(false);
+              }}
+            >
+              Done
+            </button>
+          )}
           <button
             className="px-4 py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg"
             onClick={handleCancel}
