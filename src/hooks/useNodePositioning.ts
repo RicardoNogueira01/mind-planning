@@ -1,16 +1,16 @@
 /**
  * Node Positioning Logic Hook
- * Handles hierarchical positioning, collision detection, and spider web pattern
+ * Handles hierarchical positioning, collision detection, and cascading layout
  */
 
 import { useCallback } from 'react';
-import type { Node, Position } from '../types/mindmap';
+import type { Node, Position, Connection } from '../types/mindmap';
 
 const NODE_HEIGHT = 56;
 const MARGIN = 25; // 25px spacing between nodes
 const COLLISION_DISTANCE = 80; // Reduced for tighter spacing
 
-export function useNodePositioning(nodes: Node[]) {
+export function useNodePositioning(nodes: Node[], connections: Connection[] = []) {
   /**
    * Check if position is valid (not occupied by another node)
    */
@@ -71,21 +71,36 @@ export function useNodePositioning(nodes: Node[]) {
 
   /**
    * Position children hierarchically:
-   * - Uses spider web pattern (radiates in all directions around parent)
-   * - Creates natural mind map layout
-   * - First child, second child, etc. all spread around parent
+   * - Stacks children vertically to the right of parent
+   * - Creates a cascading layout flowing downward
+   * - Each child is positioned below the previous one
    */
   const findStackedChildPosition = useCallback((parentId: string, preferredX: number, preferredY: number): Position => {
     const parent = nodes.find(n => n.id === parentId);
     if (!parent) return { x: preferredX, y: preferredY };
 
-    // Calculate the radius based on the preferred position
-    const radius = Math.abs(preferredX - parent.x);
+    // Find all existing children of this parent using connections
+    const childNodeIds = connections
+      .filter(conn => conn.from === parentId)
+      .map(conn => conn.to);
+
+    // If no children exist yet, use the parent's Y position (first child aligns with parent)
+    if (childNodeIds.length === 0) {
+      return { x: preferredX, y: parent.y };
+    }
+
+    // Get all child nodes
+    const childNodes = nodes.filter(n => childNodeIds.includes(n.id));
     
-    // Use spider web pattern for all children with the specified radius
-    // This creates a natural mind map layout like the image
-    return findAvailablePosition(parent.x, parent.y, radius);
-  }, [nodes, findAvailablePosition]);
+    // Find the lowest child Y position
+    const lowestY = Math.max(...childNodes.map(n => n.y));
+    
+    // Position new child below the lowest one with spacing
+    return {
+      x: preferredX,
+      y: lowestY + NODE_HEIGHT + MARGIN
+    };
+  }, [nodes, connections]);
 
   return {
     isPositionAvailable,

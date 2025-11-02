@@ -81,9 +81,11 @@ export default function ConnectionsSvg({
             <path
               d={pathData}
               stroke={strokeColor}
-              strokeWidth={2}
+              strokeWidth={2.5}
               fill="none"
               strokeOpacity={focusOpacity}
+              strokeLinecap="round"
+              strokeLinejoin="round"
               style={{ transition: 'all 0.15s ease-out' }}
             />
       {conn.label && labelPoint && (

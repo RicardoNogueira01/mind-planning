@@ -54,23 +54,47 @@ export function getPerimeterPoint(rect: Rect, targetX: number, targetY: number) 
 /**
  * Compute a smooth cubic bezier path between two rectangles. Returns the path d string,
  * start/end points, and a suggested label position (midpoint of start and end).
+ * Connects from right edge of parent to middle-left of child with horizontal curves.
+ * Start point is distributed along the parent's right edge based on child's vertical position.
  */
 export function computeBezierPath(fromRect: Rect, toRect: Rect) {
-  const fromCenter = getRectCenter(fromRect);
-  const toCenter = getRectCenter(toRect);
-
-  const start = getPerimeterPoint(fromRect, toCenter.x, toCenter.y);
-  const end = getPerimeterPoint(toRect, fromCenter.x, fromCenter.y);
+  // End at middle-left of child node
+  const childCenterY = (toRect.top + toRect.bottom) / 2;
+  const end = {
+    x: toRect.left,
+    y: childCenterY
+  };
+  
+  // Start from right edge of parent, but Y position depends on where child is
+  // Clamp the Y position to stay within parent's bounds (with some padding)
+  const parentTop = fromRect.top + 10; // 10px padding from top
+  const parentBottom = fromRect.bottom - 10; // 10px padding from bottom
+  const startY = Math.max(parentTop, Math.min(parentBottom, childCenterY));
+  
+  const start = {
+    x: fromRect.right,
+    y: startY
+  };
 
   const dx = end.x - start.x;
   const dy = end.y - start.y;
-  // Vertical bias as in MindMap.jsx
-  // const controlDistance = Math.min(distance * 0.4, 120); // retained variable for parity if needed later
-  const verticalBias = Math.sign(dy) * Math.min(Math.abs(dy) * 0.15, 60);
-  const c1x = start.x + dx * 0.25;
-  const c1y = start.y + dy * 0.2 - verticalBias * 0.3;
-  const c2x = end.x - dx * 0.25;
-  const c2y = end.y - dy * 0.2 + verticalBias * 0.3;
+  
+  // Create horizontal bezier curves that route around nodes
+  // Use a large fixed offset to ensure curves don't overlap with other nodes
+  const minHorizontalOffset = 100; // Minimum offset to route around nodes
+  const horizontalOffset = Math.max(Math.abs(dx) * 0.6, minHorizontalOffset);
+  
+  // For vertical spacing, add offset proportional to the vertical distance
+  // This creates smoother curves when nodes are far apart vertically
+  const verticalOffset = Math.abs(dy) * 0.3;
+  
+  // First control point - extends far to the right and slightly toward target Y
+  const c1x = start.x + horizontalOffset;
+  const c1y = start.y + (dy > 0 ? verticalOffset : -verticalOffset);
+  
+  // Second control point - extends far to the left and slightly toward target Y
+  const c2x = end.x - horizontalOffset;
+  const c2y = end.y - (dy > 0 ? verticalOffset : -verticalOffset);
 
   const d = `M ${start.x} ${start.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${end.x} ${end.y}`;
   const label = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
