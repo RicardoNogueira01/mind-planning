@@ -38,7 +38,7 @@ export default function MindMap({ mapId, onBack }) {
     }
   ]);
   const [connections, setConnections] = useState([]);
-  const [zoom] = useState(1);
+  const [zoom, setZoom] = useState(1);
   const [mode, setMode] = useState('cursor'); // 'cursor' | 'pan'
   const [selectionType, setSelectionType] = useState('simple');
   const [selectedNodes, setSelectedNodes] = useState([]);
@@ -154,6 +154,28 @@ export default function MindMap({ mapId, onBack }) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
+  // Wheel event for zooming
+  useEffect(() => {
+    const handleWheel = (e) => {
+      if (!canvasRef.current) return;
+      // Only zoom if the mouse is over the canvas
+      if (!canvasRef.current.contains(e.target)) return;
+      
+      e.preventDefault();
+      const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+      setZoom(prevZoom => {
+        const newZoom = prevZoom * zoomFactor;
+        return Math.min(Math.max(newZoom, 0.2), 3);
+      });
+    };
+
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.addEventListener('wheel', handleWheel, { passive: false });
+      return () => canvas.removeEventListener('wheel', handleWheel);
+    }
+  }, [canvasRef]);
+
   // ============================================
   // HISTORY MANAGEMENT
   // ============================================
@@ -185,8 +207,8 @@ export default function MindMap({ mapId, onBack }) {
       e.preventDefault(); // Prevent page scrolling or text selection
       setIsSelecting(true);
       const rect = canvasRef.current.getBoundingClientRect();
-      const x = (e.clientX - rect.left - pan.x);
-      const y = (e.clientY - rect.top - pan.y);
+      const x = (e.clientX - rect.left - dragging.pan.x) / zoom;
+      const y = (e.clientY - rect.top - dragging.pan.y) / zoom;
       setSelectionStart({ x, y });
       setSelectionRect({ x, y, width: 0, height: 0 });
     }
@@ -196,8 +218,8 @@ export default function MindMap({ mapId, onBack }) {
     if (isSelecting) {
       e.preventDefault(); // Prevent page scrolling or text selection
       const rect = canvasRef.current.getBoundingClientRect();
-      const currentX = (e.clientX - rect.left - pan.x);
-      const currentY = (e.clientY - rect.top - pan.y);
+      const currentX = (e.clientX - rect.left - dragging.pan.x) / zoom;
+      const currentY = (e.clientY - rect.top - dragging.pan.y) / zoom;
       // Calculate width and height before deciding position
       const width = Math.abs(currentX - selectionStart.x);
       const height = Math.abs(currentY - selectionStart.y);
@@ -839,9 +861,17 @@ export default function MindMap({ mapId, onBack }) {
     localStorage.setItem(`mindMap_${mapId}`, payload);
   }, [mapId, nodes, connections]);
 
+  // Determine cursor style based on mode and state
   let cursorStyle = 'default';
-  if (mode === 'pan') {
-    cursorStyle = isPanning ? 'grabbing' : 'grab';
+  if (mode === 'cursor' && selectionType === 'collaborator') {
+    cursorStyle = 'crosshair';
+  } else if (isPanning) {
+    cursorStyle = 'grabbing';
+  } else if (mode === 'pan') {
+    cursorStyle = 'grab';
+  } else if (mode === 'cursor') {
+    // In cursor mode, show grab cursor to indicate panning is available on empty space
+    cursorStyle = 'grab';
   }
 
   return (
@@ -849,6 +879,7 @@ export default function MindMap({ mapId, onBack }) {
       <div
         className="flex-1 relative overflow-hidden"
         ref={canvasRef}
+        style={{ cursor: cursorStyle }}
         onMouseDown={(e) => {
           // Check if in collaborator selection mode
           if (mode === 'cursor' && selectionType === 'collaborator') {
@@ -877,7 +908,6 @@ export default function MindMap({ mapId, onBack }) {
         role="application"
         tabIndex={0}
         aria-label="Mind map canvas"
-        style={{ cursor: cursorStyle }}
       >
         {/* Toolbar rendered via Portal to avoid parent stacking context issues */}
         {createPortal(
@@ -915,10 +945,10 @@ export default function MindMap({ mapId, onBack }) {
 
         {/* Canvas with pan/zoom */}
         <MindMapCanvas
-          pan={pan}
+          pan={dragging.pan}
           zoom={zoom}
-          isSelecting={false}
-          selectionRect={null}
+          isSelecting={isSelecting}
+          selectionRect={selectionRect}
           renderNodeGroups={renderNodeGroups}
           renderConnections={(
             <ConnectionsSvg
@@ -933,17 +963,24 @@ export default function MindMap({ mapId, onBack }) {
           )}
         >
           {/* Nodes */}
-          {nodes.map((node) => (
-            <NodeCard
-              key={node.id}
-              node={node}
-              selected={selectedNodes.includes(node.id)}
-              onSelect={toggleSelectNode}
-              onUpdateText={updateNodeText}
-              onMouseDown={(e) => {
-                // allow dragging via startPanning handler; nothing here
-              }}
-            >
+          {nodes.map((node) => {
+            const isNodeMatching = searchQuery 
+              ? node.text.toLowerCase().includes(searchQuery.toLowerCase()) 
+              : true;
+            
+            return (
+              <NodeCard
+                key={node.id}
+                node={node}
+                selected={selectedNodes.includes(node.id)}
+                onSelect={toggleSelectNode}
+                onUpdateText={updateNodeText}
+                searchQuery={searchQuery}
+                isMatching={isNodeMatching}
+                onMouseDown={(e) => {
+                  // allow dragging via startPanning handler; nothing here
+                }}
+              >
               {/* Progress ring (fun) */}
               {fxOptions?.progressRing && (
                 <div className="absolute -top-3 -left-3">
@@ -1378,7 +1415,8 @@ export default function MindMap({ mapId, onBack }) {
               </div>
               )}
             </NodeCard>
-          ))}
+            );
+          })}
         </MindMapCanvas>
 
         {/* Selection Rectangle for Collaborator Mode */}

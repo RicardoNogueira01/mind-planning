@@ -52,9 +52,13 @@ export function useDragging(
         }
       }
 
-      // Canvas panning (only in pan mode)
-      if (mode !== 'pan') return;
-      if (e.target !== canvasRef.current) return;
+      // Canvas panning - works in both cursor and pan modes when clicking empty space
+      // In cursor mode: pan when clicking on canvas background (not on nodes)
+      // In pan mode: pan is the primary action
+      if (mode === 'cursor') {
+        // In cursor mode, only pan if clicking directly on canvas (empty space)
+        if (e.target !== canvasRef.current) return;
+      }
       
       setIsPanning(true);
       panRef.current = {

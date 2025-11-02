@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const NodeCard = ({ node, selected, onSelect, onUpdateText, children }) => {
+const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatching, children }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editText, setEditText] = React.useState(node.text || '');
 
@@ -25,10 +25,22 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, children }) => {
     }
   };
 
+  // Calculate opacity and zIndex based on search
+  const opacity = searchQuery ? (isMatching ? 1 : 0.3) : 1;
+  const zIndex = searchQuery ? (isMatching ? 20 : 10) : 10;
+
   return (
     <div
       className={`absolute rounded-lg ${selected ? 'ring-2 ring-blue-400/70' : ''}`}
-      style={{ left: node.x - 100, top: node.y - 28, minWidth: 200, position: 'absolute' }}
+      style={{ 
+        left: node.x - 100, 
+        top: node.y - 28, 
+        minWidth: 200, 
+        position: 'absolute',
+        opacity,
+        zIndex,
+        transition: 'opacity 0.2s ease-out'
+      }}
       data-node-id={node.id}
     >
       <button
@@ -76,6 +88,8 @@ NodeCard.propTypes = {
   selected: PropTypes.bool,
   onSelect: PropTypes.func,
   onUpdateText: PropTypes.func,
+  searchQuery: PropTypes.string,
+  isMatching: PropTypes.bool,
   children: PropTypes.node
 };
 
