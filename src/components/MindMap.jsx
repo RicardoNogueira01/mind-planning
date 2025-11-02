@@ -1045,8 +1045,6 @@ export default function MindMap({ mapId, onBack }) {
         <MindMapCanvas
           pan={dragging.pan}
           zoom={zoom}
-          isSelecting={isSelecting}
-          selectionRect={selectionRect}
           renderNodeGroups={renderNodeGroups}
           renderConnections={(
             <ConnectionsSvg
