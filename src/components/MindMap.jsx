@@ -503,12 +503,36 @@ export default function MindMap({ mapId, onBack }) {
                 e.stopPropagation();
                 const start = { x: e.clientX, y: e.clientY };
                 const startBB = { ...group.boundingBox };
+                // Store initial positions of all nodes in the group
+                const initialNodePositions = {};
+                (group.nodeIds || []).forEach(nodeId => {
+                  const node = nodes.find(n => n.id === nodeId);
+                  if (node) {
+                    initialNodePositions[nodeId] = { x: node.x, y: node.y };
+                  }
+                });
+                
                 const onMove = (ev) => {
                   const dx = (ev.clientX - start.x) / zoom;
                   const dy = (ev.clientY - start.y) / zoom;
                   setIsDraggingGroup(true);
+                  
+                  // Update group bounding box
                   setNodeGroups(prev => prev.map(g => g.id === group.id ? { ...g, boundingBox: { ...startBB, x: startBB.x + dx, y: startBB.y + dy } } : g));
+                  
+                  // Move all nodes in the group
+                  setNodes(prev => prev.map(n => {
+                    if (initialNodePositions[n.id]) {
+                      return { 
+                        ...n, 
+                        x: initialNodePositions[n.id].x + dx, 
+                        y: initialNodePositions[n.id].y + dy 
+                      };
+                    }
+                    return n;
+                  }));
                 };
+                
                 const onUp = () => {
                   window.removeEventListener('pointermove', onMove);
                   window.removeEventListener('pointerup', onUp);
