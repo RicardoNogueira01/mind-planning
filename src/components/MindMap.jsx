@@ -599,13 +599,13 @@ export default function MindMap({ mapId, onBack }) {
     };
     
     // Calculate bounding box for the group based on actual node dimensions
-    // NodeCard: left: node.x - 100, top: node.y - 28, minWidth: 200
-    // So node bounds are: x ± 100 (width), y ± 28 (height)
+    // NodeCard: left: node.x - 150, top: node.y - 42, width: 300px
+    // So node bounds are: x ± 150 (width), y: top at -42, approximate height ~84px
     const groupNodes = nodes.filter(node => selectedNodes.includes(node.id));
-    const minX = Math.min(...groupNodes.map(node => node.x - 100));
-    const maxX = Math.max(...groupNodes.map(node => node.x + 100));
-    const minY = Math.min(...groupNodes.map(node => node.y - 28));
-    const maxY = Math.max(...groupNodes.map(node => node.y + 28));
+    const minX = Math.min(...groupNodes.map(node => node.x - 150));
+    const maxX = Math.max(...groupNodes.map(node => node.x + 150));
+    const minY = Math.min(...groupNodes.map(node => node.y - 42));
+    const maxY = Math.max(...groupNodes.map(node => node.y + 42));
     
     const boundingBox = {
       x: minX - 15,
