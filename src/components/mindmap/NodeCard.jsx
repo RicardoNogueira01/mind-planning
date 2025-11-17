@@ -55,7 +55,7 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
         }`}
         onClick={(e) => {
           e.stopPropagation();
-          onSelect?.(node.id);
+          onSelect?.(node.id, e);
         }}
         style={{ backgroundColor: node.bgColor || undefined, color: node.fontColor || undefined }}
         onDoubleClick={handleDoubleClick}

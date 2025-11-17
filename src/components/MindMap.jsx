@@ -278,7 +278,7 @@ export default function MindMap({ mapId, onBack }) {
   // NODE OPERATIONS (via hooks)
   // ============================================
 
-  const toggleSelectNode = (id) => {
+  const toggleSelectNode = (id, event) => {
     // If in the middle of creating a connection, connect to the clicked node
     if (connectionFrom && connectionFrom !== id) {
       const exists = connections.some(c => (c.from === connectionFrom && c.to === id) || (c.from === id && c.to === connectionFrom));
@@ -288,7 +288,17 @@ export default function MindMap({ mapId, onBack }) {
       setConnectionFrom(null);
       return;
     }
-    setSelectedNodes(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    
+    // Check if Ctrl (Windows/Linux) or Cmd (Mac) key is pressed
+    const isMultiSelect = event && (event.ctrlKey || event.metaKey);
+    
+    if (isMultiSelect) {
+      // Multi-select mode: toggle the node in the selection
+      setSelectedNodes(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    } else {
+      // Single select mode: select only this node
+      setSelectedNodes([id]);
+    }
   };
 
   // Derived selections for focus mode
