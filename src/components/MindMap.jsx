@@ -289,8 +289,9 @@ export default function MindMap({ mapId, onBack }) {
       const exists = connections.some(c => (c.from === connectionFrom && c.to === id) || (c.from === id && c.to === connectionFrom));
       if (!exists) {
         setConnections(connections.concat([{ id: `conn-${Date.now()}`, from: connectionFrom, to: id }]));
+        setConnectionFrom(null);
       }
-      setConnectionFrom(null);
+      // If connection already exists, do nothing (keep connection mode active)
       return;
     }
     
@@ -1047,8 +1048,10 @@ export default function MindMap({ mapId, onBack }) {
         ref={canvasRef}
         style={{ cursor: cursorStyle }}
         onMouseDown={(e) => {
-          // If clicking on the canvas background (not on a node), deselect all nodes
-          if (e.target === e.currentTarget || e.target.closest('.mindmap-canvas-inner')) {
+          // Only deselect if clicking on canvas background AND not starting a node drag
+          const clickedNode = e.target instanceof HTMLElement ? e.target.closest('[data-node-id]') : null;
+          
+          if (!clickedNode && (e.target === e.currentTarget || e.target.closest('.mindmap-canvas-inner'))) {
             setSelectedNodes([]);
           }
           
@@ -1176,6 +1179,7 @@ export default function MindMap({ mapId, onBack }) {
                 isMatching={isNodeMatching}
                 connectionMode={!!connectionFrom}
                 isConnectionSource={connectionFrom === node.id}
+                isAlreadyConnected={connectionFrom && connectionFrom !== node.id && connections.some(c => (c.from === connectionFrom && c.to === node.id) || (c.from === node.id && c.to === connectionFrom))}
                 onMouseDown={(e) => {
                   // allow dragging via startPanning handler; nothing here
                 }}

@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatching, connectionMode, isConnectionSource, children }) => {
+const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatching, connectionMode, isConnectionSource, isAlreadyConnected, children }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editText, setEditText] = React.useState(node.text || '');
   const [isHovering, setIsHovering] = React.useState(false);
@@ -59,40 +59,51 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
         transition: 'opacity 0.2s ease-out'
       }}
       data-node-id={node.id}
-      onMouseEnter={() => connectionMode && setIsHovering(true)}
+      onMouseEnter={() => connectionMode && !isAlreadyConnected && setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
       {/* Connection Points - visible when in connection mode */}
       {connectionMode && !isConnectionSource && (
         <>
-          {/* Top connection point */}
-          <div 
-            className={`absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 rounded-full border-2 transition-all duration-200 ${
-              isHovering ? 'bg-green-500 border-green-600 scale-150 shadow-lg shadow-green-500/50' : 'bg-white border-blue-400'
-            }`}
-            style={{ zIndex: 100 }}
-          />
-          {/* Right connection point */}
-          <div 
-            className={`absolute top-1/2 -right-2 transform -translate-y-1/2 w-4 h-4 rounded-full border-2 transition-all duration-200 ${
-              isHovering ? 'bg-green-500 border-green-600 scale-150 shadow-lg shadow-green-500/50' : 'bg-white border-blue-400'
-            }`}
-            style={{ zIndex: 100 }}
-          />
-          {/* Bottom connection point */}
-          <div 
-            className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 rounded-full border-2 transition-all duration-200 ${
-              isHovering ? 'bg-green-500 border-green-600 scale-150 shadow-lg shadow-green-500/50' : 'bg-white border-blue-400'
-            }`}
-            style={{ zIndex: 100 }}
-          />
-          {/* Left connection point */}
-          <div 
-            className={`absolute top-1/2 -left-2 transform -translate-y-1/2 w-4 h-4 rounded-full border-2 transition-all duration-200 ${
-              isHovering ? 'bg-green-500 border-green-600 scale-150 shadow-lg shadow-green-500/50' : 'bg-white border-blue-400'
-            }`}
-            style={{ zIndex: 100 }}
-          />
+          {isAlreadyConnected ? (
+            // Red indicator for already connected nodes
+            <div className="absolute inset-0 rounded-lg border-2 border-red-500 bg-red-500/10 pointer-events-none flex items-center justify-center">
+              <div className="bg-red-500 text-white text-xs font-medium px-3 py-1 rounded-full shadow-lg">
+                Already Connected
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Top connection point */}
+              <div 
+                className={`absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 rounded-full border-2 transition-all duration-200 ${
+                  isHovering ? 'bg-green-500 border-green-600 scale-150 shadow-lg shadow-green-500/50' : 'bg-white border-blue-400'
+                }`}
+                style={{ zIndex: 100 }}
+              />
+              {/* Right connection point */}
+              <div 
+                className={`absolute top-1/2 -right-2 transform -translate-y-1/2 w-4 h-4 rounded-full border-2 transition-all duration-200 ${
+                  isHovering ? 'bg-green-500 border-green-600 scale-150 shadow-lg shadow-green-500/50' : 'bg-white border-blue-400'
+                }`}
+                style={{ zIndex: 100 }}
+              />
+              {/* Bottom connection point */}
+              <div 
+                className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 rounded-full border-2 transition-all duration-200 ${
+                  isHovering ? 'bg-green-500 border-green-600 scale-150 shadow-lg shadow-green-500/50' : 'bg-white border-blue-400'
+                }`}
+                style={{ zIndex: 100 }}
+              />
+              {/* Left connection point */}
+              <div 
+                className={`absolute top-1/2 -left-2 transform -translate-y-1/2 w-4 h-4 rounded-full border-2 transition-all duration-200 ${
+                  isHovering ? 'bg-green-500 border-green-600 scale-150 shadow-lg shadow-green-500/50' : 'bg-white border-blue-400'
+                }`}
+                style={{ zIndex: 100 }}
+              />
+            </>
+          )}
         </>
       )}
       <button
@@ -145,6 +156,7 @@ NodeCard.propTypes = {
   isMatching: PropTypes.bool,
   connectionMode: PropTypes.bool,
   isConnectionSource: PropTypes.bool,
+  isAlreadyConnected: PropTypes.bool,
   children: PropTypes.node
 };
 
