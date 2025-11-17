@@ -73,36 +73,14 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
               </div>
             </div>
           ) : (
-            <>
-              {/* Top connection point */}
-              <div 
-                className={`absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 rounded-full border-2 transition-all duration-200 ${
-                  isHovering ? 'bg-green-500 border-green-600 scale-150 shadow-lg shadow-green-500/50' : 'bg-white border-blue-400'
-                }`}
-                style={{ zIndex: 100 }}
-              />
-              {/* Right connection point */}
-              <div 
-                className={`absolute top-1/2 -right-2 transform -translate-y-1/2 w-4 h-4 rounded-full border-2 transition-all duration-200 ${
-                  isHovering ? 'bg-green-500 border-green-600 scale-150 shadow-lg shadow-green-500/50' : 'bg-white border-blue-400'
-                }`}
-                style={{ zIndex: 100 }}
-              />
-              {/* Bottom connection point */}
-              <div 
-                className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 rounded-full border-2 transition-all duration-200 ${
-                  isHovering ? 'bg-green-500 border-green-600 scale-150 shadow-lg shadow-green-500/50' : 'bg-white border-blue-400'
-                }`}
-                style={{ zIndex: 100 }}
-              />
-              {/* Left connection point */}
-              <div 
-                className={`absolute top-1/2 -left-2 transform -translate-y-1/2 w-4 h-4 rounded-full border-2 transition-all duration-200 ${
-                  isHovering ? 'bg-green-500 border-green-600 scale-150 shadow-lg shadow-green-500/50' : 'bg-white border-blue-400'
-                }`}
-                style={{ zIndex: 100 }}
-              />
-            </>
+            // Green border for connectable nodes
+            <div 
+              className={`absolute inset-0 rounded-lg pointer-events-none transition-all duration-200 ${
+                isHovering 
+                  ? 'border-4 border-green-500 shadow-lg shadow-green-500/50' 
+                  : 'border-2 border-green-400/60'
+              }`}
+            />
           )}
         </>
       )}
