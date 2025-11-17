@@ -1400,6 +1400,17 @@ export default function MindMap({ mapId, onBack }) {
                   // allow dragging via startPanning handler; nothing here
                 }}
               >
+              {/* Tags below node */}
+              {node.showTags !== false && node.tags && node.tags.length > 0 && (
+                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 flex gap-1.5 flex-wrap justify-center max-w-xs z-10">
+                  {node.tags.map((tag) => (
+                    <span key={tag} className="inline-block px-2.5 py-1 text-xs rounded-md bg-blue-50 border border-blue-200 text-blue-700 font-medium shadow-sm">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               {/* Progress Indicator (top-left) - Shows completion count for parent nodes */}
               {(() => {
                 const progress = getNodeProgress(node.id);
@@ -1642,7 +1653,7 @@ export default function MindMap({ mapId, onBack }) {
                         const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
                         const top = Math.max(8, rect.bottom + 20);
                         return createPortal(
-                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000, backgroundColor: 'white', borderRadius: '8px', padding: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
+                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, maxHeight: '400px', zIndex: 5000, backgroundColor: 'white', borderRadius: '8px', padding: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
                             <div className="grid grid-cols-6 gap-1">
                               {emojis.map(emoji => (
                                 <button
@@ -1673,30 +1684,56 @@ export default function MindMap({ mapId, onBack }) {
                       {isPopupOpen(node.id, 'tags') && (() => {
                         const anchor = tagBtnRefs.current[node.id];
                         const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
-                        const popupWidth = 300;
+                        const popupWidth = 320;
                         const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
                         const top = Math.max(8, rect.bottom + 20);
                         return createPortal(
-                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000, maxHeight: '400px', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
-                            <h4 className="font-medium text-gray-800 mb-3">Tags</h4>
-                            <div className="mb-3">
+                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000, maxHeight: '400px', overflowY: 'auto', backgroundColor: 'white', borderRadius: '12px', padding: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
+                            <h4 className="font-semibold text-gray-900 mb-4 text-base">Manage Tags</h4>
+                            
+                            {/* Show/Hide Tags Toggle */}
+                            <div className="mb-4 pb-3 border-b border-gray-200">
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={node.showTags !== false}
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    setNodes(nodes.map(n => n.id === node.id ? { ...n, showTags: e.target.checked } : n));
+                                  }}
+                                  className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-2 focus:ring-teal-500"
+                                />
+                                <span className="text-sm font-medium text-gray-700">Show tags below node</span>
+                              </label>
+                            </div>
+
+                            {/* Tags Display */}
+                            <div className="mb-4">
                               {(node.tags || []).length > 0 ? (
-                                <div className="flex gap-2 flex-wrap mb-3">
+                                <div className="flex gap-2 flex-wrap">
                                   {(node.tags || []).map((t) => (
-                                    <span key={t} className="px-2 py-1 text-xs rounded-full bg-blue-100 border border-blue-200 text-blue-700 flex items-center gap-1">
+                                    <span key={t} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-blue-50 border border-blue-200 text-blue-700 font-medium hover:bg-blue-100 transition-colors">
                                       {t}
-                                      <button className="text-blue-500 hover:text-blue-700 text-xs" onClick={(e) => { e.stopPropagation(); setNodes(nodes.map(n => n.id === node.id ? { ...n, tags: (n.tags || []).filter(tag => tag !== t) } : n)); }}>×</button>
+                                      <button 
+                                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full w-4 h-4 flex items-center justify-center text-base leading-none transition-colors" 
+                                        onClick={(e) => { e.stopPropagation(); setNodes(nodes.map(n => n.id === node.id ? { ...n, tags: (n.tags || []).filter(tag => tag !== t) } : n)); }}
+                                        title="Remove tag"
+                                      >
+                                        ×
+                                      </button>
                                     </span>
                                   ))}
                                 </div>
                               ) : (
-                                <div className="text-xs text-gray-500 mb-3">No tags yet</div>
+                                <div className="text-sm text-gray-500 italic">No tags added yet</div>
                               )}
                             </div>
+                            
+                            {/* Add Tag Input */}
                             <input
                               type="text"
                               placeholder="Add tag and press Enter"
-                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                                   const tag = e.currentTarget.value.trim();
