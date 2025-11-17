@@ -14,21 +14,7 @@ export default function ConnectionsSvg({
   selectedNode,
   relatedNodeIds,
 }) {
-  // Debug logging
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      console.log('[ConnectionsSvg] Rendering with:', {
-        connectionsCount: connections?.length || 0,
-        nodesCount: nodes?.length || 0,
-        nodePositionsCount: Object.keys(nodePositions || {}).length,
-        connections: connections,
-        nodePositions: nodePositions
-      });
-    }
-  }, [connections, nodes, nodePositions]);
-
   if (!Array.isArray(connections) || connections.length === 0) {
-    console.log('[ConnectionsSvg] No connections to render');
     return null;
   }
 
@@ -56,18 +42,14 @@ export default function ConnectionsSvg({
         const fromNode = nodes.find((n) => n.id === conn.from);
         const toNode = nodes.find((n) => n.id === conn.to);
         if (!fromNode || !toNode) {
-          console.log('[ConnectionsSvg] Skipping connection - missing nodes:', { conn, fromNodeExists: !!fromNode, toNodeExists: !!toNode });
           return null;
         }
 
         const fromPos = nodePositions?.[conn.from];
         const toPos = nodePositions?.[conn.to];
         if (!fromPos || !toPos) {
-          console.log('[ConnectionsSvg] Skipping connection - missing positions:', { conn, fromPos, toPos });
           return null;
         }
-
-        console.log('[ConnectionsSvg] Rendering connection:', { conn, fromPos, toPos });
         
         // Each connection is independent - based only on child position
   const { d: pathData, label: labelPoint } = computeBezierPath(fromPos, toPos);

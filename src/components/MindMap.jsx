@@ -303,17 +303,47 @@ export default function MindMap({ mapId, onBack }) {
 
   const nodePositions = React.useMemo(() => {
     const map = {};
-    // Calculate node rectangles for connection routing
-    // Nodes are rendered as: left: x - 150, top: y - 42, minWidth: 300, height: ~88 (with padding)
-    const NODE_WIDTH = 300;  // Updated to match actual node width
-    const NODE_HEIGHT = 88;  // Updated to match actual node height with padding
+    
     nodes.forEach(n => { 
-      map[n.id] = {
-        left: n.x - NODE_WIDTH / 2,    // x - 150
-        top: n.y - NODE_HEIGHT / 2,    // y - 44
-        right: n.x + NODE_WIDTH / 2,   // x + 150
-        bottom: n.y + NODE_HEIGHT / 2  // y + 44
-      };
+      // Get actual DOM dimensions for accurate bounding box
+      const element = document.querySelector(`[data-node-id="${n.id}"]`);
+      
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        // Account for pan/zoom transforms
+        const transform = element.closest('[style*="transform"]');
+        const transformStyle = transform ? window.getComputedStyle(transform).transform : 'none';
+        
+        // For now, use actual DOM width/height
+        const actualWidth = rect.width;
+        const actualHeight = rect.height;
+        
+        map[n.id] = {
+          left: n.x - 150,
+          top: n.y - 42,
+          right: n.x - 150 + actualWidth,
+          bottom: n.y - 42 + actualHeight
+        };
+        
+        // Debug logging for root node
+        if (n.id === 'root') {
+          console.log('🔍 Root node actual dimensions:', {
+            domWidth: actualWidth,
+            domHeight: actualHeight,
+            calculatedBox: map[n.id]
+          });
+        }
+      } else {
+        // Fallback if element not yet rendered
+        const NODE_WIDTH = 300;
+        const NODE_HEIGHT = 84;
+        map[n.id] = {
+          left: n.x - 150,
+          top: n.y - 42,
+          right: n.x - 150 + NODE_WIDTH,
+          bottom: n.y - 42 + NODE_HEIGHT
+        };
+      }
     });
     return map;
   }, [nodes]);
@@ -1064,12 +1094,30 @@ export default function MindMap({ mapId, onBack }) {
               ? node.text.toLowerCase().includes(searchQuery.toLowerCase()) 
               : true;
             
+            const bbox = nodePositions[node.id];
+            
             return (
-              <NodeCard
-                key={node.id}
-                node={node}
-                selected={selectedNodes.includes(node.id)}
-                onSelect={toggleSelectNode}
+              <React.Fragment key={node.id}>
+                {/* DEBUG: Visual bounding box overlay */}
+                {node.id === 'root' && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: bbox.left,
+                      top: bbox.top,
+                      width: bbox.right - bbox.left,
+                      height: bbox.bottom - bbox.top,
+                      border: '2px solid red',
+                      pointerEvents: 'none',
+                      zIndex: 9999
+                    }}
+                  />
+                )}
+                
+                <NodeCard
+                  node={node}
+                  selected={selectedNodes.includes(node.id)}
+                  onSelect={toggleSelectNode}
                 onUpdateText={updateNodeText}
                 searchQuery={searchQuery}
                 isMatching={isNodeMatching}
@@ -1583,6 +1631,7 @@ export default function MindMap({ mapId, onBack }) {
               </div>
               )}
             </NodeCard>
+          </React.Fragment>
             );
           })}
         </MindMapCanvas>

@@ -26,9 +26,9 @@ export function getPerimeterPoint(rect: Rect, targetX: number, targetY: number) 
   
   let x, y;
 
-  // Determine which edge the line intersects
+  // Determine which edge the line intersects based on slope
   if (absSlope < height / width) {
-    // Intersects with left or right edge
+    // Intersects with left or right edge (more horizontal)
     if (dx > 0) {
       // Right edge
       x = rect.right;
@@ -36,10 +36,10 @@ export function getPerimeterPoint(rect: Rect, targetX: number, targetY: number) 
     } else {
       // Left edge
       x = rect.left;
-      y = cy - (width / 2) * slope;
+      y = cy + (width / 2) * slope;  // Fixed: removed incorrect negation
     }
   } else {
-    // Intersects with top or bottom edge
+    // Intersects with top or bottom edge (more vertical)
     if (dy > 0) {
       // Bottom edge
       y = rect.bottom;
@@ -47,11 +47,11 @@ export function getPerimeterPoint(rect: Rect, targetX: number, targetY: number) 
     } else {
       // Top edge
       y = rect.top;
-      x = cx - (height / 2) / slope;
+      x = cx + (height / 2) / slope;
     }
   }
 
-  // Clamp values to be within the rectangle's bounds, just in case
+  // Clamp values to be within the rectangle's bounds
   x = Math.max(rect.left, Math.min(rect.right, x));
   y = Math.max(rect.top, Math.min(rect.bottom, y));
 
@@ -95,8 +95,9 @@ export function computeBezierPath(fromRect: Rect, toRect: Rect) {
     childConnectionY = toCenterY;
   }
   
-  // Step 2: Find where on parent to connect FROM, aiming at the child connection point
-  const start = getPerimeterPoint(fromRect, childConnectionX, childConnectionY);
+  // Step 2: Find where on parent to connect FROM, using child's CENTER
+  // This allows multiple children in the same direction to share the same parent connection point
+  const start = getPerimeterPoint(fromRect, toCenterX, toCenterY);
   
   // Step 3: Use the child connection point we determined (don't recalculate)
   const end = { x: childConnectionX, y: childConnectionY };
