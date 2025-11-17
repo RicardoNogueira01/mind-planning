@@ -324,15 +324,6 @@ export default function MindMap({ mapId, onBack }) {
           right: n.x - 150 + actualWidth,
           bottom: n.y - 42 + actualHeight
         };
-        
-        // Debug logging for root node
-        if (n.id === 'root') {
-          console.log('🔍 Root node actual dimensions:', {
-            domWidth: actualWidth,
-            domHeight: actualHeight,
-            calculatedBox: map[n.id]
-          });
-        }
       } else {
         // Fallback if element not yet rendered
         const NODE_WIDTH = 300;
@@ -1094,26 +1085,8 @@ export default function MindMap({ mapId, onBack }) {
               ? node.text.toLowerCase().includes(searchQuery.toLowerCase()) 
               : true;
             
-            const bbox = nodePositions[node.id];
-            
             return (
               <React.Fragment key={node.id}>
-                {/* DEBUG: Visual bounding box overlay */}
-                {node.id === 'root' && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: bbox.left,
-                      top: bbox.top,
-                      width: bbox.right - bbox.left,
-                      height: bbox.bottom - bbox.top,
-                      border: '2px solid red',
-                      pointerEvents: 'none',
-                      zIndex: 9999
-                    }}
-                  />
-                )}
-                
                 <NodeCard
                   node={node}
                   selected={selectedNodes.includes(node.id)}

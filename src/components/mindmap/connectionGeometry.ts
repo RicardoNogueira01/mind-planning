@@ -62,9 +62,13 @@ export function getPerimeterPoint(rect: Rect, targetX: number, targetY: number) 
  * Compute a smooth cubic bezier path between two rectangles. Returns the path d string,
  * start/end points, and a suggested label position (midpoint of start and end).
  * Creates smooth, curved connections that route around nodes for clean, professional appearance.
- * Each connection is completely independent based on the actual child's position.
+ * Supports distributed connection points for polished visual hierarchy.
  */
-export function computeBezierPath(fromRect: Rect, toRect: Rect) {
+export function computeBezierPath(
+  fromRect: Rect, 
+  toRect: Rect,
+  options?: { childIndex?: number; totalChildren?: number; parentId?: string }
+) {
   const fromCenterX = (fromRect.left + fromRect.right) / 2;
   const fromCenterY = (fromRect.top + fromRect.bottom) / 2;
   const toCenterX = (toRect.left + toRect.right) / 2;
@@ -95,36 +99,60 @@ export function computeBezierPath(fromRect: Rect, toRect: Rect) {
     childConnectionY = toCenterY;
   }
   
-  // Step 2: Find where on parent to connect FROM, using child's CENTER
-  // This allows multiple children in the same direction to share the same parent connection point
-  const start = getPerimeterPoint(fromRect, toCenterX, toCenterY);
+  // Step 2: Find where on parent to connect FROM
+  // If distribution info provided, spread connections vertically along parent's right edge
+  let start: { x: number; y: number };
+  
+  if (options?.childIndex !== undefined && options?.totalChildren !== undefined && options.totalChildren > 1) {
+    // Distribute connection points evenly along the parent's right edge
+    const parentHeight = fromRect.bottom - fromRect.top;
+    const spacing = parentHeight / (options.totalChildren + 1);
+    const offsetY = spacing * (options.childIndex + 1);
+    
+    start = {
+      x: fromRect.right,
+      y: fromRect.top + offsetY
+    };
+  } else {
+    // Fallback: use child's position to determine parent exit point
+    start = getPerimeterPoint(fromRect, toCenterX, toCenterY);
+  }
   
   // Step 3: Use the child connection point we determined (don't recalculate)
   const end = { x: childConnectionX, y: childConnectionY };
   
-  // Create a more pronounced "S" curve for better node avoidance.
-  // The curve's direction depends on whether the target is to the left or right.
-  const curveStrength = 0.5; // Controls how much the line bends
+  // Create smooth, natural Bezier curves that flow elegantly
+  // Control points create gentle curves without awkward bending
   let c1x, c1y, c2x, c2y;
   
+  const horizontalDistance = Math.abs(end.x - start.x);
+  const verticalDistance = Math.abs(end.y - start.y);
+  
   if (toRect.left > fromRect.right + 10) {
-    // Target is clearly to the right of the source
-    c1x = start.x + (end.x - start.x) * curveStrength;
+    // Target is to the right - create smooth rightward flow
+    // Control points extend horizontally for natural curve
+    const controlDistance = Math.min(horizontalDistance * 0.6, 150);
+    
+    c1x = start.x + controlDistance;
     c1y = start.y;
-    c2x = end.x - (end.x - start.x) * curveStrength;
+    c2x = end.x - controlDistance;
     c2y = end.y;
   } else if (toRect.right < fromRect.left - 10) {
-    // Target is clearly to the left of the source
-    c1x = start.x - (start.x - end.x) * curveStrength;
+    // Target is to the left - create smooth leftward flow
+    const controlDistance = Math.min(horizontalDistance * 0.6, 150);
+    
+    c1x = start.x - controlDistance;
     c1y = start.y;
-    c2x = end.x + (start.x - end.x) * curveStrength;
+    c2x = end.x + controlDistance;
     c2y = end.y;
   } else {
-    // Nodes are vertically aligned or overlapping horizontally
+    // Nodes are vertically aligned - use vertical curves
+    const controlDistance = Math.min(verticalDistance * 0.6, 100);
+    
     c1x = start.x;
-    c1y = start.y + (end.y - start.y) * curveStrength;
+    c1y = start.y + (end.y > start.y ? controlDistance : -controlDistance);
     c2x = end.x;
-    c2y = end.y - (end.y - start.y) * curveStrength;
+    c2y = end.y - (end.y > start.y ? controlDistance : -controlDistance);
   }
   
   const d = `M ${start.x} ${start.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${end.x} ${end.y}`;

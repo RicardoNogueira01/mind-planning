@@ -51,8 +51,16 @@ export default function ConnectionsSvg({
           return null;
         }
         
-        // Each connection is independent - based only on child position
-  const { d: pathData, label: labelPoint } = computeBezierPath(fromPos, toPos);
+        // Calculate this connection's index among siblings for distributed exit points
+        const siblingsFromSameParent = connections.filter(c => c.from === conn.from);
+        const childIndex = siblingsFromSameParent.findIndex(c => c.id === conn.id);
+        const totalChildren = siblingsFromSameParent.length;
+        
+        const { d: pathData, label: labelPoint } = computeBezierPath(fromPos, toPos, {
+          childIndex,
+          totalChildren,
+          parentId: conn.from
+        });
         const inFocusMode = !!(fxOptions?.enabled && fxOptions?.focusMode && selectedNode);
         const isRelated = !!(relatedNodeIds?.has(conn.from) || relatedNodeIds?.has(conn.to));
         let focusOpacity = 0.8;
