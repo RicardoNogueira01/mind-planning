@@ -7,9 +7,9 @@ const NodeToolbarConnectionButton = ({
   onStart,
   onCancel,
 }) => {
-  const base = 'node-toolbar-btn p-2 rounded-xl transition-colors duration-200 border';
+  const base = 'node-toolbar-btn p-2 rounded-xl transition-all duration-200 border';
   const stateCls = isActive
-    ? ' bg-blue-100 text-blue-700 border-blue-300'
+    ? ' bg-blue-500 text-white border-blue-600 shadow-lg shadow-blue-500/30 ring-2 ring-blue-300 animate-pulse'
     : ' hover:bg-blue-100 text-blue-700 border-blue-200 hover:border-blue-300';
 
   return (
@@ -20,12 +20,21 @@ const NodeToolbarConnectionButton = ({
         if (isActive) onCancel();
         else onStart(nodeId, e);
       }}
-      title={isActive ? 'Cancel connection mode' : 'Create connection to another node'}
+      title={isActive ? 'Cancel connection mode (click to cancel)' : 'Create connection to another node'}
     >
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
-        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-      </svg>
+      {isActive ? (
+        // Cancel icon (X) when active
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000000" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      ) : (
+        // Link icon when inactive
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+        </svg>
+      )}
     </button>
   );
 };

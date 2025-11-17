@@ -49,6 +49,7 @@ export default function MindMap({ mapId, onBack }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchList, setShowSearchList] = useState(false);
   const [connectionFrom, setConnectionFrom] = useState(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   
   // Collaborator selection mode state
   const [isSelecting, setIsSelecting] = useState(false);
@@ -368,6 +369,29 @@ export default function MindMap({ mapId, onBack }) {
   const addStandaloneNode = nodeOps.addStandaloneNode;
   const startConnection = (id) => setConnectionFrom(id);
   const cancelConnection = () => setConnectionFrom(null);
+
+  // Track mouse position for connection preview line
+  useEffect(() => {
+    if (!connectionFrom) return;
+
+    const handleMouseMove = (e) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        cancelConnection();
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [connectionFrom]);
 
   // ============================================
   // PROGRESS TRACKING FUNCTIONS
@@ -1005,6 +1029,8 @@ export default function MindMap({ mapId, onBack }) {
     cursorStyle = 'crosshair';
   } else if (isPanning) {
     cursorStyle = 'grabbing';
+  } else if (connectionFrom) {
+    cursorStyle = 'crosshair';
   } else if (mode === 'pan') {
     cursorStyle = 'grab';
   } else if (mode === 'cursor') {
@@ -1081,6 +1107,30 @@ export default function MindMap({ mapId, onBack }) {
           deleteNodeCascade={deleteNodeCascade}
         />
 
+        {/* Connection Mode Banner */}
+        {connectionFrom && (
+          <div 
+            className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 bg-blue-500 text-white rounded-full shadow-xl shadow-blue-500/40 flex items-center gap-3 animate-bounce-subtle"
+            style={{ animation: 'slideDown 0.3s ease-out' }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            <span className="font-medium">Click on another node to create connection</span>
+            <button 
+              onClick={cancelConnection}
+              className="ml-2 p-1 hover:bg-blue-600 rounded-full transition-colors"
+              title="Cancel (Esc)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        )}
+
         {/* Canvas with pan/zoom */}
         <MindMapCanvas
           pan={dragging.pan}
@@ -1095,6 +1145,10 @@ export default function MindMap({ mapId, onBack }) {
               fxOptions={fxOptions}
               selectedNode={selectedNode}
               relatedNodeIds={relatedNodeIds}
+              connectionFrom={connectionFrom}
+              mousePosition={mousePosition}
+              zoom={zoom}
+              pan={dragging.pan}
             />
           )}
         >

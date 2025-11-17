@@ -13,12 +13,19 @@ export default function ConnectionsSvg({
   fxOptions,
   selectedNode,
   relatedNodeIds,
+  connectionFrom,
+  mousePosition,
+  zoom,
+  pan,
 }) {
-  if (!Array.isArray(connections) || connections.length === 0) {
+  const strokeColor = isDarkMode ? '#9ca3af' : '#64748B';
+  const hasConnections = Array.isArray(connections) && connections.length > 0;
+  const showPreview = connectionFrom && mousePosition;
+
+  // Always render SVG if there are connections or if we're in connection mode
+  if (!hasConnections && !showPreview) {
     return null;
   }
-
-  const strokeColor = isDarkMode ? '#9ca3af' : '#64748B';
 
   return (
     <svg
@@ -127,6 +134,75 @@ export default function ConnectionsSvg({
           </g>
         );
       })}
+      
+      {/* Connection Preview Line - shows when creating a new connection */}
+      {connectionFrom && mousePosition && (() => {
+        const fromNode = nodes.find(n => n.id === connectionFrom);
+        const fromPos = nodePositions?.[connectionFrom];
+        
+        if (!fromNode || !fromPos) return null;
+        
+        // Convert mouse position from screen space to canvas space
+        const canvasX = (mousePosition.x - pan.x) / zoom;
+        const canvasY = (mousePosition.y - pan.y) / zoom;
+        
+        // Calculate center of source node
+        const fromCenterX = (fromPos.left + fromPos.right) / 2;
+        const fromCenterY = (fromPos.top + fromPos.bottom) / 2;
+        
+        // Create animated dashed line
+        return (
+          <g key="connection-preview">
+            {/* Glow effect */}
+            <line
+              x1={fromCenterX}
+              y1={fromCenterY}
+              x2={canvasX}
+              y2={canvasY}
+              stroke="#3B82F6"
+              strokeWidth={4}
+              strokeOpacity={0.2}
+              strokeLinecap="round"
+            />
+            {/* Main line with animated dashes */}
+            <line
+              x1={fromCenterX}
+              y1={fromCenterY}
+              x2={canvasX}
+              y2={canvasY}
+              stroke="#3B82F6"
+              strokeWidth={2.5}
+              strokeOpacity={0.8}
+              strokeDasharray="8 4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{
+                animation: 'dash-flow 0.5s linear infinite',
+              }}
+            />
+            {/* Endpoint circle with subtle pulse */}
+            <circle
+              cx={canvasX}
+              cy={canvasY}
+              r={5}
+              fill="#3B82F6"
+              opacity={0.8}
+            />
+            <circle
+              cx={canvasX}
+              cy={canvasY}
+              r={8}
+              fill="none"
+              stroke="#3B82F6"
+              strokeWidth={2}
+              opacity={0.4}
+              style={{
+                animation: 'pulse-circle 1.5s ease-in-out infinite',
+              }}
+            />
+          </g>
+        );
+      })()}
     </svg>
   );
 }
@@ -139,4 +215,14 @@ ConnectionsSvg.propTypes = {
   fxOptions: PropTypes.object,
   selectedNode: PropTypes.string,
   relatedNodeIds: PropTypes.instanceOf(Set),
+  connectionFrom: PropTypes.string,
+  mousePosition: PropTypes.shape({
+    x: PropTypes.number,
+    y: PropTypes.number,
+  }),
+  zoom: PropTypes.number,
+  pan: PropTypes.shape({
+    x: PropTypes.number,
+    y: PropTypes.number,
+  }),
 };
