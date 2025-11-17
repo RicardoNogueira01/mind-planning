@@ -1233,32 +1233,6 @@ export default function MindMap({ mapId, onBack }) {
 
                   {/* Visual group when expanded */}
                   {isNodeToolbarExpanded(node.id) && (
-                    <>
-                      <NodeToolbarBackgroundColor
-                        isOpen={isPopupOpen(node.id, 'bgColor')}
-                        currentColor={node.bgColor}
-                        onToggle={() => togglePopup(node.id, 'bgColor')}
-                        onSelect={(color) => { selectBgColor(node.id, color); closePopup(node.id, 'bgColor'); }}
-                        onClose={() => closePopup(node.id, 'bgColor')}
-                      />
-                      <NodeToolbarFontColor
-                        isOpen={isPopupOpen(node.id, 'fontColor')}
-                        currentColor={node.fontColor}
-                        onToggle={() => togglePopup(node.id, 'fontColor')}
-                        onSelect={(color) => { selectFontColor(node.id, color); closePopup(node.id, 'fontColor'); }}
-                        onClose={() => closePopup(node.id, 'fontColor')}
-                      />
-                    </>
-                  )}
-
-                  {/* Settings toggle */}
-                  <NodeToolbarSettingsToggle
-                    isToolbarExpanded={isNodeToolbarExpanded(node.id)}
-                    onToggle={() => toggleNodeToolbar(node.id)}
-                  />
-
-                  {/* Divider */}
-                  {isNodeToolbarExpanded(node.id) && (
                     <div className="w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
                   )}
 
@@ -1269,7 +1243,7 @@ export default function MindMap({ mapId, onBack }) {
                         ref={(el) => { attachBtnRefs.current[node.id] = el; }}
                         className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'attach'); }}
-                        title="Attachments"
+                        title="Manage file attachments"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
@@ -1336,7 +1310,7 @@ export default function MindMap({ mapId, onBack }) {
                         ref={(el) => { notesBtnRefs.current[node.id] = el; }}
                         className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'notes'); }}
-                        title="Notes"
+                        title="Add or edit notes"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
@@ -1371,7 +1345,7 @@ export default function MindMap({ mapId, onBack }) {
                         ref={(el) => { emojiBtnRefs.current[node.id] = el; }}
                         className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'emoji'); }}
-                        title="Add emoji"
+                        title="Choose emoji icon"
                       >
                         {node.emoji || '😊'}
                       </button>
@@ -1404,7 +1378,7 @@ export default function MindMap({ mapId, onBack }) {
                         ref={(el) => { tagBtnRefs.current[node.id] = el; }}
                         className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'tags'); }}
-                        title="Tags"
+                        title="Add or manage tags"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
@@ -1468,7 +1442,7 @@ export default function MindMap({ mapId, onBack }) {
                         ref={(el) => { detailsBtnRefs.current[node.id] = el; }}
                         className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'details'); }}
-                        title="Details"
+                        title="Edit priority, status, and description"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <circle cx="12" cy="12" r="10"></circle>
@@ -1535,7 +1509,7 @@ export default function MindMap({ mapId, onBack }) {
                         ref={(el) => { dateBtnRefs.current[node.id] = el; }}
                         className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'date'); }}
-                        title="Due date"
+                        title="Set due date"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
@@ -1578,7 +1552,7 @@ export default function MindMap({ mapId, onBack }) {
                       <button
                         className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
                         onClick={(e) => { e.stopPropagation(); setCollaboratorNodeId(node.id); setShowCollaboratorDialog(true); }}
-                        title="Assign collaborator"
+                        title="Assign team member"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
@@ -1605,8 +1579,14 @@ export default function MindMap({ mapId, onBack }) {
                     />
                   )}
 
-                  {/* Delete when expanded and not root */}
-                  {isNodeToolbarExpanded(node.id) && node.id !== 'root' && (
+                  {/* Settings toggle - Always at the end before delete */}
+                  <NodeToolbarSettingsToggle
+                    isToolbarExpanded={isNodeToolbarExpanded(node.id)}
+                    onToggle={() => toggleNodeToolbar(node.id)}
+                  />
+
+                  {/* Delete button at the end - Always visible for non-root nodes */}
+                  {node.id !== 'root' && (
                     <button
                       className="node-toolbar-btn p-2 rounded-xl hover:bg-red-100 text-red-600 transition-colors duration-200 border border-red-200 hover:border-red-300"
                       onClick={(e) => { e.stopPropagation(); nodeOps.deleteNodes([node.id]); }}
