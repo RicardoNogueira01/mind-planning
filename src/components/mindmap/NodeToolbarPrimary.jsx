@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Check, Trash2 } from 'lucide-react';
+import { Check, Trash2, Unlink } from 'lucide-react';
 
 export default function NodeToolbarPrimary({
   node,
@@ -8,6 +8,8 @@ export default function NodeToolbarPrimary({
   onToggleComplete,
   onAddChild,
   onRequestDelete,
+  onRequestDetach,
+  hasParent,
 }) {
   return (
     <div className="flex items-center gap-1">
@@ -34,6 +36,17 @@ export default function NodeToolbarPrimary({
         </button>
       )}
 
+      {/* Detach Node Button - Only visible if node has a parent connection */}
+      {!isToolbarExpanded && hasParent && (
+        <button
+          className="node-toolbar-btn p-2 rounded-xl hover:bg-orange-100 text-orange-700 transition-colors duration-200 border border-orange-200 hover:border-orange-300"
+          onClick={(e) => { e.stopPropagation(); onRequestDetach?.(node.id); }}
+          title="Detach from parent node"
+        >
+          <Unlink size={16} />
+        </button>
+      )}
+
       {/* Delete Node Button - Only visible in collapsed (quick) view */}
       {!isToolbarExpanded && node.id !== 'root' && (
         <button
@@ -54,4 +67,6 @@ NodeToolbarPrimary.propTypes = {
   onToggleComplete: PropTypes.func,
   onAddChild: PropTypes.func,
   onRequestDelete: PropTypes.func,
+  onRequestDetach: PropTypes.func,
+  hasParent: PropTypes.bool,
 };
