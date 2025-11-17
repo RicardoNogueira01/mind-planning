@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatching, connectionMode, isConnectionSource, isAlreadyConnected, isParentOfSelected, isChildOfSelected, children }) => {
+const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatching, connectionMode, isConnectionSource, isAlreadyConnected, isParentOfSelected, isChildOfSelected, hasProgress, children }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editText, setEditText] = React.useState(node.text || '');
   const [isHovering, setIsHovering] = React.useState(false);
@@ -115,7 +115,7 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
           e.stopPropagation();
           onSelect?.(node.id, e);
         }}
-        style={{ backgroundColor: node.bgColor || undefined, color: node.fontColor || undefined }}
+        style={{ backgroundColor: node.bgColor || undefined, color: node.fontColor || undefined, minHeight: '56px' }}
         onDoubleClick={handleDoubleClick}
       >
         {isEditing ? (
@@ -132,7 +132,7 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
             placeholder="Type here... (Ctrl+Enter to save, Esc to cancel)"
           />
         ) : (
-          <div className="text-center text-gray-800 font-medium whitespace-pre-wrap">{node.text || 'New Task'}</div>
+          <div className="text-center text-gray-800 font-medium whitespace-pre-wrap break-words" style={{ paddingLeft: hasProgress ? '48px' : '0' }}>{node.text || 'New Task'}</div>
         )}
       </button>
       {children}
@@ -159,6 +159,7 @@ NodeCard.propTypes = {
   isAlreadyConnected: PropTypes.bool,
   isParentOfSelected: PropTypes.bool,
   isChildOfSelected: PropTypes.bool,
+  hasProgress: PropTypes.bool,
   children: PropTypes.node
 };
 

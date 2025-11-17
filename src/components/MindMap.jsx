@@ -90,6 +90,7 @@ export default function MindMap({ mapId, onBack }) {
   const fontBtnRefs = useRef({}); // Font color button refs
   const emojiBtnRefs = useRef({}); // Emoji button refs
   const [detachConfirmNodeId, setDetachConfirmNodeId] = useState(null); // Track which node has detach confirmation open
+  const [parentSelectionState, setParentSelectionState] = useState(null); // { nodeId, parentConnections: [] }
   const [deleteConfirmNodeId, setDeleteConfirmNodeId] = useState(null); // Track which node has delete confirmation open
 
   // Canvas ref
@@ -331,9 +332,36 @@ export default function MindMap({ mapId, onBack }) {
 
   // Detach node from parent (remove connection)
   const detachNodeFromParent = (nodeId) => {
-    // Find and remove any connection where this node is the 'to' (child)
-    setConnections(prev => prev.filter(conn => conn.to !== nodeId));
-    setDetachConfirmNodeId(null);
+    // Find all parent connections for this node
+    const parentConnections = connections.filter(conn => conn.to === nodeId);
+    
+    if (parentConnections.length === 0) {
+      setDetachConfirmNodeId(null);
+      return;
+    }
+    
+    // If node has multiple parents, show selection popup
+    if (parentConnections.length > 1) {
+      setParentSelectionState({
+        nodeId,
+        parentConnections: parentConnections.map(conn => ({
+          connectionId: `${conn.from}-${conn.to}`,
+          parentId: conn.from,
+          parentNode: nodes.find(n => n.id === conn.from)
+        }))
+      });
+      setDetachConfirmNodeId(null);
+    } else {
+      // Single parent - remove directly
+      setConnections(prev => prev.filter(conn => conn.to !== nodeId));
+      setDetachConfirmNodeId(null);
+    }
+  };
+  
+  // Remove specific parent connection
+  const removeParentConnection = (nodeId, parentId) => {
+    setConnections(prev => prev.filter(conn => !(conn.from === parentId && conn.to === nodeId)));
+    setParentSelectionState(null);
   };
 
   // Derived selections for focus mode
@@ -1349,6 +1377,10 @@ export default function MindMap({ mapId, onBack }) {
             const isParentOfSelected = selectedNodes.length === 1 && connections.some(c => c.from === node.id && c.to === selectedNodes[0]);
             const isChildOfSelected = selectedNodes.length === 1 && connections.some(c => c.from === selectedNodes[0] && c.to === node.id);
             
+            // Check if this node has progress indicator
+            const progress = getNodeProgress(node.id);
+            const hasProgress = progress && !node.completed;
+            
             return (
               <React.Fragment key={node.id}>
                 <NodeCard
@@ -1363,6 +1395,7 @@ export default function MindMap({ mapId, onBack }) {
                 isAlreadyConnected={connectionFrom && connectionFrom !== node.id && connections.some(c => (c.from === connectionFrom && c.to === node.id) || (c.from === node.id && c.to === connectionFrom))}
                 isParentOfSelected={isParentOfSelected}
                 isChildOfSelected={isChildOfSelected}
+                hasProgress={hasProgress}
                 onMouseDown={(e) => {
                   // allow dragging via startPanning handler; nothing here
                 }}
@@ -1370,34 +1403,35 @@ export default function MindMap({ mapId, onBack }) {
               {/* Progress Indicator (top-left) - Shows completion count for parent nodes */}
               {(() => {
                 const progress = getNodeProgress(node.id);
-                if (!progress || node.completed) return null;
+                const hasProgress = progress && !node.completed;
+                if (!hasProgress) return null;
                 
                 return (
                   <div 
                     className="absolute top-3 left-3 flex items-center gap-1 z-20"
                     title={`Total Progress: ${progress.completed}/${progress.total} tasks completed (${progress.percentage}%) - ${progress.depth + 1} levels deep`}
                   >
-                    <div className="relative w-8 h-8">
-                      <svg className="w-8 h-8 transform -rotate-90" viewBox="0 0 32 32">
+                    <div className="relative w-10 h-10">
+                      <svg className="w-10 h-10 transform -rotate-90" viewBox="0 0 40 40">
                         {/* Background circle */}
                         <circle 
-                          cx="16" 
-                          cy="16" 
-                          r="13" 
+                          cx="20" 
+                          cy="20" 
+                          r="16" 
                           stroke="#d1d5db" 
                           strokeWidth="3" 
                           fill="white" 
                         />
                         {/* Progress arc */}
                         <circle 
-                          cx="16" 
-                          cy="16" 
-                          r="13"
+                          cx="20" 
+                          cy="20" 
+                          r="16"
                           stroke={progress.percentage === 100 ? '#10b981' : '#3b82f6'}
                           strokeWidth="3" 
                           fill="transparent"
-                          strokeDasharray={`${2 * Math.PI * 13}`}
-                          strokeDashoffset={`${2 * Math.PI * 13 * (1 - progress.percentage / 100)}`}
+                          strokeDasharray={`${2 * Math.PI * 16}`}
+                          strokeDashoffset={`${2 * Math.PI * 16 * (1 - progress.percentage / 100)}`}
                           className="transition-all duration-300"
                         />
                       </svg>
@@ -1977,6 +2011,72 @@ export default function MindMap({ mapId, onBack }) {
         setCollaboratorNodeId={setCollaboratorNodeId}
         nodes={nodes}
       />
+
+      {/* Parent Selection Dialog - for nodes with multiple parents */}
+      {parentSelectionState && createPortal(
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
+          onClick={() => setParentSelectionState(null)}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 border border-gray-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-4 mb-6">
+              <div className="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-600">
+                  <path d="m18.84 12.25 1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71"></path>
+                  <path d="m5.17 11.75-1.71 1.71a5.004 5.004 0 0 0 .12 7.07 5.006 5.006 0 0 0 6.95 0l1.71-1.71"></path>
+                  <line x1="8" x2="8" y1="2" y2="5"></line>
+                  <line x1="2" x2="5" y1="8" y2="8"></line>
+                  <line x1="16" x2="16" y1="19" y2="22"></line>
+                  <line x1="19" x2="22" y1="16" y2="16"></line>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Select Parent to Remove
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  This node has multiple parents. Choose which parent connection to remove:
+                </p>
+              </div>
+            </div>
+            <div className="space-y-2 mb-6 max-h-64 overflow-y-auto">
+              {parentSelectionState.parentConnections.map(({ parentId, parentNode }) => (
+                <button
+                  key={parentId}
+                  className="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-all duration-200 group"
+                  onClick={() => removeParentConnection(parentSelectionState.nodeId, parentId)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900 group-hover:text-purple-700">
+                        {parentNode?.text || 'Untitled Node'}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        ID: {parentId}
+                      </div>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 group-hover:text-purple-600">
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-3 justify-end border-t pt-4">
+              <button
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                onClick={() => setParentSelectionState(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Detachment Confirmation Dialog */}
       {detachConfirmNodeId && createPortal(
