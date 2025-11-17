@@ -9,42 +9,49 @@ export function getRectCenter(rect: Rect) {
  * Mirrors the logic previously embedded in MindMap.jsx.
  */
 export function getPerimeterPoint(rect: Rect, targetX: number, targetY: number) {
-  const rectCenterX = (rect.left + rect.right) / 2;
-  const rectCenterY = (rect.top + rect.bottom) / 2;
-  const angle = Math.atan2(targetY - rectCenterY, targetX - rectCenterX);
-
+  const cx = (rect.left + rect.right) / 2;
+  const cy = (rect.top + rect.bottom) / 2;
+  const dx = targetX - cx;
+  const dy = targetY - cy;
   const width = rect.right - rect.left;
   const height = rect.bottom - rect.top;
-  const halfWidth = width / 2;
-  const halfHeight = height / 2;
 
-  const absAngle = Math.abs(angle);
-  const cornerAngle = Math.atan2(halfHeight, halfWidth);
-
-  let x: number, y: number;
-
-  if (absAngle <= cornerAngle) {
-    // Right edge
-    x = rect.right;
-    y = rectCenterY + halfWidth * Math.tan(angle);
-  } else if (absAngle <= Math.PI - cornerAngle) {
-    // Top or bottom edge
-    if (angle > 0) {
-      // Bottom edge
-      x = rectCenterX + halfHeight / Math.tan(angle);
-      y = rect.bottom;
-    } else {
-      // Top edge
-      x = rectCenterX - halfHeight / Math.tan(angle);
-      y = rect.top;
-    }
-  } else {
-    // Left edge
-    x = rect.left;
-    y = rectCenterY + halfWidth * Math.tan(Math.PI - absAngle) * (angle > 0 ? -1 : 1);
+  // Handle case where target is the center of the rect
+  if (dx === 0 && dy === 0) {
+    return { x: cx, y: cy };
   }
 
-  // Clamp to bounds
+  const slope = dy / dx;
+  const absSlope = Math.abs(slope);
+  
+  let x, y;
+
+  // Determine which edge the line intersects
+  if (absSlope < height / width) {
+    // Intersects with left or right edge
+    if (dx > 0) {
+      // Right edge
+      x = rect.right;
+      y = cy + (width / 2) * slope;
+    } else {
+      // Left edge
+      x = rect.left;
+      y = cy - (width / 2) * slope;
+    }
+  } else {
+    // Intersects with top or bottom edge
+    if (dy > 0) {
+      // Bottom edge
+      y = rect.bottom;
+      x = cx + (height / 2) / slope;
+    } else {
+      // Top edge
+      y = rect.top;
+      x = cx - (height / 2) / slope;
+    }
+  }
+
+  // Clamp values to be within the rectangle's bounds, just in case
   x = Math.max(rect.left, Math.min(rect.right, x));
   y = Math.max(rect.top, Math.min(rect.bottom, y));
 
@@ -54,70 +61,78 @@ export function getPerimeterPoint(rect: Rect, targetX: number, targetY: number) 
 /**
  * Compute a smooth cubic bezier path between two rectangles. Returns the path d string,
  * start/end points, and a suggested label position (midpoint of start and end).
- * Intelligently chooses start point on parent node to create smoothest path to child.
+ * Creates smooth, curved connections that route around nodes for clean, professional appearance.
+ * Each connection is completely independent based on the actual child's position.
  */
 export function computeBezierPath(fromRect: Rect, toRect: Rect) {
-  // End at middle-left of child node
-  const childCenterX = (toRect.left + toRect.right) / 2;
-  const childCenterY = (toRect.top + toRect.bottom) / 2;
-  const end = {
-    x: toRect.left,
-    y: childCenterY
+  const fromCenterX = (fromRect.left + fromRect.right) / 2;
+  const fromCenterY = (fromRect.top + fromRect.bottom) / 2;
+  const toCenterX = (toRect.left + toRect.right) / 2;
+  const toCenterY = (toRect.top + toRect.bottom) / 2;
+  
+  // Step 1: Determine the optimal connection point on the CHILD based on parent's position
+  let childConnectionX, childConnectionY;
+  
+  if (fromCenterX < toRect.left) {
+    // Parent is to the left - connect to child's left edge
+    childConnectionX = toRect.left;
+    childConnectionY = toCenterY;
+  } else if (fromCenterX > toRect.right) {
+    // Parent is to the right - connect to child's right edge
+    childConnectionX = toRect.right;
+    childConnectionY = toCenterY;
+  } else if (fromCenterY < toRect.top) {
+    // Parent is above - connect to child's top edge
+    childConnectionX = toCenterX;
+    childConnectionY = toRect.top;
+  } else if (fromCenterY > toRect.bottom) {
+    // Parent is below - connect to child's bottom edge
+    childConnectionX = toCenterX;
+    childConnectionY = toRect.bottom;
+  } else {
+    // Parent overlaps child - use center
+    childConnectionX = toCenterX;
+    childConnectionY = toCenterY;
+  }
+  
+  // Step 2: Find where on parent to connect FROM, aiming at the child connection point
+  const start = getPerimeterPoint(fromRect, childConnectionX, childConnectionY);
+  
+  // Step 3: Use the child connection point we determined (don't recalculate)
+  const end = { x: childConnectionX, y: childConnectionY };
+  
+  // Create a more pronounced "S" curve for better node avoidance.
+  // The curve's direction depends on whether the target is to the left or right.
+  const curveStrength = 0.5; // Controls how much the line bends
+  let c1x, c1y, c2x, c2y;
+  
+  if (toRect.left > fromRect.right + 10) {
+    // Target is clearly to the right of the source
+    c1x = start.x + (end.x - start.x) * curveStrength;
+    c1y = start.y;
+    c2x = end.x - (end.x - start.x) * curveStrength;
+    c2y = end.y;
+  } else if (toRect.right < fromRect.left - 10) {
+    // Target is clearly to the left of the source
+    c1x = start.x - (start.x - end.x) * curveStrength;
+    c1y = start.y;
+    c2x = end.x + (start.x - end.x) * curveStrength;
+    c2y = end.y;
+  } else {
+    // Nodes are vertically aligned or overlapping horizontally
+    c1x = start.x;
+    c1y = start.y + (end.y - start.y) * curveStrength;
+    c2x = end.x;
+    c2y = end.y - (end.y - start.y) * curveStrength;
+  }
+  
+  const d = `M ${start.x} ${start.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${end.x} ${end.y}`;
+  
+  // Suggest a label position at the midpoint of the curve
+  const label = {
+    x: (start.x + end.x) / 2,
+    y: (start.y + end.y) / 2,
   };
   
-  // Determine best starting edge based on child position relative to parent
-  const parentCenterX = (fromRect.left + fromRect.right) / 2;
-  const parentCenterY = (fromRect.top + fromRect.bottom) / 2;
-  
-  const dx = childCenterX - parentCenterX;
-  const dy = childCenterY - parentCenterY;
-  
-  let start;
-  
-  // Choose the edge that points most directly toward the child
-  // This creates natural, smooth curves
-  if (Math.abs(dx) > Math.abs(dy)) {
-    // Child is more horizontal from parent - use right edge
-    // Position varies along the edge based on child's Y
-    const startY = parentCenterY + (dy * 0.7); // 70% of the way toward child's Y
-    start = {
-      x: fromRect.right,
-      y: Math.max(fromRect.top + 15, Math.min(fromRect.bottom - 15, startY))
-    };
-  } else if (dy > 0) {
-    // Child is below parent - start from bottom edge
-    const startX = parentCenterX + (dx * 0.5); // Shift X toward child
-    start = {
-      x: Math.max(fromRect.left + 15, Math.min(fromRect.right - 15, startX)),
-      y: fromRect.bottom
-    };
-  } else {
-    // Child is above parent - start from top edge
-    const startX = parentCenterX + (dx * 0.5); // Shift X toward child
-    start = {
-      x: Math.max(fromRect.left + 15, Math.min(fromRect.right - 15, startX)),
-      y: fromRect.top
-    };
-  }
-
-  const deltaX = end.x - start.x;
-  const deltaY = end.y - start.y;
-  
-  // Create gentle, direct curves
-  // Reduce curvature for cleaner, more direct connections
-  const horizontalOffset = Math.abs(deltaX) * 0.4; // Use 40% of horizontal distance (reduced from 60%)
-  const verticalOffset = Math.abs(deltaY) * 0.15; // Minimal vertical offset (reduced from 30%)
-  
-  // First control point - gentle curve from start
-  const c1x = start.x + horizontalOffset;
-  const c1y = start.y + (deltaY > 0 ? verticalOffset : -verticalOffset);
-  
-  // Second control point - gentle curve to end
-  const c2x = end.x - horizontalOffset;
-  const c2y = end.y - (deltaY > 0 ? verticalOffset : -verticalOffset);
-
-  const d = `M ${start.x} ${start.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${end.x} ${end.y}`;
-  const label = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
-
   return { d, start, end, label };
 }

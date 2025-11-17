@@ -52,7 +52,7 @@ export default function ConnectionsSvg({
           <polygon points="0 0, 10 3.5, 0 7" fill={strokeColor} opacity="0.6" />
         </marker>
       </defs>
-      {connections.map((conn) => {
+      {connections.map((conn, index) => {
         const fromNode = nodes.find((n) => n.id === conn.from);
         const toNode = nodes.find((n) => n.id === conn.to);
         if (!fromNode || !toNode) {
@@ -68,6 +68,8 @@ export default function ConnectionsSvg({
         }
 
         console.log('[ConnectionsSvg] Rendering connection:', { conn, fromPos, toPos });
+        
+        // Each connection is independent - based only on child position
   const { d: pathData, label: labelPoint } = computeBezierPath(fromPos, toPos);
         const inFocusMode = !!(fxOptions?.enabled && fxOptions?.focusMode && selectedNode);
         const isRelated = !!(relatedNodeIds?.has(conn.from) || relatedNodeIds?.has(conn.to));
