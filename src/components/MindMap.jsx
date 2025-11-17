@@ -73,6 +73,7 @@ export default function MindMap({ mapId, onBack }) {
   const notesBtnRefs = useRef({});
   const tagBtnRefs = useRef({});
   const layoutBtnRefs = useRef({});
+  const collaboratorBtnRefs = useRef({}); // Collaborator button refs
   const [showCollaboratorDialog, setShowCollaboratorDialog] = useState(false);
   const [collaboratorNodeId, setCollaboratorNodeId] = useState(null); // Track which node the collaborator dialog is for
   const [collaborators] = useState([
@@ -1245,7 +1246,7 @@ export default function MindMap({ mapId, onBack }) {
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'attach'); }}
                         title="Manage file attachments"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
                           <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
                         </svg>
                       </button>
@@ -1312,7 +1313,7 @@ export default function MindMap({ mapId, onBack }) {
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'notes'); }}
                         title="Add or edit notes"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
                           <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                           <polyline points="14 2 14 8 20 8"></polyline>
                           <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -1380,7 +1381,7 @@ export default function MindMap({ mapId, onBack }) {
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'tags'); }}
                         title="Add or manage tags"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
                           <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
                           <line x1="7" y1="7" x2="7.01" y2="7"></line>
                         </svg>
@@ -1444,7 +1445,7 @@ export default function MindMap({ mapId, onBack }) {
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'details'); }}
                         title="Edit priority, status, and description"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
                           <circle cx="12" cy="12" r="10"></circle>
                           <line x1="12" y1="16" x2="12" y2="12"></line>
                           <line x1="12" y1="8" x2="12.01" y2="8"></line>
@@ -1512,7 +1513,7 @@ export default function MindMap({ mapId, onBack }) {
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'date'); }}
                         title="Set due date"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
                           <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
                           <line x1="16" y1="2" x2="16" y2="6"></line>
                           <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -1551,17 +1552,62 @@ export default function MindMap({ mapId, onBack }) {
                       })()}
 
                       <button
+                        ref={(el) => { collaboratorBtnRefs.current[node.id] = el; }}
                         className="node-toolbar-btn p-2 rounded-xl hover:bg-cyan-50 text-cyan-600 transition-colors duration-200 border border-cyan-200 hover:border-cyan-300"
-                        onClick={(e) => { e.stopPropagation(); setCollaboratorNodeId(node.id); setShowCollaboratorDialog(true); }}
+                        onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'collaborator'); }}
                         title="Assign team member"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
                           <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
                           <circle cx="9" cy="7" r="4"></circle>
                           <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
                           <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                         </svg>
                       </button>
+                      {isPopupOpen(node.id, 'collaborator') && (() => {
+                        const anchor = collaboratorBtnRefs.current[node.id];
+                        const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
+                        const popupWidth = 280;
+                        const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
+                        const top = Math.max(8, rect.bottom + 8);
+                        return createPortal(
+                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={(e) => e.stopPropagation()}>
+                            <h4 className="font-medium text-gray-800 mb-3">Assign Collaborators</h4>
+                            <p className="text-xs text-gray-500 mb-3">Select team members for this node</p>
+                            
+                            {/* Collaborator list with checkboxes */}
+                            <div className="max-h-64 overflow-y-auto space-y-1">
+                              {collaborators.map(collab => {
+                                const isSelected = (node.collaborators || []).includes(collab.id);
+                                return (
+                                  <label 
+                                    key={collab.id} 
+                                    className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      onChange={() => {
+                                        assignCollaborator(node.id, collab.id);
+                                      }}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="w-4 h-4 text-cyan-600 rounded focus:ring-2 focus:ring-cyan-500"
+                                    />
+                                    <span 
+                                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" 
+                                      style={{ backgroundColor: collab.color, color: 'white' }}
+                                    >
+                                      {collab.initials}
+                                    </span>
+                                    <span className="text-sm text-gray-700">{collab.name}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>,
+                          document.body
+                        );
+                      })()}
                     </div>
                   )}
 
@@ -1593,7 +1639,7 @@ export default function MindMap({ mapId, onBack }) {
                       onClick={(e) => { e.stopPropagation(); nodeOps.deleteNodes([node.id]); }}
                       title="Delete node"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                         <line x1="10" y1="11" x2="10" y2="17"></line>

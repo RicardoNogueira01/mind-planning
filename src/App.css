@@ -196,13 +196,23 @@ html {
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
+  /* Ensure crisp rendering at all zoom levels */
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 .node-toolbar-btn svg {
   display: block;
-  shape-rendering: geometricPrecision;
+  shape-rendering: crispEdges;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Force GPU acceleration for smoother scaling */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .node-toolbar-btn:hover {
