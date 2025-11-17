@@ -62,6 +62,7 @@ export default function MindMap({ mapId, onBack }) {
   const [hudGroupId, setHudGroupId] = useState(null); // Quick actions HUD near group
   const [movingGroupId, setMovingGroupId] = useState(null); // When set, group box becomes draggable
   const [isDraggingGroup, setIsDraggingGroup] = useState(false);
+  const [resizingGroupId, setResizingGroupId] = useState(null); // When set, group box shows resize handles
   
   const [expandedNodeToolbars, setExpandedNodeToolbars] = useState({}); // { [nodeId]: bool } - Per-node toolbar expansion
   const [popupOpenFor, setPopupOpenFor] = useState({}); // { [nodeId]: { [popupName]: bool } }
@@ -147,13 +148,22 @@ export default function MindMap({ mapId, onBack }) {
     return () => window.removeEventListener('click', onWinClick);
   }, []);
 
-  // Global Escape key to dismiss HUD / move mode
+  // Global Escape key to reset to normal state
   useEffect(() => {
     const onKeyDown = (e) => {
       if (e.key === 'Escape') {
+        // Reset all states to normal
         setHudGroupId(null);
         setMovingGroupId(null);
         setOpenGroupMenuId(null);
+        setResizingGroupId(null);
+        setSelectedNodes([]);
+        setConnectionFrom(null);
+        setMode('cursor');
+        setSelectionType('simple');
+        setShowCollaboratorDialog(false);
+        setIsSelecting(false);
+        setSelectionRect(null);
       }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -747,20 +757,148 @@ export default function MindMap({ mapId, onBack }) {
             <div
               style={{
                 position: 'absolute',
-                left: boundingBox.x + 10,
-                top: Math.max(boundingBox.y - 36, 10),
+                left: boundingBox.x,
+                top: Math.max(boundingBox.y - 58, 10),
                 background: '#111827',
                 color: '#fff',
-                padding: '6px 10px',
-                borderRadius: 999,
-                fontSize: 12,
+                padding: '8px 16px',
+                borderRadius: 8,
+                fontSize: 13,
                 fontWeight: 600,
                 boxShadow: '0 6px 20px rgba(0,0,0,0.25)',
-                zIndex: 1003
+                zIndex: 1003,
+                minWidth: 240,
+                whiteSpace: 'nowrap'
               }}
             >
               Drag to move group — Esc to cancel
             </div>
+          )}
+
+          {/* Resize hint pill when in resize mode */}
+          {resizingGroupId === group.id && (
+            <div
+              style={{
+                position: 'absolute',
+                left: boundingBox.x,
+                top: Math.max(boundingBox.y - 58, 10),
+                background: '#065F46',
+                color: '#fff',
+                padding: '8px 16px',
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 600,
+                boxShadow: '0 6px 20px rgba(0,0,0,0.25)',
+                zIndex: 1003,
+                minWidth: 240,
+                whiteSpace: 'nowrap'
+              }}
+            >
+              Drag handles to resize — Esc to cancel
+            </div>
+          )}
+
+          {/* Resize handles when in resize mode */}
+          {resizingGroupId === group.id && (
+            <>
+              {/* Corner handles */}
+              {['nw', 'ne', 'sw', 'se'].map(corner => {
+                const isTop = corner.includes('n');
+                const isBottom = corner.includes('s');
+                const isLeft = corner.includes('w');
+                const isRight = corner.includes('e');
+                return (
+                  <div
+                    key={corner}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      const start = { x: e.clientX, y: e.clientY };
+                      const startBB = { ...boundingBox };
+                      const onMove = (ev) => {
+                        const dx = (ev.clientX - start.x) / zoom;
+                        const dy = (ev.clientY - start.y) / zoom;
+                        const newBB = { ...startBB };
+                        if (isLeft) { newBB.x = startBB.x + dx; newBB.width = startBB.width - dx; }
+                        if (isRight) { newBB.width = startBB.width + dx; }
+                        if (isTop) { newBB.y = startBB.y + dy; newBB.height = startBB.height - dy; }
+                        if (isBottom) { newBB.height = startBB.height + dy; }
+                        if (newBB.width > 50 && newBB.height > 50) {
+                          setNodeGroups(prev => prev.map(g => g.id === group.id ? { ...g, boundingBox: newBB } : g));
+                        }
+                      };
+                      const onUp = () => {
+                        window.removeEventListener('pointermove', onMove);
+                        window.removeEventListener('pointerup', onUp);
+                      };
+                      window.addEventListener('pointermove', onMove);
+                      window.addEventListener('pointerup', onUp);
+                    }}
+                    style={{
+                      position: 'absolute',
+                      left: isLeft ? boundingBox.x - 6 : boundingBox.x + boundingBox.width - 6,
+                      top: isTop ? boundingBox.y - 6 : boundingBox.y + boundingBox.height - 6,
+                      width: 12,
+                      height: 12,
+                      borderRadius: '50%',
+                      background: '#10B981',
+                      border: '2px solid white',
+                      cursor: corner === 'nw' || corner === 'se' ? 'nwse-resize' : 'nesw-resize',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                      zIndex: 1004
+                    }}
+                  />
+                );
+              })}
+              {/* Edge handles */}
+              {['n', 'e', 's', 'w'].map(edge => {
+                const isVertical = edge === 'n' || edge === 's';
+                const isTop = edge === 'n';
+                const isBottom = edge === 's';
+                const isLeft = edge === 'w';
+                const isRight = edge === 'e';
+                return (
+                  <div
+                    key={edge}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      const start = { x: e.clientX, y: e.clientY };
+                      const startBB = { ...boundingBox };
+                      const onMove = (ev) => {
+                        const dx = (ev.clientX - start.x) / zoom;
+                        const dy = (ev.clientY - start.y) / zoom;
+                        const newBB = { ...startBB };
+                        if (isLeft) { newBB.x = startBB.x + dx; newBB.width = startBB.width - dx; }
+                        if (isRight) { newBB.width = startBB.width + dx; }
+                        if (isTop) { newBB.y = startBB.y + dy; newBB.height = startBB.height - dy; }
+                        if (isBottom) { newBB.height = startBB.height + dy; }
+                        if (newBB.width > 50 && newBB.height > 50) {
+                          setNodeGroups(prev => prev.map(g => g.id === group.id ? { ...g, boundingBox: newBB } : g));
+                        }
+                      };
+                      const onUp = () => {
+                        window.removeEventListener('pointermove', onMove);
+                        window.removeEventListener('pointerup', onUp);
+                      };
+                      window.addEventListener('pointermove', onMove);
+                      window.addEventListener('pointerup', onUp);
+                    }}
+                    style={{
+                      position: 'absolute',
+                      left: isVertical ? boundingBox.x + boundingBox.width / 2 - 6 : (isLeft ? boundingBox.x - 6 : boundingBox.x + boundingBox.width - 6),
+                      top: isVertical ? (isTop ? boundingBox.y - 6 : boundingBox.y + boundingBox.height - 6) : boundingBox.y + boundingBox.height / 2 - 6,
+                      width: 12,
+                      height: 12,
+                      borderRadius: '50%',
+                      background: '#10B981',
+                      border: '2px solid white',
+                      cursor: isVertical ? 'ns-resize' : 'ew-resize',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                      zIndex: 1004
+                    }}
+                  />
+                );
+              })}
+            </>
           )}
 
           {/* Clickable primary avatar (outside pointer-events:none box) */}
@@ -895,7 +1033,7 @@ export default function MindMap({ mapId, onBack }) {
               </div>
 
               {/* Quick actions */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
                 <button
                   onClick={() => { selectGroupNodes(group.id); setOpenGroupMenuId(null); }}
                   style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #E5E7EB', background: '#F9FAFB', fontSize: 12, fontWeight: 600, color: '#111827', cursor: 'pointer' }}
@@ -908,6 +1046,13 @@ export default function MindMap({ mapId, onBack }) {
                   style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #DBEAFE', background: '#EFF6FF', fontSize: 12, fontWeight: 600, color: '#1D4ED8', cursor: 'pointer' }}
                 >
                   Move group
+                </button>
+                <button
+                  onClick={() => { setResizingGroupId(group.id); setOpenGroupMenuId(null); }}
+                  title="Resize the group rectangle with draggable handles"
+                  style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #D1FAE5', background: '#ECFDF5', fontSize: 12, fontWeight: 600, color: '#065F46', cursor: 'pointer' }}
+                >
+                  Resize
                 </button>
               </div>
 
@@ -1138,6 +1283,25 @@ export default function MindMap({ mapId, onBack }) {
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
+          </div>
+        )}
+
+        {/* Collaborator Mode Banner */}
+        {mode === 'cursor' && selectionType === 'collaborator' && (
+          <div 
+            className="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 bg-cyan-600 text-white rounded-lg shadow-xl shadow-cyan-600/40 flex items-center gap-3"
+            style={{ animation: 'slideDown 0.3s ease-out', maxWidth: '600px' }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <div className="flex flex-col gap-1">
+              <span className="font-semibold text-sm">Collaborator Selection Mode</span>
+              <span className="text-xs text-cyan-100">Click and drag to select multiple nodes, then assign them to a collaborator</span>
+            </div>
           </div>
         )}
 

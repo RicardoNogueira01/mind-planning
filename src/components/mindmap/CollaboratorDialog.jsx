@@ -51,8 +51,8 @@ const CollaboratorDialog = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-25 backdrop-blur-sm flex items-center justify-center z-50">
-  <div className="bg-white rounded-xl shadow-xl border border-gray-200 p-5 w-72">
+    <div className="fixed inset-0 bg-gray-900 bg-opacity-5 backdrop-blur-sm flex items-center justify-center z-50">
+  <div className="bg-white bg-opacity-80 rounded-xl shadow-xl border border-gray-200 p-5 w-72">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           {collaboratorNodeId ? 'Assign Collaborators' : 'Assign Collaborator to Group'}
         </h3>
@@ -63,7 +63,7 @@ const CollaboratorDialog = ({
         {/* Search input */}
         <input
           type="text"
-          className="w-full p-2 mb-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full p-2 mb-3 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Search collaborators..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -92,7 +92,7 @@ const CollaboratorDialog = ({
                     />
                     <span 
                       className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" 
-                      style={{ backgroundColor: collab.color, color: 'white' }}
+                      style={{ backgroundColor: collab.color, color: '#000000' }}
                     >
                       {collab.initials}
                     </span>
@@ -114,8 +114,8 @@ const CollaboratorDialog = ({
                   }}
                 >
                   <div 
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-white mb-2"
-                    style={{ backgroundColor: collab.color }}
+                    className="w-10 h-10 rounded-full flex items-center justify-center mb-2"
+                    style={{ backgroundColor: collab.color, color: '#000000' }}
                   >
                     {collab.initials}
                   </div>
