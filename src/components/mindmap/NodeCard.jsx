@@ -6,6 +6,13 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
   const [editText, setEditText] = React.useState(node.text || '');
   const [isHovering, setIsHovering] = React.useState(false);
 
+  // Calculate dynamic row count based on content
+  const calculateRows = (text) => {
+    if (!text) return 4; // Start with 4 rows when empty
+    const lineCount = text.split('\n').length;
+    return Math.max(4, Math.min(lineCount, 10)); // Min 4, max 10 rows
+  };
+
   const handleDoubleClick = () => {
     setIsEditing(true);
     setEditText(node.text || '');
@@ -129,7 +136,7 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
             onBlur={handleSaveText}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
-            rows={4}
+            rows={calculateRows(editText)}
             placeholder="Type here... (Ctrl+Enter to save, Esc to cancel)"
           />
         ) : (
