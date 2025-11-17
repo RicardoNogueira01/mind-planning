@@ -166,10 +166,51 @@ export default function MindMap({ mapId, onBack }) {
         setIsSelecting(false);
         setSelectionRect(null);
       }
+      
+      // Check if user is typing in an input/textarea
+      const activeElement = document.activeElement;
+      const isTyping = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
+      
+      // Shift+N: Create new node (child if node selected, standalone otherwise)
+      if (e.shiftKey && e.key === 'N' && !isTyping) {
+        e.preventDefault();
+        
+        if (selectedNodes.length === 1) {
+          // Create child node of the selected node
+          nodeOps.addChildNode(selectedNodes[0]);
+        } else {
+          // Create standalone node
+          nodeOps.addStandaloneNode();
+        }
+      }
+      
+      // Shift+Delete or Delete: Delete selected nodes
+      if ((e.shiftKey && e.key === 'Delete') || e.key === 'Delete') {
+        if (!isTyping) {
+          e.preventDefault();
+          
+          if (selectedNodes.length > 0) {
+            setDeleteConfirmNodeId(selectedNodes[0]);
+          }
+        }
+      }
+      
+      // Shift+D: Detach node from parent
+      if (e.shiftKey && e.key === 'D' && !isTyping) {
+        e.preventDefault();
+        
+        if (selectedNodes.length === 1) {
+          // Check if node has parent connections
+          const hasParent = connections.some(conn => conn.to === selectedNodes[0]);
+          if (hasParent) {
+            setDetachConfirmNodeId(selectedNodes[0]);
+          }
+        }
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
+  }, [selectedNodes, nodeOps]);
 
   // Wheel event for zooming
   useEffect(() => {

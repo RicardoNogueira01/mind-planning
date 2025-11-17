@@ -89,19 +89,19 @@ const MindMapToolbar = ({
           <button 
             onClick={addStandaloneNode} 
             className="p-2.5 rounded-lg text-gray-700 hover:bg-white hover:text-emerald-600 hover:shadow-sm transition-all duration-200 group border border-gray-200/60 hover:border-gray-300"
-            title="Add New Node"
+            title="Add New Node (Shift+N)"
           >
             <Plus size={18} className="group-hover:scale-110 transition-transform duration-200" />
           </button>
           
           <button 
             onClick={() => selectedNodes.length > 0 && deleteNodes(selectedNodes)}
+            title="Delete Selected Nodes (Del or Shift+Del)"
             className={`p-2.5 rounded-lg transition-all duration-200 group border ${
               selectedNodes.length > 0 
                 ? 'text-gray-700 hover:bg-white hover:text-red-600 hover:shadow-sm border-gray-200/60 hover:border-gray-300' 
                 : 'text-gray-400 cursor-not-allowed border-gray-100'
             }`}
-            title="Delete Selected Nodes"
             disabled={selectedNodes.length === 0}
           >
             <Trash2 size={18} className={selectedNodes.length > 0 ? 'group-hover:scale-110 transition-transform duration-200' : ''} />

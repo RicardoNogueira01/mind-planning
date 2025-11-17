@@ -27,7 +27,7 @@ export default function NodeToolbarPrimary({
       <button
         className="node-toolbar-btn p-2 rounded-xl hover:bg-green-100 text-green-700 transition-colors duration-200 border border-green-200 hover:border-green-300"
         onClick={(e) => { e.stopPropagation(); onAddChild?.(node.id); }}
-        title="Add connected child node"
+        title="Add connected child node (Shift+N)"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
           <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -40,7 +40,7 @@ export default function NodeToolbarPrimary({
         <button
           className="node-toolbar-btn p-2 rounded-xl hover:bg-orange-100 text-orange-700 transition-colors duration-200 border border-orange-200 hover:border-orange-300"
           onClick={(e) => { e.stopPropagation(); onRequestDetach?.(node.id); }}
-          title="Detach from parent node"
+          title="Detach from parent node (Shift+D)"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
             <path d="m18.84 12.25 1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71"></path>
