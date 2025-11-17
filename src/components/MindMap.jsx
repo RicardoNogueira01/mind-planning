@@ -310,10 +310,22 @@ export default function MindMap({ mapId, onBack }) {
     
     if (isMultiSelect) {
       // Multi-select mode: toggle the node in the selection
-      setSelectedNodes(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+      setSelectedNodes(prev => {
+        const newSelection = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+        // Close popups for deselected nodes
+        if (!newSelection.includes(id)) {
+          setPopupOpenFor(prevPopups => {
+            const updated = { ...prevPopups };
+            delete updated[id];
+            return updated;
+          });
+        }
+        return newSelection;
+      });
     } else {
-      // Single select mode: select only this node
+      // Single select mode: select only this node and close all popups
       setSelectedNodes([id]);
+      setPopupOpenFor({});
     }
   };
 
@@ -1198,6 +1210,7 @@ export default function MindMap({ mapId, onBack }) {
           
           if (!clickedNode && (e.target === e.currentTarget || e.target.closest('.mindmap-canvas-inner'))) {
             setSelectedNodes([]);
+            setPopupOpenFor({});
           }
           
           // Check if in collaborator selection mode
