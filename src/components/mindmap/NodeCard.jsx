@@ -30,9 +30,20 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
     // Regular Enter key creates a new line (default textarea behavior)
   };
 
-  // Calculate opacity and zIndex based on search
+  // Calculate opacity and zIndex based on search and editing state
   const opacity = searchQuery ? (isMatching ? 1 : 0.3) : 1;
-  const zIndex = searchQuery ? (isMatching ? 20 : 10) : 10;
+  let zIndex = 10;
+  if (searchQuery && isMatching) {
+    zIndex = 20;
+  } else if (searchQuery && !isMatching) {
+    zIndex = 10;
+  }
+  // Editing nodes should always be on top
+  if (isEditing) {
+    zIndex = 100;
+  } else if (selected) {
+    zIndex = 30;
+  }
 
   return (
     <div

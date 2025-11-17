@@ -1047,6 +1047,11 @@ export default function MindMap({ mapId, onBack }) {
         ref={canvasRef}
         style={{ cursor: cursorStyle }}
         onMouseDown={(e) => {
+          // If clicking on the canvas background (not on a node), deselect all nodes
+          if (e.target === e.currentTarget || e.target.closest('.mindmap-canvas-inner')) {
+            setSelectedNodes([]);
+          }
+          
           // Check if in collaborator selection mode
           if (mode === 'cursor' && selectionType === 'collaborator') {
             startSelection(e);
