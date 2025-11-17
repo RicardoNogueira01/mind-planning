@@ -1313,7 +1313,7 @@ export default function MindMap({ mapId, onBack }) {
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'attach'); }}
                         title="Manage file attachments"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
                           <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
                         </svg>
                       </button>
@@ -1322,7 +1322,7 @@ export default function MindMap({ mapId, onBack }) {
                         const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
                         const popupWidth = 480;
                         const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
-                        const top = Math.max(8, rect.bottom + 8);
+                        const top = Math.max(8, rect.bottom + 20);
                         return createPortal(
                           <div className="node-popup" style={{ position: 'fixed', left, top, minWidth: popupWidth, maxWidth: 500, zIndex: 5000 }} onClick={(e) => e.stopPropagation()}>
                             <h4 className="font-medium text-gray-800 mb-3">Attachments</h4>
@@ -1380,7 +1380,7 @@ export default function MindMap({ mapId, onBack }) {
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'notes'); }}
                         title="Add or edit notes"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
                           <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                           <polyline points="14 2 14 8 20 8"></polyline>
                           <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -1393,7 +1393,7 @@ export default function MindMap({ mapId, onBack }) {
                         const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
                         const popupWidth = 420;
                         const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
-                        const top = Math.max(8, rect.bottom + 8);
+                        const top = Math.max(8, rect.bottom + 20);
                         return createPortal(
                           <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={(e) => e.stopPropagation()}>
                             <h4 className="font-medium text-gray-800 mb-3">Notes</h4>
@@ -1423,7 +1423,7 @@ export default function MindMap({ mapId, onBack }) {
                         const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
                         const popupWidth = 280;
                         const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
-                        const top = Math.max(8, rect.bottom + 8);
+                        const top = Math.max(8, rect.bottom + 20);
                         return createPortal(
                           <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000, backgroundColor: 'white', borderRadius: '8px', padding: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
                             <div className="grid grid-cols-6 gap-1">
@@ -1448,7 +1448,7 @@ export default function MindMap({ mapId, onBack }) {
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'tags'); }}
                         title="Add or manage tags"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
                           <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
                           <line x1="7" y1="7" x2="7.01" y2="7"></line>
                         </svg>
@@ -1458,7 +1458,7 @@ export default function MindMap({ mapId, onBack }) {
                         const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
                         const popupWidth = 300;
                         const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
-                        const top = Math.max(8, rect.bottom + 8);
+                        const top = Math.max(8, rect.bottom + 20);
                         return createPortal(
                           <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000, maxHeight: '400px', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
                             <h4 className="font-medium text-gray-800 mb-3">Tags</h4>
@@ -1512,7 +1512,7 @@ export default function MindMap({ mapId, onBack }) {
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'details'); }}
                         title="Edit priority, status, and description"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
                           <circle cx="12" cy="12" r="10"></circle>
                           <line x1="12" y1="16" x2="12" y2="12"></line>
                           <line x1="12" y1="8" x2="12.01" y2="8"></line>
@@ -1523,7 +1523,7 @@ export default function MindMap({ mapId, onBack }) {
                         const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
                         const popupWidth = 340;
                         const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
-                        const top = Math.max(8, rect.bottom + 8);
+                        const top = Math.max(8, rect.bottom + 20);
                         return createPortal(
                           <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={(e) => e.stopPropagation()}>
                             <h4 className="font-medium text-gray-800 mb-3">Details</h4>
@@ -1580,7 +1580,7 @@ export default function MindMap({ mapId, onBack }) {
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'date'); }}
                         title="Set due date"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
                           <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
                           <line x1="16" y1="2" x2="16" y2="6"></line>
                           <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -1592,7 +1592,7 @@ export default function MindMap({ mapId, onBack }) {
                         const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
                         const popupWidth = 220;
                         const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
-                        const top = Math.max(8, rect.bottom + 8);
+                        const top = Math.max(8, rect.bottom + 20);
                         return createPortal(
                           <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={(e) => e.stopPropagation()}>
                             <h4 className="font-medium text-gray-800 mb-3">Due date</h4>
@@ -1624,7 +1624,7 @@ export default function MindMap({ mapId, onBack }) {
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'collaborator'); }}
                         title="Assign team member"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
                           <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
                           <circle cx="9" cy="7" r="4"></circle>
                           <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -1636,7 +1636,7 @@ export default function MindMap({ mapId, onBack }) {
                         const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
                         const popupWidth = 280;
                         const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
-                        const top = Math.max(8, rect.bottom + 8);
+                        const top = Math.max(8, rect.bottom + 20);
                         return createPortal(
                           <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={(e) => e.stopPropagation()}>
                             <h4 className="font-medium text-gray-800 mb-2">Assign Collaborators</h4>
@@ -1731,7 +1731,7 @@ export default function MindMap({ mapId, onBack }) {
                       onClick={(e) => { e.stopPropagation(); setDeleteConfirmNodeId(node.id); }}
                       title="Delete node"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                         <line x1="10" y1="11" x2="10" y2="17"></line>
