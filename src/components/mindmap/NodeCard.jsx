@@ -122,13 +122,14 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
           <textarea
             autoFocus
             className="w-full text-center resize-none bg-transparent outline-none font-medium text-gray-800 border-0"
+            style={{ paddingLeft: hasProgress ? '48px' : '0' }}
             value={editText}
             onChange={(e) => setEditText(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleSaveText}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
-            rows={3}
+            rows={4}
             placeholder="Type here... (Ctrl+Enter to save, Esc to cancel)"
           />
         ) : (
