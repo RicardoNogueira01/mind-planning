@@ -84,10 +84,12 @@ export default function MindMap({ mapId, onBack }) {
     { id: 'ts', initials: 'TS', name: 'Taylor Smith', color: '#8B5CF6' }
   ]);
   const [attachmentFilters, setAttachmentFilters] = useState({ search: '' }); // Attachment search/filter state
+  const [collaboratorSearch, setCollaboratorSearch] = useState(''); // Collaborator search filter
   const bgBtnRefs = useRef({}); // Background color button refs
   const fontBtnRefs = useRef({}); // Font color button refs
   const emojiBtnRefs = useRef({}); // Emoji button refs
   const [detachConfirmNodeId, setDetachConfirmNodeId] = useState(null); // Track which node has detach confirmation open
+  const [deleteConfirmNodeId, setDeleteConfirmNodeId] = useState(null); // Track which node has delete confirmation open
 
   // Canvas ref
   const canvasRef = useRef(null);
@@ -1167,6 +1169,8 @@ export default function MindMap({ mapId, onBack }) {
                 onUpdateText={updateNodeText}
                 searchQuery={searchQuery}
                 isMatching={isNodeMatching}
+                connectionMode={!!connectionFrom}
+                isConnectionSource={connectionFrom === node.id}
                 onMouseDown={(e) => {
                   // allow dragging via startPanning handler; nothing here
                 }}
@@ -1626,12 +1630,29 @@ export default function MindMap({ mapId, onBack }) {
                         const top = Math.max(8, rect.bottom + 8);
                         return createPortal(
                           <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={(e) => e.stopPropagation()}>
-                            <h4 className="font-medium text-gray-800 mb-3">Assign Collaborators</h4>
+                            <h4 className="font-medium text-gray-800 mb-2">Assign Collaborators</h4>
                             <p className="text-xs text-gray-500 mb-3">Select team members for this node</p>
+                            
+                            {/* Search input */}
+                            <div className="mb-3">
+                              <input
+                                type="text"
+                                placeholder="Search collaborators..."
+                                value={collaboratorSearch}
+                                onChange={(e) => setCollaboratorSearch(e.target.value)}
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-gray-900 placeholder-gray-500"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </div>
                             
                             {/* Collaborator list with checkboxes */}
                             <div className="max-h-64 overflow-y-auto space-y-1">
-                              {collaborators.map(collab => {
+                              {collaborators
+                                .filter(collab => 
+                                  collab.name.toLowerCase().includes(collaboratorSearch.toLowerCase()) ||
+                                  collab.initials.toLowerCase().includes(collaboratorSearch.toLowerCase())
+                                )
+                                .map(collab => {
                                 const isSelected = (node.collaborators || []).includes(collab.id);
                                 return (
                                   <label 
@@ -1657,6 +1678,14 @@ export default function MindMap({ mapId, onBack }) {
                                   </label>
                                 );
                               })}
+                              {collaborators.filter(collab => 
+                                collab.name.toLowerCase().includes(collaboratorSearch.toLowerCase()) ||
+                                collab.initials.toLowerCase().includes(collaboratorSearch.toLowerCase())
+                              ).length === 0 && (
+                                <div className="text-center py-4 text-sm text-gray-500">
+                                  No collaborators found
+                                </div>
+                              )}
                             </div>
                           </div>,
                           document.body
@@ -1690,7 +1719,7 @@ export default function MindMap({ mapId, onBack }) {
                   {node.id !== 'root' && (
                     <button
                       className="node-toolbar-btn p-2 rounded-xl hover:bg-red-100 text-red-600 transition-colors duration-200 border border-red-200 hover:border-red-300"
-                      onClick={(e) => { e.stopPropagation(); nodeOps.deleteNodes([node.id]); }}
+                      onClick={(e) => { e.stopPropagation(); setDeleteConfirmNodeId(node.id); }}
                       title="Delete node"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
@@ -1799,6 +1828,57 @@ export default function MindMap({ mapId, onBack }) {
                 onClick={() => detachNodeFromParent(detachConfirmNodeId)}
               >
                 Yes, Detach
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirmNodeId && createPortal(
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
+          onClick={() => setDeleteConfirmNodeId(null)}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 border border-gray-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-4 mb-6">
+              <div className="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-600">
+                  <path d="M3 6h18"></path>
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Delete Node?
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Are you sure you want to delete this node? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                onClick={() => setDeleteConfirmNodeId(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors duration-200 shadow-sm"
+                onClick={() => {
+                  nodeOps.deleteNodes([deleteConfirmNodeId]);
+                  setDeleteConfirmNodeId(null);
+                }}
+              >
+                Yes, Delete
               </button>
             </div>
           </div>

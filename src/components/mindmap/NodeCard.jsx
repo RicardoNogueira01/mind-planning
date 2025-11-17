@@ -1,9 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatching, children }) => {
+const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatching, connectionMode, isConnectionSource, children }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editText, setEditText] = React.useState(node.text || '');
+  const [isHovering, setIsHovering] = React.useState(false);
 
   const handleDoubleClick = () => {
     setIsEditing(true);
@@ -47,7 +48,42 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
         transition: 'opacity 0.2s ease-out'
       }}
       data-node-id={node.id}
+      onMouseEnter={() => connectionMode && setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
     >
+      {/* Connection Points - visible when in connection mode */}
+      {connectionMode && !isConnectionSource && (
+        <>
+          {/* Top connection point */}
+          <div 
+            className={`absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 rounded-full border-2 transition-all duration-200 ${
+              isHovering ? 'bg-green-500 border-green-600 scale-150 shadow-lg shadow-green-500/50' : 'bg-white border-blue-400'
+            }`}
+            style={{ zIndex: 100 }}
+          />
+          {/* Right connection point */}
+          <div 
+            className={`absolute top-1/2 -right-2 transform -translate-y-1/2 w-4 h-4 rounded-full border-2 transition-all duration-200 ${
+              isHovering ? 'bg-green-500 border-green-600 scale-150 shadow-lg shadow-green-500/50' : 'bg-white border-blue-400'
+            }`}
+            style={{ zIndex: 100 }}
+          />
+          {/* Bottom connection point */}
+          <div 
+            className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 rounded-full border-2 transition-all duration-200 ${
+              isHovering ? 'bg-green-500 border-green-600 scale-150 shadow-lg shadow-green-500/50' : 'bg-white border-blue-400'
+            }`}
+            style={{ zIndex: 100 }}
+          />
+          {/* Left connection point */}
+          <div 
+            className={`absolute top-1/2 -left-2 transform -translate-y-1/2 w-4 h-4 rounded-full border-2 transition-all duration-200 ${
+              isHovering ? 'bg-green-500 border-green-600 scale-150 shadow-lg shadow-green-500/50' : 'bg-white border-blue-400'
+            }`}
+            style={{ zIndex: 100 }}
+          />
+        </>
+      )}
       <button
         type="button"
         className={`w-full px-4 py-4 rounded-lg border text-left ${
@@ -96,6 +132,8 @@ NodeCard.propTypes = {
   onUpdateText: PropTypes.func,
   searchQuery: PropTypes.string,
   isMatching: PropTypes.bool,
+  connectionMode: PropTypes.bool,
+  isConnectionSource: PropTypes.bool,
   children: PropTypes.node
 };
 
