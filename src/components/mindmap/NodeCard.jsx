@@ -132,7 +132,7 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
             placeholder="Type here... (Ctrl+Enter to save, Esc to cancel)"
           />
         ) : (
-          <div className="text-center text-gray-800 font-medium whitespace-pre-wrap">{node.text || 'New Node'}</div>
+          <div className="text-center text-gray-800 font-medium whitespace-pre-wrap">{node.text || 'New Task'}</div>
         )}
       </button>
       {children}

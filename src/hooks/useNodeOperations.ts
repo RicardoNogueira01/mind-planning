@@ -25,7 +25,7 @@ export function useNodeOperations(
     const id = `node-${Date.now()}`;
     const newNode: Node = { 
       id, 
-      text: 'Idea', 
+      text: 'Task', 
       x, 
       y,
       bgColor: isDarkMode ? '#374151' : '#ffffff',
@@ -43,7 +43,7 @@ export function useNodeOperations(
     const id = `node-${Date.now()}`;
     const child: Node = { 
       id, 
-      text: 'New Node', 
+      text: 'New Task', 
       x, 
       y,
       bgColor: isDarkMode ? '#374151' : '#ffffff',

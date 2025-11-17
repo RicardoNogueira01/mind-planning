@@ -31,7 +31,7 @@ export default function MindMap({ mapId, onBack }) {
   const [nodes, setNodes] = useState([
     { 
       id: 'root', 
-      text: 'Central Idea', 
+      text: 'Central Task', 
       x: Math.round(window.innerWidth / 2), 
       y: Math.round(window.innerHeight / 2),
       bgColor: '#ffffff',
