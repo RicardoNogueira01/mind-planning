@@ -51,10 +51,39 @@ export default function ConnectionsSvg({
           return null;
         }
         
-        // Calculate this connection's index among siblings for distributed exit points
+        // Group siblings by direction for intelligent distribution
         const siblingsFromSameParent = connections.filter(c => c.from === conn.from);
-        const childIndex = siblingsFromSameParent.findIndex(c => c.id === conn.id);
-        const totalChildren = siblingsFromSameParent.length;
+        
+        // Determine which direction this child is relative to parent
+        const toCenterX = (toPos.left + toPos.right) / 2;
+        const toCenterY = (toPos.top + toPos.bottom) / 2;
+        
+        let direction = 'right'; // default
+        if (toCenterX > fromPos.right) direction = 'right';
+        else if (toCenterX < fromPos.left) direction = 'left';
+        else if (toCenterY > fromPos.bottom) direction = 'bottom';
+        else if (toCenterY < fromPos.top) direction = 'top';
+        
+        // Filter siblings in the same direction
+        const siblingsInSameDirection = siblingsFromSameParent.filter(c => {
+          const siblingToPos = nodePositions?.[c.to];
+          if (!siblingToPos) return false;
+          
+          const siblingToCenterX = (siblingToPos.left + siblingToPos.right) / 2;
+          const siblingToCenterY = (siblingToPos.top + siblingToPos.bottom) / 2;
+          
+          let sibDirection;
+          if (siblingToCenterX > fromPos.right) sibDirection = 'right';
+          else if (siblingToCenterX < fromPos.left) sibDirection = 'left';
+          else if (siblingToCenterY > fromPos.bottom) sibDirection = 'bottom';
+          else if (siblingToCenterY < fromPos.top) sibDirection = 'top';
+          else sibDirection = 'right'; // default fallback
+          
+          return sibDirection === direction;
+        });
+        
+        const childIndex = siblingsInSameDirection.findIndex(c => c.id === conn.id);
+        const totalChildren = siblingsInSameDirection.length;
         
         const { d: pathData, label: labelPoint } = computeBezierPath(fromPos, toPos, {
           childIndex,

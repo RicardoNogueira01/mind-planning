@@ -100,21 +100,52 @@ export function computeBezierPath(
   }
   
   // Step 2: Find where on parent to connect FROM
-  // If distribution info provided, spread connections vertically along parent's right edge
+  // Intelligently choose which edge and whether to distribute or group
   let start: { x: number; y: number };
   
-  if (options?.childIndex !== undefined && options?.totalChildren !== undefined && options.totalChildren > 1) {
-    // Distribute connection points evenly along the parent's right edge
-    const parentHeight = fromRect.bottom - fromRect.top;
-    const spacing = parentHeight / (options.totalChildren + 1);
-    const offsetY = spacing * (options.childIndex + 1);
-    
-    start = {
-      x: fromRect.right,
-      y: fromRect.top + offsetY
-    };
+  // Determine which edge of the parent to use based on child position
+  const isChildToRight = toCenterX > fromRect.right;
+  const isChildToLeft = toCenterX < fromRect.left;
+  const isChildBelow = toCenterY > fromRect.bottom;
+  const isChildAbove = toCenterY < fromRect.top;
+  
+  // Dynamic grouping: if more than 10 children, group them at one point
+  const shouldDistribute = options?.totalChildren !== undefined && 
+                           options.totalChildren > 1 && 
+                           options.totalChildren <= 10;
+  
+  if (shouldDistribute && options?.childIndex !== undefined) {
+    // Distribute connection points along the appropriate edge
+    if (isChildToRight) {
+      // Spread vertically along right edge
+      const parentHeight = fromRect.bottom - fromRect.top;
+      const spacing = parentHeight / (options.totalChildren + 1);
+      const offsetY = spacing * (options.childIndex + 1);
+      start = { x: fromRect.right, y: fromRect.top + offsetY };
+    } else if (isChildToLeft) {
+      // Spread vertically along left edge
+      const parentHeight = fromRect.bottom - fromRect.top;
+      const spacing = parentHeight / (options.totalChildren + 1);
+      const offsetY = spacing * (options.childIndex + 1);
+      start = { x: fromRect.left, y: fromRect.top + offsetY };
+    } else if (isChildBelow) {
+      // Spread horizontally along bottom edge
+      const parentWidth = fromRect.right - fromRect.left;
+      const spacing = parentWidth / (options.totalChildren + 1);
+      const offsetX = spacing * (options.childIndex + 1);
+      start = { x: fromRect.left + offsetX, y: fromRect.bottom };
+    } else if (isChildAbove) {
+      // Spread horizontally along top edge
+      const parentWidth = fromRect.right - fromRect.left;
+      const spacing = parentWidth / (options.totalChildren + 1);
+      const offsetX = spacing * (options.childIndex + 1);
+      start = { x: fromRect.left + offsetX, y: fromRect.top };
+    } else {
+      // Fallback
+      start = getPerimeterPoint(fromRect, toCenterX, toCenterY);
+    }
   } else {
-    // Fallback: use child's position to determine parent exit point
+    // Group all connections at a single point (>10 children or no distribution info)
     start = getPerimeterPoint(fromRect, toCenterX, toCenterY);
   }
   
