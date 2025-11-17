@@ -198,6 +198,13 @@ html {
   backdrop-filter: blur(8px);
 }
 
+.node-toolbar-btn svg {
+  display: block;
+  shape-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 .node-toolbar-btn:hover {
   background: rgba(255, 255, 255, 0.8);
   border-color: rgba(255, 255, 255, 0.4);

@@ -1,16 +1,18 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Settings } from 'lucide-react';
 
 export default function NodeToolbarSettingsToggle({ isToolbarExpanded, onToggle }) {
   return (
     <div className="relative">
       <button
-        className={`node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-300 transform border border-gray-200/60 hover:border-gray-300 ${isToolbarExpanded ? 'rotate-90' : ''}`}
+        className={`node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-all duration-300 transform border border-gray-200/60 hover:border-gray-300 ${isToolbarExpanded ? 'rotate-180' : ''}`}
         onClick={(e) => { e.stopPropagation(); onToggle?.(); }}
         title={isToolbarExpanded ? 'Hide advanced options' : 'Show advanced options'}
       >
-        <Settings size={16} />
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'geometricPrecision'}}>
+          <polyline points="7 13 12 18 17 13"></polyline>
+          <polyline points="7 6 12 11 17 6"></polyline>
+        </svg>
       </button>
     </div>
   );

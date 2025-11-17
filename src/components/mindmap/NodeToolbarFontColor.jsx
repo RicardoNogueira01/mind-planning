@@ -25,18 +25,17 @@ const NodeToolbarFontColor = ({
     <div className="relative">
       <button
         ref={btnRef}
-        className="node-toolbar-btn p-2 rounded-xl hover:bg-white/60 text-gray-700 transition-colors duration-200 border border-gray-200/60 hover:border-gray-300"
+        className="node-toolbar-btn p-2 rounded-xl hover:bg-emerald-50 text-emerald-600 transition-colors duration-200 border border-emerald-200 hover:border-emerald-300"
         onClick={(e) => {
           e.stopPropagation();
           onToggle(e);
         }}
         title={title}
       >
-        {/* A simple 'A' icon representing text color */}
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M4 20h16" />
-          <path d="M6 20l6-16 6 16" />
-          <path d="M8 14h8" />
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'geometricPrecision'}}>
+          <polyline points="4 7 4 4 20 4 20 7"></polyline>
+          <line x1="9" y1="20" x2="15" y2="20"></line>
+          <line x1="12" y1="4" x2="12" y2="20"></line>
         </svg>
       </button>
 
