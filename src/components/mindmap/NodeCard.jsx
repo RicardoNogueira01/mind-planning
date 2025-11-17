@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatching, connectionMode, isConnectionSource, isAlreadyConnected, children }) => {
+const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatching, connectionMode, isConnectionSource, isAlreadyConnected, isParentOfSelected, isChildOfSelected, children }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editText, setEditText] = React.useState(node.text || '');
   const [isHovering, setIsHovering] = React.useState(false);
@@ -47,7 +47,11 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
 
   return (
     <div
-      className={`absolute rounded-lg ${selected ? 'ring-2 ring-blue-400/70' : ''}`}
+      className={`absolute rounded-lg ${
+        selected ? 'ring-2 ring-blue-400/70' : 
+        isParentOfSelected ? 'ring-2 ring-purple-400/70' : 
+        isChildOfSelected ? 'ring-2 ring-amber-400/70' : ''
+      }`}
       style={{ 
         left: node.x - 150, 
         top: node.y - 42, 
@@ -62,6 +66,24 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
       onMouseEnter={() => connectionMode && !isAlreadyConnected && setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
+      {/* Parent indicator badge */}
+      {isParentOfSelected && (
+        <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-20">
+          <div className="bg-purple-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md">
+            Parent
+          </div>
+        </div>
+      )}
+      
+      {/* Child indicator badge */}
+      {isChildOfSelected && (
+        <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-20">
+          <div className="bg-amber-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md">
+            Child
+          </div>
+        </div>
+      )}
+      
       {/* Connection Points - visible when in connection mode */}
       {connectionMode && !isConnectionSource && (
         <>
@@ -135,6 +157,8 @@ NodeCard.propTypes = {
   connectionMode: PropTypes.bool,
   isConnectionSource: PropTypes.bool,
   isAlreadyConnected: PropTypes.bool,
+  isParentOfSelected: PropTypes.bool,
+  isChildOfSelected: PropTypes.bool,
   children: PropTypes.node
 };
 

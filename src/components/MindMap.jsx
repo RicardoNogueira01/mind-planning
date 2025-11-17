@@ -1332,6 +1332,10 @@ export default function MindMap({ mapId, onBack }) {
               ? node.text.toLowerCase().includes(searchQuery.toLowerCase()) 
               : true;
             
+            // Determine if this node is a parent or child of selected node(s)
+            const isParentOfSelected = selectedNodes.length === 1 && connections.some(c => c.from === node.id && c.to === selectedNodes[0]);
+            const isChildOfSelected = selectedNodes.length === 1 && connections.some(c => c.from === selectedNodes[0] && c.to === node.id);
+            
             return (
               <React.Fragment key={node.id}>
                 <NodeCard
@@ -1344,6 +1348,8 @@ export default function MindMap({ mapId, onBack }) {
                 connectionMode={!!connectionFrom}
                 isConnectionSource={connectionFrom === node.id}
                 isAlreadyConnected={connectionFrom && connectionFrom !== node.id && connections.some(c => (c.from === connectionFrom && c.to === node.id) || (c.from === node.id && c.to === connectionFrom))}
+                isParentOfSelected={isParentOfSelected}
+                isChildOfSelected={isChildOfSelected}
                 onMouseDown={(e) => {
                   // allow dragging via startPanning handler; nothing here
                 }}
