@@ -109,7 +109,7 @@ export default function MindMap({ mapId, onBack }) {
     positioning.findStackedChildPosition
   );
 
-  const dragging = useDragging(nodes, setNodes, canvasRef, mode);
+  const dragging = useDragging(nodes, setNodes, canvasRef, mode, selectedNodes);
 
   // ============================================
   // UI INTERACTION: Reference dragging state
@@ -1272,8 +1272,8 @@ export default function MindMap({ mapId, onBack }) {
                 </div>
               )}
               
-              {/* Per-node toolbar overlay - Only visible when node is selected */}
-              {selectedNodes.includes(node.id) && (
+              {/* Per-node toolbar overlay - Only visible when exactly ONE node is selected */}
+              {selectedNodes.length === 1 && selectedNodes.includes(node.id) && (
               <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-full z-20" style={{ top: '-25px' }}>
                 <div className="enhanced-node-toolbar backdrop-blur-md bg-white/90 shadow-lg border border-white/20 rounded-2xl flex items-center p-2 gap-1">
                   {/* PRIMARY GROUP - always visible */}

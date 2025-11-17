@@ -10,11 +10,13 @@ export function useDragging(
   nodes: Node[],
   setNodes: (nodes: Node[] | ((prev: Node[]) => Node[])) => void,
   canvasRef: React.RefObject<HTMLDivElement>,
-  mode: string
+  mode: string,
+  selectedNodes: string[]
 ) {
   // Dragging state
   const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [initialPositions, setInitialPositions] = useState<Record<string, { x: number; y: number }>>({});
 
   // Panning state
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -46,6 +48,19 @@ export function useDragging(
                 x: e.clientX - rect.left - (node.x + pan.x),
                 y: e.clientY - rect.top - (node.y + pan.y),
               });
+              
+              // Store initial positions for all selected nodes if this is a multi-select drag
+              if (selectedNodes.includes(id) && selectedNodes.length > 1) {
+                const positions: Record<string, { x: number; y: number }> = {};
+                selectedNodes.forEach(nodeId => {
+                  const n = nodes.find(node => node.id === nodeId);
+                  if (n) {
+                    positions[nodeId] = { x: n.x, y: n.y };
+                  }
+                });
+                setInitialPositions(positions);
+              }
+              
               return;
             }
           }
@@ -66,7 +81,7 @@ export function useDragging(
         startY: e.clientY - pan.y,
       };
     },
-    [nodes, pan, mode, canvasRef]
+    [nodes, pan, mode, canvasRef, selectedNodes]
   );
 
   /**
@@ -86,11 +101,35 @@ export function useDragging(
           const rect = canvasRef.current.getBoundingClientRect();
           const newX = e.clientX - rect.left - pan.x - dragOffset.x;
           const newY = e.clientY - rect.top - pan.y - dragOffset.y;
-          setNodes(prev =>
-            prev.map(n =>
-              n.id === draggingNodeId ? { ...n, x: newX, y: newY } : n
-            )
-          );
+          
+          // If multiple nodes are selected, move them all together
+          if (selectedNodes.includes(draggingNodeId) && selectedNodes.length > 1 && Object.keys(initialPositions).length > 0) {
+            const draggedNode = nodes.find(n => n.id === draggingNodeId);
+            if (draggedNode) {
+              const deltaX = newX - initialPositions[draggingNodeId].x;
+              const deltaY = newY - initialPositions[draggingNodeId].y;
+              
+              setNodes(prev =>
+                prev.map(n => {
+                  if (selectedNodes.includes(n.id) && initialPositions[n.id]) {
+                    return {
+                      ...n,
+                      x: initialPositions[n.id].x + deltaX,
+                      y: initialPositions[n.id].y + deltaY
+                    };
+                  }
+                  return n;
+                })
+              );
+            }
+          } else {
+            // Single node drag
+            setNodes(prev =>
+              prev.map(n =>
+                n.id === draggingNodeId ? { ...n, x: newX, y: newY } : n
+              )
+            );
+          }
         }
         return;
       }
@@ -102,7 +141,7 @@ export function useDragging(
         y: e.clientY - panRef.current.startY,
       });
     },
-    [draggingNodeId, pan, dragOffset, isPanning, setNodes, canvasRef]
+    [draggingNodeId, pan, dragOffset, isPanning, setNodes, canvasRef, selectedNodes, initialPositions]
   );
 
   /**
@@ -111,6 +150,7 @@ export function useDragging(
   const stopPanning = useCallback(() => {
     setIsPanning(false);
     setDraggingNodeId(null);
+    setInitialPositions({});
   }, []);
 
   return {
