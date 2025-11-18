@@ -1035,6 +1035,10 @@ export default function MindMap({ mapId, onBack }) {
   }, []); // Run only once on mount
 
   // Touch event handlers for mobile support
+  const [touchDragNodeId, setTouchDragNodeId] = useState(null);
+  const [touchDragOffset, setTouchDragOffset] = useState({ x: 0, y: 0 });
+  const [touchInitialPositions, setTouchInitialPositions] = useState({});
+
   const handleTouchStart = (e) => {
     if (e.touches.length === 1) {
       // Single touch - could be pan or node drag
@@ -1046,7 +1050,32 @@ export default function MindMap({ mapId, onBack }) {
       const nodeElement = target?.closest('[data-node-id]');
       
       if (nodeElement) {
-        setIsTouchDraggingNode(true);
+        const nodeId = nodeElement.dataset.nodeId;
+        const node = nodes.find(n => n.id === nodeId);
+        
+        if (node && canvasRef.current) {
+          const rect = canvasRef.current.getBoundingClientRect();
+          setIsTouchDraggingNode(true);
+          setTouchDragNodeId(nodeId);
+          
+          // Calculate offset between touch point and node position
+          setTouchDragOffset({
+            x: touch.clientX - rect.left - (node.x + dragging.pan.x),
+            y: touch.clientY - rect.top - (node.y + dragging.pan.y),
+          });
+          
+          // Store initial positions for multi-select drag
+          if (selectedNodes.includes(nodeId) && selectedNodes.length > 1) {
+            const positions = {};
+            selectedNodes.forEach(id => {
+              const n = nodes.find(node => node.id === id);
+              if (n) {
+                positions[id] = { x: n.x, y: n.y };
+              }
+            });
+            setTouchInitialPositions(positions);
+          }
+        }
       } else {
         // Start panning
         dragging.startPanning({
@@ -1068,14 +1097,49 @@ export default function MindMap({ mapId, onBack }) {
   };
 
   const handleTouchMove = (e) => {
-    if (e.touches.length === 1 && !isTouchDraggingNode) {
-      // Single touch pan
+    if (e.touches.length === 1) {
       const touch = e.touches[0];
-      dragging.handlePanning({
-        clientX: touch.clientX,
-        clientY: touch.clientY,
-        preventDefault: () => e.preventDefault()
-      });
+      
+      if (isTouchDraggingNode && touchDragNodeId && canvasRef.current) {
+        // Drag the node
+        e.preventDefault();
+        const rect = canvasRef.current.getBoundingClientRect();
+        const newX = touch.clientX - rect.left - dragging.pan.x - touchDragOffset.x;
+        const newY = touch.clientY - rect.top - dragging.pan.y - touchDragOffset.y;
+        
+        // If multiple nodes are selected, move them all together
+        if (selectedNodes.includes(touchDragNodeId) && selectedNodes.length > 1 && Object.keys(touchInitialPositions).length > 0) {
+          const deltaX = newX - touchInitialPositions[touchDragNodeId].x;
+          const deltaY = newY - touchInitialPositions[touchDragNodeId].y;
+          
+          setNodes(prev =>
+            prev.map(n => {
+              if (selectedNodes.includes(n.id) && touchInitialPositions[n.id]) {
+                return {
+                  ...n,
+                  x: touchInitialPositions[n.id].x + deltaX,
+                  y: touchInitialPositions[n.id].y + deltaY
+                };
+              }
+              return n;
+            })
+          );
+        } else {
+          // Single node drag
+          setNodes(prev =>
+            prev.map(n =>
+              n.id === touchDragNodeId ? { ...n, x: newX, y: newY } : n
+            )
+          );
+        }
+      } else if (!isTouchDraggingNode) {
+        // Single touch pan
+        dragging.handlePanning({
+          clientX: touch.clientX,
+          clientY: touch.clientY,
+          preventDefault: () => e.preventDefault()
+        });
+      }
     } else if (e.touches.length === 2) {
       // Two-finger pinch zoom
       e.preventDefault();
@@ -1103,6 +1167,8 @@ export default function MindMap({ mapId, onBack }) {
       setLastTouchDistance(null);
       setTouchStartPos(null);
       setIsTouchDraggingNode(false);
+      setTouchDragNodeId(null);
+      setTouchInitialPositions({});
     } else if (e.touches.length === 1) {
       // One finger left, reset pinch zoom
       setLastTouchDistance(null);
