@@ -590,24 +590,26 @@ const RecentlyCompletedTasksManager = () => {
               </button>
             </div>
 
-            <div className="flex items-center gap-4">              <select
+            <div className="flex flex-wrap items-center gap-2 md:gap-4">
+              <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-sm md:text-base min-w-0 flex-shrink"
               >
-                <option value="completedAt">Sort by Completion Date</option>
-                <option value="title">Sort by Title</option>
-                <option value="priority">Sort by Priority</option>
-                <option value="quality">Sort by Quality</option>
-                <option value="timeSpent">Sort by Time Spent</option>
-              </select>              <button
+                <option value="completedAt">Date</option>
+                <option value="title">Title</option>
+                <option value="priority">Priority</option>
+                <option value="quality">Quality</option>
+                <option value="timeSpent">Time</option>
+              </select>
+              <button
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-700"
+                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 flex-shrink-0"
               >
                 {sortOrder === 'asc' ? '↑' : '↓'}
               </button>
 
-              <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+              <div className="flex border border-gray-300 rounded-lg overflow-hidden flex-shrink-0">
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`p-2 ${viewMode === 'grid' ? 'bg-gray-800 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} transition-colors`}

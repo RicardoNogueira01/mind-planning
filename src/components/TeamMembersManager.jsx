@@ -493,24 +493,26 @@ const TeamMembersManager = () => {
               </button>
             </div>
 
-            <div className="flex items-center gap-4">              <select
+            <div className="flex flex-wrap items-center gap-2 md:gap-4">
+              <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black text-sm md:text-base min-w-0 flex-shrink"
               >
-                <option value="name">Sort by Name</option>
-                <option value="role">Sort by Role</option>
-                <option value="completionRate">Sort by Completion Rate</option>
-                <option value="tasksAssigned">Sort by Tasks Assigned</option>
-                <option value="overdueTasks">Sort by Overdue Tasks</option>
-              </select>              <button
+                <option value="name">Name</option>
+                <option value="role">Role</option>
+                <option value="completionRate">Completion</option>
+                <option value="tasksAssigned">Tasks</option>
+                <option value="overdueTasks">Overdue</option>
+              </select>
+              <button
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-black"
+                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-black flex-shrink-0"
               >
                 {sortOrder === 'asc' ? '↑' : '↓'}
               </button>
 
-              <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+              <div className="flex border border-gray-300 rounded-lg overflow-hidden flex-shrink-0">
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`p-2 ${viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} transition-colors`}

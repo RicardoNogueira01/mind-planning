@@ -138,48 +138,52 @@ const WeeklyCalendarWidget = () => {
   const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-            <Calendar size={20} />
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0 mb-4 md:mb-6">
+        <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
+          <div className="p-2 bg-blue-100 text-blue-600 rounded-lg flex-shrink-0">
+            <Calendar size={18} className="md:hidden" />
+            <Calendar size={20} className="hidden md:block" />
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">This Week</h2>
-            <p className="text-sm text-gray-500">{formatDate(weekDates[0])} - {formatDate(weekDates[6])}</p>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-base md:text-lg font-semibold text-gray-900">This Week</h2>
+            <p className="text-xs md:text-sm text-gray-500 truncate">{formatDate(weekDates[0])} - {formatDate(weekDates[6])}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigateWeek(-1)}
-            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <ChevronLeft size={16} className="text-gray-600" />
-          </button>
-          <button
-            onClick={() => setCurrentDate(new Date())}
-            className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-          >
-            Today
-          </button>
-          <button
-            onClick={() => navigateWeek(1)}
-            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <ChevronRight size={16} className="text-gray-600" />
-          </button>
+        <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end">
+          <div className="flex items-center gap-1 md:gap-2">
+            <button
+              onClick={() => navigateWeek(-1)}
+              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors touch-manipulation"
+            >
+              <ChevronLeft size={16} className="text-gray-600" />
+            </button>
+            <button
+              onClick={() => setCurrentDate(new Date())}
+              className="px-2 md:px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors touch-manipulation"
+            >
+              Today
+            </button>
+            <button
+              onClick={() => navigateWeek(1)}
+              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors touch-manipulation"
+            >
+              <ChevronRight size={16} className="text-gray-600" />
+            </button>
+          </div>
           <Link
             to="/calendar"
-            className="ml-2 px-3 py-1.5 text-xs font-medium bg-gray-800 text-white hover:bg-gray-900 rounded-lg transition-colors"
+            className="px-2 md:px-3 py-1.5 text-xs font-medium bg-gray-800 text-white hover:bg-gray-900 rounded-lg transition-colors touch-manipulation whitespace-nowrap"
           >
-            Full Calendar
+            <span className="hidden sm:inline">Full Calendar</span>
+            <span className="sm:hidden">Calendar</span>
           </Link>
         </div>
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
         {weekDates.map((date, index) => {
           const dayTasks = getTasksForDate(date);
           const isTodayDate = isToday(date);
@@ -187,18 +191,18 @@ const WeeklyCalendarWidget = () => {
           return (
             <div
               key={index}
-              className={`p-3 rounded-lg border-2 transition-colors ${
+              className={`p-2 md:p-3 rounded-lg border-2 transition-colors ${
                 isTodayDate 
                   ? 'border-blue-200 bg-blue-50' 
                   : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
               }`}
             >
               {/* Day header */}
-              <div className="text-center mb-3">
+              <div className="text-center mb-2 md:mb-3">
                 <div className="text-xs font-medium text-gray-500 mb-1">
                   {dayNames[index]}
                 </div>
-                <div className={`text-lg font-semibold ${
+                <div className={`text-base md:text-lg font-semibold ${
                   isTodayDate ? 'text-blue-600' : 'text-gray-800'
                 }`}>
                   {date.getDate()}
@@ -210,17 +214,17 @@ const WeeklyCalendarWidget = () => {
                 {dayTasks.map(task => (
                   <div
                     key={task.id}
-                    className="p-2 rounded-md border border-gray-100 hover:shadow-sm transition-shadow cursor-pointer"
+                    className="p-1.5 md:p-2 rounded-md border border-gray-100 hover:shadow-sm transition-shadow cursor-pointer touch-manipulation"
                     style={{ 
                       borderLeftColor: task.color,
-                      borderLeftWidth: '3px'
+                      borderLeftWidth: '2px'
                     }}
                   >
                     <div className="flex items-center gap-1 mb-1">
-                      <Clock size={10} className="text-gray-400" />
-                      <span className="text-xs text-gray-500">{task.time}</span>
+                      <Clock size={9} className="text-gray-400 flex-shrink-0" />
+                      <span className="text-[10px] md:text-xs text-gray-500 truncate">{task.time}</span>
                     </div>
-                    <div className="text-xs font-medium text-gray-800 line-clamp-2">
+                    <div className="text-[10px] md:text-xs font-medium text-gray-800 line-clamp-2">
                       {task.title}
                     </div>
                   </div>
@@ -228,16 +232,16 @@ const WeeklyCalendarWidget = () => {
                 
                 {/* Show more indicator if there are more tasks */}
                 {tasks.filter(task => task.date === date.toISOString().split('T')[0]).length > 3 && (
-                  <div className="text-xs text-gray-400 text-center py-1">
-                    +{tasks.filter(task => task.date === date.toISOString().split('T')[0]).length - 3} more
+                  <div className="text-[10px] md:text-xs text-gray-400 text-center py-1">
+                    +{tasks.filter(task => task.date === date.toISOString().split('T')[0]).length - 3}
                   </div>
                 )}
 
                 {/* Empty state for days with no tasks */}
                 {dayTasks.length === 0 && (
-                  <div className="text-center py-4">
-                    <button className="w-6 h-6 border border-dashed border-gray-300 rounded-md flex items-center justify-center hover:border-gray-400 transition-colors group">
-                      <Plus size={12} className="text-gray-400 group-hover:text-gray-600" />
+                  <div className="text-center py-2 md:py-4">
+                    <button className="w-5 h-5 md:w-6 md:h-6 border border-dashed border-gray-300 rounded-md flex items-center justify-center hover:border-gray-400 transition-colors group touch-manipulation">
+                      <Plus size={10} className="text-gray-400 group-hover:text-gray-600 md:w-3 md:h-3" />
                     </button>
                   </div>
                 )}
@@ -248,18 +252,19 @@ const WeeklyCalendarWidget = () => {
       </div>
 
       {/* Footer */}
-      <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
+      <div className="mt-3 md:mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs md:text-sm text-gray-500">
         <div className="flex items-center gap-4">
-          <span>Total this week: {tasks.filter(task => {
+          <span>Total: {tasks.filter(task => {
             const taskDate = new Date(task.date);
             return weekDates.some(date => date.toDateString() === taskDate.toDateString());
           }).length} tasks</span>
         </div>
         <Link
           to="/calendar"
-          className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+          className="text-blue-600 hover:text-blue-700 font-medium transition-colors touch-manipulation"
         >
-          View full calendar →
+          <span className="hidden sm:inline">View full calendar →</span>
+          <span className="sm:hidden">View all →</span>
         </Link>
       </div>
     </div>
