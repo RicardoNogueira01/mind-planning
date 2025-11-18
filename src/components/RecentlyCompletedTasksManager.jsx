@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -16,12 +16,21 @@ import {
   ExternalLink,
   MoreVertical,
   Download,
-  RefreshCw
+  RefreshCw,
+  Edit2,
+  Trash2,
+  X
 } from 'lucide-react';
 
 const RecentlyCompletedTasksManager = () => {
+  // Modal and UI state
+  const [showEditTaskModal, setShowEditTaskModal] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [feedbackMessage, setFeedbackMessage] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
+
   // Sample data
-  const [completedTasks] = useState([
+  const [completedTasks, setCompletedTasks] = useState([
     {
       id: 1,
       title: 'Finalize design mockups',
@@ -236,6 +245,38 @@ const RecentlyCompletedTasksManager = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [showFilters, setShowFilters] = useState(false);
 
+  // Feedback and handlers
+  const showFeedback = (message, type = 'success') => {
+    setFeedbackMessage({ message, type });
+    setTimeout(() => setFeedbackMessage(null), 3000);
+  };
+
+  const handleEdit = (task) => {
+    setEditingTaskId(task.id);
+    setShowEditTaskModal(true);
+    setOpenMenuId(null);
+  };
+
+  const handleDelete = (taskId, taskTitle) => {
+    if (globalThis.confirm(`Are you sure you want to delete "${taskTitle}"?`)) {
+      setCompletedTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
+      showFeedback('Task deleted successfully!', 'error');
+      setOpenMenuId(null);
+    }
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openMenuId && !event.target.closest('.relative')) {
+        setOpenMenuId(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openMenuId]);
+
   // Filter and sort data
   const filteredTasks = completedTasks
     .filter(task => {
@@ -355,9 +396,32 @@ const RecentlyCompletedTasksManager = () => {
                 <p className="text-sm text-gray-500">{task.project}</p>
               </div>
             </div>
-            <button className="p-1 hover:bg-gray-100 rounded">
-              <MoreVertical size={16} className="text-gray-400" />
-            </button>
+            <div className="relative">
+              <button 
+                className="p-1 hover:bg-gray-100 rounded"
+                onClick={() => setOpenMenuId(openMenuId === task.id ? null : task.id)}
+              >
+                <MoreVertical size={16} className="text-gray-400" />
+              </button>
+              {openMenuId === task.id && (
+                <div className="absolute right-0 top-8 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                  <button 
+                    className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50 flex items-center gap-2"
+                    onClick={() => handleEdit(task)}
+                  >
+                    <Edit2 size={14} />
+                    Edit Task
+                  </button>
+                  <button 
+                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                    onClick={() => handleDelete(task.id, task.title)}
+                  >
+                    <Trash2 size={14} />
+                    Delete Task
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           <p className="text-sm text-gray-600 mb-4 line-clamp-2">{task.description}</p>
@@ -484,6 +548,19 @@ const RecentlyCompletedTasksManager = () => {
   );
   return (
     <div className="min-h-screen bg-gray-50 p-3 md:p-6">
+      {/* Feedback Message */}
+      {feedbackMessage && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[60] animate-fade-in">
+          <div className={`px-6 py-3 rounded-lg shadow-lg border ${
+            feedbackMessage.type === 'success' 
+              ? 'bg-green-50 border-green-200 text-green-800' 
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            <p className="font-medium">{feedbackMessage.message}</p>
+          </div>
+        </div>
+      )}
+      
       {/* Header */}
       <header className="mb-4 md:mb-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
