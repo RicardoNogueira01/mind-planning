@@ -2,13 +2,12 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
-import { Check, Download, X } from 'lucide-react';
+import { Check } from 'lucide-react';
 import MindMapToolbar from './mindmap/MindMapToolbar';
 import MindMapCanvas from './mindmap/MindMapCanvas';
 import NodeCard from './mindmap/NodeCard';
 import MindMapSearchBar from './mindmap/MindMapSearchBar';
 import ConnectionsSvg from './mindmap/ConnectionsSvg';
-import NodePopup from './mindmap/NodePopup';
 import ResizeHandle from './mindmap/ResizeHandle';
 import CollaboratorAvatar from './mindmap/CollaboratorAvatar';
 import ShareDialog from './mindmap/ShareDialog';
@@ -20,6 +19,13 @@ import NodeToolbarPrimary from './mindmap/NodeToolbarPrimary';
 import NodeToolbarConnectionButton from './mindmap/NodeToolbarConnectionButton';
 import NodeToolbarSettingsToggle from './mindmap/NodeToolbarSettingsToggle';
 import NodeToolbarLayout from './mindmap/NodeToolbarLayout';
+import EmojiPicker from './popups/EmojiPicker';
+import NotesPopup from './popups/NotesPopup';
+import TagsPopup from './popups/TagsPopup';
+import PropertiesPanel from './popups/PropertiesPanel';
+import DueDatePicker from './popups/DueDatePicker';
+import AttachmentsPopup from './popups/AttachmentsPopup';
+import CollaboratorPicker from './popups/CollaboratorPicker';
 
 import { getDescendantNodeIds, getAncestorNodeIds } from './mindmap/graphUtils';
 import ShapePalette from './mindmap/ShapePalette';
@@ -32,6 +38,7 @@ import { useNodePositioning } from '../hooks/useNodePositioning';
 import { useNodeOperations } from '../hooks/useNodeOperations';
 import { useDragging } from '../hooks/useDragging';
 import { useNodeHandlers } from '../hooks/useNodeHandlers';
+import { useConnectionDrawing } from '../hooks/useConnectionDrawing';
 
 export default function MindMap({ mapId, onBack }) {
   // Minimal, compiling scaffold to restore the app while we refactor
@@ -55,8 +62,6 @@ export default function MindMap({ mapId, onBack }) {
   const [fxOptions, setFxOptions] = useState({ enabled: false });
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchList, setShowSearchList] = useState(false);
-  const [connectionFrom, setConnectionFrom] = useState(null);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   
   // Collaborator selection mode state
   const [isSelecting, setIsSelecting] = useState(false);
@@ -129,6 +134,10 @@ export default function MindMap({ mapId, onBack }) {
 
   const dragging = useDragging(nodes, setNodes, canvasRef, mode, selectedNodes);
 
+  // Connection drawing hook
+  const connectionDrawing = useConnectionDrawing();
+  const { connectionFrom, mousePosition, startConnection, cancelConnection, updateMousePosition } = connectionDrawing;
+
   const nodeHandlers = useNodeHandlers(
     nodes,
     setNodes,
@@ -193,7 +202,7 @@ export default function MindMap({ mapId, onBack }) {
       setOpenGroupMenuId(null);
       setResizingGroupId(null);
       setSelectedNodes([]);
-      setConnectionFrom(null);
+      cancelConnection();
       setMode('cursor');
       setSelectionType('simple');
       setShowCollaboratorDialog(false);
@@ -253,7 +262,7 @@ export default function MindMap({ mapId, onBack }) {
 
     globalThis.addEventListener('keydown', onKeyDown);
     return () => globalThis.removeEventListener('keydown', onKeyDown);
-  }, [selectedNodes, nodeOps]);
+  }, [selectedNodes, nodeOps, cancelConnection, connections]);
 
   // Wheel event for zooming
   useEffect(() => {
@@ -384,7 +393,7 @@ export default function MindMap({ mapId, onBack }) {
       const exists = connections.some(c => (c.from === connectionFrom && c.to === id) || (c.from === id && c.to === connectionFrom));
       if (!exists) {
         setConnections(connections.concat([{ id: `conn-${Date.now()}`, from: connectionFrom, to: id }]));
-        setConnectionFrom(null);
+        cancelConnection();
       }
       // If connection already exists, do nothing (keep connection mode active)
       return;
@@ -544,15 +553,13 @@ export default function MindMap({ mapId, onBack }) {
   const onAddChild = nodeOps.addChildNode;
   const onRequestDelete = (node) => nodeOps.deleteNodes([node.id]);
   const addStandaloneNode = nodeOps.addStandaloneNode;
-  const startConnection = (id) => setConnectionFrom(id);
-  const cancelConnection = () => setConnectionFrom(null);
 
   // Track mouse position for connection preview line
   useEffect(() => {
     if (!connectionFrom) return;
 
     const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
+      updateMousePosition(e.clientX, e.clientY);
     };
 
     const handleKeyDown = (e) => {
@@ -568,7 +575,7 @@ export default function MindMap({ mapId, onBack }) {
       globalThis.removeEventListener('mousemove', handleMouseMove);
       globalThis.removeEventListener('keydown', handleKeyDown);
     };
-  }, [connectionFrom]);
+  }, [connectionFrom, updateMousePosition, cancelConnection]);
 
   // ============================================
   // PROGRESS TRACKING FUNCTIONS
@@ -1446,67 +1453,18 @@ export default function MindMap({ mapId, onBack }) {
                           <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
                         </svg>
                       </button>
-                      {isPopupOpen(node.id, 'attach') && (() => {
-                        const anchor = attachBtnRefs.current[node.id];
-                        const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
-                        const popupWidth = 480;
-                        const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
-                        const top = Math.max(8, rect.bottom + 20);
-                        return createPortal(
-                          <NodePopup
-                            position={{ left, top }}
-                            width={popupWidth}
-                            maxWidth="500px"
-                            title="Attachments"
-                            onClose={() => togglePopup(node.id, 'attach')}
-                          >
-                            <div className="mb-4">
-                              <label htmlFor={`attachment-search-${node.id}`} className="block text-xs font-medium text-gray-700 mb-1">Search by name</label>
-                              <input id={`attachment-search-${node.id}`} type="text" placeholder="Search by name..." className="w-full p-2 text-sm border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left" value={attachmentFilters.search}
-                                onChange={(e) => setAttachmentFilters({ ...attachmentFilters, search: e.target.value })}
-                                onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onFocus={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} />
-                            </div>
-                            <div className="mb-4">
-                              <label htmlFor={`attachment-file-${node.id}`} className="block text-xs font-medium text-gray-700 mb-2">Add new file</label>
-                              <input id={`attachment-file-${node.id}`} type="file" accept=".xlsx,.xls,.doc,.docx,.pdf" className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-300 rounded-lg p-2"
-                                onChange={(e) => handleAttachment(e, node.id)} onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onFocus={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} />
-                            </div>
-                            <div className="max-h-64 overflow-y-auto">
-                              {node.attachments && node.attachments.length > 0 ? (
-                                <div className="space-y-2">
-                                  {node.attachments.filter(attachment => attachment.name.toLowerCase().includes((attachmentFilters.search || '').toLowerCase())).map(attachment => (
-                                    <div key={attachment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
-                                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                                        <span className="text-xs text-white bg-blue-500 px-2 py-1 rounded font-medium uppercase">{attachment.type}</span>
-                                        <span className="text-sm text-gray-900 font-medium truncate">{attachment.name}</span>
-                                      </div>
-                                      <div className="flex items-center gap-1 ml-2">
-                                        <button 
-                                          className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors" 
-                                          onClick={(e) => { e.stopPropagation(); downloadAttachment(attachment); }}
-                                          title="Download file"
-                                        >
-                                          <Download size={16} />
-                                        </button>
-                                        <button 
-                                          className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition-colors" 
-                                          onClick={(e) => { e.stopPropagation(); removeAttachment(node.id, attachment.id); }}
-                                          title="Remove file"
-                                        >
-                                          <X size={16} />
-                                        </button>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <div className="text-xs text-gray-500">No attachments</div>
-                              )}
-                            </div>
-                          </NodePopup>,
-                          document.body
-                        );
-                      })()}
+                      <AttachmentsPopup
+                        show={isPopupOpen(node.id, 'attach')}
+                        anchorRef={attachBtnRefs.current[node.id] ? { current: attachBtnRefs.current[node.id] } : null}
+                        nodeId={node.id}
+                        attachments={node.attachments}
+                        searchFilter={attachmentFilters.search}
+                        onSearchChange={(value) => setAttachmentFilters({ ...attachmentFilters, search: value })}
+                        onFileSelect={(e) => handleAttachment(e, node.id)}
+                        onDownload={downloadAttachment}
+                        onRemove={(attachmentId) => removeAttachment(node.id, attachmentId)}
+                        onClose={() => togglePopup(node.id, 'attach')}
+                      />
                       
                       <button
                         ref={(el) => { notesBtnRefs.current[node.id] = el; }}
@@ -1522,44 +1480,13 @@ export default function MindMap({ mapId, onBack }) {
                           <line x1="10" y1="9" x2="8" y2="9"></line>
                         </svg>
                       </button>
-                      {isPopupOpen(node.id, 'notes') && (() => {
-                        const anchor = notesBtnRefs.current[node.id];
-                        const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
-                        const popupWidth = 420;
-                        const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
-                        const top = Math.max(8, rect.bottom + 20);
-                        return createPortal(
-                          <NodePopup 
-                            position={{ left, top }}
-                            width={popupWidth}
-                            title="Notes"
-                            onClose={() => setNodes(nodes.map(n => n.id === node.id ? { ...n, showNotesPopup: false } : n))}
-                          >
-                            <textarea 
-                              className="w-full p-2 text-sm border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"  
-                              placeholder="Add your notes here..." 
-                              value={node.notes || ''}
-                              onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, notes: e.target.value } : n))}
-                              onClick={(e) => e.stopPropagation()} 
-                              onMouseDown={(e) => e.stopPropagation()} 
-                              onFocus={(e) => e.stopPropagation()} 
-                              onKeyDown={(e) => e.stopPropagation()}
-                            />
-                            <div className="mt-2 flex justify-end">
-                              <button 
-                                className="px-2 py-1 text-xs rounded-lg border border-gray-200 bg-white hover:bg-gray-50" 
-                                onClick={(e) => { 
-                                  e.stopPropagation(); 
-                                  setNodes(nodes.map(n => n.id === node.id ? { ...n, showNotesPopup: false } : n)); 
-                                }}
-                              >
-                                Close
-                              </button>
-                            </div>
-                          </NodePopup>,
-                          document.body
-                        );
-                      })()}
+                      <NotesPopup
+                        show={isPopupOpen(node.id, 'notes')}
+                        anchorRef={notesBtnRefs.current[node.id] ? { current: notesBtnRefs.current[node.id] } : null}
+                        notes={node.notes}
+                        onChange={(value) => setNodes(nodes.map(n => n.id === node.id ? { ...n, notes: value } : n))}
+                        onClose={() => togglePopup(node.id, 'notes')}
+                      />
 
                       <button
                         ref={(el) => { emojiBtnRefs.current[node.id] = el; }}
@@ -1569,36 +1496,15 @@ export default function MindMap({ mapId, onBack }) {
                       >
                         {node.emoji || '😊'}
                       </button>
-                      {isPopupOpen(node.id, 'emoji') && (() => {
-                        const emojis = ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '😜', '😛', '😲', '😮', '😯', '😨', '😰', '😢', '😭', '😱', '😖', '😣', '😞', '😓', '😩', '😫', '🥱', '😤', '😡', '😠', '🤬', '😈', '👿', '💀', '☠️', '💩', '🤡', '👹', '👺', '👻', '👽', '👾', '🤖'];
-                        const anchor = emojiBtnRefs.current[node.id];
-                        const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
-                        const popupWidth = 280;
-                        const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
-                        const top = Math.max(8, rect.bottom + 20);
-                        return createPortal(
-                          <NodePopup
-                            position={{ left, top }}
-                            width={popupWidth}
-                            maxHeight="400px"
-                            onClose={() => togglePopup(node.id, 'emoji')}
-                            style={{ padding: '8px' }}
-                          >
-                            <div className="grid grid-cols-6 gap-1">
-                              {emojis.map(emoji => (
-                                <button
-                                  key={emoji}
-                                  className="p-1 text-lg hover:bg-gray-100 rounded cursor-pointer"
-                                  onClick={(e) => { e.stopPropagation(); setNodeEmoji(node.id, emoji); togglePopup(node.id, 'emoji'); }}
-                                >
-                                  {emoji}
-                                </button>
-                              ))}
-                            </div>
-                          </NodePopup>,
-                          document.body
-                        );
-                      })()}
+                      <EmojiPicker
+                        show={isPopupOpen(node.id, 'emoji')}
+                        anchorRef={emojiBtnRefs.current[node.id] ? { current: emojiBtnRefs.current[node.id] } : null}
+                        onSelect={(emoji) => {
+                          setNodeEmoji(node.id, emoji);
+                          togglePopup(node.id, 'emoji');
+                        }}
+                        onClose={() => togglePopup(node.id, 'emoji')}
+                      />
 
                       <button
                         ref={(el) => { tagBtnRefs.current[node.id] = el; }}
@@ -1611,78 +1517,16 @@ export default function MindMap({ mapId, onBack }) {
                           <line x1="7" y1="7" x2="7.01" y2="7"></line>
                         </svg>
                       </button>
-                      {isPopupOpen(node.id, 'tags') && (() => {
-                        const anchor = tagBtnRefs.current[node.id];
-                        const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
-                        const popupWidth = 320;
-                        const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
-                        const top = Math.max(8, rect.bottom + 20);
-                        return createPortal(
-                          <NodePopup
-                            position={{ left, top }}
-                            width={popupWidth}
-                            maxHeight="400px"
-                            onClose={() => togglePopup(node.id, 'tags')}
-                            title="Manage Tags"
-                          >
-                            {/* Show/Hide Tags Toggle */}
-                            <div className="mb-4 pb-3 border-b border-gray-200">
-                              <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={node.showTags !== false}
-                                  onChange={(e) => {
-                                    e.stopPropagation();
-                                    setNodes(nodes.map(n => n.id === node.id ? { ...n, showTags: e.target.checked } : n));
-                                  }}
-                                  className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-2 focus:ring-teal-500"
-                                />
-                                <span className="text-sm font-medium text-gray-700">Show tags below node</span>
-                              </label>
-                            </div>
-
-                            {/* Tags Display */}
-                            <div className="mb-4">
-                              {(node.tags || []).length > 0 ? (
-                                <div className="flex gap-2 flex-wrap">
-                                  {(node.tags || []).map((t) => (
-                                    <span key={t} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-blue-50 border border-blue-200 text-blue-700 font-medium hover:bg-blue-100 transition-colors">
-                                      {t}
-                                      <button 
-                                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full w-4 h-4 flex items-center justify-center text-base leading-none transition-colors" 
-                                        onClick={(e) => { e.stopPropagation(); setNodes(nodes.map(n => n.id === node.id ? { ...n, tags: (n.tags || []).filter(tag => tag !== t) } : n)); }}
-                                        title="Remove tag"
-                                      >
-                                        ×
-                                      </button>
-                                    </span>
-                                  ))}
-                                </div>
-                              ) : (
-                                <div className="text-sm text-gray-500 italic">No tags added yet</div>
-                              )}
-                            </div>
-                            
-                            {/* Add Tag Input */}
-                            <input
-                              type="text"
-                              placeholder="Add tag and press Enter"
-                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                                  const tag = e.currentTarget.value.trim();
-                                  setNodes(nodes.map(n => n.id === node.id ? { ...n, tags: [...(n.tags || []), tag] } : n));
-                                  e.currentTarget.value = '';
-                                }
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              onFocus={(e) => e.stopPropagation()}
-                            />
-                          </NodePopup>,
-                          document.body
-                        );
-                      })()}
+                      <TagsPopup
+                        show={isPopupOpen(node.id, 'tags')}
+                        anchorRef={tagBtnRefs.current[node.id] ? { current: tagBtnRefs.current[node.id] } : null}
+                        tags={node.tags}
+                        showTags={node.showTags}
+                        onToggleShowTags={(checked) => setNodes(nodes.map(n => n.id === node.id ? { ...n, showTags: checked } : n))}
+                        onAddTag={(tag) => setNodes(nodes.map(n => n.id === node.id ? { ...n, tags: [...(n.tags || []), tag] } : n))}
+                        onRemoveTag={(tag) => setNodes(nodes.map(n => n.id === node.id ? { ...n, tags: (n.tags || []).filter(t => t !== tag) } : n))}
+                        onClose={() => togglePopup(node.id, 'tags')}
+                      />
                     </div>
                   )}
 
@@ -1706,68 +1550,18 @@ export default function MindMap({ mapId, onBack }) {
                           <line x1="12" y1="8" x2="12.01" y2="8"></line>
                         </svg>
                       </button>
-                      {isPopupOpen(node.id, 'details') && (() => {
-                        const anchor = detailsBtnRefs.current[node.id];
-                        const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
-                        const popupWidth = 340;
-                        const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
-                        const top = Math.max(8, rect.bottom + 20);
-                        return createPortal(
-                          <NodePopup
-                            position={{ left, top }}
-                            width={popupWidth}
-                            title="Details"
-                            onClose={() => togglePopup(node.id, 'details')}
-                          >
-                            <div className="space-y-3">
-                              <div>
-                                <label htmlFor={`priority-${node.id}`} className="text-sm text-gray-600 block mb-1">Priority</label>
-                                <select
-                                  id={`priority-${node.id}`}
-                                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                  value={node.priority || 'normal'}
-                                  onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, priority: e.target.value } : n))}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <option value="low">Low</option>
-                                  <option value="normal">Normal</option>
-                                  <option value="high">High</option>
-                                </select>
-                              </div>
-                              <div>
-                                <label htmlFor={`status-${node.id}`} className="text-sm text-gray-600 block mb-1">Status</label>
-                                <select
-                                  id={`status-${node.id}`}
-                                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                  value={node.status || 'todo'}
-                                  onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, status: e.target.value } : n))}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <option value="todo">To do</option>
-                                  <option value="doing">Doing</option>
-                                  <option value="done">Done</option>
-                                </select>
-                              </div>
-                              <div>
-                                <label htmlFor={`description-${node.id}`} className="text-sm text-gray-600 block mb-1">Description</label>
-                                <textarea
-                                  id={`description-${node.id}`}
-                                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                  rows={3}
-                                  placeholder="Add a description..."
-                                  value={node.description || ''}
-                                  onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, description: e.target.value } : n))}
-                                  onClick={(e) => e.stopPropagation()}
-                                  onMouseDown={(e) => e.stopPropagation()}
-                                  onFocus={(e) => e.stopPropagation()}
-                                  onKeyDown={(e) => e.stopPropagation()}
-                                />
-                              </div>
-                            </div>
-                          </NodePopup>,
-                          document.body
-                        );
-                      })()}
+                      <PropertiesPanel
+                        show={isPopupOpen(node.id, 'details')}
+                        anchorRef={detailsBtnRefs.current[node.id] ? { current: detailsBtnRefs.current[node.id] } : null}
+                        nodeId={node.id}
+                        priority={node.priority}
+                        status={node.status}
+                        description={node.description}
+                        onPriorityChange={(priority) => setNodes(nodes.map(n => n.id === node.id ? { ...n, priority } : n))}
+                        onStatusChange={(status) => setNodes(nodes.map(n => n.id === node.id ? { ...n, status } : n))}
+                        onDescriptionChange={(description) => setNodes(nodes.map(n => n.id === node.id ? { ...n, description } : n))}
+                        onClose={() => togglePopup(node.id, 'details')}
+                      />
 
                       <button
                         ref={(el) => { dateBtnRefs.current[node.id] = el; }}
@@ -1782,40 +1576,14 @@ export default function MindMap({ mapId, onBack }) {
                           <line x1="3" y1="10" x2="21" y2="10"></line>
                         </svg>
                       </button>
-                      {isPopupOpen(node.id, 'date') && (() => {
-                        const anchor = dateBtnRefs.current[node.id];
-                        const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
-                        const popupWidth = 220;
-                        const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
-                        const top = Math.max(8, rect.bottom + 20);
-                        return createPortal(
-                          <NodePopup 
-                            position={{ left, top }}
-                            width={popupWidth}
-                            title="Due Date"
-                            onClose={() => togglePopup(node.id, 'date')}
-                          >
-                            <input
-                              type="date"
-                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              value={node.dueDate || ''}
-                              onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, dueDate: e.target.value } : n))}
-                              onClick={(e) => e.stopPropagation()}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              onFocus={(e) => e.stopPropagation()}
-                            />
-                            {node.dueDate && (
-                              <button
-                                className="mt-2 text-xs text-red-600 hover:text-red-700 w-full py-1 hover:bg-red-50 rounded"
-                                onClick={(e) => { e.stopPropagation(); setNodes(nodes.map(n => n.id === node.id ? { ...n, dueDate: '' } : n)); }}
-                              >
-                                Clear date
-                              </button>
-                            )}
-                          </NodePopup>,
-                          document.body
-                        );
-                      })()}
+                      <DueDatePicker
+                        show={isPopupOpen(node.id, 'date')}
+                        anchorRef={dateBtnRefs.current[node.id] ? { current: dateBtnRefs.current[node.id] } : null}
+                        dueDate={node.dueDate}
+                        onDueDateChange={(dueDate) => setNodes(nodes.map(n => n.id === node.id ? { ...n, dueDate } : n))}
+                        onClearDate={() => setNodes(nodes.map(n => n.id === node.id ? { ...n, dueDate: '' } : n))}
+                        onClose={() => togglePopup(node.id, 'date')}
+                      />
 
                       <button
                         ref={(el) => { collaboratorBtnRefs.current[node.id] = el; }}
@@ -1830,79 +1598,16 @@ export default function MindMap({ mapId, onBack }) {
                           <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                         </svg>
                       </button>
-                      {isPopupOpen(node.id, 'collaborator') && (() => {
-                        const anchor = collaboratorBtnRefs.current[node.id];
-                        const rect = anchor ? anchor.getBoundingClientRect() : { left: window.innerWidth/2, top: 80, width: 0, height: 0, bottom: 100 };
-                        const popupWidth = 280;
-                        const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
-                        const top = Math.max(8, rect.bottom + 20);
-                        return createPortal(
-                          <NodePopup
-                            position={{ left, top }}
-                            width={popupWidth}
-                            title="Assign Collaborators"
-                            onClose={() => togglePopup(node.id, 'collaborator')}
-                          >
-                            <p className="text-xs text-gray-500 mb-3">Select team members for this node</p>
-                            
-                            {/* Search input */}
-                            <div className="mb-3">
-                              <input
-                                type="text"
-                                placeholder="Search collaborators..."
-                                value={collaboratorSearch}
-                                onChange={(e) => setCollaboratorSearch(e.target.value)}
-                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-gray-900 placeholder-gray-500"
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            </div>
-                            
-                            {/* Collaborator list with checkboxes */}
-                            <div className="max-h-64 overflow-y-auto space-y-1">
-                              {collaborators
-                                .filter(collab => 
-                                  collab.name.toLowerCase().includes(collaboratorSearch.toLowerCase()) ||
-                                  collab.initials.toLowerCase().includes(collaboratorSearch.toLowerCase())
-                                )
-                                .map(collab => {
-                                const isSelected = (node.collaborators || []).includes(collab.id);
-                                return (
-                                  <label 
-                                    key={collab.id} 
-                                    className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={isSelected}
-                                      onChange={() => {
-                                        assignCollaborator(node.id, collab.id);
-                                      }}
-                                      onClick={(e) => e.stopPropagation()}
-                                      className="w-4 h-4 text-cyan-600 rounded focus:ring-2 focus:ring-cyan-500"
-                                    />
-                                    <span 
-                                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" 
-                                      style={{ backgroundColor: collab.color, color: 'white' }}
-                                    >
-                                      {collab.initials}
-                                    </span>
-                                    <span className="text-sm text-gray-700">{collab.name}</span>
-                                  </label>
-                                );
-                              })}
-                              {collaborators.filter(collab => 
-                                collab.name.toLowerCase().includes(collaboratorSearch.toLowerCase()) ||
-                                collab.initials.toLowerCase().includes(collaboratorSearch.toLowerCase())
-                              ).length === 0 && (
-                                <div className="text-center py-4 text-sm text-gray-500">
-                                  No collaborators found
-                                </div>
-                              )}
-                            </div>
-                          </NodePopup>,
-                          document.body
-                        );
-                      })()}
+                      <CollaboratorPicker
+                        show={isPopupOpen(node.id, 'collaborator')}
+                        anchorRef={collaboratorBtnRefs.current[node.id] ? { current: collaboratorBtnRefs.current[node.id] } : null}
+                        collaborators={collaborators}
+                        selectedCollaboratorIds={node.collaborators || []}
+                        searchQuery={collaboratorSearch}
+                        onSearchChange={setCollaboratorSearch}
+                        onToggleCollaborator={(collabId) => assignCollaborator(node.id, collabId)}
+                        onClose={() => togglePopup(node.id, 'collaborator')}
+                      />
                     </div>
                   )}
 
