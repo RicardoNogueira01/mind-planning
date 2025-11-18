@@ -1038,6 +1038,8 @@ export default function MindMap({ mapId, onBack }) {
   const [touchDragNodeId, setTouchDragNodeId] = useState(null);
   const [touchDragOffset, setTouchDragOffset] = useState({ x: 0, y: 0 });
   const [touchInitialPositions, setTouchInitialPositions] = useState({});
+  const [isTouchPanning, setIsTouchPanning] = useState(false);
+  const touchPanRef = useRef({ startX: 0, startY: 0 });
 
   const handleTouchStart = (e) => {
     if (e.touches.length === 1) {
@@ -1077,12 +1079,12 @@ export default function MindMap({ mapId, onBack }) {
           }
         }
       } else {
-        // Start panning
-        dragging.startPanning({
-          clientX: touch.clientX,
-          clientY: touch.clientY,
-          preventDefault: () => e.preventDefault()
-        });
+        // Start canvas panning
+        setIsTouchPanning(true);
+        touchPanRef.current = {
+          startX: touch.clientX - dragging.pan.x,
+          startY: touch.clientY - dragging.pan.y,
+        };
       }
     } else if (e.touches.length === 2) {
       // Two-finger pinch for zoom
@@ -1132,12 +1134,11 @@ export default function MindMap({ mapId, onBack }) {
             )
           );
         }
-      } else if (!isTouchDraggingNode) {
-        // Single touch pan
-        dragging.handlePanning({
-          clientX: touch.clientX,
-          clientY: touch.clientY,
-          preventDefault: () => e.preventDefault()
+      } else if (isTouchPanning) {
+        // Canvas panning
+        dragging.setPan({
+          x: touch.clientX - touchPanRef.current.startX,
+          y: touch.clientY - touchPanRef.current.startY,
         });
       }
     } else if (e.touches.length === 2) {
@@ -1163,12 +1164,12 @@ export default function MindMap({ mapId, onBack }) {
 
   const handleTouchEnd = (e) => {
     if (e.touches.length === 0) {
-      dragging.stopPanning();
       setLastTouchDistance(null);
       setTouchStartPos(null);
       setIsTouchDraggingNode(false);
       setTouchDragNodeId(null);
       setTouchInitialPositions({});
+      setIsTouchPanning(false);
     } else if (e.touches.length === 1) {
       // One finger left, reset pinch zoom
       setLastTouchDistance(null);
