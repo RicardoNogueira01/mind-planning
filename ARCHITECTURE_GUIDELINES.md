@@ -5,29 +5,57 @@
 ### Component Organization
 ```
 src/components/
-├── MindMap.jsx (MAIN ORCHESTRATOR - to be refactored)
+├── MindMap.jsx ✅ REFACTORED (1,558 lines, down from 2,441)
+├── MindMapManager.jsx ✅ REFACTORED (450 lines, down from 711)
 ├── mindmap/
 │   ├── MindMapToolbar.jsx - Top toolbar UI
 │   ├── MindMapCanvas.jsx - Canvas wrapper
+│   ├── MindMapCard.jsx ✅ NEW - Reusable map card
 │   ├── NodeCard.jsx - Individual node rendering
 │   ├── ConnectionsSvg.jsx - Connection lines
 │   ├── NodeToolbar*.jsx - Per-node toolbar buttons (✓ PATTERN)
 │   ├── ShapePalette.jsx - Shape quick-add
 │   ├── CollaboratorDialog.jsx - Modal dialog
+│   ├── ShareDialog.jsx ✅ NEW - Share modal
+│   ├── ParentSelectionDialog.jsx ✅ NEW - Parent picker
+│   ├── DetachConfirmDialog.jsx ✅ NEW - Detach confirm
+│   ├── DeleteConfirmDialog.jsx ✅ NEW - Delete confirm
+│   ├── CopiedNotification.jsx ✅ NEW - Copy feedback
 │   ├── builders.ts - Shape builders
 │   ├── graphUtils.ts - Graph traversal
 │   └── constants.js - UI constants
+├── popups/
+│   ├── EmojiPicker.jsx ✅ NEW - Emoji selection
+│   ├── NotesPopup.jsx ✅ NEW - Notes editor
+│   ├── TagsPopup.jsx ✅ NEW - Tag management
+│   ├── PropertiesPanel.jsx ✅ NEW - Node properties
+│   ├── DueDatePicker.jsx ✅ NEW - Date picker
+│   ├── AttachmentsPopup.jsx ✅ NEW - File attachments
+│   └── CollaboratorPicker.jsx ✅ NEW - Collaborator picker
+└── shared/
+    └── TaskCard.jsx ✅ NEW - Reusable task card
 ```
 
 ### Hook Organization
 ```
 src/hooks/
 ├── useDashboardData.ts - Dashboard-specific
-├── useNodePositioning.ts ✅ NEW - Positioning logic
-└── useNodeOperations.ts ✅ NEW - Node CRUD
+├── useNodePositioning.ts ✅ Positioning logic
+├── useNodeOperations.ts ✅ Node CRUD
+├── useDragging.ts ✅ Drag & pan interactions
+├── useNodeHandlers.ts ✅ Node event handlers
+├── useKeyboardShortcuts.ts ✅ Keyboard shortcuts
+├── useNodeSelection.ts ✅ Selection management
+├── useConnectionDrawing.ts ✅ Connection UI
+├── useMindMaps.ts ✅ MindMap data & localStorage
+└── useMindMapFilters.ts ✅ Filtering & sorting
 
 src/types/
-└── mindmap.ts ✅ NEW - Shared TypeScript types
+└── mindmap.ts ✅ Shared TypeScript types
+
+src/utils/
+├── nodeUtils.js ✅ Node utility functions
+└── dateUtils.ts ✅ Date formatting utilities
 ```
 
 ---
@@ -171,9 +199,72 @@ const onAddChild = (parentId, layoutMode = 'stacked') => {
 
 ---
 
-### ✅ PATTERN 3: New State/Behavior
+### ✅ PATTERN 3: New Popup Component
 
-**Goal**: Add "quick-tags" feature
+**Goal**: Add new popup for feature
+
+**Steps**:
+
+1. Create popup file:
+```
+src/components/popups/FeaturePopup.jsx
+```
+
+2. Implement as controlled component:
+```jsx
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+
+const FeaturePopup = ({ node, onUpdate, onClose, anchorRef }) => {
+  const [value, setValue] = useState(node.feature || '');
+
+  const handleSave = () => {
+    onUpdate(node.id, { feature: value });
+    onClose();
+  };
+
+  return (
+    <div className="popup">
+      <input value={value} onChange={(e) => setValue(e.target.value)} />
+      <button onClick={handleSave}>Save</button>
+    </div>
+  );
+};
+
+FeaturePopup.propTypes = {
+  node: PropTypes.object.isRequired,
+  onUpdate: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
+  anchorRef: PropTypes.object
+};
+
+export default FeaturePopup;
+```
+
+3. Use in MindMap.jsx:
+```jsx
+import FeaturePopup from './popups/FeaturePopup';
+
+{popupOpenFor[node.id] === 'feature' && (
+  <FeaturePopup
+    node={node}
+    onUpdate={updateNode}
+    onClose={() => setPopupOpenFor(prev => ({ ...prev, [node.id]: null }))}
+  />
+)}
+```
+
+**Benefits**:
+- ✅ Popup is self-contained
+- ✅ Can be tested independently
+- ✅ PropTypes validation
+- ✅ Reusable across features
+
+---
+
+### ✅ PATTERN 4: New Custom Hook
+
+**Goal**: Add "quick-tags" feature with complex state
 
 **Steps**:
 
@@ -245,23 +336,44 @@ Is it a visual component?
 
 ## Examples of Refactored Features
 
-### Feature: Node Emoji (Currently in MindMap.jsx)
-**Before**: 15+ lines in MindMap.jsx
-**After**:
-- Component: `NodeToolbarEmoji.jsx` (40 lines)
-- MindMap.jsx: 2 lines (import + render)
+### MindMap.jsx - Complete Refactoring
+**Before**: 2,441 lines (monolithic)
+**After**: 1,558 lines (36% reduction)
+- **Extracted**: 12 components (5 dialogs + 7 popups)
+- **Extracted**: 4 hooks (handlers, keyboard, selection, connections)
+- **Extracted**: 2 utils (nodeUtils, dateUtils)
+- **Result**: Clean orchestrator pattern
 
-### Feature: Hierarchical Positioning (Current)
-**Before**: 140 lines in MindMap.jsx
-**After**:
-- Hook: `useNodePositioning.ts` (140 lines)
-- MindMap.jsx: 1 line (const {...} = useNodePositioning(...))
+### MindMapManager.jsx - Complete Refactoring
+**Before**: 711 lines (data + UI + logic mixed)
+**After**: 450 lines (37% reduction)
+- **Extracted**: `useMindMaps.ts` hook (125 lines) - localStorage + CRUD
+- **Extracted**: `useMindMapFilters.ts` hook (42 lines) - filtering/sorting
+- **Extracted**: `MindMapCard.jsx` component (154 lines) - reusable card
+- **Extracted**: `dateUtils.ts` (22 lines) - date formatting
+- **Result**: Separation of concerns achieved
 
-### Feature: Node CRUD (Currently scattered)
-**Before**: 60+ lines scattered in MindMap.jsx
+### Feature: Dialog Components
+**Before**: 390+ lines inline JSX in MindMap.jsx
 **After**:
-- Hook: `useNodeOperations.ts` (80 lines)
-- MindMap.jsx: 1 line (const {...} = useNodeOperations(...))
+- `ShareDialog.jsx` (173 lines)
+- `ParentSelectionDialog.jsx` (95 lines)
+- `DetachConfirmDialog.jsx` (70 lines)
+- `DeleteConfirmDialog.jsx` (70 lines)
+- `CopiedNotification.jsx` (48 lines)
+- **Result**: Reusable, testable, maintainable
+
+### Feature: Popup Components
+**Before**: 580+ lines inline JSX in MindMap.jsx
+**After**: 7 dedicated popup components (584 lines total)
+- **Result**: Each popup is self-contained and reusable
+
+### Feature: Node Selection
+**Before**: 30+ lines scattered in MindMap.jsx
+**After**:
+- Hook: `useNodeSelection.ts` (97 lines)
+- MindMap.jsx: Uses `selection.clearSelection()`, `selection.selectSingleNode()`, etc.
+- **Result**: Clean API, all selection logic centralized
 
 ---
 
@@ -272,8 +384,15 @@ Is it a visual component?
 | **Types** | ✅ Done | `src/types/mindmap.ts` |
 | **Positioning** | ✅ Done | `src/hooks/useNodePositioning.ts` |
 | **Operations** | ✅ Done | `src/hooks/useNodeOperations.ts` |
-| **Dragging** | 🔲 TODO | `src/hooks/useDragging.ts` (next) |
-| **MindMap.jsx** | 🔲 TODO | Update to use hooks (Phase 5) |
+| **Dragging** | ✅ Done | `src/hooks/useDragging.ts` |
+| **Selection** | ✅ Done | `src/hooks/useNodeSelection.ts` |
+| **Keyboard** | ✅ Done | `src/hooks/useKeyboardShortcuts.ts` |
+| **Connections** | ✅ Done | `src/hooks/useConnectionDrawing.ts` |
+| **MindMap.jsx** | ✅ Done | 1,558 lines (36% reduction) |
+| **MindMapManager** | ✅ Done | 450 lines (37% reduction) |
+| **Dialogs** | ✅ Done | 5 dialog components extracted |
+| **Popups** | ✅ Done | 7 popup components extracted |
+| **Utils** | ✅ Done | nodeUtils.js, dateUtils.ts |
 | **Toolbar Comps** | ✅ Good | Already modular! |
 
 ---
@@ -301,6 +420,28 @@ Adding a new feature? Use this:
 
 ---
 
-**Architecture Owner**: Your Refactoring
-**Last Updated**: October 19, 2025
-**Status**: Actively Being Implemented ✅
+## Refactoring Metrics
+
+### Code Reduction
+- **MindMap.jsx**: 2,441 → 1,558 lines (36% reduction, 883 lines saved)
+- **MindMapManager.jsx**: 711 → 450 lines (37% reduction, 261 lines saved)
+- **Total**: 1,144 lines eliminated from monolithic files
+
+### New Modular Files Created
+- **Hooks**: 10 files (useMindMaps, useMindMapFilters, useKeyboardShortcuts, useNodeSelection, useConnectionDrawing, useNodeHandlers, useNodePositioning, useNodeOperations, useDragging, useDashboardData)
+- **Components**: 13 files (5 dialogs + 7 popups + 1 shared)
+- **Utils**: 2 files (nodeUtils.js, dateUtils.ts)
+- **Total**: 25 modular, maintainable files
+
+### Benefits Achieved
+- ✅ **Maintainability**: Small, focused files (< 200 lines each)
+- ✅ **Testability**: Isolated hooks and components
+- ✅ **Reusability**: Shared components and utilities
+- ✅ **Type Safety**: TypeScript hooks
+- ✅ **Readability**: Clear separation of concerns
+
+---
+
+**Architecture Owner**: Refactoring Team
+**Last Updated**: November 18, 2025
+**Status**: Refactoring Complete ✅ | Actively Maintained 🔄
