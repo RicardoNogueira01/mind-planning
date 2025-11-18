@@ -8,6 +8,7 @@ import MindMapCanvas from './mindmap/MindMapCanvas';
 import NodeCard from './mindmap/NodeCard';
 import MindMapSearchBar from './mindmap/MindMapSearchBar';
 import ConnectionsSvg from './mindmap/ConnectionsSvg';
+import NodePopup from './mindmap/NodePopup';
 import NodeToolbarPrimary from './mindmap/NodeToolbarPrimary';
 import NodeToolbarConnectionButton from './mindmap/NodeToolbarConnectionButton';
 import NodeToolbarSettingsToggle from './mindmap/NodeToolbarSettingsToggle';
@@ -157,62 +158,76 @@ export default function MindMap({ mapId, onBack }) {
 
   // Global Escape key to reset to normal state
   useEffect(() => {
+    // Helper: Check if user is typing in an input
+    const isUserTyping = () => {
+      const activeElement = document.activeElement;
+      return activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
+    };
+
+    // Helper: Reset all UI states (Escape key)
+    const resetAllStates = () => {
+      setMovingGroupId(null);
+      setOpenGroupMenuId(null);
+      setResizingGroupId(null);
+      setSelectedNodes([]);
+      setConnectionFrom(null);
+      setMode('cursor');
+      setSelectionType('simple');
+      setShowCollaboratorDialog(false);
+      setIsSelecting(false);
+      setSelectionRect(null);
+    };
+
+    // Helper: Handle Shift+N (create node)
+    const handleCreateNode = (e) => {
+      if (!e.shiftKey || e.key !== 'N' || isUserTyping()) return false;
+      e.preventDefault();
+      
+      if (selectedNodes.length === 1) {
+        nodeOps.addChildNode(selectedNodes[0]);
+      } else {
+        nodeOps.addStandaloneNode();
+      }
+      return true;
+    };
+
+    // Helper: Handle Delete key (delete node)
+    const handleDeleteNode = (e) => {
+      const isDeleteKey = e.key === 'Delete';
+      if (!isDeleteKey || isUserTyping()) return false;
+      e.preventDefault();
+      
+      if (selectedNodes.length > 0) {
+        setDeleteConfirmNodeId(selectedNodes[0]);
+      }
+      return true;
+    };
+
+    // Helper: Handle Shift+D (detach node)
+    const handleDetachNode = (e) => {
+      if (!e.shiftKey || e.key !== 'D' || isUserTyping()) return false;
+      e.preventDefault();
+      
+      if (selectedNodes.length === 1) {
+        const hasParent = connections.some(conn => conn.to === selectedNodes[0]);
+        if (hasParent) {
+          setDetachConfirmNodeId(selectedNodes[0]);
+        }
+      }
+      return true;
+    };
+
+    // Main keyboard event handler
     const onKeyDown = (e) => {
       if (e.key === 'Escape') {
-        // Reset all states to normal
-        setMovingGroupId(null);
-        setOpenGroupMenuId(null);
-        setResizingGroupId(null);
-        setSelectedNodes([]);
-        setConnectionFrom(null);
-        setMode('cursor');
-        setSelectionType('simple');
-        setShowCollaboratorDialog(false);
-        setIsSelecting(false);
-        setSelectionRect(null);
+        resetAllStates();
+        return;
       }
       
-      // Check if user is typing in an input/textarea
-      const activeElement = document.activeElement;
-      const isTyping = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
-      
-      // Shift+N: Create new node (child if node selected, standalone otherwise)
-      if (e.shiftKey && e.key === 'N' && !isTyping) {
-        e.preventDefault();
-        
-        if (selectedNodes.length === 1) {
-          // Create child node of the selected node
-          nodeOps.addChildNode(selectedNodes[0]);
-        } else {
-          // Create standalone node
-          nodeOps.addStandaloneNode();
-        }
-      }
-      
-      // Shift+Delete or Delete: Delete selected nodes
-      if ((e.shiftKey && e.key === 'Delete') || e.key === 'Delete') {
-        if (!isTyping) {
-          e.preventDefault();
-          
-          if (selectedNodes.length > 0) {
-            setDeleteConfirmNodeId(selectedNodes[0]);
-          }
-        }
-      }
-      
-      // Shift+D: Detach node from parent
-      if (e.shiftKey && e.key === 'D' && !isTyping) {
-        e.preventDefault();
-        
-        if (selectedNodes.length === 1) {
-          // Check if node has parent connections
-          const hasParent = connections.some(conn => conn.to === selectedNodes[0]);
-          if (hasParent) {
-            setDetachConfirmNodeId(selectedNodes[0]);
-          }
-        }
-      }
+      // Try each handler in sequence
+      handleCreateNode(e) || handleDeleteNode(e) || handleDetachNode(e);
     };
+
     globalThis.addEventListener('keydown', onKeyDown);
     return () => globalThis.removeEventListener('keydown', onKeyDown);
   }, [selectedNodes, nodeOps]);
@@ -966,6 +981,20 @@ export default function MindMap({ mapId, onBack }) {
                 const isBottom = edge === 's';
                 const isLeft = edge === 'w';
                 const isRight = edge === 'e';
+                
+                // Calculate handle position
+                const handleLeft = isVertical 
+                  ? boundingBox.x + boundingBox.width / 2 - 6 
+                  : isLeft 
+                    ? boundingBox.x - 6 
+                    : boundingBox.x + boundingBox.width - 6;
+                
+                const handleTop = isVertical 
+                  ? isTop 
+                    ? boundingBox.y - 6 
+                    : boundingBox.y + boundingBox.height - 6
+                  : boundingBox.y + boundingBox.height / 2 - 6;
+                
                 return (
                   <div
                     key={edge}
@@ -994,8 +1023,8 @@ export default function MindMap({ mapId, onBack }) {
                     }}
                     style={{
                       position: 'absolute',
-                      left: isVertical ? boundingBox.x + boundingBox.width / 2 - 6 : (isLeft ? boundingBox.x - 6 : boundingBox.x + boundingBox.width - 6),
-                      top: isVertical ? (isTop ? boundingBox.y - 6 : boundingBox.y + boundingBox.height - 6) : boundingBox.y + boundingBox.height / 2 - 6,
+                      left: handleLeft,
+                      top: handleTop,
                       width: 12,
                       height: 12,
                       borderRadius: '50%',
@@ -1760,16 +1789,34 @@ export default function MindMap({ mapId, onBack }) {
                         const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
                         const top = Math.max(8, rect.bottom + 20);
                         return createPortal(
-                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={(e) => e.stopPropagation()}>
-                            <h4 className="font-medium text-gray-800 mb-3">Notes</h4>
-                            <textarea className="w-full p-2 text-sm border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"  placeholder="Add your notes here..." value={node.notes || ''}
+                          <NodePopup 
+                            position={{ left, top }}
+                            width={popupWidth}
+                            title="Notes"
+                            onClose={() => setNodes(nodes.map(n => n.id === node.id ? { ...n, showNotesPopup: false } : n))}
+                          >
+                            <textarea 
+                              className="w-full p-2 text-sm border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"  
+                              placeholder="Add your notes here..." 
+                              value={node.notes || ''}
                               onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, notes: e.target.value } : n))}
-                              onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onFocus={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}
+                              onClick={(e) => e.stopPropagation()} 
+                              onMouseDown={(e) => e.stopPropagation()} 
+                              onFocus={(e) => e.stopPropagation()} 
+                              onKeyDown={(e) => e.stopPropagation()}
                             />
                             <div className="mt-2 flex justify-end">
-                              <button className="px-2 py-1 text-xs rounded-lg border border-gray-200 bg-white hover:bg-gray-50" onClick={(e) => { e.stopPropagation(); setNodes(nodes.map(n => n.id === node.id ? { ...n, showNotesPopup: false } : n)); }}>Close</button>
+                              <button 
+                                className="px-2 py-1 text-xs rounded-lg border border-gray-200 bg-white hover:bg-gray-50" 
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  setNodes(nodes.map(n => n.id === node.id ? { ...n, showNotesPopup: false } : n)); 
+                                }}
+                              >
+                                Close
+                              </button>
                             </div>
-                          </div>,
+                          </NodePopup>,
                           document.body
                         );
                       })()}
@@ -1916,7 +1963,7 @@ export default function MindMap({ mapId, onBack }) {
                         const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
                         const top = Math.max(8, rect.bottom + 20);
                         return createPortal(
-                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={(e) => e.stopPropagation()}>
+                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.key === 'Escape' && e.stopPropagation()} role="dialog" tabIndex={0}>
                             <h4 className="font-medium text-gray-800 mb-3">Details</h4>
                             <div className="space-y-3">
                               <div>
@@ -1988,8 +2035,12 @@ export default function MindMap({ mapId, onBack }) {
                         const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
                         const top = Math.max(8, rect.bottom + 20);
                         return createPortal(
-                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={(e) => e.stopPropagation()}>
-                            <h4 className="font-medium text-gray-800 mb-3">Due date</h4>
+                          <NodePopup 
+                            position={{ left, top }}
+                            width={popupWidth}
+                            title="Due Date"
+                            onClose={() => togglePopup(node.id, 'date')}
+                          >
                             <input
                               type="date"
                               className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -2007,7 +2058,7 @@ export default function MindMap({ mapId, onBack }) {
                                 Clear date
                               </button>
                             )}
-                          </div>,
+                          </NodePopup>,
                           document.body
                         );
                       })()}
