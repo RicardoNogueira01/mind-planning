@@ -92,6 +92,17 @@ export default function MindMap({ mapId, onBack }) {
   const [detachConfirmNodeId, setDetachConfirmNodeId] = useState(null); // Track which node has detach confirmation open
   const [parentSelectionState, setParentSelectionState] = useState(null); // { nodeId, parentConnections: [] }
   const [deleteConfirmNodeId, setDeleteConfirmNodeId] = useState(null); // Track which node has delete confirmation open
+  const [showShareDialog, setShowShareDialog] = useState(false); // Share link dialog
+  const [sharePermission, setSharePermission] = useState('view'); // 'view' or 'edit'
+  const [shareLink, setShareLink] = useState(''); // Generated share link
+  const [isBookmarked, setIsBookmarked] = useState(false); // Bookmark state
+  const [showCopiedNotification, setShowCopiedNotification] = useState(false); // Copied to clipboard notification
+  const [shareVisitors, setShareVisitors] = useState([
+    // Mock data - replace with real backend data
+    { id: 1, name: 'Anonymous User', timestamp: new Date(Date.now() - 3600000).toISOString(), permission: 'view' },
+    { id: 2, name: 'John Doe', timestamp: new Date(Date.now() - 7200000).toISOString(), permission: 'edit' },
+    { id: 3, name: 'Jane Smith', timestamp: new Date(Date.now() - 86400000).toISOString(), permission: 'view' },
+  ]);
 
   // Canvas ref
   const canvasRef = useRef(null);
@@ -403,6 +414,49 @@ export default function MindMap({ mapId, onBack }) {
   const removeParentConnection = (nodeId, parentId) => {
     setConnections(prev => prev.filter(conn => !(conn.from === parentId && conn.to === nodeId)));
     setParentSelectionState(null);
+  };
+  
+  // Generate share link
+  const generateShareLink = () => {
+    const baseUrl = window.location.origin;
+    const shareId = `${mapId}-${Date.now()}`;
+    const link = `${baseUrl}/shared/${shareId}?permission=${sharePermission}`;
+    setShareLink(link);
+  };
+  
+  // Copy share link to clipboard
+  const copyShareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareLink);
+      setShowCopiedNotification(true);
+      setTimeout(() => setShowCopiedNotification(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+  
+  // Toggle bookmark
+  const toggleBookmark = () => {
+    setIsBookmarked(!isBookmarked);
+    // TODO: Save to backend/localStorage
+  };
+  
+  // Format visitor timestamp
+  const formatVisitorTime = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + 
+           ' at ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
   // Derived selections for focus mode
@@ -1344,6 +1398,39 @@ export default function MindMap({ mapId, onBack }) {
           deleteNodeCascade={deleteNodeCascade}
         />
 
+        {/* Share and Bookmark Buttons - Top Right */}
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+          {/* Bookmark Button */}
+          <button
+            onClick={toggleBookmark}
+            className={`p-3 rounded-xl shadow-lg border transition-all duration-200 ${
+              isBookmarked 
+                ? 'bg-yellow-500 text-white border-yellow-600 hover:bg-yellow-600' 
+                : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-yellow-50 hover:text-yellow-600 hover:border-yellow-300'
+            }`}
+            title={isBookmarked ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </button>
+          
+          {/* Share Button */}
+          <button
+            onClick={() => setShowShareDialog(true)}
+            className="p-3 rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all duration-200"
+            title="Share mind map"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" x2="15.42" y1="13.51" y2="17.49"></line>
+              <line x1="15.41" x2="8.59" y1="6.51" y2="10.49"></line>
+            </svg>
+          </button>
+        </div>
+
         {/* Connection Mode Banner */}
         {connectionFrom && (
           <div 
@@ -2089,6 +2176,165 @@ export default function MindMap({ mapId, onBack }) {
         setCollaboratorNodeId={setCollaboratorNodeId}
         nodes={nodes}
       />
+
+      {/* Share Dialog */}
+      {showShareDialog && createPortal(
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
+          onClick={() => {
+            setShowShareDialog(false);
+            setShareLink('');
+          }}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 border border-gray-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-4 mb-6">
+              <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" x2="15.42" y1="13.51" y2="17.49"></line>
+                  <line x1="15.41" x2="8.59" y1="6.51" y2="10.49"></line>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Share Mind Map
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Choose permissions and generate a shareable link
+                </p>
+              </div>
+            </div>
+            
+            {/* Permission Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Permission Level
+              </label>
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input
+                    type="radio"
+                    name="permission"
+                    value="view"
+                    checked={sharePermission === 'view'}
+                    onChange={(e) => setSharePermission(e.target.value)}
+                    className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">View Only</div>
+                    <div className="text-xs text-gray-500">Users can view but not edit</div>
+                  </div>
+                </label>
+                <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input
+                    type="radio"
+                    name="permission"
+                    value="edit"
+                    checked={sharePermission === 'edit'}
+                    onChange={(e) => setSharePermission(e.target.value)}
+                    className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">Can Edit</div>
+                    <div className="text-xs text-gray-500">Users can view and edit</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+            
+            {/* Generated Link */}
+            {shareLink && (
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Share Link
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={shareLink}
+                    readOnly
+                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+                    onClick={(e) => e.target.select()}
+                  />
+                  <button
+                    onClick={copyShareLink}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {/* Visitor Tracking */}
+            {shareLink && shareVisitors.length > 0 && (
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Visitor History ({shareVisitors.length})
+                </label>
+                <div className="max-h-48 overflow-y-auto space-y-2 border border-gray-200 rounded-lg p-2">
+                  {shareVisitors.map((visitor) => (
+                    <div key={visitor.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                          {visitor.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{visitor.name}</div>
+                          <div className="text-xs text-gray-500">{formatVisitorTime(visitor.timestamp)}</div>
+                        </div>
+                      </div>
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        visitor.permission === 'edit' 
+                          ? 'bg-green-100 text-green-700' 
+                          : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {visitor.permission === 'edit' ? 'Edit' : 'View'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Actions */}
+            <div className="flex gap-3 justify-end border-t pt-4">
+              <button
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                onClick={() => {
+                  setShowShareDialog(false);
+                  setShareLink('');
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm"
+                onClick={generateShareLink}
+              >
+                {shareLink ? 'Regenerate Link' : 'Generate Link'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Copied Notification */}
+      {showCopiedNotification && createPortal(
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[10000] px-4 py-2 bg-green-500 text-white rounded-lg shadow-lg flex items-center gap-2 animate-fade-in">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span className="text-sm font-medium">Link copied to clipboard!</span>
+        </div>,
+        document.body
+      )}
 
       {/* Parent Selection Dialog - for nodes with multiple parents */}
       {parentSelectionState && createPortal(
