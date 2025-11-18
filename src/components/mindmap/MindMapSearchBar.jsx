@@ -65,7 +65,7 @@ const MindMapSearchBar = ({
 
         {/* Search Input com Animação */}
         <div className={`relative transition-all duration-300 ease-in-out overflow-hidden ${
-          isSearchOpen ? 'w-56 md:w-80 ml-2 md:ml-3 opacity-100' : 'w-0 ml-0 opacity-0'
+          isSearchOpen ? 'w-40 md:w-80 ml-2 md:ml-5 opacity-100' : 'w-0 ml-0 opacity-0'
         }`}>
           <div className="absolute inset-y-0 left-0 pl-2 md:pl-3 flex items-center pointer-events-none">
             <svg className="h-4 w-4 md:h-5 md:w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">

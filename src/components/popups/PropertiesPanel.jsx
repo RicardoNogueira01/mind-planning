@@ -22,10 +22,10 @@ export default function PropertiesPanel({ show, anchorRef, nodeId, priority, sta
     >
       <div className="space-y-3">
         <div>
-          <label htmlFor={`priority-${nodeId}`} className="text-sm text-gray-600 block mb-1">Priority</label>
+          <label htmlFor={`priority-${nodeId}`} className="text-sm md:text-base text-gray-600 block mb-1">Priority</label>
           <select
             id={`priority-${nodeId}`}
-            className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm md:text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation"
             value={priority || 'normal'}
             onChange={(e) => onChange({ priority: e.target.value })}
             onClick={(e) => e.stopPropagation()}
@@ -36,10 +36,10 @@ export default function PropertiesPanel({ show, anchorRef, nodeId, priority, sta
           </select>
         </div>
         <div>
-          <label htmlFor={`status-${nodeId}`} className="text-sm text-gray-600 block mb-1">Status</label>
+          <label htmlFor={`status-${nodeId}`} className="text-sm md:text-base text-gray-600 block mb-1">Status</label>
           <select
             id={`status-${nodeId}`}
-            className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm md:text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation"
             value={status || 'todo'}
             onChange={(e) => onChange({ status: e.target.value })}
             onClick={(e) => e.stopPropagation()}
@@ -50,10 +50,10 @@ export default function PropertiesPanel({ show, anchorRef, nodeId, priority, sta
           </select>
         </div>
         <div>
-          <label htmlFor={`description-${nodeId}`} className="text-sm text-gray-600 block mb-1">Description</label>
+          <label htmlFor={`description-${nodeId}`} className="text-sm md:text-base text-gray-600 block mb-1">Description</label>
           <textarea
             id={`description-${nodeId}`}
-            className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm md:text-base text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation"
             rows={3}
             placeholder="Add a description..."
             value={description || ''}

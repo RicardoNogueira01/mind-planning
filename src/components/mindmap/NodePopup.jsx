@@ -15,19 +15,29 @@ const NodePopup = ({
   title,
   style = {} 
 }) => {
+  // Detect mobile/tablet
+  const isMobile = window.innerWidth < 1024;
+  
+  // On mobile, use full width with padding; on desktop use specified width
+  const responsiveWidth = isMobile ? 'calc(100vw - 16px)' : (width || 'auto');
+  const responsiveMaxWidth = isMobile ? 'calc(100vw - 16px)' : (maxWidth || 500);
+  const responsiveLeft = isMobile ? 8 : position.left;
+  const responsiveTop = isMobile ? Math.max(60, position.top) : position.top;
+  const responsiveMaxHeight = isMobile ? 'calc(100vh - 120px)' : (maxHeight || 'none');
+
   const baseStyle = {
     position: 'fixed',
-    left: position.left,
-    top: position.top,
-    width: width || 'auto',
-    maxWidth: maxWidth || 500,
-    maxHeight: maxHeight || 'none',
+    left: responsiveLeft,
+    top: responsiveTop,
+    width: responsiveWidth,
+    maxWidth: responsiveMaxWidth,
+    maxHeight: responsiveMaxHeight,
     zIndex: 5000,
     backgroundColor: 'white',
     borderRadius: '8px',
     padding: '16px',
     boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-    overflowY: maxHeight ? 'auto' : 'visible',
+    overflowY: 'auto',
     ...style
   };
 

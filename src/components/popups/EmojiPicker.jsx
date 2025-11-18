@@ -30,11 +30,11 @@ export default function EmojiPicker({ show, anchorRef, onSelect, onClose }) {
       onClose={onClose}
       style={{ padding: '8px' }}
     >
-      <div className="grid grid-cols-6 gap-1">
+      <div className="grid grid-cols-6 md:grid-cols-7 gap-1">
         {EMOJIS.map(emoji => (
           <button
             key={emoji}
-            className="p-1 text-lg hover:bg-gray-100 rounded cursor-pointer"
+            className="p-2 md:p-1 text-xl md:text-lg hover:bg-gray-100 rounded cursor-pointer touch-manipulation"
             onClick={(e) => {
               e.stopPropagation();
               onSelect(emoji);

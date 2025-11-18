@@ -21,7 +21,7 @@ export default function NotesPopup({ show, anchorRef, notes, onChange, onClose }
       onClose={onClose}
     >
       <textarea 
-        className="w-full p-2 text-sm border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"  
+        className="w-full p-2 md:p-3 text-sm md:text-base border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[120px] lg:min-h-[80px]"  
         placeholder="Add your notes here..." 
         value={notes || ''}
         onChange={(e) => onChange(e.target.value)}

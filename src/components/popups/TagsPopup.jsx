@@ -22,8 +22,8 @@ export default function TagsPopup({ show, anchorRef, tags, showTags, onToggleSho
       title="Manage Tags"
     >
       {/* Show/Hide Tags Toggle */}
-      <div className="mb-4 pb-3 border-b border-gray-200">
-        <label className="flex items-center gap-2 cursor-pointer">
+      <div className="mb-3 md:mb-4 pb-3 border-b border-gray-200">
+        <label className="flex items-center gap-2 cursor-pointer touch-manipulation">
           <input
             type="checkbox"
             checked={showTags !== false}
@@ -31,9 +31,9 @@ export default function TagsPopup({ show, anchorRef, tags, showTags, onToggleSho
               e.stopPropagation();
               onToggleShowTags(e.target.checked);
             }}
-            className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-2 focus:ring-teal-500"
+            className="w-5 h-5 md:w-4 md:h-4 text-teal-600 border-gray-300 rounded focus:ring-2 focus:ring-teal-500"
           />
-          <span className="text-sm font-medium text-gray-700">Show tags below node</span>
+          <span className="text-sm md:text-base font-medium text-gray-700">Show tags below node</span>
         </label>
       </div>
 
@@ -66,7 +66,7 @@ export default function TagsPopup({ show, anchorRef, tags, showTags, onToggleSho
       <input
         type="text"
         placeholder="Add tag and press Enter"
-        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm md:text-base text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent touch-manipulation"
         onKeyDown={(e) => {
           if (e.key === 'Enter' && e.currentTarget.value.trim()) {
             const tag = e.currentTarget.value.trim();

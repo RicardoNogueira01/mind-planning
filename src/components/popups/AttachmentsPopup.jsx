@@ -37,15 +37,15 @@ export default function AttachmentsPopup({
       title="Attachments"
       onClose={onClose}
     >
-      <div className="mb-4">
-        <label htmlFor={`attachment-search-${nodeId}`} className="block text-xs font-medium text-gray-700 mb-1">
+      <div className="mb-3 md:mb-4">
+        <label htmlFor={`attachment-search-${nodeId}`} className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
           Search by name
         </label>
         <input 
           id={`attachment-search-${nodeId}`} 
           type="text" 
           placeholder="Search by name..." 
-          className="w-full p-2 text-sm border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left" 
+          className="w-full p-2 md:p-3 text-sm md:text-base border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left touch-manipulation" 
           value={searchFilter}
           onChange={(e) => onSearchChange(e.target.value)}
           onClick={(e) => e.stopPropagation()} 
@@ -55,15 +55,15 @@ export default function AttachmentsPopup({
         />
       </div>
       
-      <div className="mb-4">
-        <label htmlFor={`attachment-file-${nodeId}`} className="block text-xs font-medium text-gray-700 mb-2">
+      <div className="mb-3 md:mb-4">
+        <label htmlFor={`attachment-file-${nodeId}`} className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
           Add new file
         </label>
         <input 
           id={`attachment-file-${nodeId}`} 
           type="file" 
           accept=".xlsx,.xls,.doc,.docx,.pdf" 
-          className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-300 rounded-lg p-2"
+          className="w-full text-sm md:text-base text-gray-600 file:mr-2 md:file:mr-4 file:py-1.5 md:file:py-2 file:px-3 md:file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-300 rounded-lg p-2 touch-manipulation"
           onChange={(e) => onFileSelect(e)}
           onClick={(e) => e.stopPropagation()} 
           onMouseDown={(e) => e.stopPropagation()} 
@@ -72,11 +72,11 @@ export default function AttachmentsPopup({
         />
       </div>
       
-      <div className="max-h-64 overflow-y-auto">
+      <div className="max-h-48 md:max-h-64 overflow-y-auto">
         {filteredAttachments.length > 0 ? (
           <div className="space-y-2">
             {filteredAttachments.map(attachment => (
-              <div key={attachment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
+              <div key={attachment.id} className="flex items-center justify-between p-2 md:p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors touch-manipulation">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <span className="text-xs text-white bg-blue-500 px-2 py-1 rounded font-medium uppercase">
                     {attachment.type}

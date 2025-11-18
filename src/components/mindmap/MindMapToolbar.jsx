@@ -35,13 +35,13 @@ const MindMapToolbar = ({
         
         {/* Close Button - Mobile Only */}
         {isMobile && (
-          <div className="flex justify-end mb-2">
+          <div className="flex justify-center mb-2">
             <button 
               onClick={onClose}
-              className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200 touch-manipulation"
+              className="p-1.5 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200 touch-manipulation"
               title="Close Menu"
             >
-              <X size={20} />
+              <X size={16} />
             </button>
           </div>
         )}
@@ -140,7 +140,7 @@ const MindMapToolbar = ({
         <div className={`${isMobile ? 'flex flex-col w-full' : 'hidden md:flex items-center'} gap-1 px-2 py-1 rounded-lg bg-gray-50/50`}>
           <button 
             onClick={undo}
-            className={`${isMobile ? 'w-full' : ''} p-2.5 rounded-lg transition-all duration-200 group border ${
+            className={`${isMobile ? 'w-full p-1.5' : 'p-2.5'} rounded-lg transition-all duration-200 group border ${
               historyIndex <= 0 
                 ? 'text-gray-400 cursor-not-allowed border-gray-100' 
                 : 'text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm border-gray-200/60 hover:border-gray-300'
@@ -148,7 +148,7 @@ const MindMapToolbar = ({
             title="Undo"
             disabled={historyIndex <= 0}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}} className={`${historyIndex > 0 ? 'group-hover:scale-110 transition-transform duration-200' : ''} ${isMobile ? 'mx-auto' : ''}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}} className={`md:w-[18px] md:h-[18px] ${historyIndex > 0 ? 'group-hover:scale-110 transition-transform duration-200' : ''} ${isMobile ? 'mx-auto' : ''}`}>
               <path d="M9 17L4 12l5-5" />
               <path d="M20 18v-1a4 4 0 0 0-4-4H4" />
             </svg>
@@ -156,7 +156,7 @@ const MindMapToolbar = ({
           
           <button 
             onClick={redo}
-            className={`${isMobile ? 'w-full' : ''} p-2.5 rounded-lg transition-all duration-200 group border ${
+            className={`${isMobile ? 'w-full p-1.5' : 'p-2.5'} rounded-lg transition-all duration-200 group border ${
               historyIndex >= history.length - 1 
                 ? 'text-gray-400 cursor-not-allowed border-gray-100' 
                 : 'text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm border-gray-200/60 hover:border-gray-300'
@@ -164,7 +164,7 @@ const MindMapToolbar = ({
             title="Redo"
             disabled={historyIndex >= history.length - 1}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}} className={`${historyIndex < history.length - 1 ? 'group-hover:scale-110 transition-transform duration-200' : ''} ${isMobile ? 'mx-auto' : ''}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}} className={`md:w-[18px] md:h-[18px] ${historyIndex < history.length - 1 ? 'group-hover:scale-110 transition-transform duration-200' : ''} ${isMobile ? 'mx-auto' : ''}`}>
               <path d="M15 7l5 5-5 5" />
               <path d="M4 6v1a4 4 0 0 0 4 4h12" />
             </svg>

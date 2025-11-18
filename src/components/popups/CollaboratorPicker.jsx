@@ -43,19 +43,19 @@ export default function CollaboratorPicker({
           placeholder="Search collaborators..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-gray-900 placeholder-gray-500"
+          className="w-full px-3 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-gray-900 placeholder-gray-500 touch-manipulation"
           onClick={(e) => e.stopPropagation()}
         />
       </div>
       
       {/* Collaborator list with checkboxes */}
-      <div className="max-h-64 overflow-y-auto space-y-1">
+      <div className="max-h-48 md:max-h-64 overflow-y-auto space-y-1">
         {filteredCollaborators.map(collab => {
           const isSelected = selectedCollaboratorIds.includes(collab.id);
           return (
             <label 
               key={collab.id} 
-              className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors touch-manipulation"
             >
               <input
                 type="checkbox"
