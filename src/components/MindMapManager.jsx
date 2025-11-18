@@ -61,14 +61,14 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
     setEditingMap(null);
   };
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-3 md:p-6">
       {/* Header */}
-      <header className="mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <header className="mb-4 md:mb-8">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
+          <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
             <button
               onClick={onBack}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600 touch-manipulation flex-shrink-0"
               title="Back to Dashboard"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -76,17 +76,17 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
                 <path d="M12 19l-7-7 7-7"/>
               </svg>
             </button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Mind Maps</h1>
-              <p className="text-gray-500">Create, organize, and manage your mind maps</p>
+            <div className="flex-1 md:flex-initial min-w-0">
+              <h1 className="text-xl md:text-2xl font-bold text-gray-900">Mind Maps</h1>
+              <p className="text-sm md:text-base text-gray-500 truncate md:whitespace-normal">Create, organize, and manage your mind maps</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
             {selectedMaps.length > 0 && (
               <button
                 onClick={handleBulkDelete}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm touch-manipulation flex-1 md:flex-initial"
               >
                 <Trash2 size={16} />
                 Delete ({selectedMaps.length})
@@ -95,7 +95,7 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
             
             <button
               onClick={handleCreateNew}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors"
+              className="flex items-center justify-center gap-2 px-3 md:px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors text-sm touch-manipulation flex-1 md:flex-initial"
             >
               <Plus size={20} />
               New Mind Map
@@ -107,10 +107,10 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
       {/* Main Content */}
       <main>
         {/* Controls Bar */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-4 mb-4 md:mb-6">
+          <div className="flex flex-col lg:flex-row gap-3 md:gap-4 items-start lg:items-center justify-between">
             {/* Search */}
-            <div className="flex-1 max-w-md">
+            <div className="flex-1 w-full lg:max-w-md">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                 <input
@@ -118,18 +118,18 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
                   placeholder="Search mind maps..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500 text-sm md:text-base"
                 />
               </div>
             </div>
 
             {/* Filters and Controls */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 md:gap-3 w-full lg:w-auto">
               {/* Filter Dropdown */}
               <select
                 value={filterBy}
                 onChange={(e) => setFilterBy(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500 text-gray-900"
+                className="flex-1 lg:flex-initial px-2 md:px-3 py-2 border border-gray-300 rounded-lg bg-white text-xs md:text-sm focus:ring-2 focus:ring-blue-500 text-gray-900 touch-manipulation"
               >
                 <option value="all">All Maps</option>
                 <option value="recent">Recent</option>
@@ -141,7 +141,7 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500 text-gray-900"
+                className="flex-1 lg:flex-initial px-2 md:px-3 py-2 border border-gray-300 rounded-lg bg-white text-xs md:text-sm focus:ring-2 focus:ring-blue-500 text-gray-900 touch-manipulation"
               >
                 <option value="updated">Last Modified</option>
                 <option value="created">Date Created</option>
@@ -153,13 +153,15 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
               <div className="flex border border-gray-300 rounded-lg">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 ${viewMode === 'grid' ? 'bg-gray-800 text-white' : 'text-gray-600 hover:bg-gray-100'} rounded-l-lg transition-colors`}
+                  className={`p-2 ${viewMode === 'grid' ? 'bg-gray-800 text-white' : 'text-gray-600 hover:bg-gray-100'} rounded-l-lg transition-colors touch-manipulation`}
+                  aria-label="Grid view"
                 >
                   <Grid size={16} />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-2 ${viewMode === 'list' ? 'bg-gray-800 text-white' : 'text-gray-600 hover:bg-gray-100'} rounded-r-lg transition-colors`}
+                  className={`p-2 ${viewMode === 'list' ? 'bg-gray-800 text-white' : 'text-gray-600 hover:bg-gray-100'} rounded-r-lg transition-colors touch-manipulation`}
+                  aria-label="List view"
                 >
                   <List size={16} />
                 </button>
@@ -169,7 +171,7 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
           <div className="bg-white p-4 rounded-lg shadow-sm border">
             <div className="flex items-center justify-between">
               <div>

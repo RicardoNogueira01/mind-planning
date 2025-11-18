@@ -9,7 +9,6 @@ import {
   ArrowRight,
   Activity,
   BarChart2,
-  CheckSquare,
   Circle,
   PieChart
 } from 'lucide-react';
@@ -52,22 +51,18 @@ const Dashboard = () => {
   const completionPercentage = Math.round((stats.tasksCompleted / stats.totalTasks) * 100);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-3 md:p-6">
       {/* Header */}
-      <header className="mb-8">
-        <div className="flex justify-between items-center">
+      <header className="mb-4 md:mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-0">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900">
               Project Dashboard
             </h1>
-            <p className="text-gray-500">Welcome back! Here's what's happening with your projects today.</p>
+            <p className="text-sm md:text-base text-gray-500">Welcome back! Here's what's happening with your projects today.</p>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors duration-200 flex items-center gap-2 text-sm font-medium">
-              <CheckSquare size={16} />
-              New Task
-            </button>
-            <Link to="/mindmaps" className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors duration-200 flex items-center gap-2 text-sm font-medium">
+          <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
+            <Link to="/mindmaps" className="flex-1 md:flex-initial px-3 md:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center md:justify-start gap-2 text-sm font-medium touch-manipulation">
               <Activity size={16} />
               Mind Maps
             </Link>
@@ -78,11 +73,11 @@ const Dashboard = () => {
       {/* Main Content */}
       <main>
         {/* Quick Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
           {/* Task Overview Card */}
-          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">Task Overview</h2>
+          <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm">
+            <div className="flex justify-between items-start mb-3 md:mb-4">
+              <h2 className="text-base md:text-lg font-semibold text-gray-800">Task Overview</h2>
               <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
                 <BarChart2 size={20} />
               </div>
@@ -125,9 +120,9 @@ const Dashboard = () => {
           </div>
 
           {/* Task Status Card */}
-          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">Task Status</h2>
+          <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm">
+            <div className="flex justify-between items-start mb-3 md:mb-4">
+              <h2 className="text-base md:text-lg font-semibold text-gray-800">Task Status</h2>
               <div className="p-2 bg-green-100 text-green-600 rounded-lg">
                 <Activity size={20} />
               </div>
@@ -169,9 +164,9 @@ const Dashboard = () => {
           </div>
 
           {/* Team Overview Card */}
-          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">Team Overview</h2>
+          <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm">
+            <div className="flex justify-between items-start mb-3 md:mb-4">
+              <h2 className="text-base md:text-lg font-semibold text-gray-800">Team Overview</h2>
               <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
                 <Users size={20} />
               </div>
@@ -205,9 +200,9 @@ const Dashboard = () => {
           </div>
 
           {/* Project Summary Card */}
-          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">Project Summary</h2>
+          <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm">
+            <div className="flex justify-between items-start mb-3 md:mb-4">
+              <h2 className="text-base md:text-lg font-semibold text-gray-800">Project Summary</h2>
               <div className="p-2 bg-yellow-100 text-yellow-600 rounded-lg">
                 <PieChart size={20} />
               </div>
@@ -257,12 +252,12 @@ const Dashboard = () => {
         </div>
 
         {/* Detailed Sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           {/* Recent Completed Tasks */}
-          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-3">
-                <CheckCircle className="text-green-500" size={22} />
+          <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0 mb-3 md:mb-4">
+              <h2 className="text-base md:text-lg font-semibold text-gray-800 flex items-center gap-2 md:gap-3">
+                <CheckCircle className="text-green-500" size={18} />
                 Recently Completed
               </h2>
               <Link to="/completed-tasks" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 font-medium">
@@ -271,27 +266,27 @@ const Dashboard = () => {
               </Link>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-2 md:space-y-3">
               {recentCompletedTasks.map(task => (
-                <div key={task.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <div className={clsx("w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold", task.color)}>
+                <div key={task.id} className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3 p-3 bg-gray-50 rounded-lg touch-manipulation">
+                  <div className={clsx("w-8 md:w-9 h-8 md:h-9 rounded-full flex items-center justify-center text-white text-xs md:text-sm font-semibold flex-shrink-0", task.color)}>
                     {task.initials}
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-800 text-sm">{task.title}</h3>
-                    <p className="text-sm text-gray-500">Completed by {task.completedBy}</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-gray-800 text-sm truncate">{task.title}</h3>
+                    <p className="text-xs md:text-sm text-gray-500 truncate">Completed by {task.completedBy}</p>
                   </div>
-                  <span className="text-sm text-gray-500">{task.completedAt}</span>
+                  <span className="text-xs md:text-sm text-gray-500 whitespace-nowrap">{task.completedAt}</span>
                 </div>
               ))}
             </div>
           </div>
           
           {/* Upcoming Deadlines */}
-          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-3">
-                <Clock className="text-red-500" size={22} />
+          <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0 mb-3 md:mb-4">
+              <h2 className="text-base md:text-lg font-semibold text-gray-800 flex items-center gap-2 md:gap-3">
+                <Clock className="text-red-500" size={18} />
                 Upcoming Deadlines
               </h2>
               <Link to="/upcoming-deadlines" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 font-medium">
@@ -300,17 +295,17 @@ const Dashboard = () => {
               </Link>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-2 md:space-y-3">
               {upcomingDeadlines.map(task => (
-                <div key={task.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <div className={clsx("w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold", task.color)}>
+                <div key={task.id} className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3 p-3 bg-gray-50 rounded-lg touch-manipulation">
+                  <div className={clsx("w-8 md:w-9 h-8 md:h-9 rounded-full flex items-center justify-center text-white text-xs md:text-sm font-semibold flex-shrink-0", task.color)}>
                     {task.initials}
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-800 text-sm">{task.title}</h3>
-                    <p className="text-sm text-gray-500">Assigned to {task.assignedTo}</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-gray-800 text-sm truncate">{task.title}</h3>
+                    <p className="text-xs md:text-sm text-gray-500 truncate">Assigned to {task.assignedTo}</p>
                   </div>
-                  <span className={clsx('text-sm font-semibold px-2.5 py-1 rounded-full', {
+                  <span className={clsx('text-xs md:text-sm font-semibold px-2 md:px-2.5 py-1 rounded-full whitespace-nowrap', {
                     'bg-red-100 text-red-700': task.status === 'danger',
                     'bg-yellow-100 text-yellow-700': task.status === 'warning'
                   })}>
@@ -323,7 +318,7 @@ const Dashboard = () => {
         </div>
 
         {/* Weekly Calendar Widget */}
-        <div className="mt-6 bg-white border border-gray-200 rounded-xl shadow-sm">
+        <div className="mt-4 md:mt-6 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
           <WeeklyCalendarWidget />
         </div>
       </main>
