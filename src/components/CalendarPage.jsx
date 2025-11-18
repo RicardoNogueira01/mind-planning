@@ -478,39 +478,39 @@ const CalendarPage = () => {
     );
   };
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-3 md:p-6">
       {/* Header */}
-      <header className="mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+      <header className="mb-4 md:mb-8">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
+          <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
+            <Link to="/" className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 touch-manipulation">
               <ArrowLeft size={20} className="text-gray-600" />
             </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Calendar</h1>
-              <p className="text-gray-500">Manage your schedule and events</p>
+            <div className="flex-1 md:flex-initial">
+              <h1 className="text-xl md:text-2xl font-bold text-gray-900">Calendar</h1>
+              <p className="text-sm md:text-base text-gray-500">Manage your schedule and events</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2">
+          <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
+            <button className="flex-1 md:flex-initial px-3 md:px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center justify-center gap-2 text-sm touch-manipulation">
               <Plus size={16} />
               Add Event
             </button>
           </div>
         </div>
       </header>      {/* Controls */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-4 mb-4 md:mb-6">
+          <div className="flex flex-col lg:flex-row gap-3 md:gap-4 items-start lg:items-center justify-between">
             {/* Navigation */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 md:gap-4 w-full lg:w-auto">
+              <div className="flex items-center gap-2 flex-1 lg:flex-initial">
                 <button
                   onClick={() => navigateDate(-1)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors touch-manipulation"
                 >
                   <ChevronLeft size={18} className="text-gray-600" />
                 </button>
-                <div className="px-4 py-2 font-semibold text-gray-900 min-w-64 text-center">
+                <div className="px-3 md:px-4 py-2 font-semibold text-gray-900 text-center flex-1 lg:min-w-[240px] text-sm md:text-base">
                   {getDateRangeText()}
                 </div>
                 <button

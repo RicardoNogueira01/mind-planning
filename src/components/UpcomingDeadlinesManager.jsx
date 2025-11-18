@@ -585,27 +585,28 @@ const UpcomingDeadlinesManager = () => {
     </div>
   );
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-3 md:p-6">
       {/* Header */}
-      <header className="mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+      <header className="mb-4 md:mb-8">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
+          <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
+            <Link to="/" className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 touch-manipulation">
               <ArrowLeft size={20} className="text-gray-600" />
             </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Upcoming Deadlines</h1>
-              <p className="text-gray-500">Track deadlines and manage priorities</p>
+            <div className="flex-1 md:flex-initial min-w-0">
+              <h1 className="text-xl md:text-2xl font-bold text-gray-900">Upcoming Deadlines</h1>
+              <p className="text-sm md:text-base text-gray-500 truncate md:whitespace-normal">Track deadlines and manage priorities</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+          <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
+            <button className="flex-1 md:flex-initial px-3 md:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm touch-manipulation">
               <RefreshCw size={16} />
-              Refresh
+              <span className="hidden md:inline">Refresh</span>
             </button>
-            <button className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2">
+            <button className="flex-1 md:flex-initial px-3 md:px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center justify-center gap-2 text-sm touch-manipulation">
               <Plus size={16} />
-              Add Task
+              <span className="hidden md:inline">Add Task</span>
+              <span className="md:hidden">Add</span>
             </button>
           </div>
         </div>
@@ -614,7 +615,7 @@ const UpcomingDeadlinesManager = () => {
       {/* Main Content */}
       <main>
         {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-4 md:mb-6">
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
