@@ -46,6 +46,10 @@ import { useNodeSelection } from '../hooks/useNodeSelection';
 import { getNodeProgress, formatVisitorTime } from '../utils/nodeUtils';
 
 export default function MindMap({ mapId, onBack }) {
+  // Detect if mobile/tablet
+  const isMobileOrTablet = window.innerWidth < 1024; // lg breakpoint
+  const initialZoom = isMobileOrTablet ? 0.7 : 1;
+  
   // Minimal, compiling scaffold to restore the app while we refactor
   const [nodes, setNodes] = useState([
     { 
@@ -58,7 +62,7 @@ export default function MindMap({ mapId, onBack }) {
     }
   ]);
   const [connections, setConnections] = useState([]);
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(initialZoom);
   const [mode, setMode] = useState('cursor'); // 'cursor' | 'pan'
   const [selectionType, setSelectionType] = useState('simple');
   const [selectedNodes, setSelectedNodes] = useState([]);
@@ -67,6 +71,11 @@ export default function MindMap({ mapId, onBack }) {
   const [fxOptions, setFxOptions] = useState({ enabled: false });
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchList, setShowSearchList] = useState(false);
+  
+  // Touch/mobile state
+  const [lastTouchDistance, setLastTouchDistance] = useState(null);
+  const [touchStartPos, setTouchStartPos] = useState(null);
+  const [isTouchDraggingNode, setIsTouchDraggingNode] = useState(false);
   
   // Collaborator selection mode state
   const [isSelecting, setIsSelecting] = useState(false);
@@ -84,6 +93,8 @@ export default function MindMap({ mapId, onBack }) {
   const [expandedNodeToolbars, setExpandedNodeToolbars] = useState({}); // { [nodeId]: bool } - Per-node toolbar expansion
   const [popupOpenFor, setPopupOpenFor] = useState({}); // { [nodeId]: { [popupName]: bool } }
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [showShapesPalette, setShowShapesPalette] = useState(false); // Mobile shapes palette toggle
+  const [showMobileToolbar, setShowMobileToolbar] = useState(false); // Mobile toolbar toggle
 
   // Per-node button anchor refs for popovers
   const detailsBtnRefs = useRef({});
@@ -981,6 +992,98 @@ export default function MindMap({ mapId, onBack }) {
     localStorage.setItem(`mindMap_${mapId}`, payload);
   }, [mapId, nodes, connections]);
 
+  // Center view on mobile/tablet on mount
+  React.useEffect(() => {
+    if (isMobileOrTablet && nodes.length > 0) {
+      const rootNode = nodes.find(n => n.id === 'root');
+      if (rootNode) {
+        // Center the root node in the viewport
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        dragging.setPan({
+          x: centerX - rootNode.x * initialZoom,
+          y: centerY - rootNode.y * initialZoom
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
+
+  // Touch event handlers for mobile support
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 1) {
+      // Single touch - could be pan or node drag
+      const touch = e.touches[0];
+      setTouchStartPos({ x: touch.clientX, y: touch.clientY });
+      
+      // Check if touching a node
+      const target = document.elementFromPoint(touch.clientX, touch.clientY);
+      const nodeElement = target?.closest('[data-node-id]');
+      
+      if (nodeElement) {
+        setIsTouchDraggingNode(true);
+      } else {
+        // Start panning
+        dragging.startPanning({
+          clientX: touch.clientX,
+          clientY: touch.clientY,
+          preventDefault: () => e.preventDefault()
+        });
+      }
+    } else if (e.touches.length === 2) {
+      // Two-finger pinch for zoom
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const distance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+      setLastTouchDistance(distance);
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 1 && !isTouchDraggingNode) {
+      // Single touch pan
+      const touch = e.touches[0];
+      dragging.handlePanning({
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        preventDefault: () => e.preventDefault()
+      });
+    } else if (e.touches.length === 2) {
+      // Two-finger pinch zoom
+      e.preventDefault();
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const distance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+      
+      if (lastTouchDistance) {
+        const delta = distance - lastTouchDistance;
+        const zoomSpeed = 0.005;
+        const newZoom = Math.max(0.1, Math.min(3, zoom + delta * zoomSpeed));
+        setZoom(newZoom);
+      }
+      
+      setLastTouchDistance(distance);
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (e.touches.length === 0) {
+      dragging.stopPanning();
+      setLastTouchDistance(null);
+      setTouchStartPos(null);
+      setIsTouchDraggingNode(false);
+    } else if (e.touches.length === 1) {
+      // One finger left, reset pinch zoom
+      setLastTouchDistance(null);
+    }
+  };
+
   // Determine cursor style based on mode and state
   let cursorStyle = 'default';
   if (mode === 'cursor' && selectionType === 'collaborator') {
@@ -999,9 +1102,9 @@ export default function MindMap({ mapId, onBack }) {
   return (
     <div className="flex w-full h-screen overflow-hidden bg-gray-50">
       <div
-        className="flex-1 relative overflow-hidden"
+        className="flex-1 relative overflow-hidden touch-manipulation"
         ref={canvasRef}
-        style={{ cursor: cursorStyle }}
+        style={{ cursor: cursorStyle, touchAction: 'none' }}
         onMouseDown={(e) => {
           // Only deselect if clicking on canvas background AND not starting a node drag
           const clickedNode = e.target instanceof HTMLElement ? e.target.closest('[data-node-id]') : null;
@@ -1033,6 +1136,9 @@ export default function MindMap({ mapId, onBack }) {
           stopSelection();
           dragging.stopPanning();
         }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         onDragOver={handleCanvasDragOver}
         onDrop={handleCanvasDrop}
         role="application"
@@ -1056,36 +1162,77 @@ export default function MindMap({ mapId, onBack }) {
             onBack={onBack}
             fxOptions={fxOptions}
             setFxOptions={setFxOptions}
+            showMobileToolbar={showMobileToolbar}
+            isMobile={isMobileOrTablet}
+            onClose={() => setShowMobileToolbar(false)}
           />,
           document.body
         )}
 
-        {/* Search Bar */}
-        <MindMapSearchBar
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          showSearchList={showSearchList}
-          setShowSearchList={setShowSearchList}
-          nodes={nodes}
-          setSelectedNode={(id) => id ? selection.selectSingleNode(id) : selection.clearSelection()}
-          setPan={setPan}
-          deleteNode={deleteNode}
-          deleteNodeCascade={deleteNodeCascade}
-        />
+        {/* Hamburger Menu and Search Bar - Top Left */}
+        <div className="absolute top-2 md:top-4 left-2 md:left-4 z-20 flex items-center gap-2">
+          {/* Hamburger Menu Button - Mobile/Tablet Only */}
+          <button
+            onClick={() => setShowMobileToolbar(!showMobileToolbar)}
+            className={`lg:hidden p-2 rounded-lg shadow-lg border transition-all duration-200 touch-manipulation ${
+              showMobileToolbar
+                ? 'bg-blue-500 text-white border-blue-600'
+                : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300'
+            }`}
+            title={showMobileToolbar ? 'Hide toolbar' : 'Show toolbar'}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
 
-        {/* Share and Bookmark Buttons - Top Right */}
-        <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+          {/* Search Bar */}
+          <MindMapSearchBar
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            showSearchList={showSearchList}
+            setShowSearchList={setShowSearchList}
+            nodes={nodes}
+            setSelectedNode={(id) => id ? selection.selectSingleNode(id) : selection.clearSelection()}
+            setPan={setPan}
+            deleteNode={deleteNode}
+            deleteNodeCascade={deleteNodeCascade}
+          />
+        </div>
+
+        {/* Share, Bookmark, and Shapes Toggle Buttons - Top Right */}
+        <div className="absolute top-2 md:top-4 right-2 md:right-4 z-20 flex items-center gap-1 md:gap-2">
+          {/* Shapes Palette Toggle - Mobile Only */}
+          <button
+            onClick={() => setShowShapesPalette(!showShapesPalette)}
+            className={`md:hidden p-2 rounded-lg shadow-lg border transition-all duration-200 touch-manipulation ${
+              showShapesPalette
+                ? 'bg-indigo-500 text-white border-indigo-600'
+                : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300'
+            }`}
+            title={showShapesPalette ? 'Hide shapes' : 'Show shapes'}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+          </button>
+          
           {/* Bookmark Button */}
           <button
             onClick={toggleBookmark}
-            className={`p-3 rounded-xl shadow-lg border transition-all duration-200 ${
+            className={`p-2 md:p-3 rounded-lg md:rounded-xl shadow-lg border transition-all duration-200 touch-manipulation ${
               isBookmarked 
                 ? 'bg-yellow-500 text-white border-yellow-600 hover:bg-yellow-600' 
                 : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-yellow-50 hover:text-yellow-600 hover:border-yellow-300'
             }`}
             title={isBookmarked ? 'Remove from favorites' : 'Add to favorites'}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
             </svg>
           </button>
@@ -1093,10 +1240,10 @@ export default function MindMap({ mapId, onBack }) {
           {/* Share Button */}
           <button
             onClick={() => setShowShareDialog(true)}
-            className="p-3 rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all duration-200"
+            className="p-2 md:p-3 rounded-lg md:rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all duration-200 touch-manipulation"
             title="Share mind map"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="18" cy="5" r="3"></circle>
               <circle cx="6" cy="12" r="3"></circle>
               <circle cx="18" cy="19" r="3"></circle>
@@ -1109,20 +1256,20 @@ export default function MindMap({ mapId, onBack }) {
         {/* Connection Mode Banner */}
         {connectionFrom && (
           <div 
-            className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 bg-blue-500 text-white rounded-full shadow-xl shadow-blue-500/40 flex items-center gap-3 animate-bounce-subtle"
+            className="fixed top-16 md:top-20 left-1/2 transform -translate-x-1/2 z-50 px-3 md:px-6 py-2 md:py-3 bg-blue-500 text-white rounded-full shadow-xl shadow-blue-500/40 flex items-center gap-2 md:gap-3 max-w-[90vw] md:max-w-none"
             style={{ animation: 'slideDown 0.3s ease-out' }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
               <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
             </svg>
-            <span className="font-medium">Click on another node to create connection</span>
+            <span className="font-medium text-xs md:text-sm">Tap another node to connect</span>
             <button 
               onClick={cancelConnection}
-              className="ml-2 p-1 hover:bg-blue-600 rounded-full transition-colors"
+              className="ml-1 md:ml-2 p-1 hover:bg-blue-600 rounded-full transition-colors touch-manipulation flex-shrink-0"
               title="Cancel (Esc)"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 md:w-4 md:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
@@ -1133,18 +1280,18 @@ export default function MindMap({ mapId, onBack }) {
         {/* Collaborator Mode Banner */}
         {mode === 'cursor' && selectionType === 'collaborator' && (
           <div 
-            className="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 bg-cyan-600 text-white rounded-lg shadow-xl shadow-cyan-600/40 flex items-center gap-3"
-            style={{ animation: 'slideDown 0.3s ease-out', maxWidth: '600px' }}
+            className="fixed top-16 md:top-20 left-1/2 transform -translate-x-1/2 z-50 px-3 md:px-6 py-2 md:py-3 bg-cyan-600 text-white rounded-lg shadow-xl shadow-cyan-600/40 flex items-center gap-2 md:gap-3 mx-2"
+            style={{ animation: 'slideDown 0.3s ease-out', maxWidth: '90vw' }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
               <circle cx="9" cy="7" r="4"></circle>
               <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
               <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
-            <div className="flex flex-col gap-1">
-              <span className="font-semibold text-sm">Collaborator Selection Mode</span>
-              <span className="text-xs text-cyan-100">Click and drag to select multiple nodes, then assign them to a collaborator</span>
+            <div className="flex flex-col gap-0.5 md:gap-1">
+              <span className="font-semibold text-xs md:text-sm">Collaborator Selection</span>
+              <span className="text-[10px] md:text-xs text-cyan-100 hidden sm:block">Drag to select nodes, then assign to a collaborator</span>
             </div>
           </div>
         )}
@@ -1310,37 +1457,39 @@ export default function MindMap({ mapId, onBack }) {
               {/* Per-node toolbar overlay - Only visible when exactly ONE node is selected */}
               {selectedNodes.length === 1 && selectedNodes.includes(node.id) && (
               <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-full z-20" style={{ top: '-25px' }}>
-                <div className="enhanced-node-toolbar backdrop-blur-md bg-white/90 shadow-lg border border-white/20 rounded-2xl flex items-center p-2 gap-1">
+                <div className="enhanced-node-toolbar backdrop-blur-md bg-white/90 shadow-lg border border-white/20 rounded-2xl p-2 lg:flex lg:items-center lg:gap-1 grid grid-cols-4 md:grid-cols-6 gap-1 max-w-[90vw] lg:max-w-none">
                   {/* PRIMARY GROUP - always visible */}
-                  <NodeToolbarPrimary
-                    node={node}
-                    isToolbarExpanded={isNodeToolbarExpanded(node.id)}
-                    onToggleComplete={onToggleComplete}
-                    onAddChild={onAddChild}
-                    onRequestDelete={onRequestDelete}
-                    onRequestDetach={(nodeId) => setDetachConfirmNodeId(nodeId)}
-                    hasParent={connections.some(conn => conn.to === node.id)}
-                  />
+                  <div className="col-span-4 md:col-span-6 lg:col-span-auto flex items-center gap-1 justify-center lg:justify-start">
+                    <NodeToolbarPrimary
+                      node={node}
+                      isToolbarExpanded={isNodeToolbarExpanded(node.id)}
+                      onToggleComplete={onToggleComplete}
+                      onAddChild={onAddChild}
+                      onRequestDelete={onRequestDelete}
+                      onRequestDetach={(nodeId) => setDetachConfirmNodeId(nodeId)}
+                      hasParent={connections.some(conn => conn.to === node.id)}
+                    />
                   
-                  {/* Connection button for connectors */}
-                  <NodeToolbarConnectionButton
-                    nodeId={node.id}
-                    isActive={connectionFrom === node.id}
-                    onStart={startConnection}
-                    onCancel={cancelConnection}
-                  />
+                    {/* Connection button for connectors */}
+                    <NodeToolbarConnectionButton
+                      nodeId={node.id}
+                      isActive={connectionFrom === node.id}
+                      onStart={startConnection}
+                      onCancel={cancelConnection}
+                    />
+                  </div>
 
-                  {/* Visual group when expanded */}
+                  {/* Visual group when expanded - Desktop only */}
                   {isNodeToolbarExpanded(node.id) && (
-                    <div className="w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
+                    <div className="hidden lg:block w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
                   )}
 
                   {/* Content group when expanded */}
                   {isNodeToolbarExpanded(node.id) && (
-                    <div className="flex items-center gap-1">
+                    <>
                       <button
                         ref={(el) => { attachBtnRefs.current[node.id] = el; }}
-                        className="node-toolbar-btn p-2 rounded-xl hover:bg-purple-50 text-purple-600 transition-colors duration-200 border border-purple-200 hover:border-purple-300"
+                        className="node-toolbar-btn p-2 rounded-xl hover:bg-purple-50 text-purple-600 transition-colors duration-200 border border-purple-200 hover:border-purple-300 touch-manipulation"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'attach'); }}
                         title="Manage file attachments"
                       >
@@ -1422,20 +1571,20 @@ export default function MindMap({ mapId, onBack }) {
                         onRemoveTag={(tag) => setNodes(nodes.map(n => n.id === node.id ? { ...n, tags: (n.tags || []).filter(t => t !== tag) } : n))}
                         onClose={() => togglePopup(node.id, 'tags')}
                       />
-                    </div>
+                    </>
                   )}
 
-                  {/* Divider */}
+                  {/* Divider - Desktop only */}
                   {isNodeToolbarExpanded(node.id) && (
-                    <div className="w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
+                    <div className="hidden lg:block w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
                   )}
 
                   {/* Meta group when expanded */}
                   {isNodeToolbarExpanded(node.id) && (
-                    <div className="flex items-center gap-1">
+                    <>
                       <button
                         ref={(el) => { detailsBtnRefs.current[node.id] = el; }}
-                        className="node-toolbar-btn p-2 rounded-xl hover:bg-indigo-50 text-indigo-600 transition-colors duration-200 border border-indigo-200 hover:border-indigo-300"
+                        className="node-toolbar-btn p-2 rounded-xl hover:bg-indigo-50 text-indigo-600 transition-colors duration-200 border border-indigo-200 hover:border-indigo-300 touch-manipulation"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'details'); }}
                         title="Edit priority, status, and description"
                       >
@@ -1503,45 +1652,48 @@ export default function MindMap({ mapId, onBack }) {
                         onToggleCollaborator={(collabId) => assignCollaborator(node.id, collabId)}
                         onClose={() => togglePopup(node.id, 'collaborator')}
                       />
-                    </div>
+                    </>
                   )}
 
-                  {/* Divider */}
+                  {/* Divider - Desktop only */}
                   {isNodeToolbarExpanded(node.id) && (
-                    <div className="w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
+                    <div className="hidden lg:block w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
                   )}
 
-                  {/* Layout button (root only) */}
-                  {node.id === 'root' && isNodeToolbarExpanded(node.id) && (
-                    <NodeToolbarLayout
-                      shouldRender={true}
-                      layoutBtnRef={(el) => { layoutBtnRefs.current[node.id] = el; }}
-                      onToggleLayout={() => { /* layout mode toggle */ }}
-                      renderLayoutPopup={() => null}
+                  {/* Final controls group */}
+                  <div className="col-span-4 md:col-span-6 lg:col-span-auto flex items-center gap-1 justify-center lg:justify-start">
+                    {/* Layout button (root only) */}
+                    {node.id === 'root' && isNodeToolbarExpanded(node.id) && (
+                      <NodeToolbarLayout
+                        shouldRender={true}
+                        layoutBtnRef={(el) => { layoutBtnRefs.current[node.id] = el; }}
+                        onToggleLayout={() => { /* layout mode toggle */ }}
+                        renderLayoutPopup={() => null}
+                      />
+                    )}
+
+                    {/* Settings toggle - Always at the end before delete */}
+                    <NodeToolbarSettingsToggle
+                      isToolbarExpanded={isNodeToolbarExpanded(node.id)}
+                      onToggle={() => toggleNodeToolbar(node.id)}
                     />
-                  )}
 
-                  {/* Settings toggle - Always at the end before delete */}
-                  <NodeToolbarSettingsToggle
-                    isToolbarExpanded={isNodeToolbarExpanded(node.id)}
-                    onToggle={() => toggleNodeToolbar(node.id)}
-                  />
-
-                  {/* Delete button at the end - Always visible for non-root nodes */}
-                  {node.id !== 'root' && (
-                    <button
-                      className="node-toolbar-btn p-2 rounded-xl hover:bg-red-100 text-red-600 transition-colors duration-200 border border-red-200 hover:border-red-300"
-                      onClick={(e) => { e.stopPropagation(); setDeleteConfirmNodeId(node.id); }}
-                      title="Delete node"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                        <line x1="10" y1="11" x2="10" y2="17"></line>
-                        <line x1="14" y1="11" x2="14" y2="17"></line>
-                      </svg>
-                    </button>
-                  )}
+                    {/* Delete button at the end - Always visible for non-root nodes */}
+                    {node.id !== 'root' && (
+                      <button
+                        className="node-toolbar-btn p-2 rounded-xl hover:bg-red-100 text-red-600 transition-colors duration-200 border border-red-200 hover:border-red-300 touch-manipulation"
+                        onClick={(e) => { e.stopPropagation(); setDeleteConfirmNodeId(node.id); }}
+                        title="Delete node"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          <line x1="10" y1="11" x2="10" y2="17"></line>
+                          <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
               )}
@@ -1568,8 +1720,35 @@ export default function MindMap({ mapId, onBack }) {
           />
         )}
       </div>
+      
+      {/* Mobile Backdrop Overlay for Shapes Palette */}
+      {showShapesPalette && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/50 z-20"
+          onClick={() => setShowShapesPalette(false)}
+          onKeyDown={(e) => e.key === 'Escape' && setShowShapesPalette(false)}
+          role="button"
+          tabIndex={0}
+          aria-label="Close shapes palette"
+        />
+      )}
+      
+      {/* Mobile Backdrop Overlay for Toolbar */}
+      {showMobileToolbar && isMobileOrTablet && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-15"
+          onClick={() => setShowMobileToolbar(false)}
+          onKeyDown={(e) => e.key === 'Escape' && setShowMobileToolbar(false)}
+          role="button"
+          tabIndex={0}
+          aria-label="Close toolbar"
+        />
+      )}
+      
       {/* Shapes Palette Sidebar */}
-      <div className="w-fit border-l bg-white">
+      <div className={`w-fit border-l bg-white transition-transform duration-300 ease-in-out md:translate-x-0 ${
+        showShapesPalette ? 'translate-x-0' : 'translate-x-full'
+      } md:relative absolute right-0 top-0 bottom-0 z-30 shadow-2xl md:shadow-none`}>
         <ShapePalette
           shapeDefinitions={React.useMemo(() => ([
             { type: 'circle',    name: 'Circle',    color: '#3B82F6', icon: '●' },
