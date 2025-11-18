@@ -5,22 +5,41 @@ export function getRectCenter(rect: Rect) {
 }
 
 /**
- * Compute the intersection point on a rectangle's perimeter for a ray from the rect center to target.
- * Mirrors the logic previously embedded in MindMap.jsx.
+ * Compute the intersection point on a rectangle's perimeter for a ray from the rect center to target
+ * 
+ * Purpose: Connections should start/end at node edges, not centers
+ * 
+ * @param rect - Rectangle bounds { left, top, right, bottom }
+ * @param targetX - X coordinate of target point
+ * @param targetY - Y coordinate of target point
+ * @returns Point where the line intersects rectangle edge
+ * 
+ * Algorithm:
+ * 1. Calculate slope of line from center to target
+ * 2. Determine which edge will be intersected based on slope:
+ *    - Shallow slope (< height/width) → left or right edge
+ *    - Steep slope (>= height/width) → top or bottom edge
+ * 3. Use slope to calculate exact intersection coordinates
+ * 4. Clamp result to ensure it stays within rectangle bounds
  */
 export function getPerimeterPoint(rect: Rect, targetX: number, targetY: number) {
+  // Calculate rectangle center
   const cx = (rect.left + rect.right) / 2;
   const cy = (rect.top + rect.bottom) / 2;
+  
+  // Calculate direction vector from center to target
   const dx = targetX - cx;
   const dy = targetY - cy;
+  
   const width = rect.right - rect.left;
   const height = rect.bottom - rect.top;
 
-  // Handle case where target is the center of the rect
+  // Handle edge case: target is at center
   if (dx === 0 && dy === 0) {
     return { x: cx, y: cy };
   }
 
+  // Calculate slope (rise over run)
   const slope = dy / dx;
   const absSlope = Math.abs(slope);
   
@@ -28,30 +47,30 @@ export function getPerimeterPoint(rect: Rect, targetX: number, targetY: number) 
 
   // Determine which edge the line intersects based on slope
   if (absSlope < height / width) {
-    // Intersects with left or right edge (more horizontal)
+    // Line is more HORIZONTAL → intersects LEFT or RIGHT edge
     if (dx > 0) {
-      // Right edge
+      // Target is to the right → intersect RIGHT edge
       x = rect.right;
       y = cy + (width / 2) * slope;
     } else {
-      // Left edge
+      // Target is to the left → intersect LEFT edge
       x = rect.left;
-      y = cy + (width / 2) * slope;  // Fixed: removed incorrect negation
+      y = cy + (width / 2) * slope;
     }
   } else {
-    // Intersects with top or bottom edge (more vertical)
+    // Line is more VERTICAL → intersects TOP or BOTTOM edge
     if (dy > 0) {
-      // Bottom edge
+      // Target is below → intersect BOTTOM edge
       y = rect.bottom;
       x = cx + (height / 2) / slope;
     } else {
-      // Top edge
+      // Target is above → intersect TOP edge
       y = rect.top;
       x = cx + (height / 2) / slope;
     }
   }
 
-  // Clamp values to be within the rectangle's bounds
+  // Clamp values to be within the rectangle's bounds (safety check)
   x = Math.max(rect.left, Math.min(rect.right, x));
   y = Math.max(rect.top, Math.min(rect.bottom, y));
 
@@ -59,48 +78,72 @@ export function getPerimeterPoint(rect: Rect, targetX: number, targetY: number) 
 }
 
 /**
- * Compute a smooth cubic bezier path between two rectangles. Returns the path d string,
- * start/end points, and a suggested label position (midpoint of start and end).
- * Creates smooth, curved connections that route around nodes for clean, professional appearance.
- * Supports distributed connection points for polished visual hierarchy.
+ * Compute a smooth cubic Bezier path between two rectangles
+ * 
+ * This is the MOST COMPLEX function in the codebase!
+ * It creates professional, curved connections that:
+ * - Connect at appropriate edges (not through nodes)
+ * - Distribute connection points for clean appearance (up to 10 children)
+ * - Group connections at single point for large families (>10 children)
+ * - Flow naturally with smooth curves
+ * 
+ * @param fromRect - Parent node rectangle
+ * @param toRect - Child node rectangle
+ * @param options - Optional: childIndex, totalChildren for distribution
+ * @returns Object with: d (SVG path), start point, end point, label position
+ * 
+ * @example
+ * const path = computeBezierPath(parentRect, childRect, { childIndex: 2, totalChildren: 5 });
+ * // Returns: { d: "M 100 50 C 150 50, 250 100, 300 100", start, end, label }
+ * 
+ * Algorithm Overview:
+ * STEP 1: Determine optimal connection point on CHILD (based on parent position)
+ * STEP 2: Determine connection point on PARENT (smart distribution or grouping)
+ * STEP 3: Create smooth Bezier curve with adaptive control points
  */
 export function computeBezierPath(
   fromRect: Rect, 
   toRect: Rect,
   options?: { childIndex?: number; totalChildren?: number; parentId?: string }
 ) {
+  // Calculate centers of both rectangles
   const fromCenterX = (fromRect.left + fromRect.right) / 2;
   const fromCenterY = (fromRect.top + fromRect.bottom) / 2;
   const toCenterX = (toRect.left + toRect.right) / 2;
   const toCenterY = (toRect.top + toRect.bottom) / 2;
   
-  // Step 1: Determine the optimal connection point on the CHILD based on parent's position
+  // ============================================================
+  // STEP 1: Determine optimal connection point on CHILD node
+  // ============================================================
+  // Choose edge of child based on where parent is located
   let childConnectionX, childConnectionY;
   
   if (fromCenterX < toRect.left) {
-    // Parent is to the left - connect to child's left edge
+    // Parent is to the LEFT → connect to child's LEFT edge
     childConnectionX = toRect.left;
     childConnectionY = toCenterY;
   } else if (fromCenterX > toRect.right) {
-    // Parent is to the right - connect to child's right edge
+    // Parent is to the RIGHT → connect to child's RIGHT edge
     childConnectionX = toRect.right;
     childConnectionY = toCenterY;
   } else if (fromCenterY < toRect.top) {
-    // Parent is above - connect to child's top edge
+    // Parent is ABOVE → connect to child's TOP edge
     childConnectionX = toCenterX;
     childConnectionY = toRect.top;
   } else if (fromCenterY > toRect.bottom) {
-    // Parent is below - connect to child's bottom edge
+    // Parent is BELOW → connect to child's BOTTOM edge
     childConnectionX = toCenterX;
     childConnectionY = toRect.bottom;
   } else {
-    // Parent overlaps child - use center
+    // Parent overlaps child (rare) → use center
     childConnectionX = toCenterX;
     childConnectionY = toCenterY;
   }
   
-  // Step 2: Find where on parent to connect FROM
-  // Intelligently choose which edge and whether to distribute or group
+  // ============================================================
+  // STEP 2: Determine connection point on PARENT node
+  // ============================================================
+  // Smart distribution: spread out connections for visual clarity
   let start: { x: number; y: number };
   
   // Determine which edge of the parent to use based on child position
@@ -109,86 +152,105 @@ export function computeBezierPath(
   const isChildBelow = toCenterY > fromRect.bottom;
   const isChildAbove = toCenterY < fromRect.top;
   
-  // Dynamic grouping: if more than 10 children, group them at one point
+  // Dynamic grouping strategy:
+  // - 1-10 children: DISTRIBUTE along edge for clean appearance
+  // - >10 children: GROUP at single point to avoid clutter
   const shouldDistribute = options?.totalChildren !== undefined && 
                            options.totalChildren > 1 && 
                            options.totalChildren <= 10;
   
   if (shouldDistribute && options?.childIndex !== undefined) {
-    // Distribute connection points along the appropriate edge
+    // ========== DISTRIBUTE MODE ==========
+    // Spread connection points evenly along the appropriate edge
+    
     if (isChildToRight) {
-      // Spread vertically along right edge
+      // Children are to the RIGHT → spread vertically along parent's RIGHT edge
       const parentHeight = fromRect.bottom - fromRect.top;
-      const spacing = parentHeight / (options.totalChildren + 1);
+      const spacing = parentHeight / (options.totalChildren + 1);  // +1 for padding
       const offsetY = spacing * (options.childIndex + 1);
       start = { x: fromRect.right, y: fromRect.top + offsetY };
+      
     } else if (isChildToLeft) {
-      // Spread vertically along left edge
+      // Children are to the LEFT → spread vertically along parent's LEFT edge
       const parentHeight = fromRect.bottom - fromRect.top;
       const spacing = parentHeight / (options.totalChildren + 1);
       const offsetY = spacing * (options.childIndex + 1);
       start = { x: fromRect.left, y: fromRect.top + offsetY };
+      
     } else if (isChildBelow) {
-      // Spread horizontally along bottom edge
+      // Children are BELOW → spread horizontally along parent's BOTTOM edge
       const parentWidth = fromRect.right - fromRect.left;
       const spacing = parentWidth / (options.totalChildren + 1);
       const offsetX = spacing * (options.childIndex + 1);
       start = { x: fromRect.left + offsetX, y: fromRect.bottom };
+      
     } else if (isChildAbove) {
-      // Spread horizontally along top edge
+      // Children are ABOVE → spread horizontally along parent's TOP edge
       const parentWidth = fromRect.right - fromRect.left;
       const spacing = parentWidth / (options.totalChildren + 1);
       const offsetX = spacing * (options.childIndex + 1);
       start = { x: fromRect.left + offsetX, y: fromRect.top };
+      
     } else {
-      // Fallback
+      // Fallback: use perimeter point calculation
       start = getPerimeterPoint(fromRect, toCenterX, toCenterY);
     }
   } else {
-    // Group all connections at a single point (>10 children or no distribution info)
+    // ========== GROUP MODE ==========
+    // All connections share a single point (>10 children or no distribution info)
     start = getPerimeterPoint(fromRect, toCenterX, toCenterY);
   }
   
-  // Step 3: Use the child connection point we determined (don't recalculate)
+  // ============================================================
+  // STEP 3: Create smooth Bezier curve with adaptive control points
+  // ============================================================
+  // Use the child connection point determined in Step 1 (don't recalculate)
   const end = { x: childConnectionX, y: childConnectionY };
   
-  // Create smooth, natural Bezier curves that flow elegantly
-  // Control points create gentle curves without awkward bending
+  // Bezier control points create the curve's "flow"
+  // Think of them as invisible magnets pulling the line
   let c1x, c1y, c2x, c2y;
   
   const horizontalDistance = Math.abs(end.x - start.x);
   const verticalDistance = Math.abs(end.y - start.y);
   
   if (toRect.left > fromRect.right + 10) {
-    // Target is to the right - create smooth rightward flow
-    // Control points extend horizontally for natural curve
-    const controlDistance = Math.min(horizontalDistance * 0.6, 150);
+    // ========== RIGHTWARD FLOW ==========
+    // Child is to the RIGHT → curve flows horizontally
+    // Control points extend right from start and left from end
+    const controlDistance = Math.min(horizontalDistance * 0.6, 150);  // Max 150px for stability
     
-    c1x = start.x + controlDistance;
-    c1y = start.y;
-    c2x = end.x - controlDistance;
-    c2y = end.y;
+    c1x = start.x + controlDistance;   // Pull right from start
+    c1y = start.y;                     // Stay at start height
+    c2x = end.x - controlDistance;     // Pull left from end
+    c2y = end.y;                       // Stay at end height
+    
   } else if (toRect.right < fromRect.left - 10) {
-    // Target is to the left - create smooth leftward flow
+    // ========== LEFTWARD FLOW ==========
+    // Child is to the LEFT → curve flows horizontally
     const controlDistance = Math.min(horizontalDistance * 0.6, 150);
     
-    c1x = start.x - controlDistance;
+    c1x = start.x - controlDistance;   // Pull left from start
     c1y = start.y;
-    c2x = end.x + controlDistance;
+    c2x = end.x + controlDistance;     // Pull right from end
     c2y = end.y;
-  } else {
-    // Nodes are vertically aligned - use vertical curves
-    const controlDistance = Math.min(verticalDistance * 0.6, 100);
     
-    c1x = start.x;
-    c1y = start.y + (end.y > start.y ? controlDistance : -controlDistance);
-    c2x = end.x;
-    c2y = end.y - (end.y > start.y ? controlDistance : -controlDistance);
+  } else {
+    // ========== VERTICAL FLOW ==========
+    // Nodes are vertically aligned → curve flows vertically
+    const controlDistance = Math.min(verticalDistance * 0.6, 100);  // Smaller for vertical curves
+    
+    c1x = start.x;                     // Stay at start X
+    c1y = start.y + (end.y > start.y ? controlDistance : -controlDistance);  // Pull toward end
+    c2x = end.x;                       // Stay at end X
+    c2y = end.y - (end.y > start.y ? controlDistance : -controlDistance);    // Pull toward start
   }
   
+  // Construct SVG path string
+  // Format: M (move to start) C (cubic bezier with 2 control points) to end
   const d = `M ${start.x} ${start.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${end.x} ${end.y}`;
   
-  // Suggest a label position at the midpoint of the curve
+  // Calculate label position at midpoint (useful for connection labels/icons)
   const label = {
     x: (start.x + end.x) / 2,
     y: (start.y + end.y) / 2,
