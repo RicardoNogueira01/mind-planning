@@ -100,7 +100,7 @@ const MindMapSearchBar = ({
       
       {/* Enhanced Search Results */}
       {isSearchOpen && showSearchList && searchQuery && (
-        <div className="absolute left-10 md:left-14 right-0 mt-2 md:mt-3 w-64 md:w-80 bg-white/95 backdrop-blur-lg shadow-2xl border border-gray-200/50 rounded-xl md:rounded-2xl p-2 md:p-3 max-h-72 md:max-h-96 overflow-y-auto">
+        <div className="absolute left-10 md:left-14 top-full mt-4 w-64 md:w-80 bg-white/95 backdrop-blur-lg shadow-2xl border border-gray-200/50 rounded-xl md:rounded-2xl p-2 md:p-3 max-h-72 md:max-h-96 overflow-y-auto">
           {nodes
             .filter(node => node.text.toLowerCase().includes(searchQuery.toLowerCase()))
             .map(node => (
