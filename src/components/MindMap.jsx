@@ -9,8 +9,6 @@ import NodeCard from './mindmap/NodeCard';
 import MindMapSearchBar from './mindmap/MindMapSearchBar';
 import ConnectionsSvg from './mindmap/ConnectionsSvg';
 import NodeToolbarPrimary from './mindmap/NodeToolbarPrimary';
-import NodeToolbarBackgroundColor from './mindmap/NodeToolbarBackgroundColor';
-import NodeToolbarFontColor from './mindmap/NodeToolbarFontColor';
 import NodeToolbarConnectionButton from './mindmap/NodeToolbarConnectionButton';
 import NodeToolbarSettingsToggle from './mindmap/NodeToolbarSettingsToggle';
 import NodeToolbarLayout from './mindmap/NodeToolbarLayout';
@@ -59,7 +57,6 @@ export default function MindMap({ mapId, onBack }) {
   
   // Group management UI states
   const [openGroupMenuId, setOpenGroupMenuId] = useState(null); // Popup menu for group
-  const [hudGroupId, setHudGroupId] = useState(null); // Quick actions HUD near group
   const [movingGroupId, setMovingGroupId] = useState(null); // When set, group box becomes draggable
   const [isDraggingGroup, setIsDraggingGroup] = useState(false);
   const [resizingGroupId, setResizingGroupId] = useState(null); // When set, group box shows resize handles
@@ -86,8 +83,6 @@ export default function MindMap({ mapId, onBack }) {
   ]);
   const [attachmentFilters, setAttachmentFilters] = useState({ search: '' }); // Attachment search/filter state
   const [collaboratorSearch, setCollaboratorSearch] = useState(''); // Collaborator search filter
-  const bgBtnRefs = useRef({}); // Background color button refs
-  const fontBtnRefs = useRef({}); // Font color button refs
   const emojiBtnRefs = useRef({}); // Emoji button refs
   const [detachConfirmNodeId, setDetachConfirmNodeId] = useState(null); // Track which node has detach confirmation open
   const [parentSelectionState, setParentSelectionState] = useState(null); // { nodeId, parentConnections: [] }
@@ -97,7 +92,7 @@ export default function MindMap({ mapId, onBack }) {
   const [shareLink, setShareLink] = useState(''); // Generated share link
   const [isBookmarked, setIsBookmarked] = useState(false); // Bookmark state
   const [showCopiedNotification, setShowCopiedNotification] = useState(false); // Copied to clipboard notification
-  const [shareVisitors, setShareVisitors] = useState([
+  const [shareVisitors] = useState([
     // Mock data - replace with real backend data
     { id: 1, name: 'Anonymous User', timestamp: new Date(Date.now() - 3600000).toISOString(), permission: 'view' },
     { id: 2, name: 'John Doe', timestamp: new Date(Date.now() - 7200000).toISOString(), permission: 'edit' },
@@ -127,7 +122,7 @@ export default function MindMap({ mapId, onBack }) {
   // ============================================
   // UI INTERACTION: Reference dragging state
   // ============================================
-  const { draggingNodeId, pan, setPan, isPanning } = dragging;
+  const { pan, setPan, isPanning } = dragging;
 
   // ============================================
   // AUTO-SAVE HISTORY ON CHANGES
@@ -156,8 +151,8 @@ export default function MindMap({ mapId, onBack }) {
   // Close group menu on outside click
   useEffect(() => {
     const onWinClick = () => setOpenGroupMenuId(null);
-    window.addEventListener('click', onWinClick);
-    return () => window.removeEventListener('click', onWinClick);
+    globalThis.addEventListener('click', onWinClick);
+    return () => globalThis.removeEventListener('click', onWinClick);
   }, []);
 
   // Global Escape key to reset to normal state
@@ -165,7 +160,6 @@ export default function MindMap({ mapId, onBack }) {
     const onKeyDown = (e) => {
       if (e.key === 'Escape') {
         // Reset all states to normal
-        setHudGroupId(null);
         setMovingGroupId(null);
         setOpenGroupMenuId(null);
         setResizingGroupId(null);
@@ -219,8 +213,8 @@ export default function MindMap({ mapId, onBack }) {
         }
       }
     };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    globalThis.addEventListener('keydown', onKeyDown);
+    return () => globalThis.removeEventListener('keydown', onKeyDown);
   }, [selectedNodes, nodeOps]);
 
   // Wheel event for zooming
@@ -418,7 +412,7 @@ export default function MindMap({ mapId, onBack }) {
   
   // Generate share link
   const generateShareLink = () => {
-    const baseUrl = window.location.origin;
+    const baseUrl = globalThis.location.origin;
     const shareId = `${mapId}-${Date.now()}`;
     const link = `${baseUrl}/shared/${shareId}?permission=${sharePermission}`;
     setShareLink(link);
@@ -464,23 +458,20 @@ export default function MindMap({ mapId, onBack }) {
   const relatedNodeIds = React.useMemo(() => {
     if (!selectedNode) return new Set();
     const set = new Set([selectedNode]);
-    getDescendantNodeIds(connections, selectedNode).forEach(id => set.add(id));
-    getAncestorNodeIds(connections, selectedNode).forEach(id => set.add(id));
+    for (const id of getDescendantNodeIds(connections, selectedNode)) set.add(id);
+    for (const id of getAncestorNodeIds(connections, selectedNode)) set.add(id);
     return set;
   }, [selectedNode, connections]);
 
   const nodePositions = React.useMemo(() => {
     const map = {};
     
-    nodes.forEach(n => { 
+    for (const n of nodes) { 
       // Get actual DOM dimensions for accurate bounding box
       const element = document.querySelector(`[data-node-id="${n.id}"]`);
       
       if (element) {
         const rect = element.getBoundingClientRect();
-        // Account for pan/zoom transforms
-        const transform = element.closest('[style*="transform"]');
-        const transformStyle = transform ? window.getComputedStyle(transform).transform : 'none';
         
         // For now, use actual DOM width/height
         const actualWidth = rect.width;
@@ -503,7 +494,7 @@ export default function MindMap({ mapId, onBack }) {
           bottom: n.y - 42 + NODE_HEIGHT
         };
       }
-    });
+    }
     return map;
   }, [nodes]);
 
@@ -532,12 +523,12 @@ export default function MindMap({ mapId, onBack }) {
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('keydown', handleKeyDown);
-    
+    globalThis.addEventListener('mousemove', handleMouseMove);
+    globalThis.addEventListener('keydown', handleKeyDown);
+
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('keydown', handleKeyDown);
+      globalThis.removeEventListener('mousemove', handleMouseMove);
+      globalThis.removeEventListener('keydown', handleKeyDown);
     };
   }, [connectionFrom]);
 
@@ -576,10 +567,10 @@ export default function MindMap({ mapId, onBack }) {
         .filter(Boolean);
       
       let allDescendants = [...directChildren];
-      directChildren.forEach(child => {
+      for (const child of directChildren) {
         const childDescendants = getAllDescendants(child.id, new Set(visited));
         allDescendants = [...allDescendants, ...childDescendants];
-      });
+      }
       
       return allDescendants;
     };
@@ -606,10 +597,6 @@ export default function MindMap({ mapId, onBack }) {
   // ============================================
   // NODE DATA UPDATES (via hooks)
   // ============================================
-  const updateNode = nodeOps.updateNode;
-  const setNodeField = (id, key, value) => updateNode(id, { [key]: value });
-  const addNodeTag = (id, tag) => updateNode(id, n => ({ ...n, tags: [ ...(n.tags || []), tag ] }));
-
   const deleteNode = (id) => nodeOps.deleteNodes([id]);
   const deleteNodeCascade = (id) => {
     const desc = new Set(getDescendantNodeIds(connections, id));
@@ -639,12 +626,6 @@ export default function MindMap({ mapId, onBack }) {
       }
     }));
   };
-  const closePopup = (nodeId, popupName) => {
-    setPopupOpenFor(prev => ({
-      ...prev,
-      [nodeId]: { ...(prev[nodeId] || {}), [popupName]: false }
-    }));
-  };
 
   // Toolbar expansion helpers - per-node
   const isNodeToolbarExpanded = (nodeId) => expandedNodeToolbars[nodeId] === true;
@@ -653,12 +634,6 @@ export default function MindMap({ mapId, onBack }) {
       ...prev,
       [nodeId]: !isNodeToolbarExpanded(nodeId)
     }));
-  };
-  const selectBgColor = (id, color) => { 
-    setNodes(nodes.map(n => n.id === id ? { ...n, bgColor: color } : n)); 
-  };
-  const selectFontColor = (id, color) => { 
-    setNodes(nodes.map(n => n.id === id ? { ...n, fontColor: color } : n)); 
   };
 
   // Attachment handlers
@@ -705,7 +680,7 @@ export default function MindMap({ mapId, onBack }) {
     link.download = attachment.name;
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    link.remove();
   };
 
   const setNodeEmoji = (nodeId, emoji) => {
@@ -837,12 +812,12 @@ export default function MindMap({ mapId, onBack }) {
                 const startBB = { ...group.boundingBox };
                 // Store initial positions of all nodes in the group
                 const initialNodePositions = {};
-                (group.nodeIds || []).forEach(nodeId => {
+                for (const nodeId of (group.nodeIds || [])) {
                   const node = nodes.find(n => n.id === nodeId);
                   if (node) {
                     initialNodePositions[nodeId] = { x: node.x, y: node.y };
                   }
-                });
+                }
                 
                 const onMove = (ev) => {
                   const dx = (ev.clientX - start.x) / zoom;
@@ -866,13 +841,13 @@ export default function MindMap({ mapId, onBack }) {
                 };
                 
                 const onUp = () => {
-                  window.removeEventListener('pointermove', onMove);
-                  window.removeEventListener('pointerup', onUp);
+                  globalThis.removeEventListener('pointermove', onMove);
+                  globalThis.removeEventListener('pointerup', onUp);
                   setIsDraggingGroup(false);
                   setMovingGroupId(null);
                 };
-                window.addEventListener('pointermove', onMove);
-                window.addEventListener('pointerup', onUp);
+                globalThis.addEventListener('pointermove', onMove);
+                globalThis.addEventListener('pointerup', onUp);
               }}
               style={{
                 position: 'absolute',
@@ -962,11 +937,11 @@ export default function MindMap({ mapId, onBack }) {
                         }
                       };
                       const onUp = () => {
-                        window.removeEventListener('pointermove', onMove);
-                        window.removeEventListener('pointerup', onUp);
+                        globalThis.removeEventListener('pointermove', onMove);
+                        globalThis.removeEventListener('pointerup', onUp);
                       };
-                      window.addEventListener('pointermove', onMove);
-                      window.addEventListener('pointerup', onUp);
+                      globalThis.addEventListener('pointermove', onMove);
+                      globalThis.addEventListener('pointerup', onUp);
                     }}
                     style={{
                       position: 'absolute',
@@ -1011,11 +986,11 @@ export default function MindMap({ mapId, onBack }) {
                         }
                       };
                       const onUp = () => {
-                        window.removeEventListener('pointermove', onMove);
-                        window.removeEventListener('pointerup', onUp);
+                        globalThis.removeEventListener('pointermove', onMove);
+                        globalThis.removeEventListener('pointerup', onUp);
                       };
-                      window.addEventListener('pointermove', onMove);
-                      window.addEventListener('pointerup', onUp);
+                      globalThis.addEventListener('pointermove', onMove);
+                      globalThis.addEventListener('pointerup', onUp);
                     }}
                     style={{
                       position: 'absolute',
@@ -1037,11 +1012,19 @@ export default function MindMap({ mapId, onBack }) {
           )}
 
           {/* Clickable primary avatar (outside pointer-events:none box) */}
-          <div
+          <button
             onClick={(e) => {
               e.stopPropagation();
               setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id);
             }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id);
+              }
+            }}
+            tabIndex={0}
             onMouseDown={(e) => e.stopPropagation()}
             style={{
               position: 'absolute',
@@ -1066,7 +1049,7 @@ export default function MindMap({ mapId, onBack }) {
             title={`${collaborator.name}'s group settings`}
           >
             {collaborator.initials}
-          </div>
+          </button>
 
           {/* Secondary collaborator avatars (shared group) */}
           {Array.isArray(group.extraCollaborators) && group.extraCollaborators.length > 0 && (
@@ -1085,6 +1068,15 @@ export default function MindMap({ mapId, onBack }) {
                     <div
                       key={c.id}
                       onClick={(e) => { e.stopPropagation(); setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id); }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
                       onMouseDown={(e) => e.stopPropagation()}
                       title={`${c.name}'s group settings`}
                       style={{
@@ -1114,6 +1106,15 @@ export default function MindMap({ mapId, onBack }) {
                   {remaining > 0 && (
                     <div
                       onClick={(e) => { e.stopPropagation(); setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id); }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
                       onMouseDown={(e) => e.stopPropagation()}
                       title={`+${remaining} more`}
                       style={{
@@ -1149,6 +1150,14 @@ export default function MindMap({ mapId, onBack }) {
           {openGroupMenuId === group.id && (
             <div
               onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.stopPropagation();
+                  setOpenGroupMenuId(null);
+                }
+              }}
+              role="dialog"
+              tabIndex={0}
               onMouseDown={(e) => e.stopPropagation()}
               style={{
                 position: 'absolute',
@@ -1680,17 +1689,17 @@ export default function MindMap({ mapId, onBack }) {
                         const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
                         const top = Math.max(8, rect.bottom + 20);
                         return createPortal(
-                          <div className="node-popup" style={{ position: 'fixed', left, top, minWidth: popupWidth, maxWidth: 500, zIndex: 5000 }} onClick={(e) => e.stopPropagation()}>
+                          <div className="node-popup" style={{ position: 'fixed', left, top, minWidth: popupWidth, maxWidth: 500, zIndex: 5000 }} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.key === 'Escape' && e.stopPropagation()} role="dialog" tabIndex={0}>
                             <h4 className="font-medium text-gray-800 mb-3">Attachments</h4>
                             <div className="mb-4">
-                              <label className="block text-xs font-medium text-gray-700 mb-1">Search by name</label>
-                              <input type="text" placeholder="Search by name..." className="w-full p-2 text-sm border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left" value={attachmentFilters.search}
+                              <label htmlFor={`attachment-search-${node.id}`} className="block text-xs font-medium text-gray-700 mb-1">Search by name</label>
+                              <input id={`attachment-search-${node.id}`} type="text" placeholder="Search by name..." className="w-full p-2 text-sm border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left" value={attachmentFilters.search}
                                 onChange={(e) => setAttachmentFilters({ ...attachmentFilters, search: e.target.value })}
                                 onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onFocus={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} />
                             </div>
                             <div className="mb-4">
-                              <label className="block text-xs font-medium text-gray-700 mb-2">Add new file</label>
-                              <input type="file" accept=".xlsx,.xls,.doc,.docx,.pdf" className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-300 rounded-lg p-2"
+                              <label htmlFor={`attachment-file-${node.id}`} className="block text-xs font-medium text-gray-700 mb-2">Add new file</label>
+                              <input id={`attachment-file-${node.id}`} type="file" accept=".xlsx,.xls,.doc,.docx,.pdf" className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-300 rounded-lg p-2"
                                 onChange={(e) => handleAttachment(e, node.id)} onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} onFocus={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} />
                             </div>
                             <div className="max-h-64 overflow-y-auto">
@@ -1816,7 +1825,7 @@ export default function MindMap({ mapId, onBack }) {
                         const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
                         const top = Math.max(8, rect.bottom + 20);
                         return createPortal(
-                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000, maxHeight: '400px', overflowY: 'auto', backgroundColor: 'white', borderRadius: '12px', padding: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()}>
+                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000, maxHeight: '400px', overflowY: 'auto', backgroundColor: 'white', borderRadius: '12px', padding: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.key === 'Escape' && e.stopPropagation()} role="dialog" tabIndex={0}>
                             <h4 className="font-semibold text-gray-900 mb-4 text-base">Manage Tags</h4>
                             
                             {/* Show/Hide Tags Toggle */}
@@ -1911,8 +1920,9 @@ export default function MindMap({ mapId, onBack }) {
                             <h4 className="font-medium text-gray-800 mb-3">Details</h4>
                             <div className="space-y-3">
                               <div>
-                                <label className="text-sm text-gray-600 block mb-1">Priority</label>
+                                <label htmlFor={`priority-${node.id}`} className="text-sm text-gray-600 block mb-1">Priority</label>
                                 <select
+                                  id={`priority-${node.id}`}
                                   className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                                   value={node.priority || 'normal'}
                                   onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, priority: e.target.value } : n))}
@@ -1924,8 +1934,9 @@ export default function MindMap({ mapId, onBack }) {
                                 </select>
                               </div>
                               <div>
-                                <label className="text-sm text-gray-600 block mb-1">Status</label>
+                                <label htmlFor={`status-${node.id}`} className="text-sm text-gray-600 block mb-1">Status</label>
                                 <select
+                                  id={`status-${node.id}`}
                                   className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                                   value={node.status || 'todo'}
                                   onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, status: e.target.value } : n))}
@@ -1937,8 +1948,9 @@ export default function MindMap({ mapId, onBack }) {
                                 </select>
                               </div>
                               <div>
-                                <label className="text-sm text-gray-600 block mb-1">Description</label>
+                                <label htmlFor={`description-${node.id}`} className="text-sm text-gray-600 block mb-1">Description</label>
                                 <textarea
+                                  id={`description-${node.id}`}
                                   className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                   rows={3}
                                   placeholder="Add a description..."
@@ -2341,6 +2353,9 @@ export default function MindMap({ mapId, onBack }) {
         <div 
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
           onClick={() => setParentSelectionState(null)}
+          onKeyDown={(e) => e.key === 'Escape' && setParentSelectionState(null)}
+          role="dialog"
+          tabIndex={0}
         >
           <div 
             className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 border border-gray-200"

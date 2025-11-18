@@ -5,8 +5,7 @@ import {
   CheckCircle, 
   Clock, 
   AlertTriangle, 
-  Users, 
-  Calendar, 
+  Users,
   ArrowRight,
   Activity,
   BarChart2,
@@ -18,7 +17,7 @@ import clsx from 'clsx';
 
 const Dashboard = () => {
   // Sample data - in a real app, this would come from your state or API
-  const [stats, setStats] = useState({
+  const [stats] = useState({
     tasksCompleted: 32,
     tasksInProgress: 18,
     tasksNotStarted: 12,
@@ -26,14 +25,14 @@ const Dashboard = () => {
     overdueTasks: 5
   });
   
-  const [collaborators, setCollaborators] = useState([
+  const [collaborators] = useState([
     { id: 'jd', name: 'John Doe', initials: 'JD', color: 'bg-blue-500', tasksAssigned: 14, tasksCompleted: 8, overdueTasks: 2 },
     { id: 'ak', name: 'Alex Kim', initials: 'AK', color: 'bg-green-500', tasksAssigned: 20, tasksCompleted: 15, overdueTasks: 0 },
     { id: 'mr', name: 'Maria Rodriguez', initials: 'MR', color: 'bg-yellow-500', tasksAssigned: 18, tasksCompleted: 5, overdueTasks: 3 },
     { id: 'ts', name: 'Taylor Smith', initials: 'TS', color: 'bg-purple-500', tasksAssigned: 10, tasksCompleted: 4, overdueTasks: 0 }
   ]);
   
-  const [recentCompletedTasks, setRecentCompletedTasks] = useState([
+  const [recentCompletedTasks] = useState([
     { id: 1, title: 'Finalize design mockups', completedBy: 'Alex Kim', initials: 'AK', color: 'bg-green-500', completedAt: '2 hours ago' },
     { id: 2, title: 'Review sprint backlog', completedBy: 'John Doe', initials: 'JD', color: 'bg-blue-500', completedAt: '4 hours ago' },
     { id: 3, title: 'Update user documentation', completedBy: 'Taylor Smith', initials: 'TS', color: 'bg-purple-500', completedAt: 'Yesterday' },
@@ -41,7 +40,7 @@ const Dashboard = () => {
     { id: 5, title: 'Client feedback meeting', completedBy: 'Maria Rodriguez', initials: 'MR', color: 'bg-yellow-500', completedAt: '2 days ago' }
   ]);
   
-  const [upcomingDeadlines, setUpcomingDeadlines] = useState([
+  const [upcomingDeadlines] = useState([
     { id: 1, title: 'API integration testing', assignedTo: 'John Doe', initials: 'JD', color: 'bg-blue-500', dueDate: 'Today', status: 'danger' },
     { id: 2, title: 'Create social media campaign', assignedTo: 'Maria Rodriguez', initials: 'MR', color: 'bg-yellow-500', dueDate: 'Today', status: 'danger' },
     { id: 3, title: 'Update project timeline', assignedTo: 'Maria Rodriguez', initials: 'MR', color: 'bg-yellow-500', dueDate: 'Tomorrow', status: 'warning' },
