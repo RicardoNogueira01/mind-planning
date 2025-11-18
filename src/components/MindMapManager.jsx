@@ -1,65 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Trash2, Edit3, User, Grid, List, Star, MoreVertical, Palette } from 'lucide-react';
-import RoundColorPicker from './RoundColorPicker';
+import { Plus, Search, Trash2, User, Grid, List, Star } from 'lucide-react';
+import PropTypes from 'prop-types';
+import { useMindMaps } from '../hooks/useMindMaps';
+import { useMindMapFilters } from '../hooks/useMindMapFilters';
+import { getRelativeTime } from '../utils/dateUtils';
+import MindMapCard from './mindmap/MindMapCard';
 
 const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
-  const [mindMaps, setMindMaps] = useState([]);
+  const { mindMaps, createMap, deleteMap, deleteMaps, toggleFavorite, updateMapColor, updateMapTitle } = useMindMaps();
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterBy, setFilterBy] = useState('all'); // all, recent, favorites, shared
-  const [viewMode, setViewMode] = useState('grid'); // grid, list
+  const [filterBy, setFilterBy] = useState('all');
+  const [viewMode, setViewMode] = useState('grid');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [selectedMaps, setSelectedMaps] = useState([]);
-  const [sortBy, setSortBy] = useState('updated'); // updated, created, name, size
+  const [sortBy, setSortBy] = useState('updated');
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [editingMap, setEditingMap] = useState(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [showColorPicker, setShowColorPicker] = useState(null);
 
-  // Load mind maps from localStorage on component mount
-  useEffect(() => {
-    const savedMaps = localStorage.getItem('mindMaps');
-    if (savedMaps) {
-      setMindMaps(JSON.parse(savedMaps));
-    } else {
-      // Initialize with some sample data to demonstrate the functionality
-      const sampleMaps = [
-        {
-          id: 'map-1',
-          title: 'Project Planning',
-          description: 'Strategic planning for Q4 product launch',
-          createdAt: '2024-01-15',
-          updatedAt: '2024-01-20',
-          author: 'John Doe',
-          collaborators: ['John Doe', 'Sarah Wilson'],
-          tags: ['business', 'strategy', 'planning'],
-          nodeCount: 24,
-          isFavorite: true,
-          thumbnail: null,
-          color: '#3B82F6'
-        },
-        {
-          id: 'map-2',
-          title: 'Learning Roadmap',
-          description: 'Personal development and skill acquisition plan',
-          createdAt: '2024-01-10',
-          updatedAt: '2024-01-18',
-          author: 'Sarah Wilson',
-          collaborators: ['Sarah Wilson'],
-          tags: ['education', 'personal', 'goals'],
-          nodeCount: 18,
-          isFavorite: false,
-          thumbnail: null,
-          color: '#10B981'
-        }
-      ];
-      setMindMaps(sampleMaps);
-      localStorage.setItem('mindMaps', JSON.stringify(sampleMaps));
-    }
-  }, []);
-  // Save mind maps to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('mindMaps', JSON.stringify(mindMaps));
-  }, [mindMaps]);
+  const filteredMaps = useMindMapFilters(mindMaps, searchQuery, filterBy, sortBy);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -74,90 +34,21 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Filter and sort mind maps
-  const filteredMaps = mindMaps
-    .filter(map => {
-      // Search filter
-      const matchesSearch = searchQuery === '' || 
-        map.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        map.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        map.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-      
-      // Category filter
-      const matchesFilter = filterBy === 'all' ||
-        (filterBy === 'recent' && new Date(map.updatedAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) ||
-        (filterBy === 'favorites' && map.isFavorite) ||
-        (filterBy === 'shared' && map.collaborators.length > 1);
-      
-      return matchesSearch && matchesFilter;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'updated':
-          return new Date(b.updatedAt) - new Date(a.updatedAt);
-        case 'created':
-          return new Date(b.createdAt) - new Date(a.createdAt);
-        case 'name':
-          return a.title.localeCompare(b.title);
-        case 'size':
-          return b.nodeCount - a.nodeCount;
-        default:
-          return 0;
-      }
-    });
-
   const handleCreateNew = () => {
-    const newMap = {
-      id: `map-${Date.now()}`,
-      title: 'Untitled Mind Map',
-      description: '',
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0],
-      author: 'Current User',
-      collaborators: ['Current User'],
-      tags: [],
-      nodeCount: 1,
-      isFavorite: false,
-      thumbnail: null,
-      color: '#6366F1'
-    };
-    
-    setMindMaps([newMap, ...mindMaps]);
-    
-    // Call the callback without the new map
+    createMap();
     if (onCreateNew) {
       onCreateNew();
     }
   };
 
   const handleDeleteMap = (mapId) => {
-    setMindMaps(mindMaps.filter(map => map.id !== mapId));
+    deleteMap(mapId);
     setShowDeleteConfirm(null);
   };
 
-  const handleToggleFavorite = (mapId) => {
-    setMindMaps(mindMaps.map(map => 
-      map.id === mapId ? { ...map, isFavorite: !map.isFavorite } : map
-    ));
-  };
   const handleBulkDelete = () => {
-    setMindMaps(mindMaps.filter(map => !selectedMaps.includes(map.id)));
+    deleteMaps(selectedMaps);
     setSelectedMaps([]);
-  };
-
-  const handleUpdateMapColor = (mapId, newColor) => {
-    setMindMaps(mindMaps.map(map => 
-      map.id === mapId ? { ...map, color: newColor } : map
-    ));
-  };
-
-  const handleUpdateMapTitle = (mapId, newTitle) => {
-    if (newTitle.trim()) {
-      setMindMaps(mindMaps.map(map => 
-        map.id === mapId ? { ...map, title: newTitle.trim() } : map
-      ));
-    }
-    setEditingMap(null);
   };
 
   const startEditing = (map) => {
@@ -165,24 +56,9 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
     setEditingTitle(map.title);
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-
-  const getRelativeTime = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-    
-    if (diffInDays === 0) return 'Today';
-    if (diffInDays === 1) return 'Yesterday';
-    if (diffInDays < 7) return `${diffInDays} days ago`;
-    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
-    return formatDate(dateString);
+  const handleUpdateMapTitle = (mapId, newTitle) => {
+    updateMapTitle(mapId, newTitle);
+    setEditingMap(null);
   };
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -402,172 +278,24 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
 
             {/* Existing Mind Maps */}
             {filteredMaps.map((map) => (
-              <div key={map.id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
-                {/* Card Header */}
-                <div className="p-4 border-b border-gray-100">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div 
-                          className="w-3 h-3 rounded-full" 
-                          style={{ backgroundColor: map.color }}
-                        ></div>
-                        {editingMap === map.id ? (
-                          <input
-                            type="text"
-                            value={editingTitle}
-                            onChange={(e) => setEditingTitle(e.target.value)}
-                            onBlur={() => handleUpdateMapTitle(map.id, editingTitle)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                handleUpdateMapTitle(map.id, editingTitle);
-                              } else if (e.key === 'Escape') {
-                                setEditingMap(null);
-                                setEditingTitle('');
-                              }
-                            }}
-                            className="text-sm font-semibold text-gray-900 bg-transparent border-b border-indigo-300 focus:outline-none focus:border-indigo-500 px-1"
-                            autoFocus
-                          />
-                        ) : (
-                          <h3 className="font-semibold text-gray-900 text-sm truncate">{map.title}</h3>
-                        )}
-                        {map.isFavorite && (
-                          <Star className="text-yellow-500 fill-current" size={14} />
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-600 line-clamp-2">{map.description}</p>
-                    </div>
-                      <div className="relative ml-2 dropdown-container">
-                      <button 
-                        className="p-1 text-gray-400 hover:text-gray-600 rounded"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveDropdown(activeDropdown === map.id ? null : map.id);
-                        }}
-                      >
-                        <MoreVertical size={16} />
-                      </button>
-                      
-                      {/* Dropdown Menu */}
-                      {activeDropdown === map.id && (
-                        <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10 w-48">
-                          <button
-                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              startEditing(map);
-                              setActiveDropdown(null);
-                            }}
-                          >
-                            <Edit3 size={14} />
-                            Edit Name
-                          </button>
-                          
-                          <div className="px-4 py-2 text-sm text-gray-700">
-                            <button
-                              className="flex items-center gap-2 w-full text-left hover:bg-gray-50 p-2 rounded"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setShowColorPicker(showColorPicker === map.id ? null : map.id);
-                              }}
-                            >
-                              <Palette size={14} />
-                              <span>Change Color</span>
-                            </button>
-                            
-                            {/* Round Color Picker */}
-                            {showColorPicker === map.id && (
-                              <div className="relative mt-2">
-                                <RoundColorPicker
-                                  currentColor={map.color || '#3B82F6'}
-                                  onColorSelect={(color) => {
-                                    handleUpdateMapColor(map.id, color);
-                                    setActiveDropdown(null);
-                                    setShowColorPicker(null);
-                                  }}
-                                  onClose={() => {
-                                    setShowColorPicker(null);
-                                  }}
-                                  position="bottom-left"
-                                />
-                              </div>
-                            )}
-                          </div>
-                          
-                          <hr className="my-2" />
-                          
-                          <button
-                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setShowDeleteConfirm(map.id);
-                              setActiveDropdown(null);
-                            }}
-                          >
-                            <Trash2 size={14} />
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card Body */}                <div 
-                  className="p-4 cursor-pointer hover:bg-gray-50"
-                  onClick={() => onOpenMindMap && onOpenMindMap(map.id)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      onOpenMindMap && onOpenMindMap(map.id);
-                    }
-                  }}
-                >
-                  {/* Thumbnail placeholder */}
-                  <div className="h-32 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
-                      <circle cx="12" cy="12" r="3"/>
-                      <path d="M12 1v6m0 6v6"/>
-                      <path d="m21 12-6 0m-6 0-6 0"/>
-                    </svg>
-                  </div>
-
-                  {/* Metadata */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>{map.nodeCount} nodes</span>
-                      <span>{getRelativeTime(map.updatedAt)}</span>
-                    </div>
-                    
-                    {/* Tags */}
-                    {map.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {map.tags.slice(0, 2).map((tag) => (
-                          <span key={tag} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-600">
-                            {tag}
-                          </span>
-                        ))}
-                        {map.tags.length > 2 && (
-                          <span className="text-xs text-gray-400">+{map.tags.length - 2} more</span>
-                        )}
-                      </div>
-                    )}
-                    
-                    {/* Collaborators */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        <User size={12} className="text-gray-400" />
-                        <span className="text-xs text-gray-500">{map.author}</span>
-                      </div>
-                      {map.collaborators.length > 1 && (
-                        <span className="text-xs text-gray-400">+{map.collaborators.length - 1} collaborators</span>
-                      )}                    </div>
-                  </div>
-                </div>
-              </div>
+              <MindMapCard
+                key={map.id}
+                map={map}
+                onOpen={onOpenMindMap}
+                onToggleFavorite={toggleFavorite}
+                onDelete={setShowDeleteConfirm}
+                onUpdateTitle={handleUpdateMapTitle}
+                onUpdateColor={updateMapColor}
+                isEditing={editingMap === map.id}
+                onStartEdit={startEditing}
+                editingTitle={editingTitle}
+                onEditTitleChange={setEditingTitle}
+                showDropdown={activeDropdown === map.id}
+                onToggleDropdown={() => setActiveDropdown(activeDropdown === map.id ? null : map.id)}
+                showColorPicker={showColorPicker === map.id}
+                onToggleColorPicker={() => setShowColorPicker(showColorPicker === map.id ? null : map.id)}
+                getRelativeTime={getRelativeTime}
+              />
             ))}
           </div>
         ) : (
@@ -662,7 +390,7 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => handleToggleFavorite(map.id)}
+                            onClick={() => toggleFavorite(map.id)}
                             className="text-gray-400 hover:text-yellow-500"
                             title="Toggle favorite"
                           >
@@ -734,6 +462,12 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
       )}
     </div>
   );
+};
+
+MindMapManager.propTypes = {
+  onCreateNew: PropTypes.func,
+  onOpenMindMap: PropTypes.func,
+  onBack: PropTypes.func.isRequired
 };
 
 export default MindMapManager;
