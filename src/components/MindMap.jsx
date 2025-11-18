@@ -122,7 +122,7 @@ export default function MindMap({ mapId, onBack }) {
   const [shareLink, setShareLink] = useState(''); // Generated share link
   const [isBookmarked, setIsBookmarked] = useState(false); // Bookmark state
   const [showCopiedNotification, setShowCopiedNotification] = useState(false); // Copied to clipboard notification
-  const [shareVisitors] = useState([
+  const [shareVisitors, setShareVisitors] = useState([
     // Mock data - replace with real backend data
     { id: 1, name: 'Anonymous User', timestamp: new Date(Date.now() - 3600000).toISOString(), permission: 'view' },
     { id: 2, name: 'John Doe', timestamp: new Date(Date.now() - 7200000).toISOString(), permission: 'edit' },
@@ -468,6 +468,12 @@ export default function MindMap({ mapId, onBack }) {
     const shareId = `${mapId}-${Date.now()}`;
     const link = `${baseUrl}/shared/${shareId}?permission=${sharePermission}`;
     setShareLink(link);
+  };
+  
+  // Remove visitor access
+  const removeVisitorAccess = (visitorId) => {
+    setShareVisitors(prev => prev.filter(visitor => visitor.id !== visitorId));
+    // TODO: Add API call to revoke access on backend
   };
   
   // Copy share link to clipboard
@@ -1923,10 +1929,11 @@ export default function MindMap({ mapId, onBack }) {
         sharePermission={sharePermission}
         setSharePermission={setSharePermission}
         shareLink={shareLink}
-        onCopyShareLink={copyShareLink}
+        onCopyLink={copyShareLink}
         shareVisitors={shareVisitors}
         formatVisitorTime={formatVisitorTime}
         onGenerateLink={generateShareLink}
+        onRemoveVisitor={removeVisitorAccess}
       />
 
       {/* Copied Notification */}

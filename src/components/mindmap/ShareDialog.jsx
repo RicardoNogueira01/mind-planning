@@ -14,7 +14,8 @@ const ShareDialog = ({
   shareVisitors,
   onGenerateLink,
   onCopyLink,
-  formatVisitorTime
+  formatVisitorTime,
+  onRemoveVisitor
 }) => {
   // Lock body scroll when dialog is open
   React.useEffect(() => {
@@ -98,6 +99,55 @@ const ShareDialog = ({
           </div>
         </div>
         
+        {/* Visitor Tracking - Show always, not just when shareLink exists */}
+        {shareVisitors.length > 0 && (
+          <div className="mb-4 sm:mb-6">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">
+              People with Access ({shareVisitors.length})
+            </label>
+            <div className="max-h-48 overflow-y-auto space-y-1 sm:space-y-2 border border-gray-200 rounded-lg p-2">
+              {shareVisitors.map((visitor) => (
+                <div key={visitor.id} className="flex items-center justify-between gap-2 p-1.5 sm:p-2 hover:bg-gray-50 rounded-lg transition-colors group">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                      {visitor.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">{visitor.name}</div>
+                      <div className="text-xs text-gray-500">{formatVisitorTime(visitor.timestamp)}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                    <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full ${
+                      visitor.permission === 'edit' 
+                        ? 'bg-green-100 text-green-700' 
+                        : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      {visitor.permission === 'edit' ? 'Edit' : 'View'}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveVisitor(visitor.id);
+                      }}
+                      className="p-1 sm:p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors touch-manipulation"
+                      title="Remove access"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
         {/* Generated Link */}
         {shareLink && (
           <div className="mb-4 sm:mb-6">
@@ -118,37 +168,6 @@ const ShareDialog = ({
               >
                 Copy
               </button>
-            </div>
-          </div>
-        )}
-        
-        {/* Visitor Tracking */}
-        {shareLink && shareVisitors.length > 0 && (
-          <div className="mb-4 sm:mb-6">
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">
-              Visitor History ({shareVisitors.length})
-            </label>
-            <div className="max-h-48 overflow-y-auto space-y-1 sm:space-y-2 border border-gray-200 rounded-lg p-2">
-              {shareVisitors.map((visitor) => (
-                <div key={visitor.id} className="flex items-center justify-between p-1.5 sm:p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                      {visitor.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">{visitor.name}</div>
-                      <div className="text-xs text-gray-500">{formatVisitorTime(visitor.timestamp)}</div>
-                    </div>
-                  </div>
-                  <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full flex-shrink-0 ${
-                    visitor.permission === 'edit' 
-                      ? 'bg-green-100 text-green-700' 
-                      : 'bg-blue-100 text-blue-700'
-                  }`}>
-                    {visitor.permission === 'edit' ? 'Edit' : 'View'}
-                  </span>
-                </div>
-              ))}
             </div>
           </div>
         )}
@@ -183,7 +202,8 @@ ShareDialog.propTypes = {
   shareVisitors: PropTypes.array.isRequired,
   onGenerateLink: PropTypes.func.isRequired,
   onCopyLink: PropTypes.func.isRequired,
-  formatVisitorTime: PropTypes.func.isRequired
+  formatVisitorTime: PropTypes.func.isRequired,
+  onRemoveVisitor: PropTypes.func.isRequired
 };
 
 export default ShareDialog;
