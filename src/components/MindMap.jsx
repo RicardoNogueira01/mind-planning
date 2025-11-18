@@ -9,6 +9,8 @@ import NodeCard from './mindmap/NodeCard';
 import MindMapSearchBar from './mindmap/MindMapSearchBar';
 import ConnectionsSvg from './mindmap/ConnectionsSvg';
 import NodePopup from './mindmap/NodePopup';
+import ResizeHandle from './mindmap/ResizeHandle';
+import CollaboratorAvatar from './mindmap/CollaboratorAvatar';
 import NodeToolbarPrimary from './mindmap/NodeToolbarPrimary';
 import NodeToolbarConnectionButton from './mindmap/NodeToolbarConnectionButton';
 import NodeToolbarSettingsToggle from './mindmap/NodeToolbarSettingsToggle';
@@ -927,158 +929,45 @@ export default function MindMap({ mapId, onBack }) {
           {resizingGroupId === group.id && (
             <>
               {/* Corner handles */}
-              {['nw', 'ne', 'sw', 'se'].map(corner => {
-                const isTop = corner.includes('n');
-                const isBottom = corner.includes('s');
-                const isLeft = corner.includes('w');
-                const isRight = corner.includes('e');
-                return (
-                  <div
-                    key={corner}
-                    onPointerDown={(e) => {
-                      e.stopPropagation();
-                      const start = { x: e.clientX, y: e.clientY };
-                      const startBB = { ...boundingBox };
-                      const onMove = (ev) => {
-                        const dx = (ev.clientX - start.x) / zoom;
-                        const dy = (ev.clientY - start.y) / zoom;
-                        const newBB = { ...startBB };
-                        if (isLeft) { newBB.x = startBB.x + dx; newBB.width = startBB.width - dx; }
-                        if (isRight) { newBB.width = startBB.width + dx; }
-                        if (isTop) { newBB.y = startBB.y + dy; newBB.height = startBB.height - dy; }
-                        if (isBottom) { newBB.height = startBB.height + dy; }
-                        if (newBB.width > 50 && newBB.height > 50) {
-                          setNodeGroups(prev => prev.map(g => g.id === group.id ? { ...g, boundingBox: newBB } : g));
-                        }
-                      };
-                      const onUp = () => {
-                        globalThis.removeEventListener('pointermove', onMove);
-                        globalThis.removeEventListener('pointerup', onUp);
-                      };
-                      globalThis.addEventListener('pointermove', onMove);
-                      globalThis.addEventListener('pointerup', onUp);
-                    }}
-                    style={{
-                      position: 'absolute',
-                      left: isLeft ? boundingBox.x - 6 : boundingBox.x + boundingBox.width - 6,
-                      top: isTop ? boundingBox.y - 6 : boundingBox.y + boundingBox.height - 6,
-                      width: 12,
-                      height: 12,
-                      borderRadius: '50%',
-                      background: '#10B981',
-                      border: '2px solid white',
-                      cursor: corner === 'nw' || corner === 'se' ? 'nwse-resize' : 'nesw-resize',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                      zIndex: 1004
-                    }}
-                  />
-                );
-              })}
+              {['nw', 'ne', 'sw', 'se'].map(corner => (
+                <ResizeHandle
+                  key={corner}
+                  position={corner}
+                  boundingBox={boundingBox}
+                  groupId={group.id}
+                  zoom={zoom}
+                  onResize={(id, newBB) => setNodeGroups(prev => prev.map(g => g.id === id ? { ...g, boundingBox: newBB } : g))}
+                  type="corner"
+                />
+              ))}
+              
               {/* Edge handles */}
-              {['n', 'e', 's', 'w'].map(edge => {
-                const isVertical = edge === 'n' || edge === 's';
-                const isTop = edge === 'n';
-                const isBottom = edge === 's';
-                const isLeft = edge === 'w';
-                const isRight = edge === 'e';
-                
-                // Calculate handle position
-                const handleLeft = isVertical 
-                  ? boundingBox.x + boundingBox.width / 2 - 6 
-                  : isLeft 
-                    ? boundingBox.x - 6 
-                    : boundingBox.x + boundingBox.width - 6;
-                
-                const handleTop = isVertical 
-                  ? isTop 
-                    ? boundingBox.y - 6 
-                    : boundingBox.y + boundingBox.height - 6
-                  : boundingBox.y + boundingBox.height / 2 - 6;
-                
-                return (
-                  <div
-                    key={edge}
-                    onPointerDown={(e) => {
-                      e.stopPropagation();
-                      const start = { x: e.clientX, y: e.clientY };
-                      const startBB = { ...boundingBox };
-                      const onMove = (ev) => {
-                        const dx = (ev.clientX - start.x) / zoom;
-                        const dy = (ev.clientY - start.y) / zoom;
-                        const newBB = { ...startBB };
-                        if (isLeft) { newBB.x = startBB.x + dx; newBB.width = startBB.width - dx; }
-                        if (isRight) { newBB.width = startBB.width + dx; }
-                        if (isTop) { newBB.y = startBB.y + dy; newBB.height = startBB.height - dy; }
-                        if (isBottom) { newBB.height = startBB.height + dy; }
-                        if (newBB.width > 50 && newBB.height > 50) {
-                          setNodeGroups(prev => prev.map(g => g.id === group.id ? { ...g, boundingBox: newBB } : g));
-                        }
-                      };
-                      const onUp = () => {
-                        globalThis.removeEventListener('pointermove', onMove);
-                        globalThis.removeEventListener('pointerup', onUp);
-                      };
-                      globalThis.addEventListener('pointermove', onMove);
-                      globalThis.addEventListener('pointerup', onUp);
-                    }}
-                    style={{
-                      position: 'absolute',
-                      left: handleLeft,
-                      top: handleTop,
-                      width: 12,
-                      height: 12,
-                      borderRadius: '50%',
-                      background: '#10B981',
-                      border: '2px solid white',
-                      cursor: isVertical ? 'ns-resize' : 'ew-resize',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                      zIndex: 1004
-                    }}
-                  />
-                );
-              })}
+              {['n', 'e', 's', 'w'].map(edge => (
+                <ResizeHandle
+                  key={edge}
+                  position={edge}
+                  boundingBox={boundingBox}
+                  groupId={group.id}
+                  zoom={zoom}
+                  onResize={(id, newBB) => setNodeGroups(prev => prev.map(g => g.id === id ? { ...g, boundingBox: newBB } : g))}
+                  type="edge"
+                />
+              ))}
             </>
           )}
 
           {/* Clickable primary avatar (outside pointer-events:none box) */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                e.stopPropagation();
-                setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id);
-              }
-            }}
-            tabIndex={0}
-            onMouseDown={(e) => e.stopPropagation()}
-            style={{
-              position: 'absolute',
+          <CollaboratorAvatar
+            collaborator={collaborator}
+            position={{
               left: boundingBox.x + boundingBox.width - badgeOffset,
-              top: boundingBox.y - badgeOffset,
-              width: badgeSize,
-              height: badgeSize,
-              borderRadius: '50%',
-              backgroundColor: collaborator.color,
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 'bold',
-              fontSize: '0.75rem',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-              border: '2px solid white',
-              cursor: 'pointer',
-              zIndex: 6,
-              pointerEvents: 'auto'
+              top: boundingBox.y - badgeOffset
             }}
+            size={badgeSize}
+            onClick={() => setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id)}
+            onKeyDown={() => setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id)}
             title={`${collaborator.name}'s group settings`}
-          >
-            {collaborator.initials}
-          </button>
+          />
 
           {/* Secondary collaborator avatars (shared group) */}
           {Array.isArray(group.extraCollaborators) && group.extraCollaborators.length > 0 && (
@@ -1094,81 +983,32 @@ export default function MindMap({ mapId, onBack }) {
               return (
                 <React.Fragment>
                   {shown.map((c, idx) => (
-                    <div
+                    <CollaboratorAvatar
                       key={c.id}
-                      onClick={(e) => { e.stopPropagation(); setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id); }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id);
-                        }
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      title={`${c.name}'s group settings`}
-                      style={{
-                        position: 'absolute',
+                      collaborator={c}
+                      position={{
                         left: (boundingBox.x + boundingBox.width - badgeOffset) - ((idx + 1) * (smallSize + gap)),
-                        top: boundingBox.y - badgeOffset + (badgeSize - smallSize) / 2,
-                        width: smallSize,
-                        height: smallSize,
-                        borderRadius: '50%',
-                        backgroundColor: c.color,
-                        color: 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 'bold',
-                        fontSize: '0.65rem',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                        border: '2px solid white',
-                        cursor: 'pointer',
-                        zIndex: 6,
-                        pointerEvents: 'auto'
+                        top: boundingBox.y - badgeOffset + (badgeSize - smallSize) / 2
                       }}
-                    >
-                      {c.initials}
-                    </div>
+                      size={smallSize}
+                      onClick={() => setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id)}
+                      onKeyDown={() => setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id)}
+                      title={`${c.name}'s group settings`}
+                    />
                   ))}
                   {remaining > 0 && (
-                    <div
-                      onClick={(e) => { e.stopPropagation(); setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id); }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id);
-                        }
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      title={`+${remaining} more`}
-                      style={{
-                        position: 'absolute',
+                    <CollaboratorAvatar
+                      position={{
                         left: (boundingBox.x + boundingBox.width - badgeOffset) - ((shown.length + 1) * (smallSize + gap)),
-                        top: boundingBox.y - badgeOffset + (badgeSize - smallSize) / 2,
-                        width: smallSize,
-                        height: smallSize,
-                        borderRadius: '50%',
-                        backgroundColor: '#6B7280',
-                        color: 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 700,
-                        fontSize: '0.65rem',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                        border: '2px solid white',
-                        cursor: 'pointer',
-                        zIndex: 6,
-                        pointerEvents: 'auto'
+                        top: boundingBox.y - badgeOffset + (badgeSize - smallSize) / 2
                       }}
-                    >
-                      +{remaining}
-                    </div>
+                      size={smallSize}
+                      onClick={() => setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id)}
+                      onKeyDown={() => setOpenGroupMenuId(openGroupMenuId === group.id ? null : group.id)}
+                      title={`+${remaining} more`}
+                      isCountBadge={true}
+                      count={remaining}
+                    />
                   )}
                 </React.Fragment>
               );
@@ -1718,8 +1558,13 @@ export default function MindMap({ mapId, onBack }) {
                         const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
                         const top = Math.max(8, rect.bottom + 20);
                         return createPortal(
-                          <div className="node-popup" style={{ position: 'fixed', left, top, minWidth: popupWidth, maxWidth: 500, zIndex: 5000 }} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.key === 'Escape' && e.stopPropagation()} role="dialog" tabIndex={0}>
-                            <h4 className="font-medium text-gray-800 mb-3">Attachments</h4>
+                          <NodePopup
+                            position={{ left, top }}
+                            width={popupWidth}
+                            maxWidth="500px"
+                            title="Attachments"
+                            onClose={() => togglePopup(node.id, 'attach')}
+                          >
                             <div className="mb-4">
                               <label htmlFor={`attachment-search-${node.id}`} className="block text-xs font-medium text-gray-700 mb-1">Search by name</label>
                               <input id={`attachment-search-${node.id}`} type="text" placeholder="Search by name..." className="w-full p-2 text-sm border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left" value={attachmentFilters.search}
@@ -1763,7 +1608,7 @@ export default function MindMap({ mapId, onBack }) {
                                 <div className="text-xs text-gray-500">No attachments</div>
                               )}
                             </div>
-                          </div>,
+                          </NodePopup>,
                           document.body
                         );
                       })()}
@@ -1837,7 +1682,13 @@ export default function MindMap({ mapId, onBack }) {
                         const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
                         const top = Math.max(8, rect.bottom + 20);
                         return createPortal(
-                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, maxHeight: '400px', zIndex: 5000, backgroundColor: 'white', borderRadius: '8px', padding: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+                          <NodePopup
+                            position={{ left, top }}
+                            width={popupWidth}
+                            maxHeight="400px"
+                            onClose={() => togglePopup(node.id, 'emoji')}
+                            style={{ padding: '8px' }}
+                          >
                             <div className="grid grid-cols-6 gap-1">
                               {emojis.map(emoji => (
                                 <button
@@ -1849,7 +1700,7 @@ export default function MindMap({ mapId, onBack }) {
                                 </button>
                               ))}
                             </div>
-                          </div>,
+                          </NodePopup>,
                           document.body
                         );
                       })()}
@@ -1872,9 +1723,13 @@ export default function MindMap({ mapId, onBack }) {
                         const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
                         const top = Math.max(8, rect.bottom + 20);
                         return createPortal(
-                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000, maxHeight: '400px', overflowY: 'auto', backgroundColor: 'white', borderRadius: '12px', padding: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.key === 'Escape' && e.stopPropagation()} role="dialog" tabIndex={0}>
-                            <h4 className="font-semibold text-gray-900 mb-4 text-base">Manage Tags</h4>
-                            
+                          <NodePopup
+                            position={{ left, top }}
+                            width={popupWidth}
+                            maxHeight="400px"
+                            onClose={() => togglePopup(node.id, 'tags')}
+                            title="Manage Tags"
+                          >
                             {/* Show/Hide Tags Toggle */}
                             <div className="mb-4 pb-3 border-b border-gray-200">
                               <label className="flex items-center gap-2 cursor-pointer">
@@ -1929,7 +1784,7 @@ export default function MindMap({ mapId, onBack }) {
                               onMouseDown={(e) => e.stopPropagation()}
                               onFocus={(e) => e.stopPropagation()}
                             />
-                          </div>,
+                          </NodePopup>,
                           document.body
                         );
                       })()}
@@ -1963,8 +1818,12 @@ export default function MindMap({ mapId, onBack }) {
                         const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
                         const top = Math.max(8, rect.bottom + 20);
                         return createPortal(
-                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.key === 'Escape' && e.stopPropagation()} role="dialog" tabIndex={0}>
-                            <h4 className="font-medium text-gray-800 mb-3">Details</h4>
+                          <NodePopup
+                            position={{ left, top }}
+                            width={popupWidth}
+                            title="Details"
+                            onClose={() => togglePopup(node.id, 'details')}
+                          >
                             <div className="space-y-3">
                               <div>
                                 <label htmlFor={`priority-${node.id}`} className="text-sm text-gray-600 block mb-1">Priority</label>
@@ -2010,7 +1869,7 @@ export default function MindMap({ mapId, onBack }) {
                                 />
                               </div>
                             </div>
-                          </div>,
+                          </NodePopup>,
                           document.body
                         );
                       })()}
@@ -2083,8 +1942,12 @@ export default function MindMap({ mapId, onBack }) {
                         const left = Math.max(8, Math.min(rect.left + (rect.width/2) - (popupWidth/2), window.innerWidth - popupWidth - 8));
                         const top = Math.max(8, rect.bottom + 20);
                         return createPortal(
-                          <div className="node-popup" style={{ position: 'fixed', left, top, width: popupWidth, zIndex: 5000 }} onClick={(e) => e.stopPropagation()}>
-                            <h4 className="font-medium text-gray-800 mb-2">Assign Collaborators</h4>
+                          <NodePopup
+                            position={{ left, top }}
+                            width={popupWidth}
+                            title="Assign Collaborators"
+                            onClose={() => togglePopup(node.id, 'collaborator')}
+                          >
                             <p className="text-xs text-gray-500 mb-3">Select team members for this node</p>
                             
                             {/* Search input */}
@@ -2141,7 +2004,7 @@ export default function MindMap({ mapId, onBack }) {
                                 </div>
                               )}
                             </div>
-                          </div>,
+                          </NodePopup>,
                           document.body
                         );
                       })()}
