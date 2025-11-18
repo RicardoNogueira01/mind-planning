@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -29,6 +29,9 @@ import {
 const TeamMembersManager = () => {
   // Modal state
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [showEditMemberModal, setShowEditMemberModal] = useState(false);
+  const [editingMemberId, setEditingMemberId] = useState(null);
+  const [feedbackMessage, setFeedbackMessage] = useState(null);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -85,12 +88,12 @@ const TeamMembersManager = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Here you would typically send the data to your backend
-    console.log('Form submitted:', formData);
-    // Close modal and reset form
-    setShowAddMemberModal(false);
+  const showFeedback = (message, type = 'success') => {
+    setFeedbackMessage({ message, type });
+    setTimeout(() => setFeedbackMessage(null), 3000);
+  };
+
+  const resetForm = () => {
     setFormData({
       photo: null,
       photoPreview: null,
@@ -100,10 +103,88 @@ const TeamMembersManager = () => {
       jobTitle: '',
       subDepartment: ''
     });
+    setEditingMemberId(null);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    if (editingMemberId) {
+      // Edit existing member
+      setTeamMembers(prevMembers => 
+        prevMembers.map(member => 
+          member.id === editingMemberId 
+            ? { 
+                ...member, 
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone,
+                role: formData.jobTitle,
+                department: formData.subDepartment,
+                avatar: formData.photoPreview
+              }
+            : member
+        )
+      );
+      showFeedback('Member updated successfully!');
+      setShowEditMemberModal(false);
+    } else {
+      // Add new member
+      const newMember = {
+        id: Math.max(...teamMembers.map(m => m.id)) + 1,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        role: formData.jobTitle,
+        department: formData.subDepartment,
+        avatar: formData.photoPreview,
+        initials: formData.name.split(' ').map(n => n[0]).join('').toUpperCase(),
+        color: '#' + Math.floor(Math.random()*16777215).toString(16),
+        joinDate: new Date().toISOString().split('T')[0],
+        status: 'active',
+        tasksAssigned: 0,
+        tasksCompleted: 0,
+        tasksInProgress: 0,
+        overdueTasks: 0,
+        completionRate: 0,
+        skills: [],
+        projects: [],
+        lastActive: 'Just now',
+        performance: 'good'
+      };
+      setTeamMembers(prevMembers => [...prevMembers, newMember]);
+      showFeedback('Member added successfully!');
+      setShowAddMemberModal(false);
+    }
+    
+    resetForm();
+  };
+
+  const handleEdit = (member) => {
+    setEditingMemberId(member.id);
+    setFormData({
+      photo: member.avatar,
+      photoPreview: member.avatar,
+      name: member.name,
+      email: member.email,
+      phone: member.phone,
+      jobTitle: member.role,
+      subDepartment: member.department
+    });
+    setShowEditMemberModal(true);
+    setOpenMenuId(null);
+  };
+
+  const handleDelete = (memberId, memberName) => {
+    if (window.confirm(`Are you sure you want to delete ${memberName}?`)) {
+      setTeamMembers(prevMembers => prevMembers.filter(m => m.id !== memberId));
+      showFeedback('Member deleted successfully!', 'error');
+      setOpenMenuId(null);
+    }
   };
 
   // Sample data
-  const [teamMembers] = useState([
+  const [teamMembers, setTeamMembers] = useState([
     {
       id: 1,
       name: 'John Doe',
@@ -247,6 +328,19 @@ const TeamMembersManager = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState([]);
+  const [openMenuId, setOpenMenuId] = useState(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openMenuId && !event.target.closest('.relative')) {
+        setOpenMenuId(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openMenuId]);
 
   // Filter and sort data
   const filteredMembers = teamMembers
@@ -329,9 +423,30 @@ const TeamMembersManager = () => {
                   {member.performance.replace('-', ' ')}
                 </div>
               </span>
-              <button className="p-1 hover:bg-gray-100 rounded">
-                <MoreVertical size={16} className="text-gray-400" />
-              </button>
+              <div className="relative">
+                <button 
+                  className="p-1 hover:bg-gray-100 rounded"
+                  onClick={() => setOpenMenuId(openMenuId === member.id ? null : member.id)}
+                >
+                  <MoreVertical size={16} className="text-gray-400" />
+                </button>
+                {openMenuId === member.id && (
+                  <div className="absolute right-0 top-8 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                    <button 
+                      className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50 flex items-center gap-2"
+                      onClick={() => handleEdit(member)}
+                    >
+                      Edit Member
+                    </button>
+                    <button 
+                      className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                      onClick={() => handleDelete(member.id, member.name)}
+                    >
+                      Delete Member
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -480,6 +595,19 @@ const TeamMembersManager = () => {
   );
   return (
     <div className="min-h-screen bg-gray-50 p-3 md:p-6">
+      {/* Feedback Message */}
+      {feedbackMessage && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[60] animate-fade-in">
+          <div className={`px-6 py-3 rounded-lg shadow-lg border ${
+            feedbackMessage.type === 'success' 
+              ? 'bg-green-50 border-green-200 text-green-800' 
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            <p className="font-medium">{feedbackMessage.message}</p>
+          </div>
+        </div>
+      )}
+      
       {/* Header */}
       <header className="mb-4 md:mb-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
@@ -825,6 +953,181 @@ const TeamMembersManager = () => {
                 >
                   <Plus size={16} />
                   Add Member
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Member Modal */}
+      {showEditMemberModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Edit Team Member</h2>
+                <p className="text-sm text-gray-500">Update member details</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowEditMemberModal(false);
+                  resetForm();
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleSubmit} className="p-6">
+              {/* Photo Upload */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Profile Photo
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    {formData.photoPreview ? (
+                      <img
+                        src={formData.photoPreview}
+                        alt="Preview"
+                        className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-200">
+                        <User size={32} className="text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="cursor-pointer px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center gap-2">
+                      <Upload size={16} />
+                      Upload Photo
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Recommended: Square image, at least 200x200px
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Name */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder="e.g., John Doe"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                />
+              </div>
+
+              {/* Email and Phone in Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Mail size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      placeholder="john.doe@company.com"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Phone size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="tel"
+                      required
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      placeholder="+1 (555) 123-4567"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Job Title */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Job Title <span className="text-red-500">*</span>
+                </label>
+                <select
+                  required
+                  value={formData.jobTitle}
+                  onChange={(e) => handleInputChange('jobTitle', e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                >
+                  <option value="">Select a job title...</option>
+                  {Object.keys(jobTitleDepartments).sort().map(title => (
+                    <option key={title} value={title}>{title}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Sub Department - Only show when job title is selected */}
+              {formData.jobTitle && (
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Sub Department <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    required
+                    value={formData.subDepartment}
+                    onChange={(e) => handleInputChange('subDepartment', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  >
+                    <option value="">Select a sub department...</option>
+                    {jobTitleDepartments[formData.jobTitle].map(dept => (
+                      <option key={dept} value={dept}>{dept}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Form Actions */}
+              <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditMemberModal(false);
+                    resetForm();
+                  }}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2"
+                >
+                  <Edit2 size={16} />
+                  Update Member
                 </button>
               </div>
             </form>
