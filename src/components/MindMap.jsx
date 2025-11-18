@@ -1040,6 +1040,8 @@ export default function MindMap({ mapId, onBack }) {
   const [touchInitialPositions, setTouchInitialPositions] = useState({});
   const [isTouchPanning, setIsTouchPanning] = useState(false);
   const touchPanRef = useRef({ startX: 0, startY: 0 });
+  const touchAnimationFrameRef = useRef(null);
+  const lastTouchPositionRef = useRef({ x: 0, y: 0 });
 
   const handleTouchStart = (e) => {
     if (e.touches.length === 1) {
@@ -1103,42 +1105,67 @@ export default function MindMap({ mapId, onBack }) {
       const touch = e.touches[0];
       
       if (isTouchDraggingNode && touchDragNodeId && canvasRef.current) {
-        // Drag the node
+        // Drag the node - use RAF for smooth 60fps updates
         e.preventDefault();
-        const rect = canvasRef.current.getBoundingClientRect();
-        const newX = touch.clientX - rect.left - dragging.pan.x - touchDragOffset.x;
-        const newY = touch.clientY - rect.top - dragging.pan.y - touchDragOffset.y;
         
-        // If multiple nodes are selected, move them all together
-        if (selectedNodes.includes(touchDragNodeId) && selectedNodes.length > 1 && Object.keys(touchInitialPositions).length > 0) {
-          const deltaX = newX - touchInitialPositions[touchDragNodeId].x;
-          const deltaY = newY - touchInitialPositions[touchDragNodeId].y;
-          
-          setNodes(prev =>
-            prev.map(n => {
-              if (selectedNodes.includes(n.id) && touchInitialPositions[n.id]) {
-                return {
-                  ...n,
-                  x: touchInitialPositions[n.id].x + deltaX,
-                  y: touchInitialPositions[n.id].y + deltaY
-                };
-              }
-              return n;
-            })
-          );
-        } else {
-          // Single node drag
-          setNodes(prev =>
-            prev.map(n =>
-              n.id === touchDragNodeId ? { ...n, x: newX, y: newY } : n
-            )
-          );
+        // Store the latest touch position
+        lastTouchPositionRef.current = { x: touch.clientX, y: touch.clientY };
+        
+        // Cancel any pending animation frame
+        if (touchAnimationFrameRef.current) {
+          cancelAnimationFrame(touchAnimationFrameRef.current);
         }
+        
+        // Schedule update on next frame
+        touchAnimationFrameRef.current = requestAnimationFrame(() => {
+          if (!canvasRef.current) return;
+          
+          const rect = canvasRef.current.getBoundingClientRect();
+          const newX = lastTouchPositionRef.current.x - rect.left - dragging.pan.x - touchDragOffset.x;
+          const newY = lastTouchPositionRef.current.y - rect.top - dragging.pan.y - touchDragOffset.y;
+          
+          // If multiple nodes are selected, move them all together
+          if (selectedNodes.includes(touchDragNodeId) && selectedNodes.length > 1 && Object.keys(touchInitialPositions).length > 0) {
+            const deltaX = newX - touchInitialPositions[touchDragNodeId].x;
+            const deltaY = newY - touchInitialPositions[touchDragNodeId].y;
+            
+            setNodes(prev =>
+              prev.map(n => {
+                if (selectedNodes.includes(n.id) && touchInitialPositions[n.id]) {
+                  return {
+                    ...n,
+                    x: touchInitialPositions[n.id].x + deltaX,
+                    y: touchInitialPositions[n.id].y + deltaY
+                  };
+                }
+                return n;
+              })
+            );
+          } else {
+            // Single node drag
+            setNodes(prev =>
+              prev.map(n =>
+                n.id === touchDragNodeId ? { ...n, x: newX, y: newY } : n
+              )
+            );
+          }
+          
+          touchAnimationFrameRef.current = null;
+        });
       } else if (isTouchPanning) {
-        // Canvas panning
-        dragging.setPan({
-          x: touch.clientX - touchPanRef.current.startX,
-          y: touch.clientY - touchPanRef.current.startY,
+        // Canvas panning - also use RAF for smoothness
+        if (touchAnimationFrameRef.current) {
+          cancelAnimationFrame(touchAnimationFrameRef.current);
+        }
+        
+        lastTouchPositionRef.current = { x: touch.clientX, y: touch.clientY };
+        
+        touchAnimationFrameRef.current = requestAnimationFrame(() => {
+          dragging.setPan({
+            x: lastTouchPositionRef.current.x - touchPanRef.current.startX,
+            y: lastTouchPositionRef.current.y - touchPanRef.current.startY,
+          });
+          touchAnimationFrameRef.current = null;
         });
       }
     } else if (e.touches.length === 2) {
@@ -1163,6 +1190,12 @@ export default function MindMap({ mapId, onBack }) {
   };
 
   const handleTouchEnd = (e) => {
+    // Cancel any pending animation frame
+    if (touchAnimationFrameRef.current) {
+      cancelAnimationFrame(touchAnimationFrameRef.current);
+      touchAnimationFrameRef.current = null;
+    }
+    
     if (e.touches.length === 0) {
       setLastTouchDistance(null);
       setTouchStartPos(null);
@@ -1298,7 +1331,12 @@ export default function MindMap({ mapId, onBack }) {
         <div className="absolute top-2 md:top-4 right-2 md:right-4 z-20 flex items-center gap-1 md:gap-2">
           {/* Share Button */}
           <button
-            onClick={() => setShowShareDialog(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setShowShareDialog(true);
+              setShowShapesPalette(false); // Close shapes palette when opening share dialog
+            }}
             className="p-2 md:p-3 rounded-lg md:rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all duration-200 touch-manipulation"
             title="Share mind map"
           >
@@ -1328,7 +1366,10 @@ export default function MindMap({ mapId, onBack }) {
           
           {/* Shapes Palette Toggle */}
           <button
-            onClick={() => setShowShapesPalette(!showShapesPalette)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowShapesPalette(!showShapesPalette);
+            }}
             className={`p-2 md:p-3 rounded-lg md:rounded-xl shadow-lg border transition-all duration-200 touch-manipulation ${
               showShapesPalette
                 ? 'bg-indigo-500 text-white border-indigo-600'
@@ -1556,9 +1597,9 @@ export default function MindMap({ mapId, onBack }) {
               {/* Per-node toolbar overlay - Only visible when exactly ONE node is selected */}
               {selectedNodes.length === 1 && selectedNodes.includes(node.id) && (
               <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-full z-20" style={{ top: '-25px' }}>
-                <div className="enhanced-node-toolbar backdrop-blur-md bg-white/90 shadow-lg border border-white/20 rounded-2xl p-2 lg:flex lg:items-center lg:gap-1 grid grid-cols-4 md:grid-cols-6 gap-1 max-w-[90vw] lg:max-w-none">
+                <div className="enhanced-node-toolbar backdrop-blur-md bg-white/90 shadow-lg border border-white/20 rounded-2xl p-2 lg:flex lg:items-center lg:gap-1 grid grid-cols-4 gap-1 max-w-[90vw] lg:max-w-none">
                   {/* PRIMARY GROUP - always visible */}
-                  <div className="col-span-4 md:col-span-6 lg:col-span-auto flex items-center gap-1 justify-center lg:justify-start">
+                  <div className="col-span-4 lg:col-span-auto flex items-center gap-1 justify-center lg:justify-start">
                     <NodeToolbarPrimary
                       node={node}
                       isToolbarExpanded={isNodeToolbarExpanded(node.id)}
@@ -1588,7 +1629,7 @@ export default function MindMap({ mapId, onBack }) {
                     <>
                       <button
                         ref={(el) => { attachBtnRefs.current[node.id] = el; }}
-                        className="node-toolbar-btn p-2 rounded-xl hover:bg-purple-50 text-purple-600 transition-colors duration-200 border border-purple-200 hover:border-purple-300 touch-manipulation"
+                        className="node-toolbar-btn p-2 rounded-xl hover:bg-purple-50 text-purple-600 transition-colors duration-200 border border-purple-200 hover:border-purple-300 touch-manipulation col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'attach'); }}
                         title="Manage file attachments"
                       >
@@ -1611,7 +1652,7 @@ export default function MindMap({ mapId, onBack }) {
                       
                       <button
                         ref={(el) => { notesBtnRefs.current[node.id] = el; }}
-                        className="node-toolbar-btn p-2 rounded-xl hover:bg-blue-50 text-blue-600 transition-colors duration-200 border border-blue-200 hover:border-blue-300"
+                        className="node-toolbar-btn p-2 rounded-xl hover:bg-blue-50 text-blue-600 transition-colors duration-200 border border-blue-200 hover:border-blue-300 col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'notes'); }}
                         title="Add or edit notes"
                       >
@@ -1633,7 +1674,7 @@ export default function MindMap({ mapId, onBack }) {
 
                       <button
                         ref={(el) => { emojiBtnRefs.current[node.id] = el; }}
-                        className="node-toolbar-btn p-2 rounded-xl hover:bg-amber-50 text-amber-600 transition-colors duration-200 border border-amber-200 hover:border-amber-300"
+                        className="node-toolbar-btn p-2 rounded-xl hover:bg-amber-50 text-amber-600 transition-colors duration-200 border border-amber-200 hover:border-amber-300 col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'emoji'); }}
                         title="Choose emoji icon"
                       >
@@ -1651,7 +1692,7 @@ export default function MindMap({ mapId, onBack }) {
 
                       <button
                         ref={(el) => { tagBtnRefs.current[node.id] = el; }}
-                        className="node-toolbar-btn p-2 rounded-xl hover:bg-teal-50 text-teal-600 transition-colors duration-200 border border-teal-200 hover:border-teal-300"
+                        className="node-toolbar-btn p-2 rounded-xl hover:bg-teal-50 text-teal-600 transition-colors duration-200 border border-teal-200 hover:border-teal-300 col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'tags'); }}
                         title="Add or manage tags"
                       >
@@ -1683,7 +1724,7 @@ export default function MindMap({ mapId, onBack }) {
                     <>
                       <button
                         ref={(el) => { detailsBtnRefs.current[node.id] = el; }}
-                        className="node-toolbar-btn p-2 rounded-xl hover:bg-indigo-50 text-indigo-600 transition-colors duration-200 border border-indigo-200 hover:border-indigo-300 touch-manipulation"
+                        className="node-toolbar-btn p-2 rounded-xl hover:bg-indigo-50 text-indigo-600 transition-colors duration-200 border border-indigo-200 hover:border-indigo-300 touch-manipulation col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'details'); }}
                         title="Edit priority, status, and description"
                       >
@@ -1708,7 +1749,7 @@ export default function MindMap({ mapId, onBack }) {
 
                       <button
                         ref={(el) => { dateBtnRefs.current[node.id] = el; }}
-                        className="node-toolbar-btn p-2 rounded-xl hover:bg-rose-50 text-rose-600 transition-colors duration-200 border border-rose-200 hover:border-rose-300"
+                        className="node-toolbar-btn p-2 rounded-xl hover:bg-rose-50 text-rose-600 transition-colors duration-200 border border-rose-200 hover:border-rose-300 col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'date'); }}
                         title="Set due date"
                       >
@@ -1730,7 +1771,7 @@ export default function MindMap({ mapId, onBack }) {
 
                       <button
                         ref={(el) => { collaboratorBtnRefs.current[node.id] = el; }}
-                        className="node-toolbar-btn p-2 rounded-xl hover:bg-cyan-50 text-cyan-600 transition-colors duration-200 border border-cyan-200 hover:border-cyan-300"
+                        className="node-toolbar-btn p-2 rounded-xl hover:bg-cyan-50 text-cyan-600 transition-colors duration-200 border border-cyan-200 hover:border-cyan-300 col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'collaborator'); }}
                         title="Assign team member"
                       >
@@ -1760,7 +1801,7 @@ export default function MindMap({ mapId, onBack }) {
                   )}
 
                   {/* Final controls group */}
-                  <div className="col-span-4 md:col-span-6 lg:col-span-auto flex items-center gap-1 justify-center lg:justify-start">
+                  <div className="col-span-4 lg:col-span-auto flex items-center gap-1 justify-center lg:justify-start">
                     {/* Layout button (root only) */}
                     {node.id === 'root' && isNodeToolbarExpanded(node.id) && (
                       <NodeToolbarLayout
@@ -1844,20 +1885,20 @@ export default function MindMap({ mapId, onBack }) {
         />
       )}
       
-      {/* Shapes Palette Sidebar */}
-      <div className={`w-fit border-l bg-white transition-transform duration-300 ease-in-out ${
-        showShapesPalette ? 'translate-x-0' : 'translate-x-full'
-      } absolute right-0 top-0 bottom-0 z-30 shadow-2xl`}>
-        <ShapePalette
-          shapeDefinitions={React.useMemo(() => ([
-            { type: 'circle',    name: 'Circle',    color: '#3B82F6', icon: '●' },
-            { type: 'rhombus',   name: 'Rhombus',   color: '#F59E0B', icon: '◆' },
-            { type: 'pentagon',  name: 'Pentagon',  color: '#EF4444', icon: '⬟' },
-            { type: 'ellipse',   name: 'Ellipse',   color: '#8B5CF6', icon: '◐' },
-          ]), [])}
-          onShapeDragStart={handleShapeDragStart}
-        />
-      </div>
+      {/* Shapes Palette Sidebar - Only render when shown */}
+      {showShapesPalette && (
+        <div className="w-fit border-l bg-white transition-transform duration-300 ease-in-out translate-x-0 absolute right-0 top-0 bottom-0 z-30 shadow-2xl">
+          <ShapePalette
+            shapeDefinitions={React.useMemo(() => ([
+              { type: 'circle',    name: 'Circle',    color: '#3B82F6', icon: '●' },
+              { type: 'rhombus',   name: 'Rhombus',   color: '#F59E0B', icon: '◆' },
+              { type: 'pentagon',  name: 'Pentagon',  color: '#EF4444', icon: '⬟' },
+              { type: 'ellipse',   name: 'Ellipse',   color: '#8B5CF6', icon: '◐' },
+            ]), [])}
+            onShapeDragStart={handleShapeDragStart}
+          />
+        </div>
+      )}
 
       {/* Collaborator selection dialog */}
       <CollaboratorDialog
