@@ -92,7 +92,6 @@ export default function MindMap({ mapId, onBack }) {
   
   const [expandedNodeToolbars, setExpandedNodeToolbars] = useState({}); // { [nodeId]: bool } - Per-node toolbar expansion
   const [popupOpenFor, setPopupOpenFor] = useState({}); // { [nodeId]: { [popupName]: bool } }
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [showShapesPalette, setShowShapesPalette] = useState(false); // Mobile shapes palette toggle
   const [showMobileToolbar, setShowMobileToolbar] = useState(false); // Mobile toolbar toggle
 
@@ -145,7 +144,7 @@ export default function MindMap({ mapId, onBack }) {
     connections,
     setNodes,
     setConnections,
-    isDarkMode,
+    false,
     positioning.findStackedPosition,
     positioning.findStackedChildPosition
   );
@@ -1452,7 +1451,7 @@ export default function MindMap({ mapId, onBack }) {
                 <div className="absolute -top-3 -left-3">
                   <ProgressRingChip 
                     pct={getNodeProgress(node.id, connections, nodes)?.percentage ?? (node.completed ? 100 : 0)} 
-                    isDarkMode={isDarkMode} 
+                    isDarkMode={false} 
                     shapeType={node.shapeType} 
                     completed={!!node.completed} 
                   />
@@ -1789,9 +1788,7 @@ export default function MindMap({ mapId, onBack }) {
             { type: 'pentagon',  name: 'Pentagon',  color: '#EF4444', icon: '⬟' },
             { type: 'ellipse',   name: 'Ellipse',   color: '#8B5CF6', icon: '◐' },
           ]), [])}
-          isDarkMode={isDarkMode}
           onShapeDragStart={handleShapeDragStart}
-          onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
         />
       </div>
 
