@@ -129,6 +129,8 @@ export default function MindMap({ mapId, onBack }) {
     { id: 2, name: 'John Doe', timestamp: new Date(Date.now() - 7200000).toISOString(), permission: 'edit' },
     { id: 3, name: 'Jane Smith', timestamp: new Date(Date.now() - 86400000).toISOString(), permission: 'view' },
   ]);
+  const [rippleNodes, setRippleNodes] = useState(new Set()); // Track nodes with active ripple effect
+  const rippleTimeouts = useRef({}); // Store timeout IDs for ripple cleanup
 
   // Canvas ref
   const canvasRef = useRef(null);
@@ -205,6 +207,13 @@ export default function MindMap({ mapId, onBack }) {
     const onWinClick = () => setOpenGroupMenuId(null);
     globalThis.addEventListener('click', onWinClick);
     return () => globalThis.removeEventListener('click', onWinClick);
+  }, []);
+
+  // Cleanup ripple timeouts on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(rippleTimeouts.current).forEach(timeout => clearTimeout(timeout));
+    };
   }, []);
 
   // ============================================
@@ -371,6 +380,23 @@ export default function MindMap({ mapId, onBack }) {
   // ============================================
 
   const toggleSelectNode = (id, event) => {
+    // Trigger ripple effect if FX enabled
+    if (fxOptions?.enabled && fxOptions?.ripple) {
+      setRippleNodes(prev => new Set([...prev, id]));
+      // Clear existing timeout
+      if (rippleTimeouts.current[id]) {
+        clearTimeout(rippleTimeouts.current[id]);
+      }
+      // Remove ripple after animation
+      rippleTimeouts.current[id] = setTimeout(() => {
+        setRippleNodes(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(id);
+          return newSet;
+        });
+      }, 900);
+    }
+    
     // If in the middle of creating a connection, connect to the clicked node
     if (connectionFrom && connectionFrom !== id) {
       const exists = connections.some(c => (c.from === connectionFrom && c.to === id) || (c.from === id && c.to === connectionFrom));
@@ -1204,21 +1230,18 @@ export default function MindMap({ mapId, onBack }) {
 
         {/* Share, Bookmark, and Shapes Toggle Buttons - Top Right */}
         <div className="absolute top-2 md:top-4 right-2 md:right-4 z-20 flex items-center gap-1 md:gap-2">
-          {/* Shapes Palette Toggle - Mobile Only */}
+          {/* Share Button */}
           <button
-            onClick={() => setShowShapesPalette(!showShapesPalette)}
-            className={`md:hidden p-2 rounded-lg shadow-lg border transition-all duration-200 touch-manipulation ${
-              showShapesPalette
-                ? 'bg-indigo-500 text-white border-indigo-600'
-                : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300'
-            }`}
-            title={showShapesPalette ? 'Hide shapes' : 'Show shapes'}
+            onClick={() => setShowShareDialog(true)}
+            className="p-2 md:p-3 rounded-lg md:rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all duration-200 touch-manipulation"
+            title="Share mind map"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7"></rect>
-              <rect x="14" y="3" width="7" height="7"></rect>
-              <rect x="14" y="14" width="7" height="7"></rect>
-              <rect x="3" y="14" width="7" height="7"></rect>
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" x2="15.42" y1="13.51" y2="17.49"></line>
+              <line x1="15.41" x2="8.59" y1="6.51" y2="10.49"></line>
             </svg>
           </button>
           
@@ -1237,18 +1260,21 @@ export default function MindMap({ mapId, onBack }) {
             </svg>
           </button>
           
-          {/* Share Button */}
+          {/* Shapes Palette Toggle */}
           <button
-            onClick={() => setShowShareDialog(true)}
-            className="p-2 md:p-3 rounded-lg md:rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all duration-200 touch-manipulation"
-            title="Share mind map"
+            onClick={() => setShowShapesPalette(!showShapesPalette)}
+            className={`p-2 md:p-3 rounded-lg md:rounded-xl shadow-lg border transition-all duration-200 touch-manipulation ${
+              showShapesPalette
+                ? 'bg-indigo-500 text-white border-indigo-600'
+                : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300'
+            }`}
+            title={showShapesPalette ? 'Hide shapes' : 'Show shapes'}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="18" cy="5" r="3"></circle>
-              <circle cx="6" cy="12" r="3"></circle>
-              <circle cx="18" cy="19" r="3"></circle>
-              <line x1="8.59" x2="15.42" y1="13.51" y2="17.49"></line>
-              <line x1="15.41" x2="8.59" y1="6.51" y2="10.49"></line>
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
             </svg>
           </button>
         </div>
@@ -1346,6 +1372,8 @@ export default function MindMap({ mapId, onBack }) {
                 isParentOfSelected={isParentOfSelected}
                 isChildOfSelected={isChildOfSelected}
                 hasProgress={hasProgress}
+                fxOptions={fxOptions}
+                hasRipple={rippleNodes.has(node.id)}
                 onMouseDown={(e) => {
                   // allow dragging via startPanning handler; nothing here
                 }}
@@ -1354,7 +1382,12 @@ export default function MindMap({ mapId, onBack }) {
               {node.showTags !== false && node.tags && node.tags.length > 0 && (
                 <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 flex gap-1.5 flex-wrap justify-center max-w-xs z-10">
                   {node.tags.map((tag) => (
-                    <span key={tag} className="inline-block px-2.5 py-1 text-xs rounded-md bg-blue-50 border border-blue-200 text-blue-700 font-medium shadow-sm">
+                    <span 
+                      key={tag} 
+                      className={`inline-block px-2.5 py-1 text-xs rounded-md bg-blue-50 border border-blue-200 text-blue-700 font-medium shadow-sm relative overflow-hidden ${
+                        fxOptions?.enabled && fxOptions?.tagShimmer ? 'animate-shimmer' : ''
+                      }`}
+                    >
                       {tag}
                     </span>
                   ))}
@@ -1721,10 +1754,10 @@ export default function MindMap({ mapId, onBack }) {
         )}
       </div>
       
-      {/* Mobile Backdrop Overlay for Shapes Palette */}
+      {/* Backdrop Overlay for Shapes Palette */}
       {showShapesPalette && (
         <div 
-          className="md:hidden fixed inset-0 bg-black/50 z-20"
+          className="fixed inset-0 bg-black/50 z-20"
           onClick={() => setShowShapesPalette(false)}
           onKeyDown={(e) => e.key === 'Escape' && setShowShapesPalette(false)}
           role="button"
@@ -1746,17 +1779,15 @@ export default function MindMap({ mapId, onBack }) {
       )}
       
       {/* Shapes Palette Sidebar */}
-      <div className={`w-fit border-l bg-white transition-transform duration-300 ease-in-out md:translate-x-0 ${
+      <div className={`w-fit border-l bg-white transition-transform duration-300 ease-in-out ${
         showShapesPalette ? 'translate-x-0' : 'translate-x-full'
-      } md:relative absolute right-0 top-0 bottom-0 z-30 shadow-2xl md:shadow-none`}>
+      } absolute right-0 top-0 bottom-0 z-30 shadow-2xl`}>
         <ShapePalette
           shapeDefinitions={React.useMemo(() => ([
             { type: 'circle',    name: 'Circle',    color: '#3B82F6', icon: '●' },
-            { type: 'hexagon',   name: 'Hexagon',   color: '#10B981', icon: '⬡' },
             { type: 'rhombus',   name: 'Rhombus',   color: '#F59E0B', icon: '◆' },
             { type: 'pentagon',  name: 'Pentagon',  color: '#EF4444', icon: '⬟' },
             { type: 'ellipse',   name: 'Ellipse',   color: '#8B5CF6', icon: '◐' },
-            { type: 'connector', name: 'Connector', color: '#6B7280', icon: '↔' },
           ]), [])}
           isDarkMode={isDarkMode}
           onShapeDragStart={handleShapeDragStart}
