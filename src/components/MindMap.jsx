@@ -39,6 +39,11 @@ import { useNodeOperations } from '../hooks/useNodeOperations';
 import { useDragging } from '../hooks/useDragging';
 import { useNodeHandlers } from '../hooks/useNodeHandlers';
 import { useConnectionDrawing } from '../hooks/useConnectionDrawing';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { useNodeSelection } from '../hooks/useNodeSelection';
+
+// Utils
+import { getNodeProgress, formatVisitorTime } from '../utils/nodeUtils';
 
 export default function MindMap({ mapId, onBack }) {
   // Minimal, compiling scaffold to restore the app while we refactor
@@ -134,6 +139,9 @@ export default function MindMap({ mapId, onBack }) {
 
   const dragging = useDragging(nodes, setNodes, canvasRef, mode, selectedNodes);
 
+  // Selection management hook
+  const selection = useNodeSelection(nodes, selectedNodes, setSelectedNodes, selectionType);
+
   // Connection drawing hook
   const connectionDrawing = useConnectionDrawing();
   const { connectionFrom, mousePosition, startConnection, cancelConnection, updateMousePosition } = connectionDrawing;
@@ -188,104 +196,6 @@ export default function MindMap({ mapId, onBack }) {
     return () => globalThis.removeEventListener('click', onWinClick);
   }, []);
 
-  // Global Escape key to reset to normal state
-  useEffect(() => {
-    // Helper: Check if user is typing in an input
-    const isUserTyping = () => {
-      const activeElement = document.activeElement;
-      return activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
-    };
-
-    // Helper: Reset all UI states (Escape key)
-    const resetAllStates = () => {
-      setMovingGroupId(null);
-      setOpenGroupMenuId(null);
-      setResizingGroupId(null);
-      setSelectedNodes([]);
-      cancelConnection();
-      setMode('cursor');
-      setSelectionType('simple');
-      setShowCollaboratorDialog(false);
-      setIsSelecting(false);
-      setSelectionRect(null);
-    };
-
-    // Helper: Handle Shift+N (create node)
-    const handleCreateNode = (e) => {
-      if (!e.shiftKey || e.key !== 'N' || isUserTyping()) return false;
-      e.preventDefault();
-      
-      if (selectedNodes.length === 1) {
-        nodeOps.addChildNode(selectedNodes[0]);
-      } else {
-        nodeOps.addStandaloneNode();
-      }
-      return true;
-    };
-
-    // Helper: Handle Delete key (delete node)
-    const handleDeleteNode = (e) => {
-      const isDeleteKey = e.key === 'Delete';
-      if (!isDeleteKey || isUserTyping()) return false;
-      e.preventDefault();
-      
-      if (selectedNodes.length > 0) {
-        setDeleteConfirmNodeId(selectedNodes[0]);
-      }
-      return true;
-    };
-
-    // Helper: Handle Shift+D (detach node)
-    const handleDetachNode = (e) => {
-      if (!e.shiftKey || e.key !== 'D' || isUserTyping()) return false;
-      e.preventDefault();
-      
-      if (selectedNodes.length === 1) {
-        const hasParent = connections.some(conn => conn.to === selectedNodes[0]);
-        if (hasParent) {
-          setDetachConfirmNodeId(selectedNodes[0]);
-        }
-      }
-      return true;
-    };
-
-    // Main keyboard event handler
-    const onKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        resetAllStates();
-        return;
-      }
-      
-      // Try each handler in sequence
-      handleCreateNode(e) || handleDeleteNode(e) || handleDetachNode(e);
-    };
-
-    globalThis.addEventListener('keydown', onKeyDown);
-    return () => globalThis.removeEventListener('keydown', onKeyDown);
-  }, [selectedNodes, nodeOps, cancelConnection, connections]);
-
-  // Wheel event for zooming
-  useEffect(() => {
-    const handleWheel = (e) => {
-      if (!canvasRef.current) return;
-      // Only zoom if the mouse is over the canvas
-      if (!canvasRef.current.contains(e.target)) return;
-      
-      e.preventDefault();
-      const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-      setZoom(prevZoom => {
-        const newZoom = prevZoom * zoomFactor;
-        return Math.min(Math.max(newZoom, 0.2), 3);
-      });
-    };
-
-    const canvas = canvasRef.current;
-    if (canvas) {
-      canvas.addEventListener('wheel', handleWheel, { passive: false });
-      return () => canvas.removeEventListener('wheel', handleWheel);
-    }
-  }, [canvasRef]);
-
   // ============================================
   // HISTORY MANAGEMENT
   // ============================================
@@ -308,6 +218,68 @@ export default function MindMap({ mapId, onBack }) {
       setHistoryIndex(newIndex);
     }
   };
+
+  // Keyboard shortcuts hook
+  useKeyboardShortcuts({
+    onUndo: undo,
+    onRedo: redo,
+    onToggleSearch: () => setShowSearchList(s => !s),
+    onEscape: () => {
+      setMovingGroupId(null);
+      setOpenGroupMenuId(null);
+      setResizingGroupId(null);
+      selection.clearSelection();
+      cancelConnection();
+      setMode('cursor');
+      setSelectionType('simple');
+      setShowCollaboratorDialog(false);
+      setIsSelecting(false);
+      setSelectionRect(null);
+    },
+    onDelete: () => {
+      if (selectedNodes.length > 0) {
+        setDeleteConfirmNodeId(selectedNodes[0]);
+      }
+    },
+    onSelectAll: selection.selectAllNodes,
+    onCreateNode: () => {
+      if (selectedNodes.length === 1) {
+        nodeOps.addChildNode(selectedNodes[0]);
+      } else {
+        nodeOps.addStandaloneNode();
+      }
+    },
+    onDetachNode: () => {
+      if (selectedNodes.length === 1) {
+        const hasParent = connections.some(conn => conn.to === selectedNodes[0]);
+        if (hasParent) {
+          setDetachConfirmNodeId(selectedNodes[0]);
+        }
+      }
+    }
+  });
+
+  // Wheel event for zooming
+  useEffect(() => {
+    const handleWheel = (e) => {
+      if (!canvasRef.current) return;
+      // Only zoom if the mouse is over the canvas
+      if (!canvasRef.current.contains(e.target)) return;
+      
+      e.preventDefault();
+      const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+      setZoom(prevZoom => {
+        const newZoom = prevZoom * zoomFactor;
+        return Math.min(Math.max(newZoom, 0.2), 3);
+      });
+    };
+
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.addEventListener('wheel', handleWheel, { passive: false });
+      return () => canvas.removeEventListener('wheel', handleWheel);
+    }
+  }, [canvasRef]);
 
   // ============================================
   // COLLABORATOR SELECTION MODE
@@ -368,7 +340,7 @@ export default function MindMap({ mapId, onBack }) {
 
       // Update selected nodes
       if (selectedIds.length > 0) {
-        setSelectedNodes(selectedIds);
+        selection.selectNodesByIds(selectedIds);
         // Show collaborator dialog to assign all selected nodes
         setShowCollaboratorDialog(true);
       }
@@ -403,22 +375,19 @@ export default function MindMap({ mapId, onBack }) {
     const isMultiSelect = event && (event.ctrlKey || event.metaKey);
     
     if (isMultiSelect) {
-      // Multi-select mode: toggle the node in the selection
-      setSelectedNodes(prev => {
-        const newSelection = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
-        // Close popups for deselected nodes
-        if (!newSelection.includes(id)) {
-          setPopupOpenFor(prevPopups => {
-            const updated = { ...prevPopups };
-            delete updated[id];
-            return updated;
-          });
-        }
-        return newSelection;
-      });
+      // Multi-select mode: use hook's toggle
+      selection.toggleSelectNode(id);
+      // Close popups for deselected nodes
+      if (!selectedNodes.includes(id)) {
+        setPopupOpenFor(prevPopups => {
+          const updated = { ...prevPopups };
+          delete updated[id];
+          return updated;
+        });
+      }
     } else {
-      // Single select mode: select only this node and close all popups
-      setSelectedNodes([id]);
+      // Single select mode: use hook's single select
+      selection.selectSingleNode(id);
       setPopupOpenFor({});
     }
   };
@@ -482,23 +451,7 @@ export default function MindMap({ mapId, onBack }) {
     // TODO: Save to backend/localStorage
   };
   
-  // Format visitor timestamp
-  const formatVisitorTime = (timestamp) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + 
-           ' at ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  };
+
 
   // Derived selections for focus mode
   const selectedNode = selectedNodes[0] || null;
@@ -578,66 +531,8 @@ export default function MindMap({ mapId, onBack }) {
   }, [connectionFrom, updateMousePosition, cancelConnection]);
 
   // ============================================
-  // PROGRESS TRACKING FUNCTIONS
+  // PROGRESS TRACKING (using utility functions)
   // ============================================
-  
-  // Calculate max depth of node hierarchy
-  const getMaxDepth = (nodeId, visited = new Set(), currentDepth = 0) => {
-    if (visited.has(nodeId)) return currentDepth;
-    visited.add(nodeId);
-    
-    const children = connections
-      .filter(conn => conn.from === nodeId)
-      .map(conn => conn.to);
-    
-    if (children.length === 0) return currentDepth;
-    
-    const childDepths = children.map(childId =>
-      getMaxDepth(childId, new Set(visited), currentDepth + 1)
-    );
-    
-    return Math.max(...childDepths);
-  };
-
-  // Get progress statistics for a node (counts all descendants)
-  const getNodeProgress = (nodeId) => {
-    // Recursive helper to get all descendants with cycle detection
-    const getAllDescendants = (parentId, visited = new Set()) => {
-      if (visited.has(parentId)) return [];
-      visited.add(parentId);
-      
-      const directChildren = connections
-        .filter(conn => conn.from === parentId)
-        .map(conn => nodes.find(node => node.id === conn.to))
-        .filter(Boolean);
-      
-      let allDescendants = [...directChildren];
-      for (const child of directChildren) {
-        const childDescendants = getAllDescendants(child.id, new Set(visited));
-        allDescendants = [...allDescendants, ...childDescendants];
-      }
-      
-      return allDescendants;
-    };
-    
-    const allDescendants = getAllDescendants(nodeId);
-    if (allDescendants.length === 0) return null;
-    
-    // Remove duplicates
-    const uniqueDescendants = allDescendants.filter((node, index, self) =>
-      index === self.findIndex(n => n.id === node.id)
-    );
-    
-    const completedDescendants = uniqueDescendants.filter(d => d.completed).length;
-    const totalDescendants = uniqueDescendants.length;
-    
-    return {
-      completed: completedDescendants,
-      total: totalDescendants,
-      percentage: Math.round((completedDescendants / totalDescendants) * 100),
-      depth: getMaxDepth(nodeId)
-    };
-  };
 
   // ============================================
   // NODE DATA UPDATES (via hooks)
@@ -1045,7 +940,7 @@ export default function MindMap({ mapId, onBack }) {
       const { nodes: newNodes, connections: newConns, mainId } = builder(canvasX, canvasY, getColor);
       setNodes(prev => prev.concat(newNodes));
       setConnections(prev => prev.concat(newConns));
-      setSelectedNodes([mainId]);
+      selection.selectSingleNode(mainId);
     }
   };
 
@@ -1112,7 +1007,7 @@ export default function MindMap({ mapId, onBack }) {
           const clickedNode = e.target instanceof HTMLElement ? e.target.closest('[data-node-id]') : null;
           
           if (!clickedNode && (e.target === e.currentTarget || e.target.closest('.mindmap-canvas-inner'))) {
-            setSelectedNodes([]);
+            selection.clearSelection();
             setPopupOpenFor({});
           }
           
@@ -1172,7 +1067,7 @@ export default function MindMap({ mapId, onBack }) {
           showSearchList={showSearchList}
           setShowSearchList={setShowSearchList}
           nodes={nodes}
-          setSelectedNode={(id) => setSelectedNodes(id ? [id] : [])}
+          setSelectedNode={(id) => id ? selection.selectSingleNode(id) : selection.clearSelection()}
           setPan={setPan}
           deleteNode={deleteNode}
           deleteNodeCascade={deleteNodeCascade}
@@ -1286,7 +1181,7 @@ export default function MindMap({ mapId, onBack }) {
             const isChildOfSelected = selectedNodes.length === 1 && connections.some(c => c.from === selectedNodes[0] && c.to === node.id);
             
             // Check if this node has progress indicator
-            const progress = getNodeProgress(node.id);
+            const progress = getNodeProgress(node.id, connections, nodes);
             const hasProgress = progress && !node.completed;
             
             return (
@@ -1321,7 +1216,7 @@ export default function MindMap({ mapId, onBack }) {
 
               {/* Progress Indicator (top-left) - Shows completion count for parent nodes */}
               {(() => {
-                const progress = getNodeProgress(node.id);
+                const progress = getNodeProgress(node.id, connections, nodes);
                 const hasProgress = progress && !node.completed;
                 if (!hasProgress) return null;
                 
@@ -1376,7 +1271,7 @@ export default function MindMap({ mapId, onBack }) {
               {fxOptions?.progressRing && (
                 <div className="absolute -top-3 -left-3">
                   <ProgressRingChip 
-                    pct={getNodeProgress(node.id)?.percentage ?? (node.completed ? 100 : 0)} 
+                    pct={getNodeProgress(node.id, connections, nodes)?.percentage ?? (node.completed ? 100 : 0)} 
                     isDarkMode={isDarkMode} 
                     shapeType={node.shapeType} 
                     completed={!!node.completed} 

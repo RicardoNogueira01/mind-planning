@@ -12,6 +12,8 @@ export function useKeyboardShortcuts({
   onEscape,
   onDelete,
   onSelectAll,
+  onCreateNode,
+  onDetachNode,
   enabled = true
 }) {
   useEffect(() => {
@@ -63,9 +65,21 @@ export function useKeyboardShortcuts({
         e.preventDefault();
         onSelectAll();
       }
+      
+      // Create Node: Shift + N
+      if (e.shiftKey && e.key === 'N' && onCreateNode) {
+        e.preventDefault();
+        onCreateNode();
+      }
+      
+      // Detach Node: Shift + D
+      if (e.shiftKey && e.key === 'D' && onDetachNode) {
+        e.preventDefault();
+        onDetachNode();
+      }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [enabled, onUndo, onRedo, onToggleSearch, onEscape, onDelete, onSelectAll]);
+    globalThis.addEventListener('keydown', handleKeyDown);
+    return () => globalThis.removeEventListener('keydown', handleKeyDown);
+  }, [enabled, onUndo, onRedo, onToggleSearch, onEscape, onDelete, onSelectAll, onCreateNode, onDetachNode]);
 }
