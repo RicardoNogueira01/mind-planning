@@ -20,10 +20,88 @@ import {
   Award,
   TrendingUp,
   TrendingDown,
-  Minus
+  Minus,
+  X,
+  Upload,
+  User
 } from 'lucide-react';
 
 const TeamMembersManager = () => {
+  // Modal state
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    photo: null,
+    photoPreview: null,
+    name: '',
+    email: '',
+    phone: '',
+    jobTitle: '',
+    subDepartment: ''
+  });
+
+  // Job titles with their corresponding sub-departments
+  const jobTitleDepartments = {
+    'Software Engineer': ['Frontend Development', 'Backend Development', 'Full Stack Development', 'DevOps', 'Mobile Development'],
+    'QA Engineer': ['Quality Assurance', 'Test Automation', 'Manual Testing', 'Performance Testing'],
+    'Product Manager': ['Product Management', 'Product Strategy', 'Product Operations'],
+    'UX Designer': ['User Experience', 'Design Systems', 'User Research'],
+    'UI Designer': ['User Interface', 'Visual Design', 'Design Systems'],
+    'Data Analyst': ['Data Analytics', 'Business Intelligence', 'Data Visualization'],
+    'Data Scientist': ['Machine Learning', 'Data Science', 'AI Research'],
+    'DevOps Engineer': ['DevOps', 'Infrastructure', 'Cloud Operations', 'Site Reliability'],
+    'Project Manager': ['Project Management', 'Agile Delivery', 'Program Management'],
+    'Business Analyst': ['Business Analysis', 'Requirements Engineering', 'Process Improvement'],
+    'Marketing Manager': ['Digital Marketing', 'Content Marketing', 'Brand Management', 'Growth Marketing'],
+    'Sales Representative': ['Sales', 'Account Management', 'Business Development'],
+    'Customer Support': ['Customer Service', 'Technical Support', 'Customer Success'],
+    'HR Manager': ['Human Resources', 'Talent Acquisition', 'Employee Relations'],
+    'Finance Manager': ['Finance', 'Accounting', 'Financial Planning'],
+    'Security Engineer': ['Cybersecurity', 'Information Security', 'Security Operations']
+  };
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({
+          ...prev,
+          photo: file,
+          photoPreview: reader.result
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+      // Reset sub-department when job title changes
+      ...(field === 'jobTitle' ? { subDepartment: '' } : {})
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Here you would typically send the data to your backend
+    console.log('Form submitted:', formData);
+    // Close modal and reset form
+    setShowAddMemberModal(false);
+    setFormData({
+      photo: null,
+      photoPreview: null,
+      name: '',
+      email: '',
+      phone: '',
+      jobTitle: '',
+      subDepartment: ''
+    });
+  };
+
   // Sample data
   const [teamMembers] = useState([
     {
@@ -415,7 +493,10 @@ const TeamMembersManager = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
-            <button className="flex-1 md:flex-initial px-3 md:px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center justify-center gap-2 text-sm touch-manipulation">
+            <button 
+              onClick={() => setShowAddMemberModal(true)}
+              className="flex-1 md:flex-initial px-3 md:px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center justify-center gap-2 text-sm touch-manipulation"
+            >
               <Plus size={16} />
               Add Member
             </button>
@@ -581,6 +662,175 @@ const TeamMembersManager = () => {
         </div>        {/* Members List */}
         {viewMode === 'grid' ? <GridView /> : <ListView />}
       </main>
+
+      {/* Add Member Modal */}
+      {showAddMemberModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Add Team Member</h2>
+                <p className="text-sm text-gray-500">Fill in the details to add a new member</p>
+              </div>
+              <button
+                onClick={() => setShowAddMemberModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleSubmit} className="p-6">
+              {/* Photo Upload */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Profile Photo
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    {formData.photoPreview ? (
+                      <img
+                        src={formData.photoPreview}
+                        alt="Preview"
+                        className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-200">
+                        <User size={32} className="text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="cursor-pointer px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center gap-2">
+                      <Upload size={16} />
+                      Upload Photo
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Recommended: Square image, at least 200x200px
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Name */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder="e.g., John Doe"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                />
+              </div>
+
+              {/* Email and Phone in Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Mail size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      placeholder="john.doe@company.com"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Phone size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="tel"
+                      required
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      placeholder="+1 (555) 123-4567"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Job Title */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Job Title <span className="text-red-500">*</span>
+                </label>
+                <select
+                  required
+                  value={formData.jobTitle}
+                  onChange={(e) => handleInputChange('jobTitle', e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                >
+                  <option value="">Select a job title...</option>
+                  {Object.keys(jobTitleDepartments).sort().map(title => (
+                    <option key={title} value={title}>{title}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Sub Department - Only show when job title is selected */}
+              {formData.jobTitle && (
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Sub Department <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    required
+                    value={formData.subDepartment}
+                    onChange={(e) => handleInputChange('subDepartment', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  >
+                    <option value="">Select a sub department...</option>
+                    {jobTitleDepartments[formData.jobTitle].map(dept => (
+                      <option key={dept} value={dept}>{dept}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Form Actions */}
+              <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setShowAddMemberModal(false)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2"
+                >
+                  <Plus size={16} />
+                  Add Member
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
