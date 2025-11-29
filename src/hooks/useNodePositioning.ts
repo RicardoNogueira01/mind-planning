@@ -70,36 +70,123 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
   }, [nodes]);
 
   /**
-   * Position children hierarchically:
-   * - Stacks children vertically to the right of parent
-   * - Creates a cascading layout flowing downward
-   * - Each child is positioned below the previous one
+   * Position children intelligently with auto-balancing:
+   * - Detects available space around parent in all directions
+   * - Distributes children evenly above and below parent (or left/right)
+   * - Keeps parent centered among its children
+   * - Checks for collisions with existing nodes
    */
   const findStackedChildPosition = useCallback((parentId: string, preferredX: number, preferredY: number): Position => {
     const parent = nodes.find(n => n.id === parentId);
     if (!parent) return { x: preferredX, y: preferredY };
+
+    const NODE_WIDTH = 300;
+    const OFFSET_DISTANCE = NODE_WIDTH + 80; // Distance from parent
+    const DETECTION_RADIUS = 400; // How far to check for obstacles
 
     // Find all existing children of this parent using connections
     const childNodeIds = connections
       .filter(conn => conn.from === parentId)
       .map(conn => conn.to);
 
-    // If no children exist yet, use the parent's Y position (first child aligns with parent)
+    const childNodes = nodes.filter(n => childNodeIds.includes(n.id));
+
+    // If no children exist yet, detect which direction has most free space
     if (childNodeIds.length === 0) {
-      return { x: preferredX, y: parent.y };
+      // Check all 4 directions for obstacles
+      const directions = [
+        { name: 'right', x: parent.x + OFFSET_DISTANCE, y: parent.y, angle: 0 },
+        { name: 'down', x: parent.x, y: parent.y + OFFSET_DISTANCE, angle: 90 },
+        { name: 'left', x: parent.x - OFFSET_DISTANCE, y: parent.y, angle: 180 },
+        { name: 'up', x: parent.x, y: parent.y - OFFSET_DISTANCE, angle: 270 },
+      ];
+
+      // Count obstacles in each direction
+      const directionScores = directions.map(dir => {
+        const obstacles = nodes.filter(n => {
+          if (n.id === parentId) return false;
+          
+          const dx = n.x - dir.x;
+          const dy = n.y - dir.y;
+          const distance = Math.hypot(dx, dy);
+          
+          return distance < DETECTION_RADIUS;
+        });
+
+        return {
+          ...dir,
+          obstacles: obstacles.length,
+          score: DETECTION_RADIUS - obstacles.length * 100 // Fewer obstacles = higher score
+        };
+      });
+
+      // Choose direction with fewest obstacles (highest score)
+      const bestDirection = directionScores.reduce((best, current) => 
+        current.score > best.score ? current : best,
+        directionScores[0]
+      );
+
+      return { x: bestDirection.x, y: bestDirection.y };
     }
 
-    // Get all child nodes
-    const childNodes = nodes.filter(n => childNodeIds.includes(n.id));
+    // If children exist, determine layout direction and balance them
+    const firstChild = childNodes[0];
+    const dx = firstChild.x - parent.x;
+    const dy = firstChild.y - parent.y;
+
+    // Determine the primary direction of existing children
+    const isHorizontal = Math.abs(dx) > Math.abs(dy);
     
-    // Find the lowest child Y position
-    const lowestY = Math.max(...childNodes.map(n => n.y));
-    
-    // Position new child below the lowest one with spacing
-    return {
-      x: preferredX,
-      y: lowestY + NODE_HEIGHT + MARGIN
-    };
+    if (isHorizontal) {
+      // Children are positioned horizontally (left or right)
+      const isRight = dx > 0;
+      const targetX = isRight ? parent.x + OFFSET_DISTANCE : parent.x - OFFSET_DISTANCE;
+      
+      // Calculate balanced vertical position
+      // Distribute children evenly: half above, half below parent
+      const newChildIndex = childNodes.length; // 0-indexed position of new child
+      const totalChildren = childNodes.length + 1; // Including the new one
+      
+      // Calculate position to keep parent centered
+      // For odd numbers (1,3,5): middle child aligns with parent
+      // For even numbers (2,4,6): children split evenly above/below
+      const halfCount = Math.floor(totalChildren / 2);
+      const centerOffset = totalChildren % 2 === 0 ? (NODE_HEIGHT + MARGIN) / 2 : 0;
+      
+      const childPosition = newChildIndex - halfCount;
+      const yOffset = childPosition * (NODE_HEIGHT + MARGIN) + centerOffset;
+      
+      return {
+        x: targetX,
+        y: parent.y + yOffset
+      };
+    } else {
+      // Children are positioned vertically (up or down)
+      const isDown = dy > 0;
+      const targetX = firstChild.x;
+      
+      // Calculate balanced horizontal position
+      const newChildIndex = childNodes.length;
+      const totalChildren = childNodes.length + 1;
+      
+      const halfCount = Math.floor(totalChildren / 2);
+      const centerOffset = totalChildren % 2 === 0 ? (NODE_HEIGHT + MARGIN) / 2 : 0;
+      
+      const childPosition = newChildIndex - halfCount;
+      const yOffset = childPosition * (NODE_HEIGHT + MARGIN) + centerOffset;
+      
+      if (isDown) {
+        return {
+          x: targetX,
+          y: parent.y + OFFSET_DISTANCE + yOffset
+        };
+      } else {
+        return {
+          x: targetX,
+          y: parent.y - OFFSET_DISTANCE + yOffset
+        };
+      }
+    }
   }, [nodes, connections]);
 
   return {
