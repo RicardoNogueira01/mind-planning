@@ -147,10 +147,11 @@ export function computeBezierPath(
   let start: { x: number; y: number };
   
   // Determine which edge of the parent to use based on child position
-  const isChildToRight = toCenterX > fromRect.right;
-  const isChildToLeft = toCenterX < fromRect.left;
-  const isChildBelow = toCenterY > fromRect.bottom;
-  const isChildAbove = toCenterY < fromRect.top;
+  // Use more lenient thresholds to group children on the same side
+  const isChildToRight = toCenterX > fromRect.right + 50;  // At least 50px to the right
+  const isChildToLeft = toCenterX < fromRect.left - 50;    // At least 50px to the left
+  const isChildBelow = toCenterY > fromCenterY + 50;        // Below parent center + threshold
+  const isChildAbove = toCenterY < fromCenterY - 50;        // Above parent center - threshold
   
   // Dynamic grouping strategy:
   // - 1-10 children: DISTRIBUTE along edge for clean appearance
@@ -192,8 +193,31 @@ export function computeBezierPath(
       start = { x: fromRect.left + offsetX, y: fromRect.top };
       
     } else {
-      // Fallback: use perimeter point calculation
-      start = getPerimeterPoint(fromRect, toCenterX, toCenterY);
+      // Child is in the "neutral zone" - use the edge closest to the child
+      // This handles cases where children are slightly off-center
+      const distToBottom = Math.abs(toCenterY - fromRect.bottom);
+      const distToTop = Math.abs(toCenterY - fromRect.top);
+      const distToRight = Math.abs(toCenterX - fromRect.right);
+      const distToLeft = Math.abs(toCenterX - fromRect.left);
+      
+      const minDist = Math.min(distToBottom, distToTop, distToRight, distToLeft);
+      
+      if (minDist === distToBottom) {
+        // Use bottom edge
+        const parentWidth = fromRect.right - fromRect.left;
+        const spacing = parentWidth / (options.totalChildren + 1);
+        const offsetX = spacing * (options.childIndex + 1);
+        start = { x: fromRect.left + offsetX, y: fromRect.bottom };
+      } else if (minDist === distToTop) {
+        // Use top edge
+        const parentWidth = fromRect.right - fromRect.left;
+        const spacing = parentWidth / (options.totalChildren + 1);
+        const offsetX = spacing * (options.childIndex + 1);
+        start = { x: fromRect.left + offsetX, y: fromRect.top };
+      } else {
+        // Fallback to perimeter point
+        start = getPerimeterPoint(fromRect, toCenterX, toCenterY);
+      }
     }
   } else {
     // ========== GROUP MODE ==========
@@ -208,7 +232,7 @@ export function computeBezierPath(
   const end = { x: childConnectionX, y: childConnectionY };
   
   // Bezier control points create the curve's "flow"
-  // Think of them as invisible magnets pulling the line
+  // Strategy: Go straight down/up first, THEN curve horizontally to destination
   let c1x, c1y, c2x, c2y;
   
   const horizontalDistance = Math.abs(end.x - start.x);
@@ -216,34 +240,48 @@ export function computeBezierPath(
   
   if (toRect.left > fromRect.right + 10) {
     // ========== RIGHTWARD FLOW ==========
-    // Child is to the RIGHT → curve flows horizontally
-    // Control points extend right from start and left from end
-    const controlDistance = Math.min(horizontalDistance * 0.6, 150);  // Max 150px for stability
+    // Child is to the RIGHT → go horizontal first, then drop
     
-    c1x = start.x + controlDistance;   // Pull right from start
-    c1y = start.y;                     // Stay at start height
-    c2x = end.x - controlDistance;     // Pull left from end
-    c2y = end.y;                       // Stay at end height
+    // First control point: Move horizontally toward destination (maintain start height)
+    const horizontalCurve = Math.min(horizontalDistance * 0.6, Math.max(horizontalDistance - 50, horizontalDistance * 0.3));
+    c1x = start.x + horizontalCurve;       // Move horizontally toward child
+    c1y = start.y;                         // Stay at start height (horizontal)
+    
+    // Second control point: Drop down to destination height
+    c2x = end.x;                           // At destination X
+    c2y = end.y - verticalDistance * 0.15; // Near destination, slight curve
     
   } else if (toRect.right < fromRect.left - 10) {
     // ========== LEFTWARD FLOW ==========
-    // Child is to the LEFT → curve flows horizontally
-    const controlDistance = Math.min(horizontalDistance * 0.6, 150);
+    // Child is to the LEFT → go horizontal first, then drop
     
-    c1x = start.x - controlDistance;   // Pull left from start
-    c1y = start.y;
-    c2x = end.x + controlDistance;     // Pull right from end
-    c2y = end.y;
+    const horizontalCurve = Math.min(horizontalDistance * 0.6, Math.max(horizontalDistance - 50, horizontalDistance * 0.3));
+    c1x = start.x - horizontalCurve;       // Move horizontally toward child
+    c1y = start.y;                         // Stay at start height (horizontal)
+    
+    // Second control point: Drop down to destination height
+    c2x = end.x;                           // At destination X
+    c2y = end.y - verticalDistance * 0.15; // Near destination, slight curve
     
   } else {
     // ========== VERTICAL FLOW ==========
-    // Nodes are vertically aligned → curve flows vertically
-    const controlDistance = Math.min(verticalDistance * 0.6, 100);  // Smaller for vertical curves
+    // Nodes are vertically aligned → smooth S-curve or straight drop
+    const horizontalShift = Math.abs(end.x - start.x);
     
-    c1x = start.x;                     // Stay at start X
-    c1y = start.y + (end.y > start.y ? controlDistance : -controlDistance);  // Pull toward end
-    c2x = end.x;                       // Stay at end X
-    c2y = end.y - (end.y > start.y ? controlDistance : -controlDistance);    // Pull toward start
+    if (horizontalShift < 50) {
+      // Nearly straight vertical - simple S-curve
+      const controlDistance = Math.min(verticalDistance * 0.4, 60);
+      c1x = start.x;
+      c1y = start.y + controlDistance;
+      c2x = end.x;
+      c2y = end.y - controlDistance;
+    } else {
+      // Needs horizontal adjustment - drop straight then move across
+      c1x = start.x;                           // Drop straight down first
+      c1y = start.y + verticalDistance * 0.85; // Drop almost all the way
+      c2x = end.x;                             // Move to destination X
+      c2y = end.y - verticalDistance * 0.15;   // Slight curve into destination
+    }
   }
   
   // Construct SVG path string

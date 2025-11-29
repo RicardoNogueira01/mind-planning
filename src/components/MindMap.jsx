@@ -278,6 +278,13 @@ export default function MindMap({ mapId, onBack }) {
     return () => globalThis.removeEventListener('click', onWinClick);
   }, []);
 
+  // Close layout menu on outside click
+  useEffect(() => {
+    const onWinClick = () => setNodeLayoutMenuOpen(null);
+    globalThis.addEventListener('click', onWinClick);
+    return () => globalThis.removeEventListener('click', onWinClick);
+  }, []);
+
   // Cleanup ripple timeouts on unmount
   useEffect(() => {
     return () => {
@@ -623,11 +630,24 @@ export default function MindMap({ mapId, onBack }) {
       window.innerHeight
     );
 
-    // Merge results back - only update children positions, keep parent fixed
+    // Calculate offset to position children relative to parent, not centered in canvas
+    const layoutParent = result.nodes.find(n => n.id === parentNodeId);
+    if (!layoutParent) return;
+    
+    const offsetX = parentNode.x - layoutParent.x;
+    const offsetY = parentNode.y - layoutParent.y;
+
+    // Merge results back - only update children positions (offset to parent), keep parent fixed
     const updatedNodes = nodes.map(node => {
       if (childNodeIds.includes(node.id)) {
         const layoutNode = result.nodes.find(n => n.id === node.id);
-        return layoutNode || node;
+        if (layoutNode) {
+          return {
+            ...layoutNode,
+            x: layoutNode.x + offsetX,
+            y: layoutNode.y + offsetY
+          };
+        }
       }
       return node;
     });
@@ -2259,39 +2279,54 @@ export default function MindMap({ mapId, onBack }) {
                           </button>
                           
                           {/* Layout dropdown menu */}
-                          {nodeLayoutMenuOpen === node.id && (
-                            <div 
-                              className="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-50 min-w-[240px]"
-                              style={{ animation: 'slideDown 0.2s ease-out' }}
-                            >
-                              <div className="px-3 py-2 border-b border-gray-100">
-                                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Auto-arrange Children</div>
-                              </div>
+                          {nodeLayoutMenuOpen === node.id && createPortal(
+                            (() => {
+                              const buttonRect = layoutBtnRefs.current[node.id]?.getBoundingClientRect() || { left: 0, bottom: 0 };
+                              const popupWidth = 240;
+                              const left = Math.max(8, Math.min(buttonRect.left - popupWidth + 40, window.innerWidth - popupWidth - 8));
+                              const top = buttonRect.bottom + 8;
                               
-                              {[
-                                { type: 'force-directed', emoji: '⚡', name: 'Force Directed', desc: 'Physics-based automatic spacing' },
-                                { type: 'tree-vertical', emoji: '🌲', name: 'Tree (Vertical)', desc: 'Top to bottom hierarchy' },
-                                { type: 'tree-horizontal', emoji: '🌳', name: 'Tree (Horizontal)', desc: 'Left to right hierarchy' },
-                                { type: 'radial', emoji: '🎯', name: 'Radial', desc: 'Concentric circles' },
-                                { type: 'circular', emoji: '⭕', name: 'Circular', desc: 'Arrange in circle' },
-                                { type: 'grid', emoji: '⚙️', name: 'Grid', desc: 'Snap to grid' },
-                              ].map((layout) => (
-                                <button
-                                  key={layout.type}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleApplyNodeLayout(node.id, layout.type);
+                              return (
+                                <div 
+                                  className="fixed bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-[100]"
+                                  style={{
+                                    left: `${left}px`,
+                                    top: `${top}px`,
+                                    width: `${popupWidth}px`
                                   }}
-                                  className="w-full px-4 py-3 hover:bg-purple-50 transition-colors text-left flex items-start gap-3 group"
+                                  onClick={(e) => e.stopPropagation()}
                                 >
-                                  <span className="text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">{layout.emoji}</span>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-gray-900 text-sm">{layout.name}</div>
-                                    <div className="text-xs text-gray-500 mt-0.5">{layout.desc}</div>
+                                  <div className="px-3 py-2 border-b border-gray-100">
+                                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Auto-arrange Children</div>
                                   </div>
-                                </button>
-                              ))}
-                            </div>
+                                  
+                                  {[
+                                    { type: 'force-directed', emoji: '⚡', name: 'Force Directed', desc: 'Physics-based automatic spacing' },
+                                    { type: 'tree-vertical', emoji: '🌲', name: 'Tree (Vertical)', desc: 'Top to bottom hierarchy' },
+                                    { type: 'tree-horizontal', emoji: '🌳', name: 'Tree (Horizontal)', desc: 'Left to right hierarchy' },
+                                    { type: 'radial', emoji: '🎯', name: 'Radial', desc: 'Concentric circles' },
+                                    { type: 'circular', emoji: '⭕', name: 'Circular', desc: 'Arrange in circle' },
+                                    { type: 'grid', emoji: '⚙️', name: 'Grid', desc: 'Snap to grid' },
+                                  ].map((layout) => (
+                                    <button
+                                      key={layout.type}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleApplyNodeLayout(node.id, layout.type);
+                                      }}
+                                      className="w-full px-4 py-3 hover:bg-purple-50 transition-colors text-left flex items-start gap-3 group"
+                                    >
+                                      <span className="text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">{layout.emoji}</span>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="font-medium text-gray-900 text-sm">{layout.name}</div>
+                                        <div className="text-xs text-gray-500 mt-0.5">{layout.desc}</div>
+                                      </div>
+                                    </button>
+                                  ))}
+                                </div>
+                              );
+                            })(),
+                            document.body
                           )}
                         </div>
                       );

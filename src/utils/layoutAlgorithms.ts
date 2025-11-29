@@ -207,7 +207,7 @@ function applyTreeLayout(
 ): Node[] {
   const NODE_WIDTH = 300;
   const NODE_HEIGHT = 70;
-  const levelSpacing = spacing * 1.5; // Vertical spacing between levels
+  const levelSpacing = spacing * 4; // Much more vertical space for connection clearance
   const siblingSpacing = NODE_WIDTH + 20; // Just 20px gap between nodes horizontally
   
   // Build tree structure
