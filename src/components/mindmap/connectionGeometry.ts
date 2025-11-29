@@ -116,24 +116,26 @@ export function computeBezierPath(
   // STEP 1: Determine optimal connection point on CHILD node
   // ============================================================
   // Choose edge of child based on where parent is located
+  // Inset from edges to target middle area of node
+  const inset = 40; // Distance from edge toward center
   let childConnectionX, childConnectionY;
   
   if (fromCenterX < toRect.left) {
-    // Parent is to the LEFT → connect to child's LEFT edge
-    childConnectionX = toRect.left;
+    // Parent is to the LEFT → connect to child's LEFT edge (inset)
+    childConnectionX = toRect.left + inset;
     childConnectionY = toCenterY;
   } else if (fromCenterX > toRect.right) {
-    // Parent is to the RIGHT → connect to child's RIGHT edge
-    childConnectionX = toRect.right;
+    // Parent is to the RIGHT → connect to child's RIGHT edge (inset)
+    childConnectionX = toRect.right - inset;
     childConnectionY = toCenterY;
   } else if (fromCenterY < toRect.top) {
-    // Parent is ABOVE → connect to child's TOP edge
+    // Parent is ABOVE → connect to child's TOP edge (inset)
     childConnectionX = toCenterX;
-    childConnectionY = toRect.top;
+    childConnectionY = toRect.top + inset;
   } else if (fromCenterY > toRect.bottom) {
-    // Parent is BELOW → connect to child's BOTTOM edge
+    // Parent is BELOW → connect to child's BOTTOM edge (inset)
     childConnectionX = toCenterX;
-    childConnectionY = toRect.bottom;
+    childConnectionY = toRect.bottom - inset;
   } else {
     // Parent overlaps child (rare) → use center
     childConnectionX = toCenterX;
@@ -165,32 +167,32 @@ export function computeBezierPath(
     // Spread connection points evenly along the appropriate edge
     
     if (isChildToRight) {
-      // Children are to the RIGHT → spread vertically along parent's RIGHT edge
+      // Children are to the RIGHT → spread vertically along parent's RIGHT edge (inset)
       const parentHeight = fromRect.bottom - fromRect.top;
       const spacing = parentHeight / (options.totalChildren + 1);  // +1 for padding
       const offsetY = spacing * (options.childIndex + 1);
-      start = { x: fromRect.right, y: fromRect.top + offsetY };
+      start = { x: fromRect.right - 40, y: fromRect.top + offsetY };
       
     } else if (isChildToLeft) {
-      // Children are to the LEFT → spread vertically along parent's LEFT edge
+      // Children are to the LEFT → spread vertically along parent's LEFT edge (inset)
       const parentHeight = fromRect.bottom - fromRect.top;
       const spacing = parentHeight / (options.totalChildren + 1);
       const offsetY = spacing * (options.childIndex + 1);
-      start = { x: fromRect.left, y: fromRect.top + offsetY };
+      start = { x: fromRect.left + 40, y: fromRect.top + offsetY };
       
     } else if (isChildBelow) {
-      // Children are BELOW → spread horizontally along parent's BOTTOM edge
+      // Children are BELOW → spread horizontally along parent's BOTTOM edge (inset)
       const parentWidth = fromRect.right - fromRect.left;
       const spacing = parentWidth / (options.totalChildren + 1);
       const offsetX = spacing * (options.childIndex + 1);
-      start = { x: fromRect.left + offsetX, y: fromRect.bottom };
+      start = { x: fromRect.left + offsetX, y: fromRect.bottom - 40 };
       
     } else if (isChildAbove) {
-      // Children are ABOVE → spread horizontally along parent's TOP edge
+      // Children are ABOVE → spread horizontally along parent's TOP edge (inset)
       const parentWidth = fromRect.right - fromRect.left;
       const spacing = parentWidth / (options.totalChildren + 1);
       const offsetX = spacing * (options.childIndex + 1);
-      start = { x: fromRect.left + offsetX, y: fromRect.top };
+      start = { x: fromRect.left + offsetX, y: fromRect.top + 40 };
       
     } else {
       // Child is in the "neutral zone" - use the edge closest to the child
@@ -203,17 +205,17 @@ export function computeBezierPath(
       const minDist = Math.min(distToBottom, distToTop, distToRight, distToLeft);
       
       if (minDist === distToBottom) {
-        // Use bottom edge
+        // Use bottom edge (inset)
         const parentWidth = fromRect.right - fromRect.left;
         const spacing = parentWidth / (options.totalChildren + 1);
         const offsetX = spacing * (options.childIndex + 1);
-        start = { x: fromRect.left + offsetX, y: fromRect.bottom };
+        start = { x: fromRect.left + offsetX, y: fromRect.bottom - 40 };
       } else if (minDist === distToTop) {
-        // Use top edge
+        // Use top edge (inset)
         const parentWidth = fromRect.right - fromRect.left;
         const spacing = parentWidth / (options.totalChildren + 1);
         const offsetX = spacing * (options.childIndex + 1);
-        start = { x: fromRect.left + offsetX, y: fromRect.top };
+        start = { x: fromRect.left + offsetX, y: fromRect.top + 40 };
       } else {
         // Fallback to perimeter point
         start = getPerimeterPoint(fromRect, toCenterX, toCenterY);
