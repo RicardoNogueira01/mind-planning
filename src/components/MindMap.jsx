@@ -2,7 +2,10 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
-import { Check } from 'lucide-react';
+import { Check, LayoutTemplate, Sparkles } from 'lucide-react';
+import TemplateGallery from './templates/TemplateGallery';
+import { instantiateTemplate } from '../templates/templateEngine';
+import { applyLayout } from '../utils/layoutAlgorithms';
 import MindMapToolbar from './mindmap/MindMapToolbar';
 import MindMapCanvas from './mindmap/MindMapCanvas';
 import NodeCard from './mindmap/NodeCard';
@@ -19,7 +22,6 @@ import CopiedNotification from './mindmap/CopiedNotification';
 import NodeToolbarPrimary from './mindmap/NodeToolbarPrimary';
 import NodeToolbarConnectionButton from './mindmap/NodeToolbarConnectionButton';
 import NodeToolbarSettingsToggle from './mindmap/NodeToolbarSettingsToggle';
-import NodeToolbarLayout from './mindmap/NodeToolbarLayout';
 import EmojiPicker from './popups/EmojiPicker';
 import NotesPopup from './popups/NotesPopup';
 import TagsPopup from './popups/TagsPopup';
@@ -95,6 +97,9 @@ export default function MindMap({ mapId, onBack }) {
   const [popupOpenFor, setPopupOpenFor] = useState({}); // { [nodeId]: { [popupName]: bool } }
   const [showShapesPalette, setShowShapesPalette] = useState(false); // Mobile shapes palette toggle
   const [showMobileToolbar, setShowMobileToolbar] = useState(false); // Mobile toolbar toggle
+  const [showTemplateGallery, setShowTemplateGallery] = useState(false); // Template selection modal
+  const [showLayoutMenu, setShowLayoutMenu] = useState(false); // Auto-layout dropdown
+  const [nodeLayoutMenuOpen, setNodeLayoutMenuOpen] = useState(null); // Track which node's layout menu is open
 
   // Per-node button anchor refs for popovers
   const detailsBtnRefs = useRef({});
@@ -556,6 +561,79 @@ export default function MindMap({ mapId, onBack }) {
   const toggleBookmark = () => {
     setIsBookmarked(!isBookmarked);
     // TODO: Save to backend/localStorage
+  };
+  
+  // Apply template
+  const handleApplyTemplate = (template) => {
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    
+    const { nodes: newNodes, connections: newConns } = instantiateTemplate(template, {
+      centerX,
+      centerY,
+      scaleNodes: 1,
+      preserveColors: true
+    });
+    
+    setNodes(newNodes);
+    setConnections(newConns);
+    setShowTemplateGallery(false);
+  };
+  
+  // Apply auto-layout
+  const handleApplyLayout = (layoutType) => {
+    const result = applyLayout(
+      nodes,
+      connections,
+      { type: layoutType, spacing: 80, animate: true },
+      window.innerWidth,
+      window.innerHeight
+    );
+    
+    setNodes(result.nodes);
+    setShowLayoutMenu(false);
+  };
+
+  // Apply layout to specific node's children only
+  const handleApplyNodeLayout = (parentNodeId, layoutType) => {
+    // Find all direct children of this node
+    const childConnections = connections.filter(conn => conn.from === parentNodeId);
+    const childNodeIds = childConnections.map(conn => conn.to);
+    
+    if (childNodeIds.length === 0) {
+      setNodeLayoutMenuOpen(null);
+      return; // No children to layout
+    }
+
+    // Get parent node position to center the layout around it
+    const parentNode = nodes.find(n => n.id === parentNodeId);
+    if (!parentNode) return;
+
+    // Filter to only children nodes + parent for reference
+    const childNodes = nodes.filter(n => childNodeIds.includes(n.id));
+    const subsetNodes = [parentNode, ...childNodes];
+    const subsetConnections = childConnections;
+
+    // Apply layout to subset
+    const result = applyLayout(
+      subsetNodes,
+      subsetConnections,
+      { type: layoutType, spacing: 80, animate: true },
+      window.innerWidth,
+      window.innerHeight
+    );
+
+    // Merge results back - only update children positions, keep parent fixed
+    const updatedNodes = nodes.map(node => {
+      if (childNodeIds.includes(node.id)) {
+        const layoutNode = result.nodes.find(n => n.id === node.id);
+        return layoutNode || node;
+      }
+      return node;
+    });
+
+    setNodes(updatedNodes);
+    setNodeLayoutMenuOpen(null);
   };
   
 
@@ -1600,8 +1678,70 @@ export default function MindMap({ mapId, onBack }) {
           />
         </div>
 
-        {/* Share, Bookmark, and Shapes Toggle Buttons - Top Right */}
+        {/* Template, Layout, Share, Bookmark, and Shapes Toggle Buttons - Top Right */}
         <div className="absolute top-2 md:top-4 right-2 md:right-4 z-20 flex items-center gap-1 md:gap-2">
+          {/* Template Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setShowTemplateGallery(true);
+              setShowShapesPalette(false);
+            }}
+            className="p-2 md:p-3 rounded-lg md:rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-all duration-200 touch-manipulation"
+            title="Use Template"
+          >
+            <LayoutTemplate className="w-4 h-4 md:w-5 md:h-5" />
+          </button>
+          
+          {/* Auto-Layout Button */}
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowLayoutMenu(!showLayoutMenu);
+                setShowShapesPalette(false);
+              }}
+              className={`p-2 md:p-3 rounded-lg md:rounded-xl shadow-lg border transition-all duration-200 touch-manipulation ${
+                showLayoutMenu
+                  ? 'bg-indigo-500 text-white border-indigo-600'
+                  : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300'
+              }`}
+              title="Auto Layout"
+            >
+              <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
+            
+            {/* Layout dropdown */}
+            {showLayoutMenu && (
+              <div className="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 p-2 z-50 w-56">
+                <h3 className="font-semibold text-sm text-gray-900 px-3 py-2 border-b">Choose Layout</h3>
+                <div className="flex flex-col gap-1 pt-2">
+                  {[
+                    { type: 'force-directed', label: 'Force Directed', icon: '⚡', desc: 'Physics-based' },
+                    { type: 'tree-vertical', label: 'Tree (Vertical)', icon: '🌲', desc: 'Top to bottom' },
+                    { type: 'tree-horizontal', label: 'Tree (Horizontal)', icon: '🌳', desc: 'Left to right' },
+                    { type: 'radial', label: 'Radial', icon: '🎯', desc: 'Circular layers' },
+                    { type: 'circular', label: 'Circular', icon: '⭕', desc: 'Perfect circle' },
+                    { type: 'grid', label: 'Grid Snap', icon: '⚙️', desc: 'Align to grid' }
+                  ].map(layout => (
+                    <button
+                      key={layout.type}
+                      onClick={() => handleApplyLayout(layout.type)}
+                      className="flex items-center gap-3 px-3 py-2 text-left hover:bg-indigo-50 rounded-lg transition-colors group"
+                    >
+                      <span className="text-xl">{layout.icon}</span>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900 group-hover:text-indigo-600">{layout.label}</div>
+                        <div className="text-xs text-gray-500">{layout.desc}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Share Button */}
           <button
             onClick={(e) => {
@@ -2099,15 +2239,63 @@ export default function MindMap({ mapId, onBack }) {
 
                   {/* Final controls group */}
                   <div className="col-span-4 lg:col-span-auto flex items-center gap-1 justify-center lg:justify-start">
-                    {/* Layout button (root only) */}
-                    {node.id === 'root' && isNodeToolbarExpanded(node.id) && (
-                      <NodeToolbarLayout
-                        shouldRender={true}
-                        layoutBtnRef={(el) => { layoutBtnRefs.current[node.id] = el; }}
-                        onToggleLayout={() => { /* layout mode toggle */ }}
-                        renderLayoutPopup={() => null}
-                      />
-                    )}
+                    {/* Auto-layout button - show for any node with children */}
+                    {(() => {
+                      const hasChildren = connections.some(conn => conn.from === node.id);
+                      return hasChildren && isNodeToolbarExpanded(node.id) && (
+                        <div className="relative">
+                          <button
+                            ref={(el) => { layoutBtnRefs.current[node.id] = el; }}
+                            className="node-toolbar-btn p-2 rounded-xl hover:bg-purple-50 text-purple-600 transition-colors duration-200 border border-purple-200 hover:border-purple-300"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setNodeLayoutMenuOpen(nodeLayoutMenuOpen === node.id ? null : node.id);
+                            }}
+                            title="Auto-arrange children"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+                            </svg>
+                          </button>
+                          
+                          {/* Layout dropdown menu */}
+                          {nodeLayoutMenuOpen === node.id && (
+                            <div 
+                              className="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-50 min-w-[240px]"
+                              style={{ animation: 'slideDown 0.2s ease-out' }}
+                            >
+                              <div className="px-3 py-2 border-b border-gray-100">
+                                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Auto-arrange Children</div>
+                              </div>
+                              
+                              {[
+                                { type: 'force-directed', emoji: '⚡', name: 'Force Directed', desc: 'Physics-based automatic spacing' },
+                                { type: 'tree-vertical', emoji: '🌲', name: 'Tree (Vertical)', desc: 'Top to bottom hierarchy' },
+                                { type: 'tree-horizontal', emoji: '🌳', name: 'Tree (Horizontal)', desc: 'Left to right hierarchy' },
+                                { type: 'radial', emoji: '🎯', name: 'Radial', desc: 'Concentric circles' },
+                                { type: 'circular', emoji: '⭕', name: 'Circular', desc: 'Arrange in circle' },
+                                { type: 'grid', emoji: '⚙️', name: 'Grid', desc: 'Snap to grid' },
+                              ].map((layout) => (
+                                <button
+                                  key={layout.type}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleApplyNodeLayout(node.id, layout.type);
+                                  }}
+                                  className="w-full px-4 py-3 hover:bg-purple-50 transition-colors text-left flex items-start gap-3 group"
+                                >
+                                  <span className="text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">{layout.emoji}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium text-gray-900 text-sm">{layout.name}</div>
+                                    <div className="text-xs text-gray-500 mt-0.5">{layout.desc}</div>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Settings toggle - Always at the end before delete */}
                     <NodeToolbarSettingsToggle
@@ -2265,6 +2453,24 @@ export default function MindMap({ mapId, onBack }) {
         }}
         onCancel={() => {
           setGroupMembershipDialog({ show: false, nodeId: null, nodeName: '', group: null });
+        }}
+      />
+      
+      {/* Template Gallery */}
+      <TemplateGallery
+        show={showTemplateGallery}
+        onSelectTemplate={handleApplyTemplate}
+        onClose={() => setShowTemplateGallery(false)}
+        onStartBlank={() => {
+          setNodes([{ 
+            id: 'root', 
+            text: 'Central Task', 
+            x: Math.round(window.innerWidth / 2), 
+            y: Math.round(window.innerHeight / 2),
+            bgColor: '#ffffff',
+            fontColor: '#2d3748'
+          }]);
+          setConnections([]);
         }}
       />
     </div>
