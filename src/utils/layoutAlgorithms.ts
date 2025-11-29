@@ -207,8 +207,10 @@ function applyTreeLayout(
 ): Node[] {
   const NODE_WIDTH = 300;
   const NODE_HEIGHT = 70;
-  const levelSpacing = spacing * 4; // Much more vertical space for connection clearance
-  const siblingSpacing = NODE_WIDTH + 20; // Just 20px gap between nodes horizontally
+  // For horizontal: levelSpacing = horizontal distance (needs NODE_WIDTH + gap)
+  // For vertical: levelSpacing = vertical distance (needs clearance for connections)
+  const levelSpacing = direction === 'horizontal' ? NODE_WIDTH + spacing : spacing * 4;
+  const siblingSpacing = direction === 'horizontal' ? NODE_HEIGHT + 15 : NODE_WIDTH + 20;
   
   // Build tree structure
   const nodeMap = new Map(nodes.map(n => [n.id, n]));
@@ -284,7 +286,9 @@ function applyTreeLayout(
     const pos = positioned.get(node.id);
     if (!pos) return node;
     
-    // Swap x and y for horizontal layout
+    // For horizontal layout, swap coordinates:
+    // - pos.x (sibling position) becomes y (vertical arrangement of siblings)
+    // - pos.y (depth/level) becomes x (horizontal progression through tree)
     if (direction === 'horizontal') {
       return { ...node, x: pos.y, y: pos.x };
     }
@@ -303,7 +307,7 @@ function applyRadialLayout(
   spacing: number
 ): Node[] {
   const NODE_WIDTH = 300;
-  const levelRadius = spacing * 1.2; // Compact level spacing
+  const levelRadius = spacing * 0.8; // Reduced from 1.2 to 0.8 for tighter spacing
   
   // Find roots
   const roots = nodes.filter(n => 

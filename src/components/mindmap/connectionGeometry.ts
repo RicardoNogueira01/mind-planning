@@ -149,11 +149,11 @@ export function computeBezierPath(
   let start: { x: number; y: number };
   
   // Determine which edge of the parent to use based on child position
-  // Use more lenient thresholds to group children on the same side
-  const isChildToRight = toCenterX > fromRect.right + 50;  // At least 50px to the right
-  const isChildToLeft = toCenterX < fromRect.left - 50;    // At least 50px to the left
-  const isChildBelow = toCenterY > fromCenterY + 50;        // Below parent center + threshold
-  const isChildAbove = toCenterY < fromCenterY - 50;        // Above parent center - threshold
+  // Priority: Check vertical position first (above/below), then horizontal (left/right)
+  const isChildAbove = toCenterY < fromRect.top;            // Above parent top edge
+  const isChildBelow = toCenterY > fromRect.bottom;         // Below parent bottom edge
+  const isChildToLeft = toCenterX < fromRect.left - 50;     // At least 50px to the left
+  const isChildToRight = toCenterX > fromRect.right + 50;   // At least 50px to the right
   
   // Dynamic grouping strategy:
   // - 1-10 children: DISTRIBUTE along edge for clean appearance
@@ -165,34 +165,43 @@ export function computeBezierPath(
   if (shouldDistribute && options?.childIndex !== undefined) {
     // ========== DISTRIBUTE MODE ==========
     // Spread connection points evenly along the appropriate edge
+    // Check vertical position FIRST for better routing
     
-    if (isChildToRight) {
-      // Children are to the RIGHT → spread vertically along parent's RIGHT edge (inset)
-      const parentHeight = fromRect.bottom - fromRect.top;
-      const spacing = parentHeight / (options.totalChildren + 1);  // +1 for padding
-      const offsetY = spacing * (options.childIndex + 1);
-      start = { x: fromRect.right - 40, y: fromRect.top + offsetY };
-      
-    } else if (isChildToLeft) {
-      // Children are to the LEFT → spread vertically along parent's LEFT edge (inset)
-      const parentHeight = fromRect.bottom - fromRect.top;
-      const spacing = parentHeight / (options.totalChildren + 1);
-      const offsetY = spacing * (options.childIndex + 1);
-      start = { x: fromRect.left + 40, y: fromRect.top + offsetY };
+    if (isChildAbove) {
+      // Children are ABOVE → align connection point with child's horizontal position
+      // Clamp to stay within parent bounds with inset
+      const connectionX = Math.max(
+        fromRect.left + 40,
+        Math.min(fromRect.right - 40, toCenterX)
+      );
+      start = { x: connectionX, y: fromRect.top + 40 };
       
     } else if (isChildBelow) {
-      // Children are BELOW → spread horizontally along parent's BOTTOM edge (inset)
-      const parentWidth = fromRect.right - fromRect.left;
-      const spacing = parentWidth / (options.totalChildren + 1);
-      const offsetX = spacing * (options.childIndex + 1);
-      start = { x: fromRect.left + offsetX, y: fromRect.bottom - 40 };
+      // Children are BELOW → align connection point with child's horizontal position
+      // Clamp to stay within parent bounds with inset
+      const connectionX = Math.max(
+        fromRect.left + 40,
+        Math.min(fromRect.right - 40, toCenterX)
+      );
+      start = { x: connectionX, y: fromRect.bottom - 40 };
+    
+    } else if (isChildToRight) {
+      // Children are to the RIGHT → align connection point with child's vertical position
+      // Clamp to stay within parent bounds with inset
+      const connectionY = Math.max(
+        fromRect.top + 40,
+        Math.min(fromRect.bottom - 40, toCenterY)
+      );
+      start = { x: fromRect.right - 40, y: connectionY };
       
-    } else if (isChildAbove) {
-      // Children are ABOVE → spread horizontally along parent's TOP edge (inset)
-      const parentWidth = fromRect.right - fromRect.left;
-      const spacing = parentWidth / (options.totalChildren + 1);
-      const offsetX = spacing * (options.childIndex + 1);
-      start = { x: fromRect.left + offsetX, y: fromRect.top + 40 };
+    } else if (isChildToLeft) {
+      // Children are to the LEFT → align connection point with child's vertical position
+      // Clamp to stay within parent bounds with inset
+      const connectionY = Math.max(
+        fromRect.top + 40,
+        Math.min(fromRect.bottom - 40, toCenterY)
+      );
+      start = { x: fromRect.left + 40, y: connectionY };
       
     } else {
       // Child is in the "neutral zone" - use the edge closest to the child
@@ -205,17 +214,19 @@ export function computeBezierPath(
       const minDist = Math.min(distToBottom, distToTop, distToRight, distToLeft);
       
       if (minDist === distToBottom) {
-        // Use bottom edge (inset)
-        const parentWidth = fromRect.right - fromRect.left;
-        const spacing = parentWidth / (options.totalChildren + 1);
-        const offsetX = spacing * (options.childIndex + 1);
-        start = { x: fromRect.left + offsetX, y: fromRect.bottom - 40 };
+        // Use bottom edge (inset) - align with child's horizontal position
+        const connectionX = Math.max(
+          fromRect.left + 40,
+          Math.min(fromRect.right - 40, toCenterX)
+        );
+        start = { x: connectionX, y: fromRect.bottom - 40 };
       } else if (minDist === distToTop) {
-        // Use top edge (inset)
-        const parentWidth = fromRect.right - fromRect.left;
-        const spacing = parentWidth / (options.totalChildren + 1);
-        const offsetX = spacing * (options.childIndex + 1);
-        start = { x: fromRect.left + offsetX, y: fromRect.top + 40 };
+        // Use top edge (inset) - align with child's horizontal position
+        const connectionX = Math.max(
+          fromRect.left + 40,
+          Math.min(fromRect.right - 40, toCenterX)
+        );
+        start = { x: connectionX, y: fromRect.top + 40 };
       } else {
         // Fallback to perimeter point
         start = getPerimeterPoint(fromRect, toCenterX, toCenterY);
@@ -234,56 +245,61 @@ export function computeBezierPath(
   const end = { x: childConnectionX, y: childConnectionY };
   
   // Bezier control points create the curve's "flow"
-  // Strategy: Go straight down/up first, THEN curve horizontally to destination
+  // Strategy: Prioritize vertical flow (up/down), then horizontal
   let c1x, c1y, c2x, c2y;
   
-  const horizontalDistance = Math.abs(end.x - start.x);
-  const verticalDistance = Math.abs(end.y - start.y);
+  const horizontalDistance = end.x - start.x; // Signed distance
+  const verticalDistance = end.y - start.y;   // Signed distance
+  const absHorizontal = Math.abs(horizontalDistance);
+  const absVertical = Math.abs(verticalDistance);
   
-  if (toRect.left > fromRect.right + 10) {
+  // Check VERTICAL position first (above/below), then horizontal (left/right)
+  if (end.y < start.y - 20) {
+    // ========== UPWARD FLOW ==========
+    // Child is ABOVE parent → go up with curve
+    const horizontalCurve = Math.min(absHorizontal * 0.6, Math.max(absHorizontal - 50, absHorizontal * 0.3));
+    
+    c1x = start.x + Math.sign(horizontalDistance) * horizontalCurve;
+    c1y = start.y;                         // Stay at start height initially
+    c2x = end.x;                           // At destination X
+    c2y = end.y + absVertical * 0.15;      // Near destination, slight curve
+    
+  } else if (end.y > start.y + 20) {
+    // ========== DOWNWARD FLOW ==========
+    // Child is BELOW parent → go down with curve
+    const horizontalCurve = Math.min(absHorizontal * 0.6, Math.max(absHorizontal - 50, absHorizontal * 0.3));
+    
+    c1x = start.x + Math.sign(horizontalDistance) * horizontalCurve;
+    c1y = start.y;                         // Stay at start height initially
+    c2x = end.x;                           // At destination X
+    c2y = end.y - absVertical * 0.15;      // Near destination, slight curve
+    
+  } else if (end.x > start.x + 10) {
     // ========== RIGHTWARD FLOW ==========
-    // Child is to the RIGHT → go horizontal first, then drop
+    // Child is to the RIGHT (and roughly same height)
+    const horizontalCurve = Math.min(absHorizontal * 0.6, Math.max(absHorizontal - 50, absHorizontal * 0.3));
+    c1x = start.x + horizontalCurve;
+    c1y = start.y;
+    c2x = end.x;
+    c2y = end.y - Math.sign(verticalDistance) * absVertical * 0.15;
     
-    // First control point: Move horizontally toward destination (maintain start height)
-    const horizontalCurve = Math.min(horizontalDistance * 0.6, Math.max(horizontalDistance - 50, horizontalDistance * 0.3));
-    c1x = start.x + horizontalCurve;       // Move horizontally toward child
-    c1y = start.y;                         // Stay at start height (horizontal)
-    
-    // Second control point: Drop down to destination height
-    c2x = end.x;                           // At destination X
-    c2y = end.y - verticalDistance * 0.15; // Near destination, slight curve
-    
-  } else if (toRect.right < fromRect.left - 10) {
+  } else if (end.x < start.x - 10) {
     // ========== LEFTWARD FLOW ==========
-    // Child is to the LEFT → go horizontal first, then drop
-    
-    const horizontalCurve = Math.min(horizontalDistance * 0.6, Math.max(horizontalDistance - 50, horizontalDistance * 0.3));
-    c1x = start.x - horizontalCurve;       // Move horizontally toward child
-    c1y = start.y;                         // Stay at start height (horizontal)
-    
-    // Second control point: Drop down to destination height
-    c2x = end.x;                           // At destination X
-    c2y = end.y - verticalDistance * 0.15; // Near destination, slight curve
+    // Child is to the LEFT (and roughly same height)
+    const horizontalCurve = Math.min(absHorizontal * 0.6, Math.max(absHorizontal - 50, absHorizontal * 0.3));
+    c1x = start.x - horizontalCurve;
+    c1y = start.y;
+    c2x = end.x;
+    c2y = end.y - Math.sign(verticalDistance) * absVertical * 0.15;
     
   } else {
-    // ========== VERTICAL FLOW ==========
-    // Nodes are vertically aligned → smooth S-curve or straight drop
-    const horizontalShift = Math.abs(end.x - start.x);
-    
-    if (horizontalShift < 50) {
-      // Nearly straight vertical - simple S-curve
-      const controlDistance = Math.min(verticalDistance * 0.4, 60);
-      c1x = start.x;
-      c1y = start.y + controlDistance;
-      c2x = end.x;
-      c2y = end.y - controlDistance;
-    } else {
-      // Needs horizontal adjustment - drop straight then move across
-      c1x = start.x;                           // Drop straight down first
-      c1y = start.y + verticalDistance * 0.85; // Drop almost all the way
-      c2x = end.x;                             // Move to destination X
-      c2y = end.y - verticalDistance * 0.15;   // Slight curve into destination
-    }
+    // ========== NEARLY STRAIGHT ==========
+    // Nodes are very close - simple S-curve
+    const controlDistance = Math.min(Math.max(absVertical, absHorizontal) * 0.4, 60);
+    c1x = start.x;
+    c1y = start.y + Math.sign(verticalDistance) * controlDistance;
+    c2x = end.x;
+    c2y = end.y - Math.sign(verticalDistance) * controlDistance;
   }
   
   // Construct SVG path string
