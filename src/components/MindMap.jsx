@@ -14,6 +14,7 @@ import ShareDialog from './mindmap/ShareDialog';
 import ParentSelectionDialog from './mindmap/ParentSelectionDialog';
 import DetachConfirmDialog from './mindmap/DetachConfirmDialog';
 import DeleteConfirmDialog from './mindmap/DeleteConfirmDialog';
+import GroupMembershipDialog from './mindmap/GroupMembershipDialog';
 import CopiedNotification from './mindmap/CopiedNotification';
 import NodeToolbarPrimary from './mindmap/NodeToolbarPrimary';
 import NodeToolbarConnectionButton from './mindmap/NodeToolbarConnectionButton';
@@ -130,9 +131,73 @@ export default function MindMap({ mapId, onBack }) {
   ]);
   const [rippleNodes, setRippleNodes] = useState(new Set()); // Track nodes with active ripple effect
   const rippleTimeouts = useRef({}); // Store timeout IDs for ripple cleanup
+  
+  // Group membership dialog state
+  const [groupMembershipDialog, setGroupMembershipDialog] = useState({
+    show: false,
+    nodeId: null,
+    nodeName: '',
+    group: null
+  });
+  const [joiningGroupNodes, setJoiningGroupNodes] = useState(new Set()); // Track nodes with join animation
+  const [pulsingGroups, setPulsingGroups] = useState(new Set()); // Track groups with pulse animation
 
   // Canvas ref
   const canvasRef = useRef(null);
+
+  // ============================================
+  // HELPER FUNCTIONS (must be before hooks that use them)
+  // ============================================
+  const getNodeGroup = (nodeId) => {
+    return nodeGroups.find(group => 
+      group.nodeIds && group.nodeIds.includes(nodeId)
+    );
+  };
+  
+  const constrainPositionToGroup = (x, y, groupBoundingBox) => {
+    const nodeWidth = 300;
+    const nodeHeight = 56;
+    const padding = 10; // Espaço mínimo das bordas
+    
+    // IMPORTANTE: x,y representa o CENTRO do node
+    // NodeCard renderiza em: left: node.x - 150, top: node.y - 42
+    // Então as bordas reais do node são:
+    // left: x - 150
+    // right: x + 150
+    // top: y - 42  
+    // bottom: y + 14 (y - 42 + 56)
+    
+    const nodeLeft = x - 150;
+    const nodeRight = x + 150;
+    const nodeTop = y - 42;
+    const nodeBottom = y + 14;
+    
+    const groupLeft = groupBoundingBox.x;
+    const groupRight = groupBoundingBox.x + groupBoundingBox.width;
+    const groupTop = groupBoundingBox.y;
+    const groupBottom = groupBoundingBox.y + groupBoundingBox.height;
+    
+    // Calcular novo x (centro) garantindo que as bordas fiquem dentro
+    let constrainedX = x;
+    if (nodeLeft < groupLeft + padding) {
+      constrainedX = groupLeft + padding + 150; // Ajustar para o centro
+    } else if (nodeRight > groupRight - padding) {
+      constrainedX = groupRight - padding - 150; // Ajustar para o centro
+    }
+    
+    // Calcular novo y (centro vertical) garantindo que as bordas fiquem dentro  
+    let constrainedY = y;
+    if (nodeTop < groupTop + padding) {
+      constrainedY = groupTop + padding + 42; // Ajustar para o centro
+    } else if (nodeBottom > groupBottom - padding) {
+      constrainedY = groupBottom - padding - 14; // Ajustar para o centro (y - 42 + 56 = y + 14)
+    }
+    
+    return {
+      x: constrainedX,
+      y: constrainedY
+    };
+  };
 
   // ============================================
   // HOOKS: Extract business logic
@@ -149,7 +214,7 @@ export default function MindMap({ mapId, onBack }) {
     positioning.findStackedChildPosition
   );
 
-  const dragging = useDragging(nodes, setNodes, canvasRef, mode, selectedNodes);
+  const dragging = useDragging(nodes, setNodes, canvasRef, mode, selectedNodes, getNodeGroup, constrainPositionToGroup, zoom);
 
   // Selection management hook
   const selection = useNodeSelection(nodes, selectedNodes, setSelectedNodes, selectionType);
@@ -608,6 +673,169 @@ export default function MindMap({ mapId, onBack }) {
       }
     }));
   };
+  
+  // Group membership helpers
+  const isNodeInGroupSpace = (nodeX, nodeY, group) => {
+    const { boundingBox } = group;
+    
+    // nodeX, nodeY representa o CENTRO do node
+    // NodeCard renderiza em: left: node.x - 150, top: node.y - 42
+    const nodeLeft = nodeX - 150;
+    const nodeRight = nodeX + 150;
+    const nodeTop = nodeY - 42;
+    const nodeBottom = nodeY + 14; // nodeY - 42 + 56
+    
+    const groupLeft = boundingBox.x;
+    const groupRight = boundingBox.x + boundingBox.width;
+    const groupTop = boundingBox.y;
+    const groupBottom = boundingBox.y + boundingBox.height;
+    
+    // Para detectar quando arrastar para dentro, verificar se o centro está dentro
+    // Isso torna mais intuitivo - não precisa arrastar todo o node
+    const centerIsInside = (
+      nodeX >= groupLeft &&
+      nodeX <= groupRight &&
+      nodeY >= groupTop &&
+      nodeY <= groupBottom
+    );
+    
+    return centerIsInside; // Usa o centro para detectar entrada no grupo
+  };
+  const checkNodeGroupMembership = (nodeId) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return;
+    
+    // Check each group to see if the node is now in its space
+    for (const group of nodeGroups) {
+      // Skip if node is already in this group
+      if (group.nodeIds && group.nodeIds.includes(nodeId)) continue;
+      
+      if (isNodeInGroupSpace(node.x, node.y, group)) {
+        // Node is in group space but not a member - show dialog
+        setGroupMembershipDialog({
+          show: true,
+          nodeId,
+          nodeName: node.text || 'Untitled',
+          group
+        });
+        return;
+      }
+    }
+  };
+  
+  const addNodeToGroup = (nodeId, group) => {
+    // Add animation class to node
+    setJoiningGroupNodes(prev => new Set(prev).add(nodeId));
+    
+    // Add pulse animation to group
+    setPulsingGroups(prev => new Set(prev).add(group.id));
+    
+    // Update group to include the node
+    setNodeGroups(prev => prev.map(g => {
+      if (g.id === group.id) {
+        return {
+          ...g,
+          nodeIds: [...(g.nodeIds || []), nodeId]
+        };
+      }
+      return g;
+    }));
+    
+    // Collect all collaborator IDs from the group
+    const collaboratorIds = [];
+    
+    // Add primary collaborator ID
+    if (group.collaborator && group.collaborator.id) {
+      collaboratorIds.push(group.collaborator.id);
+    }
+    
+    // Add extra collaborators IDs
+    if (group.extraCollaborators && Array.isArray(group.extraCollaborators)) {
+      group.extraCollaborators.forEach(collab => {
+        if (collab && collab.id && !collaboratorIds.includes(collab.id)) {
+          collaboratorIds.push(collab.id);
+        }
+      });
+    }
+    
+    // Update node to add all collaborator IDs
+    if (collaboratorIds.length > 0) {
+      setNodes(prev => prev.map(n => {
+        if (n.id === nodeId) {
+          const existingCollabs = Array.isArray(n.collaborators) ? n.collaborators : [];
+          const newCollabs = [...existingCollabs];
+          
+          // Add each collaborator ID if not already present
+          collaboratorIds.forEach(collabId => {
+            if (!newCollabs.includes(collabId)) {
+              newCollabs.push(collabId);
+            }
+          });
+          
+          return {
+            ...n,
+            collaborators: newCollabs
+          };
+        }
+        return n;
+      }));
+    }
+    
+    // Remove animations after delay
+    setTimeout(() => {
+      setJoiningGroupNodes(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(nodeId);
+        return newSet;
+      });
+      setPulsingGroups(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(group.id);
+        return newSet;
+      });
+    }, 600);
+  };
+  
+  const removeNodeFromGroup = (nodeId) => {
+    // Find the group containing this node
+    const group = getNodeGroup(nodeId);
+    if (!group) return;
+    
+    // Remove node from group's nodeIds
+    setNodeGroups(prev => prev.map(g => {
+      if (g.id === group.id) {
+        return {
+          ...g,
+          nodeIds: (g.nodeIds || []).filter(id => id !== nodeId)
+        };
+      }
+      return g;
+    }));
+    
+    // Remove all collaborators from the group from this node
+    const groupCollabIds = [];
+    if (group.collaborator?.id) {
+      groupCollabIds.push(group.collaborator.id);
+    }
+    if (group.extraCollaborators && Array.isArray(group.extraCollaborators)) {
+      group.extraCollaborators.forEach(collab => {
+        if (collab?.id) groupCollabIds.push(collab.id);
+      });
+    }
+    
+    if (groupCollabIds.length > 0) {
+      setNodes(prev => prev.map(n => {
+        if (n.id === nodeId) {
+          const existingCollabs = Array.isArray(n.collaborators) ? n.collaborators : [];
+          return {
+            ...n,
+            collaborators: existingCollabs.filter(collabId => !groupCollabIds.includes(collabId))
+          };
+        }
+        return n;
+      }));
+    }
+  };
 
   // Toolbar expansion helpers - per-node
   const isNodeToolbarExpanded = (nodeId) => expandedNodeToolbars[nodeId] === true;
@@ -636,28 +864,35 @@ export default function MindMap({ mapId, onBack }) {
       const { boundingBox, collaborator } = group;
       const badgeSize = 30;
       const badgeOffset = 15;
+      const isPulsing = pulsingGroups.has(group.id);
 
       return (
         <React.Fragment key={group.id}>
           {/* Group dashed area; gets highlighted when moving */}
-          <div style={{
-            position: 'absolute',
-            left: boundingBox.x,
-            top: boundingBox.y,
-            width: boundingBox.width,
-            height: boundingBox.height,
-            border: movingGroupId === group.id ? `3px solid ${collaborator.color}` : `3px dashed ${collaborator.color}`,
-            borderRadius: '12px',
-            background: movingGroupId === group.id
-              ? `repeating-linear-gradient(45deg, ${collaborator.color}10, ${collaborator.color}10 10px, transparent 10px, transparent 20px)`
-              : `${collaborator.color}10`,
-            pointerEvents: 'none',
-            zIndex: 4,
-            boxShadow: movingGroupId === group.id
-              ? `0 0 0 2px ${collaborator.color}40, 0 10px 30px ${collaborator.color}33`
-              : `0 0 0 1px ${collaborator.color}20`,
-            transition: 'box-shadow 120ms ease-out, border 120ms ease-out, background 120ms ease-out'
-          }} />
+          <div 
+            className={isPulsing ? 'animate-pulse-ring' : ''}
+            style={{
+              position: 'absolute',
+              left: boundingBox.x,
+              top: boundingBox.y,
+              width: boundingBox.width,
+              height: boundingBox.height,
+              border: movingGroupId === group.id ? `3px solid ${collaborator.color}` : `3px dashed ${collaborator.color}`,
+              borderRadius: '12px',
+              background: movingGroupId === group.id
+                ? `repeating-linear-gradient(45deg, ${collaborator.color}10, ${collaborator.color}10 10px, transparent 10px, transparent 20px)`
+                : `${collaborator.color}10`,
+              pointerEvents: 'none',
+              zIndex: 4,
+              color: collaborator.color,
+              boxShadow: movingGroupId === group.id
+                ? `0 0 0 2px ${collaborator.color}40, 0 10px 30px ${collaborator.color}33`
+                : isPulsing
+                  ? `0 0 0 4px ${collaborator.color}40, 0 0 20px ${collaborator.color}50`
+                  : `0 0 0 1px ${collaborator.color}20`,
+              transition: 'box-shadow 120ms ease-out, border 120ms ease-out, background 120ms ease-out'
+            }} 
+          />
 
           {/* If movingGroupId matches, render a draggable overlay for the group box */}
           {movingGroupId === group.id && (
@@ -1068,10 +1303,10 @@ export default function MindMap({ mapId, onBack }) {
           setIsTouchDraggingNode(true);
           setTouchDragNodeId(nodeId);
           
-          // Calculate offset between touch point and node position
+          // Calculate offset between touch point and node position (considering zoom)
           setTouchDragOffset({
-            x: touch.clientX - rect.left - (node.x + dragging.pan.x),
-            y: touch.clientY - rect.top - (node.y + dragging.pan.y),
+            x: (touch.clientX - rect.left - dragging.pan.x) / zoom - node.x,
+            y: (touch.clientY - rect.top - dragging.pan.y) / zoom - node.y,
           });
           
           // Store initial positions for multi-select drag
@@ -1127,8 +1362,16 @@ export default function MindMap({ mapId, onBack }) {
           if (!canvasRef.current) return;
           
           const rect = canvasRef.current.getBoundingClientRect();
-          const newX = lastTouchPositionRef.current.x - rect.left - dragging.pan.x - touchDragOffset.x;
-          const newY = lastTouchPositionRef.current.y - rect.top - dragging.pan.y - touchDragOffset.y;
+          let newX = (lastTouchPositionRef.current.x - rect.left - dragging.pan.x) / zoom - touchDragOffset.x;
+          let newY = (lastTouchPositionRef.current.y - rect.top - dragging.pan.y) / zoom - touchDragOffset.y;
+          
+          // Check if node is in a group and constrain movement
+          const group = getNodeGroup(touchDragNodeId);
+          if (group && group.boundingBox) {
+            const constrained = constrainPositionToGroup(newX, newY, group.boundingBox);
+            newX = constrained.x;
+            newY = constrained.y;
+          }
           
           // If multiple nodes are selected, move them all together
           if (selectedNodes.includes(touchDragNodeId) && selectedNodes.length > 1 && Object.keys(touchInitialPositions).length > 0) {
@@ -1138,10 +1381,21 @@ export default function MindMap({ mapId, onBack }) {
             setNodes(prev =>
               prev.map(n => {
                 if (selectedNodes.includes(n.id) && touchInitialPositions[n.id]) {
+                  let finalX = touchInitialPositions[n.id].x + deltaX;
+                  let finalY = touchInitialPositions[n.id].y + deltaY;
+                  
+                  // Apply group constraints to each selected node if applicable
+                  const nodeGroup = getNodeGroup(n.id);
+                  if (nodeGroup && nodeGroup.boundingBox) {
+                    const constrained = constrainPositionToGroup(finalX, finalY, nodeGroup.boundingBox);
+                    finalX = constrained.x;
+                    finalY = constrained.y;
+                  }
+                  
                   return {
                     ...n,
-                    x: touchInitialPositions[n.id].x + deltaX,
-                    y: touchInitialPositions[n.id].y + deltaY
+                    x: finalX,
+                    y: finalY
                   };
                 }
                 return n;
@@ -1202,6 +1456,9 @@ export default function MindMap({ mapId, onBack }) {
       touchAnimationFrameRef.current = null;
     }
     
+    const wasDraggingNode = touchDragNodeId !== null;
+    const draggedNodeId = touchDragNodeId;
+    
     if (e.touches.length === 0) {
       setLastTouchDistance(null);
       setTouchStartPos(null);
@@ -1209,6 +1466,11 @@ export default function MindMap({ mapId, onBack }) {
       setTouchDragNodeId(null);
       setTouchInitialPositions({});
       setIsTouchPanning(false);
+      
+      // Check if node was dragged and should join a group
+      if (wasDraggingNode && draggedNodeId) {
+        checkNodeGroupMembership(draggedNodeId);
+      }
     } else if (e.touches.length === 1) {
       // One finger left, reset pinch zoom
       setLastTouchDistance(null);
@@ -1261,7 +1523,12 @@ export default function MindMap({ mapId, onBack }) {
         }}
         onMouseUp={() => {
           stopSelection();
-          dragging.stopPanning();
+          const dragInfo = dragging.stopPanning();
+          
+          // Check if node was dragged and should join a group
+          if (dragInfo && dragInfo.wasDraggingNode && dragInfo.draggedNodeId) {
+            checkNodeGroupMembership(dragInfo.draggedNodeId);
+          }
         }}
         onMouseLeave={() => {
           stopSelection();
@@ -1487,6 +1754,7 @@ export default function MindMap({ mapId, onBack }) {
                 hasProgress={hasProgress}
                 fxOptions={fxOptions}
                 hasRipple={rippleNodes.has(node.id)}
+                className={joiningGroupNodes.has(node.id) ? 'animate-join-group' : ''}
                 onMouseDown={(e) => {
                   // allow dragging via startPanning handler; nothing here
                 }}
@@ -1599,6 +1867,29 @@ export default function MindMap({ mapId, onBack }) {
                   })}
                 </div>
               )}
+              
+              {/* Remove from group button - Shows when node is selected AND in a group */}
+              {selectedNodes.includes(node.id) && (() => {
+                const nodeGroup = getNodeGroup(node.id);
+                if (!nodeGroup) return null;
+                return (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeNodeFromGroup(node.id);
+                    }}
+                    className="absolute top-1 right-1 w-7 h-7 rounded-full flex items-center justify-center bg-red-500 hover:bg-red-600 text-white shadow-lg transition-all duration-200 z-40 hover:scale-110"
+                    title={`Remove from ${nodeGroup.collaborator?.name || 'group'}'s group`}
+                    style={{
+                      boxShadow: `0 2px 8px ${nodeGroup.collaborator?.color || '#ef4444'}40`
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 6L6 18M6 6l12 12"></path>
+                    </svg>
+                  </button>
+                );
+              })()}
               
               {/* Per-node toolbar overlay - Only visible when exactly ONE node is selected */}
               {selectedNodes.length === 1 && selectedNodes.includes(node.id) && (
@@ -1960,6 +2251,20 @@ export default function MindMap({ mapId, onBack }) {
         onConfirm={() => {
           nodeOps.deleteNodes([deleteConfirmNodeId]);
           setDeleteConfirmNodeId(null);
+        }}
+      />
+      
+      {/* Group Membership Confirmation Dialog */}
+      <GroupMembershipDialog
+        show={groupMembershipDialog.show}
+        group={groupMembershipDialog.group}
+        nodeName={groupMembershipDialog.nodeName}
+        onConfirm={() => {
+          addNodeToGroup(groupMembershipDialog.nodeId, groupMembershipDialog.group);
+          setGroupMembershipDialog({ show: false, nodeId: null, nodeName: '', group: null });
+        }}
+        onCancel={() => {
+          setGroupMembershipDialog({ show: false, nodeId: null, nodeName: '', group: null });
         }}
       />
     </div>

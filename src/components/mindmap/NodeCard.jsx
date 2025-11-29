@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatching, connectionMode, isConnectionSource, isAlreadyConnected, isParentOfSelected, isChildOfSelected, hasProgress, fxOptions, hasRipple, children }) => {
+const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatching, connectionMode, isConnectionSource, isAlreadyConnected, isParentOfSelected, isChildOfSelected, hasProgress, fxOptions, hasRipple, className, children }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editText, setEditText] = React.useState(node.text || '');
   const [isHovering, setIsHovering] = React.useState(false);
@@ -72,6 +72,8 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
         fxOptions?.enabled && fxOptions?.gradientRing && selected ? 'animate-gradient-ring' : ''
       } ${
         shouldSpring ? 'animate-springy' : ''
+      } ${
+        className || ''
       }`}
       style={{ 
         left: node.x - 150, 
@@ -200,6 +202,7 @@ NodeCard.propTypes = {
   hasProgress: PropTypes.bool,
   fxOptions: PropTypes.object,
   hasRipple: PropTypes.bool,
+  className: PropTypes.string,
   children: PropTypes.node
 };
 

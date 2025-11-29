@@ -11,7 +11,10 @@ export function useDragging(
   setNodes: (nodes: Node[] | ((prev: Node[]) => Node[])) => void,
   canvasRef: React.RefObject<HTMLDivElement>,
   mode: string,
-  selectedNodes: string[]
+  selectedNodes: string[],
+  getNodeGroup?: (nodeId: string) => any,
+  constrainPositionToGroup?: (x: number, y: number, boundingBox: any) => { x: number; y: number },
+  zoom?: number
 ) {
   // Dragging state
   const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
@@ -43,10 +46,11 @@ export function useDragging(
             const node = nodes.find(n => n.id === id);
             if (node && canvasRef.current) {
               const rect = canvasRef.current.getBoundingClientRect();
+              const currentZoom = zoom || 1;
               setDraggingNodeId(id);
               setDragOffset({
-                x: e.clientX - rect.left - (node.x + pan.x),
-                y: e.clientY - rect.top - (node.y + pan.y),
+                x: (e.clientX - rect.left - pan.x) / currentZoom - node.x,
+                y: (e.clientY - rect.top - pan.y) / currentZoom - node.y,
               });
               
               // Store initial positions for all selected nodes if this is a multi-select drag
@@ -99,8 +103,19 @@ export function useDragging(
       if (draggingNodeId) {
         if (canvasRef.current) {
           const rect = canvasRef.current.getBoundingClientRect();
-          const newX = e.clientX - rect.left - pan.x - dragOffset.x;
-          const newY = e.clientY - rect.top - pan.y - dragOffset.y;
+          const currentZoom = zoom || 1;
+          let newX = (e.clientX - rect.left - pan.x) / currentZoom - dragOffset.x;
+          let newY = (e.clientY - rect.top - pan.y) / currentZoom - dragOffset.y;
+          
+          // Check if node is in a group and constrain movement
+          if (getNodeGroup && constrainPositionToGroup) {
+            const group = getNodeGroup(draggingNodeId);
+            if (group && group.boundingBox) {
+              const constrained = constrainPositionToGroup(newX, newY, group.boundingBox);
+              newX = constrained.x;
+              newY = constrained.y;
+            }
+          }
           
           // If multiple nodes are selected, move them all together
           if (selectedNodes.includes(draggingNodeId) && selectedNodes.length > 1 && Object.keys(initialPositions).length > 0) {
@@ -112,10 +127,23 @@ export function useDragging(
               setNodes(prev =>
                 prev.map(n => {
                   if (selectedNodes.includes(n.id) && initialPositions[n.id]) {
+                    let finalX = initialPositions[n.id].x + deltaX;
+                    let finalY = initialPositions[n.id].y + deltaY;
+                    
+                    // Apply group constraints to each selected node if applicable
+                    if (getNodeGroup && constrainPositionToGroup) {
+                      const nodeGroup = getNodeGroup(n.id);
+                      if (nodeGroup && nodeGroup.boundingBox) {
+                        const constrained = constrainPositionToGroup(finalX, finalY, nodeGroup.boundingBox);
+                        finalX = constrained.x;
+                        finalY = constrained.y;
+                      }
+                    }
+                    
                     return {
                       ...n,
-                      x: initialPositions[n.id].x + deltaX,
-                      y: initialPositions[n.id].y + deltaY
+                      x: finalX,
+                      y: finalY
                     };
                   }
                   return n;
@@ -141,17 +169,23 @@ export function useDragging(
         y: e.clientY - panRef.current.startY,
       });
     },
-    [draggingNodeId, pan, dragOffset, isPanning, setNodes, canvasRef, selectedNodes, initialPositions]
+    [draggingNodeId, pan, dragOffset, isPanning, setNodes, canvasRef, selectedNodes, initialPositions, getNodeGroup, constrainPositionToGroup, nodes, zoom]
   );
 
   /**
    * Handle mouse up - stop dragging/panning
    */
   const stopPanning = useCallback(() => {
+    const wasDraggingNode = draggingNodeId !== null;
+    const draggedNodeId = draggingNodeId;
+    
     setIsPanning(false);
     setDraggingNodeId(null);
     setInitialPositions({});
-  }, []);
+    
+    // Return info about what was being dragged for the caller to handle
+    return { wasDraggingNode, draggedNodeId };
+  }, [draggingNodeId]);
 
   return {
     // Dragging state

@@ -69,6 +69,41 @@ body {
   }
 }
 
+@keyframes scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0px currentColor;
+  }
+  100% {
+    box-shadow: 0 0 0 20px transparent;
+  }
+}
+
+@keyframes join-group {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 .animate-ripple {
   animation: ripple 900ms ease-out forwards;
   border-radius: 9999px;
@@ -116,6 +151,18 @@ body {
 
 .animate-fade-in {
   animation: fade-in 0.3s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 0.6s cubic-bezier(0, 0, 0.2, 1);
+}
+
+.animate-join-group {
+  animation: join-group 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 
