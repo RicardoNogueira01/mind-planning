@@ -85,7 +85,7 @@ export default function TemplateGallery({ show, onSelectTemplate, onClose, onSta
               placeholder="Search templates..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
             />
           </div>
           
@@ -98,11 +98,11 @@ export default function TemplateGallery({ show, onSelectTemplate, onClose, onSta
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
                   selectedCategory === cat.id
                     ? 'bg-blue-500 text-white shadow-md shadow-blue-500/30'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
                 }`}
               >
                 <span>{cat.icon}</span>
-                <span>{cat.label}</span>
+                <span className={selectedCategory === cat.id ? 'text-white' : 'text-gray-900'}>{cat.label}</span>
               </button>
             ))}
           </div>

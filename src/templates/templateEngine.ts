@@ -23,6 +23,7 @@ export interface InstantiationOptions {
 /**
  * Instantiate a template at a specific canvas position
  * Creates new unique IDs for all nodes and connections
+ * Applies collision detection to prevent overlapping nodes
  */
 export function instantiateTemplate(
   template: Template,
@@ -36,6 +37,10 @@ export function instantiateTemplate(
     customRootText
   } = options;
 
+  const NODE_WIDTH = 300;
+  const NODE_HEIGHT = 70;
+  const MIN_GAP = 30; // Minimum gap between nodes
+
   // Create ID mapping for nodes
   const idMap = new Map<string, string>();
   
@@ -46,27 +51,65 @@ export function instantiateTemplate(
     idMap.set(oldId, newId);
   });
 
-  // Transform nodes with new IDs and positions
-  const nodes: Node[] = template.nodeStructure.nodes.map((nodeTemplate, index) => {
+  // Transform nodes with new IDs and positions, with collision detection
+  const nodes: Node[] = [];
+  const occupiedRects: Array<{x: number, y: number, width: number, height: number}> = [];
+
+  template.nodeStructure.nodes.forEach((nodeTemplate, index) => {
     const oldId = index === 0 ? 'root' : getNodeKeyFromIndex(template, index);
     const newId = idMap.get(oldId)!;
 
-    // Calculate position relative to center
-    const x = centerX + (nodeTemplate.x * scaleNodes);
-    const y = centerY + (nodeTemplate.y * scaleNodes);
+    // Calculate initial position relative to center
+    let x = centerX + (nodeTemplate.x * scaleNodes);
+    let y = centerY + (nodeTemplate.y * scaleNodes);
+
+    // Check for collisions and adjust position if needed
+    let attempts = 0;
+    const maxAttempts = 50;
+    while (attempts < maxAttempts) {
+      const hasCollision = occupiedRects.some(rect => {
+        const overlap = !(
+          x + NODE_WIDTH + MIN_GAP < rect.x ||
+          x - MIN_GAP > rect.x + rect.width ||
+          y + NODE_HEIGHT + MIN_GAP < rect.y ||
+          y - MIN_GAP > rect.y + rect.height
+        );
+        return overlap;
+      });
+
+      if (!hasCollision) {
+        break;
+      }
+
+      // Move to avoid collision - try different directions
+      if (attempts % 4 === 0) {
+        x += NODE_WIDTH + MIN_GAP; // Move right
+      } else if (attempts % 4 === 1) {
+        y += NODE_HEIGHT + MIN_GAP; // Move down
+      } else if (attempts % 4 === 2) {
+        x -= NODE_WIDTH + MIN_GAP; // Move left
+      } else {
+        y -= NODE_HEIGHT + MIN_GAP; // Move up
+      }
+
+      attempts++;
+    }
+
+    // Record occupied space
+    occupiedRects.push({ x, y, width: NODE_WIDTH, height: NODE_HEIGHT });
 
     // Override root text if provided
     const text = index === 0 && customRootText ? customRootText : nodeTemplate.text;
 
-    return {
+    nodes.push({
       id: newId,
       text,
-      x,
-      y,
+      x: Math.round(x),
+      y: Math.round(y),
       bgColor: preserveColors ? nodeTemplate.bgColor : '#ffffff',
       fontColor: preserveColors ? nodeTemplate.fontColor : '#2d3748',
       ...nodeTemplate
-    };
+    });
   });
 
   // Transform connections with new IDs
