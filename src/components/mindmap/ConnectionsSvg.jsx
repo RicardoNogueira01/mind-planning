@@ -89,8 +89,15 @@ export default function ConnectionsSvg({
           return sibDirection === direction;
         });
         
-        const childIndex = siblingsInSameDirection.findIndex(c => c.id === conn.id);
-        const totalChildren = siblingsInSameDirection.length;
+        // Sort siblings by their Y position (top to bottom) for proper distribution
+        const sortedSiblings = [...siblingsInSameDirection].sort((a, b) => {
+          const aPosY = (nodePositions[a.to].top + nodePositions[a.to].bottom) / 2;
+          const bPosY = (nodePositions[b.to].top + nodePositions[b.to].bottom) / 2;
+          return aPosY - bPosY;
+        });
+        
+        const childIndex = sortedSiblings.findIndex(c => c.id === conn.id);
+        const totalChildren = sortedSiblings.length;
         
         const { d: pathData, label: labelPoint } = computeBezierPath(fromPos, toPos, {
           childIndex,

@@ -51,7 +51,7 @@ export function useNodeOperations(
       fontColor: isDarkMode ? '#f3f4f6' : '#2d3748'
     };
 
-    // Add new child
+    // Add new child and rebalance
     const newNodes = nodes.concat([child]);
     const newConnections = connections.concat([{ id: `conn-${Date.now()}`, from: parentId, to: id }]);
 
@@ -62,7 +62,7 @@ export function useNodeOperations(
     setConnections(newConnections);
   }, [connections, findStackedChildPosition, isDarkMode, NODE_WIDTH, nodes, setConnections, setNodes]);
 
-  // Helper function to rebalance children around their parent
+  // Improved rebalancing: maintains child order and spacing, aligns them properly
   const rebalanceChildren = useCallback((nodeList: Node[], connectionList: Connection[], parentId: string): Node[] => {
     const parent = nodeList.find(n => n.id === parentId);
     if (!parent) return nodeList;
@@ -83,35 +83,53 @@ export function useNodeOperations(
     const isHorizontal = Math.abs(dx) > Math.abs(dy);
 
     const totalChildren = children.length;
-    const halfCount = Math.floor(totalChildren / 2);
-    const centerOffset = totalChildren % 2 === 0 ? (NODE_HEIGHT + 25) / 2 : 0;
+    const SPACING = NODE_HEIGHT + 25; // Spacing between children
 
-    // Reposition all children to be balanced
-    const rebalancedChildren = children.map((child, index) => {
-      const childPosition = index - halfCount;
-      const offset = childPosition * (NODE_HEIGHT + 25) + centerOffset;
+    if (isHorizontal) {
+      // Children are LEFT or RIGHT of parent
+      // Sort children by their current Y position (top to bottom)
+      const sortedChildren = [...children].sort((a, b) => a.y - b.y);
+      
+      // Keep same X (left or right side), redistribute Y positions evenly
+      // Center the group around parent's Y
+      const totalHeight = (totalChildren - 1) * SPACING;
+      const startY = parent.y - (totalHeight / 2);
+      
+      const rebalancedChildren = sortedChildren.map((child, index) => ({
+        ...child,
+        x: firstChild.x, // Keep same X position as first child
+        y: startY + (index * SPACING)
+      }));
 
-      if (isHorizontal) {
-        // Keep X position (left or right of parent), adjust Y
-        return {
-          ...child,
-          y: parent.y + offset
-        };
-      } else {
-        // Keep Y position (up or down of parent), adjust X
-        return {
-          ...child,
-          x: parent.x + offset
-        };
-      }
-    });
+      // Merge rebalanced children back
+      return nodeList.map(node => {
+        const rebalanced = rebalancedChildren.find(c => c.id === node.id);
+        return rebalanced || node;
+      });
+      
+    } else {
+      // Children are ABOVE or BELOW parent
+      // Sort children by their current X position (left to right)
+      const sortedChildren = [...children].sort((a, b) => a.x - b.x);
+      
+      // Keep same Y (up or down side), redistribute X positions evenly
+      // Center the group around parent's X
+      const totalWidth = (totalChildren - 1) * SPACING;
+      const startX = parent.x - (totalWidth / 2);
+      
+      const rebalancedChildren = sortedChildren.map((child, index) => ({
+        ...child,
+        x: startX + (index * SPACING),
+        y: firstChild.y // Keep same Y position as first child
+      }));
 
-    // Merge rebalanced children back into node list
-    return nodeList.map(node => {
-      const rebalanced = rebalancedChildren.find(c => c.id === node.id);
-      return rebalanced || node;
-    });
-  }, []);
+      // Merge rebalanced children back
+      return nodeList.map(node => {
+        const rebalanced = rebalancedChildren.find(c => c.id === node.id);
+        return rebalanced || node;
+      });
+    }
+  }, [NODE_HEIGHT]);
 
   const deleteNodes = useCallback((ids: string[]) => {
     if (!ids?.length) return;

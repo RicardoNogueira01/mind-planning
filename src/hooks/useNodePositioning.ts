@@ -70,11 +70,10 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
   }, [nodes]);
 
   /**
-   * Position children intelligently with auto-balancing:
-   * - Detects available space around parent in all directions
-   * - Distributes children evenly above and below parent (or left/right)
-   * - Keeps parent centered among its children
-   * - Checks for collisions with existing nodes
+   * Position children intelligently without moving existing children:
+   * - For first child: Detects available space around parent
+   * - For additional children: Stacks them in the same direction as first child
+   * - NO auto-rebalancing - children stay where placed
    */
   const findStackedChildPosition = useCallback((parentId: string, preferredX: number, preferredY: number): Position => {
     const parent = nodes.find(n => n.id === parentId);
@@ -129,7 +128,7 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
       return { x: bestDirection.x, y: bestDirection.y };
     }
 
-    // If children exist, determine layout direction and balance them
+    // If children exist, stack new child in same direction as siblings
     const firstChild = childNodes[0];
     const dx = firstChild.x - parent.x;
     const dy = firstChild.y - parent.y;
@@ -142,48 +141,51 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
       const isRight = dx > 0;
       const targetX = isRight ? parent.x + OFFSET_DISTANCE : parent.x - OFFSET_DISTANCE;
       
-      // Calculate balanced vertical position
-      // Distribute children evenly: half above, half below parent
-      const newChildIndex = childNodes.length; // 0-indexed position of new child
-      const totalChildren = childNodes.length + 1; // Including the new one
+      // Stack vertically: find the highest or lowest child and add below/above
+      const childrenYPositions = childNodes.map(c => c.y);
+      const maxY = Math.max(...childrenYPositions);
+      const minY = Math.min(...childrenYPositions);
       
-      // Calculate position to keep parent centered
-      // For odd numbers (1,3,5): middle child aligns with parent
-      // For even numbers (2,4,6): children split evenly above/below
-      const halfCount = Math.floor(totalChildren / 2);
-      const centerOffset = totalChildren % 2 === 0 ? (NODE_HEIGHT + MARGIN) / 2 : 0;
+      // Determine if children are stacking upward or downward
+      const lastChildY = childNodes[childNodes.length - 1].y;
+      const stackingDown = lastChildY >= parent.y;
       
-      const childPosition = newChildIndex - halfCount;
-      const yOffset = childPosition * (NODE_HEIGHT + MARGIN) + centerOffset;
-      
-      return {
-        x: targetX,
-        y: parent.y + yOffset
-      };
+      if (stackingDown) {
+        // Add below the lowest child
+        return {
+          x: targetX,
+          y: maxY + NODE_HEIGHT + MARGIN
+        };
+      } else {
+        // Add above the highest child
+        return {
+          x: targetX,
+          y: minY - NODE_HEIGHT - MARGIN
+        };
+      }
     } else {
       // Children are positioned vertically (up or down)
       const isDown = dy > 0;
-      const targetX = firstChild.x;
+      const targetY = isDown ? parent.y + OFFSET_DISTANCE : parent.y - OFFSET_DISTANCE;
       
-      // Calculate balanced horizontal position
-      const newChildIndex = childNodes.length;
-      const totalChildren = childNodes.length + 1;
+      // Stack horizontally: find rightmost or leftmost child and add next to it
+      const childrenXPositions = childNodes.map(c => c.x);
+      const maxX = Math.max(...childrenXPositions);
+      const minX = Math.min(...childrenXPositions);
       
-      const halfCount = Math.floor(totalChildren / 2);
-      const centerOffset = totalChildren % 2 === 0 ? (NODE_HEIGHT + MARGIN) / 2 : 0;
+      // Determine stacking direction
+      const lastChildX = childNodes[childNodes.length - 1].x;
+      const stackingRight = lastChildX >= parent.x;
       
-      const childPosition = newChildIndex - halfCount;
-      const yOffset = childPosition * (NODE_HEIGHT + MARGIN) + centerOffset;
-      
-      if (isDown) {
+      if (stackingRight) {
         return {
-          x: targetX,
-          y: parent.y + OFFSET_DISTANCE + yOffset
+          x: maxX + NODE_WIDTH + MARGIN,
+          y: targetY
         };
       } else {
         return {
-          x: targetX,
-          y: parent.y - OFFSET_DISTANCE + yOffset
+          x: minX - NODE_WIDTH - MARGIN,
+          y: targetY
         };
       }
     }
