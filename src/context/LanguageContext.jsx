@@ -27,12 +27,17 @@ export const LanguageProvider = ({ children }) => {
     setLanguage(prev => prev === 'en' ? 'pt' : 'en');
   };
 
+  const changeLanguage = (newLanguage) => {
+    setLanguage(newLanguage);
+  };
+
   const t = (key) => translate(key, language);
 
   const value = useMemo(() => ({
     language,
     setLanguage,
     toggleLanguage,
+    changeLanguage,
     t,
   }), [language]);
 

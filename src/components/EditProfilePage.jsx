@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 import TopBar from './shared/TopBar';
 import { 
   ArrowLeft,
@@ -21,6 +22,7 @@ import {
 const EditProfilePage = () => {
   const { memberId } = useParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [feedbackMessage, setFeedbackMessage] = useState(null);
   
   const [formData, setFormData] = useState({

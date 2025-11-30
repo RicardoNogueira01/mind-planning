@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 import TopBar from './shared/TopBar';
 import { 
   ArrowLeft, 
@@ -28,6 +29,8 @@ import {
 } from 'lucide-react';
 
 const TeamMembersManager = () => {
+  const { t } = useLanguage();
+  
   // Modal state
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [showEditMemberModal, setShowEditMemberModal] = useState(false);

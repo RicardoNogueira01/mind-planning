@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
-import { Search, Bell, Languages, CheckCircle, AlertTriangle, Users, Calendar, FileText, X } from 'lucide-react';
+import { Search, Bell, Languages, CheckCircle, AlertTriangle, Users, Calendar, FileText, X, Check } from 'lucide-react';
 import PropTypes from 'prop-types';
 
 const TopBar = ({ showSearch = true }) => {
-  const { language, toggleLanguage, t } = useLanguage();
+  const { language, changeLanguage, t } = useLanguage();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showLanguages, setShowLanguages] = useState(false);
   const notificationRef = useRef(null);
+  const languageRef = useRef(null);
   
   // Dummy notifications data
   const [notifications] = useState([
@@ -75,22 +77,25 @@ const TopBar = ({ showSearch = true }) => {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Close notifications when clicking outside
+  // Click outside to close notifications and language dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target)) {
         setShowNotifications(false);
       }
+      if (languageRef.current && !languageRef.current.contains(event.target)) {
+        setShowLanguages(false);
+      }
     };
 
-    if (showNotifications) {
+    if (showNotifications || showLanguages) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showNotifications]);
+  }, [showNotifications, showLanguages]);
 
   const formatDate = (date) => {
     const now = new Date();
@@ -113,7 +118,7 @@ const TopBar = ({ showSearch = true }) => {
       <div className="px-4 md:px-8 py-4">
         <div className="flex items-center justify-between gap-4">
           {/* Logo/Brand */}
-          <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
               <span className="text-white font-bold text-lg">A</span>
             </div>
@@ -121,7 +126,7 @@ const TopBar = ({ showSearch = true }) => {
               <h1 className="text-lg font-bold text-gray-900">{t('nav.brand')}</h1>
               <p className="text-xs text-gray-500">{t('nav.subtitle')}</p>
             </div>
-          </div>
+          </Link>
 
           {/* Search Bar */}
           {showSearch && (
@@ -147,18 +152,89 @@ const TopBar = ({ showSearch = true }) => {
             )}
 
             {/* Language Switcher */}
-            <button 
-              onClick={toggleLanguage}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors group"
-              title={language === 'en' ? 'Switch to Portuguese' : 'Mudar para Inglês'}
-            >
-              <div className="flex items-center gap-1.5">
-                <Languages size={20} className="text-gray-600 group-hover:text-blue-600 transition-colors" />
-                <span className="text-sm font-semibold text-gray-700 group-hover:text-blue-600 transition-colors uppercase">
-                  {language === 'en' ? 'EN' : 'PT'}
-                </span>
-              </div>
-            </button>
+            <div className="relative" ref={languageRef}>
+              <button 
+                onClick={() => setShowLanguages(!showLanguages)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors group"
+              >
+                <div className="flex items-center gap-1.5">
+                  <Languages size={20} className="text-gray-600 group-hover:text-blue-600 transition-colors" />
+                  <span className="text-sm font-semibold text-gray-700 group-hover:text-blue-600 transition-colors uppercase">
+                    {language === 'en' ? 'EN' : language === 'pt' ? 'PT' : language === 'es' ? 'ES' : 'FR'}
+                  </span>
+                </div>
+              </button>
+
+              {/* Language Dropdown */}
+              {showLanguages && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
+                  <button
+                    onClick={() => {
+                      changeLanguage('en');
+                      setShowLanguages(false);
+                    }}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🇬🇧</span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">English</p>
+                        <p className="text-xs text-gray-500">EN</p>
+                      </div>
+                    </div>
+                    {language === 'en' && <Check size={16} className="text-blue-600" />}
+                  </button>
+                  <button
+                    onClick={() => {
+                      changeLanguage('pt');
+                      setShowLanguages(false);
+                    }}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🇵🇹</span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Português</p>
+                        <p className="text-xs text-gray-500">PT</p>
+                      </div>
+                    </div>
+                    {language === 'pt' && <Check size={16} className="text-blue-600" />}
+                  </button>
+                  <button
+                    onClick={() => {
+                      changeLanguage('es');
+                      setShowLanguages(false);
+                    }}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🇪🇸</span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Español</p>
+                        <p className="text-xs text-gray-500">ES</p>
+                      </div>
+                    </div>
+                    {language === 'es' && <Check size={16} className="text-blue-600" />}
+                  </button>
+                  <button
+                    onClick={() => {
+                      changeLanguage('fr');
+                      setShowLanguages(false);
+                    }}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-50 transition-colors flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🇫🇷</span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Français</p>
+                        <p className="text-xs text-gray-500">FR</p>
+                      </div>
+                    </div>
+                    {language === 'fr' && <Check size={16} className="text-blue-600" />}
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Notifications */}
             <div className="relative" ref={notificationRef}>

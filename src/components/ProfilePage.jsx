@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 import TopBar from './shared/TopBar';
 import { 
   ArrowLeft,
@@ -26,6 +27,7 @@ import {
 const ProfilePage = () => {
   const { memberId } = useParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('overview');
 
   // Mock data - in real app would fetch from API
