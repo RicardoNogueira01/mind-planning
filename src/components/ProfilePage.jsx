@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 import TopBar from './shared/TopBar';
 import { 
   ArrowLeft,
@@ -18,6 +19,7 @@ import {
 const ProfilePage = () => {
   const { memberId } = useParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('overview');
 
   // Mock data - in real app would fetch from API
@@ -51,9 +53,9 @@ const ProfilePage = () => {
   };
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: Activity },
-    { id: 'activity', label: 'Activity', icon: Clock },
-    { id: 'performance', label: 'Performance', icon: BarChart2 }
+    { id: 'overview', label: t('profile.overview'), icon: Activity },
+    { id: 'activity', label: t('profile.activity'), icon: Clock },
+    { id: 'performance', label: t('profile.performance'), icon: BarChart2 }
   ];
 
   const getActivityColor = (type) => {
@@ -78,8 +80,8 @@ const ProfilePage = () => {
             <ArrowLeft size={20} className="text-gray-600" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
-            <p className="text-sm text-gray-500">View and manage profile information</p>
+            <h1 className="text-2xl font-bold text-gray-900">{t('profile.title')}</h1>
+            <p className="text-sm text-gray-500">{t('profile.subtitle')}</p>
           </div>
         </div>
 
@@ -106,14 +108,14 @@ const ProfilePage = () => {
                   className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium"
                 >
                   <Edit2 size={16} />
-                  Edit Profile
+                  {t('profile.editProfile')}
                 </Link>
                 <Link
                   to={`/profile/${profile.id}/settings`}
                   className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm font-medium"
                 >
                   <Settings size={16} />
-                  Settings
+                  {t('profile.settings')}
                 </Link>
               </div>
             </div>
@@ -143,7 +145,7 @@ const ProfilePage = () => {
                   <Mail size={16} className="text-indigo-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs text-gray-500 mb-0.5">Email</p>
+                  <p className="text-xs text-gray-500 mb-0.5">{t('profile.email')}</p>
                   <p className="text-sm font-medium text-gray-900 truncate">{profile.email}</p>
                 </div>
               </div>
@@ -152,7 +154,7 @@ const ProfilePage = () => {
                   <Phone size={16} className="text-green-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs text-gray-500 mb-0.5">Phone</p>
+                  <p className="text-xs text-gray-500 mb-0.5">{t('profile.phone')}</p>
                   <p className="text-sm font-medium text-gray-900 truncate">{profile.phone}</p>
                 </div>
               </div>
@@ -161,7 +163,7 @@ const ProfilePage = () => {
                   <MapPin size={16} className="text-purple-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs text-gray-500 mb-0.5">Location</p>
+                  <p className="text-xs text-gray-500 mb-0.5">{t('profile.location')}</p>
                   <p className="text-sm font-medium text-gray-900 truncate">{profile.location}</p>
                 </div>
               </div>
@@ -169,13 +171,13 @@ const ProfilePage = () => {
 
             {/* About Section */}
             <div className="mb-6">
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">ABOUT</h3>
+              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">{t('profile.about').toUpperCase()}</h3>
               <p className="text-sm text-gray-600 leading-relaxed">{profile.bio}</p>
             </div>
 
             {/* Skills Section */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">SKILLS</h3>
+              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">{t('profile.skills').toUpperCase()}</h3>
               <div className="flex flex-wrap gap-2">
                 {profile.skills.map((skill) => (
                   <span key={skill} className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-lg font-medium hover:bg-gray-200 transition-colors">
@@ -219,38 +221,38 @@ const ProfilePage = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-white rounded-xl border-l-4 border-green-500 p-5 shadow-sm">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs text-gray-500 font-medium">Completed</p>
+                    <p className="text-xs text-gray-500 font-medium">{t('profile.completed')}</p>
                     <CheckCircle size={16} className="text-green-600" />
                   </div>
                   <p className="text-3xl font-bold text-green-600">{profile.stats.completed}</p>
-                  <p className="text-xs text-gray-500 mt-1">Total tasks</p>
+                  <p className="text-xs text-gray-500 mt-1">{t('profile.totalTasks')}</p>
                 </div>
 
                 <div className="bg-white rounded-xl border-l-4 border-blue-500 p-5 shadow-sm">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs text-gray-500 font-medium">In Progress</p>
+                    <p className="text-xs text-gray-500 font-medium">{t('profile.inProgress')}</p>
                     <Activity size={16} className="text-blue-600" />
                   </div>
                   <p className="text-3xl font-bold text-blue-600">{profile.stats.inProgress}</p>
-                  <p className="text-xs text-gray-500 mt-1">Active tasks</p>
+                  <p className="text-xs text-gray-500 mt-1">{t('profile.activeTasks')}</p>
                 </div>
 
                 <div className="bg-white rounded-xl border-l-4 border-red-500 p-5 shadow-sm">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs text-gray-500 font-medium">Overdue</p>
+                    <p className="text-xs text-gray-500 font-medium">{t('profile.overdue')}</p>
                     <TrendingUp size={16} className="text-red-600" />
                   </div>
                   <p className="text-3xl font-bold text-red-600">{profile.stats.overdue}</p>
-                  <p className="text-xs text-gray-500 mt-1">Need attention</p>
+                  <p className="text-xs text-gray-500 mt-1">{t('profile.needAttention')}</p>
                 </div>
 
                 <div className="bg-white rounded-xl border-l-4 border-amber-500 p-5 shadow-sm">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs text-gray-500 font-medium">Success Rate</p>
+                    <p className="text-xs text-gray-500 font-medium">{t('profile.successRate')}</p>
                     <BarChart2 size={16} className="text-amber-600" />
                   </div>
                   <p className="text-3xl font-bold text-amber-600">{profile.stats.successRate}%</p>
-                  <p className="text-xs text-gray-500 mt-1">Completion rate</p>
+                  <p className="text-xs text-gray-500 mt-1">{t('profile.completionRate')}</p>
                 </div>
               </div>
 

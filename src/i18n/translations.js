@@ -202,6 +202,7 @@ export const translations = {
     // Profile
     profile: {
       title: 'Profile',
+      subtitle: 'View and manage profile information',
       editProfile: 'Edit Profile',
       settings: 'Settings',
       about: 'About',
@@ -212,6 +213,19 @@ export const translations = {
       location: 'Location',
       joined: 'Joined',
       department: 'Department',
+      overview: 'Overview',
+      activity: 'Activity',
+      performance: 'Performance',
+      completed: 'Completed',
+      inProgress: 'In Progress',
+      overdue: 'Overdue',
+      successRate: 'Success Rate',
+      totalTasks: 'Total tasks',
+      activeTasks: 'Active tasks',
+      needAttention: 'Need attention',
+      completionRate: 'Completion rate',
+      taskCompletionTrend: 'Task Completion Trend',
+      recentActivity: 'Recent Activity',
       tabs: {
         overview: 'Overview',
         activity: 'Activity',
@@ -236,8 +250,8 @@ export const translations = {
         goalCrusher: 'Goal Crusher',
         goalCrusherDesc: 'Achieved all quarterly objectives',
       },
-      recentActivity: 'Recent Activity',
-      performance: {
+      activityTitle: 'Recent Activity',
+      performanceMetrics: {
         title: 'Performance Metrics',
         taskCompletion: 'Task Completion',
         onTimeDelivery: 'On-time Delivery',
@@ -252,6 +266,7 @@ export const translations = {
     // Edit Profile
     editProfile: {
       title: 'Edit Profile',
+      subtitle: 'Update your personal information',
       save: 'Save Changes',
       cancel: 'Cancel',
       successMsg: 'Profile updated successfully!',
@@ -590,6 +605,7 @@ export const translations = {
     // Perfil
     profile: {
       title: 'Perfil',
+      subtitle: 'Ver e gerir informação do perfil',
       editProfile: 'Editar Perfil',
       settings: 'Definições',
       about: 'Sobre',
@@ -600,6 +616,19 @@ export const translations = {
       location: 'Localização',
       joined: 'Entrou',
       department: 'Departamento',
+      overview: 'Visão Geral',
+      activity: 'Atividade',
+      performance: 'Desempenho',
+      completed: 'Concluído',
+      inProgress: 'Em Curso',
+      overdue: 'Atrasado',
+      successRate: 'Taxa de Sucesso',
+      totalTasks: 'Total de tarefas',
+      activeTasks: 'Tarefas ativas',
+      needAttention: 'Requer atenção',
+      completionRate: 'Taxa de conclusão',
+      taskCompletionTrend: 'Tendência de Conclusão de Tarefas',
+      recentActivity: 'Atividade Recente',
       tabs: {
         overview: 'Visão Geral',
         activity: 'Atividade',
@@ -624,8 +653,8 @@ export const translations = {
         goalCrusher: 'Destruidor de Objetivos',
         goalCrusherDesc: 'Alcançou todos os objetivos trimestrais',
       },
-      recentActivity: 'Atividade Recente',
-      performance: {
+      activityTitle: 'Atividade Recente',
+      performanceMetrics: {
         title: 'Métricas de Desempenho',
         taskCompletion: 'Conclusão de Tarefas',
         onTimeDelivery: 'Entrega Pontual',
@@ -640,6 +669,7 @@ export const translations = {
     // Editar Perfil
     editProfile: {
       title: 'Editar Perfil',
+      subtitle: 'Atualizar informação pessoal',
       save: 'Guardar Alterações',
       cancel: 'Cancelar',
       successMsg: 'Perfil atualizado com sucesso!',

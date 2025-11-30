@@ -104,8 +104,8 @@ const EditProfilePage = () => {
               <ArrowLeft size={20} className="text-gray-600" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Edit Profile</h1>
-              <p className="text-sm text-gray-500">Update your personal information</p>
+              <h1 className="text-2xl font-bold text-gray-900">{t('editProfile.title')}</h1>
+              <p className="text-sm text-gray-500">{t('editProfile.subtitle')}</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -114,14 +114,14 @@ const EditProfilePage = () => {
               className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm font-medium"
             >
               <X size={16} />
-              Cancel
+              {t('editProfile.cancel')}
             </button>
             <button
               onClick={handleSave}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium"
             >
               <Save size={16} />
-              Save Changes
+              {t('editProfile.save')}
             </button>
           </div>
         </div>
