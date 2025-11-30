@@ -420,11 +420,11 @@ const Dashboard = () => {
               </div>
             </div>
             
-            <div className="p-4 max-h-96 overflow-y-auto">
-              <div className="space-y-2">
+            <div className="p-4">
+              <div className="space-y-2 mb-4">
                 {teamHolidayRequests
                   .filter(req => req.status !== 'canceled')
-                  .slice(0, 4)
+                  .slice(0, 3)
                   .map((request) => (
                     <div 
                       key={request.id} 
@@ -459,7 +459,7 @@ const Dashboard = () => {
               
               <Link 
                 to="/team-holidays" 
-                className="w-full mt-4 text-sm text-blue-600 font-semibold hover:text-blue-700 flex items-center justify-center gap-1.5 transition-colors py-2 hover:bg-blue-50 rounded-lg"
+                className="w-full text-sm text-blue-600 font-semibold hover:text-blue-700 flex items-center justify-center gap-1.5 transition-colors py-2 hover:bg-blue-50 rounded-lg"
               >
                 <span>{t('holidays.viewAllRequests')}</span>
                 <ArrowRight size={14} />
