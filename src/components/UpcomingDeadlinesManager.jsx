@@ -421,99 +421,97 @@ const UpcomingDeadlinesManager = () => {
     return date.toLocaleDateString();
   };
 
+  const getUrgencyTopColor = (urgency) => {
+    switch(urgency) {
+      case 'critical': return 'bg-red-500';
+      case 'moderate': return 'bg-yellow-500';
+      case 'low': return 'bg-green-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
   const GridView = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {filteredTasks.map(task => (
-        <div key={task.id} className={`bg-white rounded-xl shadow-sm border-2 p-6 hover:shadow-md transition-shadow ${
-          task.isOverdue ? 'border-red-200 bg-red-50' : 
-          task.timeUntilDue === 'Today' ? 'border-orange-200 bg-orange-50' : 
-          'border-gray-200'
-        }`}>
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
+        <div key={task.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 overflow-hidden group">
+          {/* Urgency Top Line */}
+          <div className={`h-1 ${getUrgencyTopColor(task.urgencyLevel)}`}></div>
+          
+          <div className="p-4">
+          {/* Header with Avatar and Actions */}
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-2">
               <div 
-                className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium"
+                className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-medium text-sm shadow-md"
                 style={{ backgroundColor: task.assignedTo.color }}
               >
                 {task.assignedTo.initials}
               </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 line-clamp-2">{task.title}</h3>
-                <p className="text-sm text-gray-500">{task.project}</p>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-gray-900 text-sm line-clamp-1">{task.title}</h3>
+                <p className="text-xs text-gray-500 truncate">{task.project}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {task.reminderSet && (
-                <Bell size={14} className="text-blue-500" />
+            <div className="relative flex-shrink-0">
+              <button 
+                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                onClick={() => setOpenMenuId(openMenuId === task.id ? null : task.id)}
+              >
+                <MoreVertical size={14} className="text-gray-400" />
+              </button>
+              {openMenuId === task.id && (
+                <div className="absolute right-0 top-8 w-44 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50">
+                  <button 
+                    className="w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-50 flex items-center gap-2"
+                    onClick={() => handleEdit(task)}
+                  >
+                    <Edit2 size={13} />
+                    Edit Task
+                  </button>
+                  <button 
+                    className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                    onClick={() => handleDelete(task.id, task.title)}
+                  >
+                    <Trash2 size={13} />
+                    Delete Task
+                  </button>
+                </div>
               )}
-              <div className="relative">
-                <button 
-                  className="p-1 hover:bg-gray-100 rounded"
-                  onClick={() => setOpenMenuId(openMenuId === task.id ? null : task.id)}
-                >
-                  <MoreVertical size={16} className="text-gray-400" />
-                </button>
-                {openMenuId === task.id && (
-                  <div className="absolute right-0 top-8 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                    <button 
-                      className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50 flex items-center gap-2"
-                      onClick={() => handleEdit(task)}
-                    >
-                      <Edit2 size={14} />
-                      Edit Task
-                    </button>
-                    <button 
-                      className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                      onClick={() => handleDelete(task.id, task.title)}
-                    >
-                      <Trash2 size={14} />
-                      Delete Task
-                    </button>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
 
-          <p className="text-sm text-gray-600 mb-4 line-clamp-2">{task.description}</p>
+          <p className="text-xs text-gray-600 mb-3 line-clamp-2">{task.description}</p>
 
-          <div className="flex flex-wrap gap-2 mb-4">
-            <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(task.priority)}`}>
+          <div className="flex flex-wrap gap-1 mb-3">
+            <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${getPriorityColor(task.priority)}`}>
               {task.priority}
             </span>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getUrgencyColor(task.urgencyLevel)}`}>
-              {task.urgencyLevel}
-            </span>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
+            <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${getStatusColor(task.status)}`}>
               {task.status.replace('-', ' ')}
             </span>
           </div>
 
-          <div className="space-y-3 mb-4">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Due date:</span>
-              <span className={`font-medium ${getDueDateColor(task)}`}>
+          <div className="space-y-1.5 mb-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-500">Due:</span>
+              <span className={`font-bold ${getDueDateColor(task)}`}>
                 {formatDueDate(task.dueDate)}
               </span>
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Assigned to:</span>
-              <span className="font-medium">{task.assignedTo.name}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Estimated time:</span>
-              <span className="font-medium">{task.estimatedTime}</span>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-500">Time:</span>
+              <span className="font-medium text-gray-900">{task.estimatedTime}</span>
             </div>
           </div>
 
-          <div className="mb-4">
-            <div className="flex justify-between items-center text-sm mb-2">
-              <span className="text-gray-500">Progress</span>
-              <span className="font-medium">{task.progress}%</span>
+          <div className="mb-3">
+            <div className="flex justify-between items-center text-xs mb-1.5">
+              <span className="text-gray-600">Progress</span>
+              <span className="font-bold text-gray-900">{task.progress}%</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 rounded-full h-1.5">
               <div 
-                className={`h-2 rounded-full ${
+                className={`h-1.5 rounded-full ${
                   task.progress >= 75 ? 'bg-green-500' :
                   task.progress >= 50 ? 'bg-blue-500' :
                   task.progress >= 25 ? 'bg-yellow-500' : 'bg-red-500'
@@ -523,29 +521,20 @@ const UpcomingDeadlinesManager = () => {
             </div>
           </div>
 
-          <div className="border-t border-gray-100 pt-4">
-            <div className="flex flex-wrap gap-1 mb-3">
-              {task.tags.slice(0, 3).map(tag => (
-                <span key={tag} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+          <div className="border-t border-gray-100 pt-3">
+            <div className="flex flex-wrap gap-1 mb-2">
+              {task.tags.slice(0, 2).map(tag => (
+                <span key={tag} className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] rounded font-medium">
                   {tag}
                 </span>
               ))}
-              {task.tags.length > 3 && (
-                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                  +{task.tags.length - 3} more
+              {task.tags.length > 2 && (
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] rounded font-medium">
+                  +{task.tags.length - 2}
                 </span>
               )}
             </div>
-            
-            {task.blockers.length > 0 && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-2">
-                <div className="flex items-center gap-2 text-red-700">
-                  <XCircle size={14} />
-                  <span className="text-xs font-medium">Blocked</span>
-                </div>
-                <p className="text-xs text-red-600 mt-1">{task.blockers[0]}</p>
-              </div>
-            )}
+          </div>
           </div>
         </div>
       ))}

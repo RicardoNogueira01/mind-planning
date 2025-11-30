@@ -6,6 +6,7 @@ import MindMapManager from './components/MindMapManager';
 import TeamMembersManager from './components/TeamMembersManager';
 import RecentlyCompletedTasksManager from './components/RecentlyCompletedTasksManager';
 import UpcomingDeadlinesManager from './components/UpcomingDeadlinesManager';
+import TeamHolidaysManager from './components/TeamHolidaysManager';
 import CalendarPage from './components/CalendarPage';
 import ScrollToTop from './components/ScrollToTop';
 import { LanguageProvider } from './context/LanguageContext';
@@ -67,6 +68,7 @@ function App() {
           <Route path="/team-members" element={<TeamMembersManager />} />
           <Route path="/completed-tasks" element={<RecentlyCompletedTasksManager />} />
           <Route path="/upcoming-deadlines" element={<UpcomingDeadlinesManager />} />
+          <Route path="/team-holidays" element={<TeamHolidaysManager />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
