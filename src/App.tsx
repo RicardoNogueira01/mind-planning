@@ -8,6 +8,7 @@ import RecentlyCompletedTasksManager from './components/RecentlyCompletedTasksMa
 import UpcomingDeadlinesManager from './components/UpcomingDeadlinesManager';
 import CalendarPage from './components/CalendarPage';
 import ScrollToTop from './components/ScrollToTop';
+import { LanguageProvider } from './context/LanguageContext';
 
 // Wrapper components to handle navigation
 const MindMapManagerWrapper = () => {
@@ -56,6 +57,7 @@ const MindMapWrapper = () => {
 function App() {
 
   return (
+    <LanguageProvider>
       <BrowserRouter>
         <ScrollToTop />
         <Routes>
@@ -69,6 +71,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </BrowserRouter>
+    </LanguageProvider>
   )
 }
 

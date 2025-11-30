@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import WeeklyCalendarWidget from './WeeklyCalendarWidget';
+import TopBar from './shared/TopBar';
+import { useLanguage } from '../context/LanguageContext';
 import { 
   CheckCircle, 
   Clock, 
@@ -9,12 +11,32 @@ import {
   ArrowRight,
   Activity,
   BarChart2,
-  Circle,
-  PieChart
+  Circle
 } from 'lucide-react';
 import clsx from 'clsx';
 
 const Dashboard = () => {
+  const { t } = useLanguage();
+  
+  // Get current date info
+  const getCurrentDayInfo = () => {
+    const now = new Date();
+    const dayIndex = now.getDay();
+    const monthIndex = now.getMonth();
+    
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const monthNames = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+    
+    return {
+      dayName: t(`greeting.${dayNames[dayIndex]}`),
+      day: now.getDate(),
+      month: t(`greeting.${monthNames[monthIndex]}`),
+      year: now.getFullYear()
+    };
+  };
+
+  const dateInfo = getCurrentDayInfo();
+  
   // Sample data - in a real app, this would come from your state or API
   const [stats] = useState({
     tasksCompleted: 32,
@@ -40,288 +62,510 @@ const Dashboard = () => {
   ]);
   
   const [upcomingDeadlines] = useState([
-    { id: 1, title: 'API integration testing', assignedTo: 'John Doe', initials: 'JD', color: 'bg-blue-500', dueDate: 'Today', status: 'danger' },
-    { id: 2, title: 'Create social media campaign', assignedTo: 'Maria Rodriguez', initials: 'MR', color: 'bg-yellow-500', dueDate: 'Today', status: 'danger' },
-    { id: 3, title: 'Update project timeline', assignedTo: 'Maria Rodriguez', initials: 'MR', color: 'bg-yellow-500', dueDate: 'Tomorrow', status: 'warning' },
-    { id: 4, title: 'Finalize Q1 budget', assignedTo: 'Alex Kim', initials: 'AK', color: 'bg-green-500', dueDate: 'In 2 days', status: 'warning' },
-    { id: 5, title: 'Prepare meeting agenda', assignedTo: 'Taylor Smith', initials: 'TS', color: 'bg-purple-500', dueDate: 'In 3 days', status: 'warning' }
+    { id: 1, title: 'API integration testing', assignedTo: 'John Doe', initials: 'JD', color: 'bg-blue-500', dueDate: 'today', status: 'danger' },
+    { id: 2, title: 'Create social media campaign', assignedTo: 'Maria Rodriguez', initials: 'MR', color: 'bg-yellow-500', dueDate: 'today', status: 'danger' },
+    { id: 3, title: 'Update project timeline', assignedTo: 'Maria Rodriguez', initials: 'MR', color: 'bg-yellow-500', dueDate: 'tomorrow', status: 'warning' },
+    { id: 4, title: 'Finalize Q1 budget', assignedTo: 'Alex Kim', initials: 'AK', color: 'bg-green-500', dueDate: '2', status: 'warning' },
+    { id: 5, title: 'Prepare meeting agenda', assignedTo: 'Taylor Smith', initials: 'TS', color: 'bg-purple-500', dueDate: '3', status: 'warning' }
+  ]);
+  
+  // Function to format due dates with translation
+  const formatDueDate = (dueDate) => {
+    if (dueDate === 'today') return t('activity.today');
+    if (dueDate === 'tomorrow') return t('activity.tomorrow');
+    return `${t('activity.inDays')} ${dueDate} ${t('holidays.days')}`;
+  };
+  
+  const [upcomingHolidays] = useState([
+    { id: 1, name: 'Christmas Day', date: '25 Dec', daysUntil: 25, emoji: '🎄', color: 'bg-red-500', type: 'country' },
+    { id: 2, name: 'New Year\'s Day', date: '1 Jan', daysUntil: 32, emoji: '🎆', color: 'bg-indigo-500', type: 'country' },
+    { id: 3, name: 'Valentine\'s Day', date: '14 Feb', daysUntil: 76, emoji: '💝', color: 'bg-pink-500', type: 'country' },
+    { id: 4, name: 'Easter Sunday', date: '20 Apr', daysUntil: 141, emoji: '🐰', color: 'bg-purple-500', type: 'country' }
+  ]);
+  
+  const [teamHolidayRequests] = useState([
+    { 
+      id: 1, 
+      employeeName: 'Alex Kim', 
+      initials: 'AK', 
+      color: 'bg-green-500', 
+      startDate: '20 Dec', 
+      endDate: '27 Dec',
+      days: 5,
+      status: 'approved',
+      reason: 'Christmas vacation'
+    },
+    { 
+      id: 2, 
+      employeeName: 'John Doe', 
+      initials: 'JD', 
+      color: 'bg-blue-500', 
+      startDate: '2 Jan', 
+      endDate: '5 Jan',
+      days: 3,
+      status: 'pending',
+      reason: 'Family trip'
+    },
+    { 
+      id: 3, 
+      employeeName: 'Maria Rodriguez', 
+      initials: 'MR', 
+      color: 'bg-yellow-500', 
+      startDate: '15 Dec', 
+      endDate: '18 Dec',
+      days: 3,
+      status: 'approved',
+      reason: 'Personal matters'
+    },
+    { 
+      id: 4, 
+      employeeName: 'Taylor Smith', 
+      initials: 'TS', 
+      color: 'bg-purple-500', 
+      startDate: '28 Dec', 
+      endDate: '31 Dec',
+      days: 2,
+      status: 'pending',
+      reason: 'Year-end break'
+    },
+    { 
+      id: 5, 
+      employeeName: 'John Doe', 
+      initials: 'JD', 
+      color: 'bg-blue-500', 
+      startDate: '10 Dec', 
+      endDate: '12 Dec',
+      days: 2,
+      status: 'canceled',
+      reason: 'Project deadline'
+    }
   ]);
   
   // Calculate completion percentage
   const completionPercentage = Math.round((stats.tasksCompleted / stats.totalTasks) * 100);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-3 md:p-6">
-      {/* Header */}
-      <header className="mb-4 md:mb-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-0">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900">
-              Project Dashboard
-            </h1>
-            <p className="text-sm md:text-base text-gray-500">Welcome back! Here's what's happening with your projects today.</p>
-          </div>
-          <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
-            <Link to="/mindmaps" className="flex-1 md:flex-initial px-3 md:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center md:justify-start gap-2 text-sm font-medium touch-manipulation">
-              <Activity size={16} />
-              Mind Maps
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
+      <TopBar showSearch={true} />
+
+      {/* Main Content */}
+      <div className="p-4 md:p-8">
+        {/* Greeting Section */}
+        <div className="mb-6 md:mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 bg-clip-text text-transparent mb-2">
+                {t('greeting.hello')}, John Doe 👋
+              </h2>
+              <p className="text-sm md:text-base text-gray-600">
+                {dateInfo.dayName}, {dateInfo.month} {dateInfo.day}, {dateInfo.year}
+              </p>
+              <p className="text-xs md:text-sm text-gray-500 mt-1">
+                {t('greeting.subtitle')}
+              </p>
+            </div>
+            <Link 
+              to="/mindmaps" 
+              className="w-full md:w-auto px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-300 flex items-center justify-center gap-2 text-sm touch-manipulation transform hover:scale-[1.02]"
+            >
+              <Activity size={18} />
+              {t('buttons.openMindMaps')}
             </Link>
           </div>
         </div>
-      </header>
 
       {/* Main Content */}
       <main>
-        {/* Quick Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
-          {/* Task Overview Card */}
-          <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm">
-            <div className="flex justify-between items-start mb-3 md:mb-4">
-              <h2 className="text-base md:text-lg font-semibold text-gray-800">Task Overview</h2>
-              <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-                <BarChart2 size={20} />
-              </div>
-            </div>
+        {/* Quick Stats Overview with Modern Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
+          {/* Completion Progress Card - Featured */}
+          <div className="lg:col-span-2 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-6 md:p-8 shadow-xl shadow-blue-500/20 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20"></div>
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full -ml-16 -mb-16"></div>
             
-            <div className="flex justify-between items-end mb-4">
-              <div>
-                <p className="text-3xl font-bold text-gray-900">
-                  {completionPercentage}%
-                </p>
-                <p className="text-sm text-gray-500">Overall Completion</p>
+            <div className="relative z-10">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <p className="text-blue-100 text-sm font-medium mb-1">{t('stats.overallProgress')}</p>
+                  <h2 className="text-5xl md:text-6xl font-bold">{completionPercentage}%</h2>
+                </div>
+                <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
+                  <BarChart2 size={24} />
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-xl font-bold text-gray-800">+{stats.tasksCompleted}</p>
-                <p className="text-sm text-gray-500">Tasks Done</p>
+              
+              <div className="mb-4">
+                <div className="h-3 bg-white/20 rounded-full overflow-hidden">
+                  <div 
+                    className="h-3 bg-white rounded-full shadow-lg transition-all duration-1000" 
+                    style={{ width: `${completionPercentage}%` }}
+                  ></div>
+                </div>
               </div>
-            </div>
-            
-            <div className="h-2 bg-gray-200 rounded-full mb-4">
-              <div 
-                className="h-2 bg-blue-600 rounded-full" 
-                style={{ width: `${completionPercentage}%` }}
-              ></div>
-            </div>
-            
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div>
-                <span className="text-xs text-gray-500 block">Done</span>
-                <span className="text-sm font-semibold text-gray-800">{stats.tasksCompleted}</span>
-              </div>
-              <div>
-                <span className="text-xs text-gray-500 block">In Progress</span>
-                <span className="text-sm font-semibold text-gray-800">{stats.tasksInProgress}</span>
-              </div>
-              <div>
-                <span className="text-xs text-gray-500 block">To Do</span>
-                <span className="text-sm font-semibold text-gray-800">{stats.tasksNotStarted}</span>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
+                  <p className="text-3xl font-bold">{stats.tasksCompleted}</p>
+                  <p className="text-xs text-blue-100 mt-1">{t('stats.completed')}</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
+                  <p className="text-3xl font-bold">{stats.tasksInProgress}</p>
+                  <p className="text-xs text-blue-100 mt-1">{t('stats.inProgress')}</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
+                  <p className="text-3xl font-bold">{stats.tasksNotStarted}</p>
+                  <p className="text-xs text-blue-100 mt-1">{t('stats.toStart')}</p>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Task Status Card */}
-          <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm">
-            <div className="flex justify-between items-start mb-3 md:mb-4">
-              <h2 className="text-base md:text-lg font-semibold text-gray-800">Task Status</h2>
-              <div className="p-2 bg-green-100 text-green-600 rounded-lg">
+          <div className="bg-white rounded-2xl p-5 md:p-6 shadow-lg shadow-gray-200/50 border border-gray-100 hover:shadow-xl hover:shadow-gray-200/60 transition-all duration-300">
+            <div className="flex justify-between items-start mb-5">
+              <div>
+                <p className="text-gray-500 text-xs font-medium mb-1">{t('stats.taskStatus').toUpperCase()}</p>
+                <h2 className="text-xl font-bold text-gray-900">{t('stats.status')}</h2>
+              </div>
+              <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-xl">
                 <Activity size={20} />
               </div>
             </div>
             
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="space-y-3.5">
+              <div className="flex items-center justify-between group">
                 <div className="flex items-center gap-3">
-                  <CheckCircle size={18} className="text-green-500" />
-                  <span className="text-gray-700 font-medium">Completed</span>
+                  <div className="p-1.5 bg-green-100 rounded-lg group-hover:scale-110 transition-transform">
+                    <CheckCircle size={16} className="text-green-600" />
+                  </div>
+                  <span className="text-gray-700 font-medium text-sm">{t('stats.completed')}</span>
                 </div>
-                <span className="text-gray-600 font-semibold">{stats.tasksCompleted}</span>
+                <span className="text-gray-900 font-bold text-lg">{stats.tasksCompleted}</span>
               </div>
               
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between group">
                 <div className="flex items-center gap-3">
-                  <Clock size={18} className="text-yellow-500" />
-                  <span className="text-gray-700 font-medium">In Progress</span>
+                  <div className="p-1.5 bg-amber-100 rounded-lg group-hover:scale-110 transition-transform">
+                    <Clock size={16} className="text-amber-600" />
+                  </div>
+                  <span className="text-gray-700 font-medium text-sm">{t('stats.inProgress')}</span>
                 </div>
-                <span className="text-gray-600 font-semibold">{stats.tasksInProgress}</span>
+                <span className="text-gray-900 font-bold text-lg">{stats.tasksInProgress}</span>
               </div>
               
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between group">
                 <div className="flex items-center gap-3">
-                  <Circle size={18} className="text-gray-400" />
-                  <span className="text-gray-700 font-medium">Not Started</span>
+                  <div className="p-1.5 bg-gray-100 rounded-lg group-hover:scale-110 transition-transform">
+                    <Circle size={16} className="text-gray-500" />
+                  </div>
+                  <span className="text-gray-700 font-medium text-sm">{t('stats.notStarted')}</span>
                 </div>
-                <span className="text-gray-600 font-semibold">{stats.tasksNotStarted}</span>
+                <span className="text-gray-900 font-bold text-lg">{stats.tasksNotStarted}</span>
               </div>
               
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between pt-2 border-t border-gray-100 group">
                 <div className="flex items-center gap-3">
-                  <AlertTriangle size={18} className="text-red-500" />
-                  <span className="text-gray-700 font-medium">Overdue</span>
+                  <div className="p-1.5 bg-red-100 rounded-lg group-hover:scale-110 transition-transform">
+                    <AlertTriangle size={16} className="text-red-600" />
+                  </div>
+                  <span className="text-gray-700 font-medium text-sm">{t('stats.overdue')}</span>
                 </div>
-                <span className="text-gray-600 font-semibold">{stats.overdueTasks}</span>
+                <span className="text-red-600 font-bold text-lg">{stats.overdueTasks}</span>
               </div>
             </div>
           </div>
 
           {/* Team Overview Card */}
-          <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm">
-            <div className="flex justify-between items-start mb-3 md:mb-4">
-              <h2 className="text-base md:text-lg font-semibold text-gray-800">Team Overview</h2>
-              <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
+          <div className="bg-white rounded-2xl p-5 md:p-6 shadow-lg shadow-gray-200/50 border border-gray-100 hover:shadow-xl hover:shadow-gray-200/60 transition-all duration-300">
+            <div className="flex justify-between items-start mb-5">
+              <div>
+                <p className="text-gray-500 text-xs font-medium mb-1">{t('stats.team').toUpperCase()}</p>
+                <h2 className="text-xl font-bold text-gray-900">{collaborators.length} {t('stats.members')}</h2>
+              </div>
+              <div className="p-2.5 bg-purple-100 text-purple-600 rounded-xl">
                 <Users size={20} />
               </div>
             </div>
             
             <div className="space-y-3">
               {collaborators.slice(0, 3).map(collab => (
-                <div key={collab.id} className="flex items-center gap-3">
-                  <div className={clsx("w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold", collab.color)}>
+                <div key={collab.id} className="flex items-center gap-3 group hover:bg-gray-50 p-2 rounded-xl -m-2 transition-colors">
+                  <div className={clsx("w-10 h-10 rounded-xl flex items-center justify-center text-white font-semibold text-sm shadow-sm group-hover:scale-105 transition-transform", collab.color)}>
                     {collab.initials}
                   </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-semibold text-gray-800 text-sm">{collab.name}</h3>
-                      <span className={clsx('text-xs px-2 py-0.5 rounded-full font-medium', {
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center mb-0.5">
+                      <h3 className="font-semibold text-gray-800 text-sm truncate">{collab.name.split(' ')[0]}</h3>
+                      <span className={clsx('text-xs px-2 py-0.5 rounded-full font-semibold', {
                         'bg-red-100 text-red-700': collab.overdueTasks > 0,
-                        'bg-green-100 text-green-700': collab.overdueTasks === 0
+                        'bg-emerald-100 text-emerald-700': collab.overdueTasks === 0
                       })}>
-                        {collab.overdueTasks > 0 ? `${collab.overdueTasks} overdue` : 'On track'}
+                        {collab.overdueTasks > 0 ? `${collab.overdueTasks} ${t('stats.overdueTasks')}` : t('stats.onTrack')}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-500">{collab.tasksCompleted}/{collab.tasksAssigned} tasks</p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div 
+                          className={clsx("h-1.5 rounded-full", collab.color)} 
+                          style={{ width: `${(collab.tasksCompleted / collab.tasksAssigned) * 100}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-xs text-gray-500 font-medium whitespace-nowrap">{collab.tasksCompleted}/{collab.tasksAssigned}</span>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-            <Link to="/team-members" className="w-full mt-4 text-sm text-blue-600 font-semibold hover:text-blue-700 flex items-center justify-center gap-1 transition-colors py-2">
-              <span>View All Team Members</span>
+            
+            <Link 
+              to="/team-members" 
+              className="w-full mt-4 text-sm text-blue-600 font-semibold hover:text-blue-700 flex items-center justify-center gap-1.5 transition-colors py-2 hover:bg-blue-50 rounded-lg"
+            >
+              <span>{t('stats.viewAllMembers')}</span>
               <ArrowRight size={14} />
             </Link>
           </div>
+        </div>
 
-          {/* Project Summary Card */}
-          <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm">
-            <div className="flex justify-between items-start mb-3 md:mb-4">
-              <h2 className="text-base md:text-lg font-semibold text-gray-800">Project Summary</h2>
-              <div className="p-2 bg-yellow-100 text-yellow-600 rounded-lg">
-                <PieChart size={20} />
+        {/* Holidays Section - Country & Team */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6 mb-6">
+          {/* Country Holidays */}
+          <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 p-5 md:p-6 border-b border-gray-100">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm">
+                    <span className="text-2xl">🎉</span>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900">{t('holidays.title')}</h2>
+                    <p className="text-xs text-gray-500">{t('holidays.subtitle')}</p>
+                  </div>
+                </div>
+                <span className="text-sm text-gray-600 font-medium bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                  {upcomingHolidays.length} {t('holidays.holidays')}
+                </span>
               </div>
             </div>
             
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <h3 className="font-medium text-gray-700 text-sm">Project Progress</h3>
-                  <span className="text-sm font-bold text-gray-800">{completionPercentage}%</span>
-                </div>
-                <div className="h-2 bg-gray-200 rounded-full">
-                  <div className="h-2 bg-blue-600 rounded-full" style={{ width: `${completionPercentage}%` }}></div>
+            <div className="p-5 md:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {upcomingHolidays.map((holiday) => (
+                  <div 
+                    key={holiday.id} 
+                    className="group relative bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-xl p-4 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 overflow-hidden"
+                  >
+                    <div className={clsx("absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl opacity-20 -mr-10 -mt-10 transition-opacity group-hover:opacity-30", holiday.color)}></div>
+                    
+                    <div className="relative z-10">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className={clsx("w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition-transform", holiday.color, "bg-opacity-10")}>
+                          {holiday.emoji}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500 font-medium">{t('holidays.in')}</p>
+                          <p className="text-lg font-bold text-gray-900">{holiday.daysUntil}</p>
+                          <p className="text-xs text-gray-500">{t('holidays.days')}</p>
+                        </div>
+                      </div>
+                      
+                      <h3 className="font-bold text-gray-900 text-sm mb-1 group-hover:text-gray-700 transition-colors">
+                        {holiday.name}
+                      </h3>
+                      <p className="text-xs text-gray-500 font-medium flex items-center gap-1.5">
+                        <span className="w-1 h-1 rounded-full bg-gray-400"></span>
+                        {holiday.date}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Team Holiday Requests Summary */}
+          <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-5 md:p-6 border-b border-gray-100">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm">
+                    <Users size={20} className="text-blue-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900">{t('holidays.teamTitle')}</h2>
+                    <p className="text-xs text-gray-500">{t('holidays.teamSubtitle')}</p>
+                  </div>
                 </div>
               </div>
               
-              <div>
-                <h3 className="font-medium text-gray-700 text-sm mb-2">Task Distribution</h3>
-                <div className="flex gap-4 text-sm">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-                    <span className="text-gray-600">Done</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
-                    <span className="text-gray-600">Progress</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
-                    <span className="text-gray-600">Overdue</span>
-                  </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-white/80 backdrop-blur-sm rounded-lg p-2 text-center">
+                  <p className="text-xl font-bold text-green-600">
+                    {teamHolidayRequests.filter(r => r.status === 'approved').length}
+                  </p>
+                  <p className="text-xs text-gray-600 font-medium">{t('holidays.approved')}</p>
                 </div>
+                <div className="bg-white/80 backdrop-blur-sm rounded-lg p-2 text-center">
+                  <p className="text-xl font-bold text-amber-600">
+                    {teamHolidayRequests.filter(r => r.status === 'pending').length}
+                  </p>
+                  <p className="text-xs text-gray-600 font-medium">{t('holidays.pending')}</p>
+                </div>
+                <div className="bg-white/80 backdrop-blur-sm rounded-lg p-2 text-center">
+                  <p className="text-xl font-bold text-gray-500">
+                    {teamHolidayRequests.filter(r => r.status === 'canceled').length}
+                  </p>
+                  <p className="text-xs text-gray-600 font-medium">{t('holidays.canceled')}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-4 max-h-96 overflow-y-auto">
+              <div className="space-y-2">
+                {teamHolidayRequests
+                  .filter(req => req.status !== 'canceled')
+                  .slice(0, 4)
+                  .map((request) => (
+                    <div 
+                      key={request.id} 
+                      className="group bg-gray-50 hover:bg-gray-100 rounded-lg p-3 transition-colors"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={clsx("w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform", request.color)}>
+                          {request.initials}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <h3 className="font-semibold text-gray-900 text-sm truncate">
+                              {request.employeeName}
+                            </h3>
+                            <span className={clsx('text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap', {
+                              'bg-green-100 text-green-700': request.status === 'approved',
+                              'bg-amber-100 text-amber-700': request.status === 'pending',
+                              'bg-gray-100 text-gray-600': request.status === 'canceled'
+                            })}>
+                              {request.status === 'approved' ? `✓ ${t('holidays.approved')}` : `⏱ ${t('holidays.pending')}`}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-600 mb-1">
+                            {request.startDate} - {request.endDate} ({request.days} {t('holidays.days')})
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">{request.reason}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
               </div>
               
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <div className="bg-gray-100 rounded-lg p-3 text-center">
-                  <p className="text-xs text-gray-500 mb-0.5">Next Deadline</p>
-                  <p className="font-semibold text-gray-800">Today</p>
-                </div>
-                <div className="bg-gray-100 rounded-lg p-3 text-center">
-                  <p className="text-xs text-gray-500 mb-0.5">Team Focus</p>
-                  <p className="font-semibold text-gray-800">Development</p>
-                </div>
-              </div>
+              <Link 
+                to="/team-holidays" 
+                className="w-full mt-4 text-sm text-blue-600 font-semibold hover:text-blue-700 flex items-center justify-center gap-1.5 transition-colors py-2 hover:bg-blue-50 rounded-lg"
+              >
+                <span>{t('holidays.viewAllRequests')}</span>
+                <ArrowRight size={14} />
+              </Link>
             </div>
           </div>
         </div>
 
-        {/* Detailed Sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-          {/* Recent Completed Tasks */}
-          <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0 mb-3 md:mb-4">
-              <h2 className="text-base md:text-lg font-semibold text-gray-800 flex items-center gap-2 md:gap-3">
-                <CheckCircle className="text-green-500" size={18} />
-                Recently Completed
-              </h2>
-              <Link to="/completed-tasks" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 font-medium">
-                <span>View All</span>
-                <ArrowRight size={14} />
-              </Link>
+        {/* Activity Sections */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6 mb-6">
+          {/* Recent Activity */}
+          <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-gray-50 to-white p-5 md:p-6 border-b border-gray-100">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <CheckCircle className="text-green-600" size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900">{t('activity.recentTitle')}</h2>
+                    <p className="text-xs text-gray-500">{t('activity.recentSubtitle')}</p>
+                  </div>
+                </div>
+                <Link to="/completed-tasks" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 font-semibold hover:gap-2 transition-all">
+                  <span className="hidden sm:inline">{t('activity.viewAll')}</span>
+                  <ArrowRight size={16} />
+                </Link>
+              </div>
             </div>
             
-            <div className="space-y-2 md:space-y-3">
-              {recentCompletedTasks.map(task => (
-                <div key={task.id} className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3 p-3 bg-gray-50 rounded-lg touch-manipulation">
-                  <div className={clsx("w-8 md:w-9 h-8 md:h-9 rounded-full flex items-center justify-center text-white text-xs md:text-sm font-semibold flex-shrink-0", task.color)}>
-                    {task.initials}
+            <div className="p-4 md:p-5">
+              <div className="space-y-2">
+                {recentCompletedTasks.map((task, idx) => (
+                  <div 
+                    key={task.id} 
+                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group"
+                    style={{ animationDelay: `${idx * 50}ms` }}
+                  >
+                    <div className={clsx("w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform", task.color)}>
+                      {task.initials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-800 text-sm truncate">{task.title}</h3>
+                      <p className="text-xs text-gray-500 truncate">{t('activity.completedBy')} {task.completedBy}</p>
+                    </div>
+                    <span className="text-xs text-gray-400 font-medium whitespace-nowrap">{task.completedAt}</span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-800 text-sm truncate">{task.title}</h3>
-                    <p className="text-xs md:text-sm text-gray-500 truncate">Completed by {task.completedBy}</p>
-                  </div>
-                  <span className="text-xs md:text-sm text-gray-500 whitespace-nowrap">{task.completedAt}</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
           
-          {/* Upcoming Deadlines */}
-          <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0 mb-3 md:mb-4">
-              <h2 className="text-base md:text-lg font-semibold text-gray-800 flex items-center gap-2 md:gap-3">
-                <Clock className="text-red-500" size={18} />
-                Upcoming Deadlines
-              </h2>
-              <Link to="/upcoming-deadlines" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 font-medium">
-                <span>View All</span>
-                <ArrowRight size={14} />
-              </Link>
+          {/* Deadlines */}
+          <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-red-50 to-white p-5 md:p-6 border-b border-gray-100">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-red-100 rounded-lg">
+                    <Clock className="text-red-600" size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900">{t('activity.deadlinesTitle')}</h2>
+                    <p className="text-xs text-gray-500">{t('activity.deadlinesSubtitle')}</p>
+                  </div>
+                </div>
+                <Link to="/upcoming-deadlines" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 font-semibold hover:gap-2 transition-all">
+                  <span className="hidden sm:inline">{t('activity.viewAll')}</span>
+                  <ArrowRight size={16} />
+                </Link>
+              </div>
             </div>
             
-            <div className="space-y-2 md:space-y-3">
-              {upcomingDeadlines.map(task => (
-                <div key={task.id} className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3 p-3 bg-gray-50 rounded-lg touch-manipulation">
-                  <div className={clsx("w-8 md:w-9 h-8 md:h-9 rounded-full flex items-center justify-center text-white text-xs md:text-sm font-semibold flex-shrink-0", task.color)}>
-                    {task.initials}
+            <div className="p-4 md:p-5">
+              <div className="space-y-2">
+                {upcomingDeadlines.map((task, idx) => (
+                  <div 
+                    key={task.id} 
+                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group"
+                    style={{ animationDelay: `${idx * 50}ms` }}
+                  >
+                    <div className={clsx("w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform", task.color)}>
+                      {task.initials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-800 text-sm truncate">{task.title}</h3>
+                      <p className="text-xs text-gray-500 truncate">{task.assignedTo}</p>
+                    </div>
+                    <span className={clsx('text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap', {
+                      'bg-red-100 text-red-700': task.status === 'danger',
+                      'bg-amber-100 text-amber-700': task.status === 'warning'
+                    })}>
+                      {formatDueDate(task.dueDate)}
+                    </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-800 text-sm truncate">{task.title}</h3>
-                    <p className="text-xs md:text-sm text-gray-500 truncate">Assigned to {task.assignedTo}</p>
-                  </div>
-                  <span className={clsx('text-xs md:text-sm font-semibold px-2 md:px-2.5 py-1 rounded-full whitespace-nowrap', {
-                    'bg-red-100 text-red-700': task.status === 'danger',
-                    'bg-yellow-100 text-yellow-700': task.status === 'warning'
-                  })}>
-                    Due {task.dueDate}
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Weekly Calendar Widget */}
-        <div className="mt-4 md:mt-6 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
           <WeeklyCalendarWidget />
         </div>
       </main>
+      </div>
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import TopBar from './shared/TopBar';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -478,7 +479,9 @@ const CalendarPage = () => {
     );
   };
   return (
-    <div className="min-h-screen bg-gray-50 p-3 md:p-6">
+    <div className="min-h-screen bg-gray-50">
+      <TopBar showSearch={false} />
+      <div className="p-3 md:p-6">
       {/* Header */}
       <header className="mb-4 md:mb-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
@@ -612,6 +615,7 @@ const CalendarPage = () => {
         {viewMode === 'month' && <MonthView />}
         {viewMode === 'week' && <WeekView />}
         {viewMode === 'day' && <DayView />}
+      </div>
     </div>
   );
 };

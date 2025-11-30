@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import TopBar from './shared/TopBar';
 import { 
   ArrowLeft, 
   Search, 
@@ -547,7 +548,9 @@ const RecentlyCompletedTasksManager = () => {
     </div>
   );
   return (
-    <div className="min-h-screen bg-gray-50 p-3 md:p-6">
+    <div className="min-h-screen bg-gray-50">
+      <TopBar showSearch={false} />
+      <div className="p-3 md:p-6">
       {/* Feedback Message */}
       {feedbackMessage && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[60] animate-fade-in">
@@ -792,6 +795,7 @@ const RecentlyCompletedTasksManager = () => {
         </div>        {/* Tasks List */}
         {viewMode === 'grid' ? <GridView /> : <ListView />}
       </main>
+      </div>
     </div>
   );
 };

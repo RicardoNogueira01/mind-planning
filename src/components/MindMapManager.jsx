@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Trash2, User, Grid, List, Star } from 'lucide-react';
 import PropTypes from 'prop-types';
+import TopBar from './shared/TopBar';
 import { useMindMaps } from '../hooks/useMindMaps';
 import { useMindMapFilters } from '../hooks/useMindMapFilters';
 import { getRelativeTime } from '../utils/dateUtils';
@@ -61,9 +62,12 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
     setEditingMap(null);
   };
   return (
-    <div className="min-h-screen bg-gray-50 p-3 md:p-6">
-      {/* Header */}
-      <header className="mb-4 md:mb-8">
+    <div className="min-h-screen bg-gray-50">
+      <TopBar showSearch={false} />
+      
+      <div className="p-3 md:p-6">
+        {/* Header */}
+        <header className="mb-4 md:mb-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
           <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
             <button
@@ -462,6 +466,7 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
           <Plus size={24} />
         </button>
       )}
+      </div>
     </div>
   );
 };
