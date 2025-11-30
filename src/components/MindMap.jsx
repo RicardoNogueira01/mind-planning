@@ -2,7 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
-import { Check, LayoutTemplate, Sparkles } from 'lucide-react';
+import { Check, LayoutTemplate, Sparkles, Camera } from 'lucide-react';
 import TemplateGallery from './templates/TemplateGallery';
 import { instantiateTemplate } from '../templates/templateEngine';
 import { applyLayout } from '../utils/layoutAlgorithms';
@@ -29,6 +29,7 @@ import PropertiesPanel from './popups/PropertiesPanel';
 import DueDatePicker from './popups/DueDatePicker';
 import AttachmentsPopup from './popups/AttachmentsPopup';
 import CollaboratorPicker from './popups/CollaboratorPicker';
+import ImageAnalyzerModal from './mindmap/ImageAnalyzerModal';
 
 import { getDescendantNodeIds, getAncestorNodeIds } from './mindmap/graphUtils';
 import ShapePalette from './mindmap/ShapePalette';
@@ -100,6 +101,9 @@ export default function MindMap({ mapId, onBack }) {
   const [showTemplateGallery, setShowTemplateGallery] = useState(false); // Template selection modal
   const [showLayoutMenu, setShowLayoutMenu] = useState(false); // Auto-layout dropdown
   const [nodeLayoutMenuOpen, setNodeLayoutMenuOpen] = useState(null); // Track which node's layout menu is open
+  const [showImageAnalyzer, setShowImageAnalyzer] = useState(false); // Image upload & analysis modal
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false); // Loading state for AI analysis
+  const [analyzedImagePreview, setAnalyzedImagePreview] = useState(null); // Preview of uploaded image
 
   // Per-node button anchor refs for popovers
   const detailsBtnRefs = useRef({});
@@ -711,6 +715,71 @@ export default function MindMap({ mapId, onBack }) {
   const onAddChild = nodeOps.addChildNode;
   const onRequestDelete = (node) => nodeOps.deleteNodes([node.id]);
   const addStandaloneNode = nodeOps.addStandaloneNode;
+
+  // Handle analyzed image data and create mind map
+  const handleImageAnalyze = (data) => {
+    const { centralNode, nodes: branchNodes } = data;
+    
+    // Get canvas center
+    const canvasRect = canvasRef.current?.getBoundingClientRect();
+    const centerX = canvasRect ? (canvasRect.width / 2) : 500;
+    const centerY = canvasRect ? (canvasRect.height / 2) : 400;
+    
+    // Create central node
+    const centralNodeId = `node-${Date.now()}`;
+    const centralNodeObj = {
+      id: centralNodeId,
+      text: centralNode.text,
+      x: centerX - viewState.panX,
+      y: centerY - viewState.panY,
+      width: 180,
+      height: 60,
+      bgColor: centralNode.bgColor,
+      fontColor: centralNode.fontColor,
+      shape: 'rectangle'
+    };
+    
+    // Create branch nodes and connections
+    const newNodes = [centralNodeObj];
+    const newConnections = [];
+    
+    branchNodes.forEach((branchNode, index) => {
+      const { angle, distance } = branchNode.relativePosition;
+      const angleRad = (angle * Math.PI) / 180;
+      
+      // Calculate position using polar coordinates
+      const x = (centerX - viewState.panX) + distance * Math.cos(angleRad);
+      const y = (centerY - viewState.panY) + distance * Math.sin(angleRad);
+      
+      const nodeId = `node-${Date.now()}-${index}`;
+      newNodes.push({
+        id: nodeId,
+        text: branchNode.text,
+        x,
+        y,
+        width: 160,
+        height: 60,
+        bgColor: branchNode.bgColor,
+        fontColor: branchNode.fontColor,
+        shape: 'rectangle'
+      });
+      
+      // Create connection from central node to branch node
+      newConnections.push({
+        id: `conn-${Date.now()}-${index}`,
+        from: centralNodeId,
+        to: nodeId
+      });
+    });
+    
+    // Add all nodes and connections to state
+    setNodes(prev => [...prev, ...newNodes]);
+    setConnections(prev => [...prev, ...newConnections]);
+    
+    // Close modal
+    setShowImageAnalyzer(false);
+    setAnalyzedImagePreview(null);
+  };
 
   // Track mouse position for connection preview line
   useEffect(() => {
@@ -1661,6 +1730,7 @@ export default function MindMap({ mapId, onBack }) {
             showMobileToolbar={showMobileToolbar}
             isMobile={isMobileOrTablet}
             onClose={() => setShowMobileToolbar(false)}
+            onImageAnalyze={() => setShowImageAnalyzer(true)}
           />,
           document.body
         )}
@@ -2431,6 +2501,16 @@ export default function MindMap({ mapId, onBack }) {
         collaboratorNodeId={collaboratorNodeId}
         setCollaboratorNodeId={setCollaboratorNodeId}
         nodes={nodes}
+      />
+
+      {/* Image Analyzer Modal */}
+      <ImageAnalyzerModal
+        isOpen={showImageAnalyzer}
+        onClose={() => {
+          setShowImageAnalyzer(false);
+          setAnalyzedImagePreview(null);
+        }}
+        onAnalyze={handleImageAnalyze}
       />
 
       {/* Share Dialog */}

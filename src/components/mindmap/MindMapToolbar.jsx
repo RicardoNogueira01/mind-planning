@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Plus, Trash2, MousePointer, Hand, Users, Home, Sparkles, X } from 'lucide-react';
+import { Plus, Trash2, MousePointer, Hand, Users, Home, Sparkles, X, Camera } from 'lucide-react';
 
 const MindMapToolbar = ({
   mode,
@@ -19,7 +19,8 @@ const MindMapToolbar = ({
   setFxOptions,
   showMobileToolbar = true,
   isMobile = false,
-  onClose
+  onClose,
+  onImageAnalyze
 }) => {
   return (
     <div 
@@ -46,7 +47,7 @@ const MindMapToolbar = ({
           </div>
         )}
 
-        {/* Back to Dashboard Button */}
+        {/* Back to Dashboard & Camera Button */}
         <div className={`flex ${isMobile ? 'flex-col w-full' : 'items-center'} gap-0.5 md:gap-1 px-1 md:px-2 py-0.5 md:py-1 rounded-lg bg-gray-50/50`}>
           <button 
             onClick={onBack}
@@ -54,6 +55,14 @@ const MindMapToolbar = ({
             title="Back to Dashboard"
           >
             <Home size={16} className="md:w-[18px] md:h-[18px] group-hover:scale-110 transition-transform duration-200 mx-auto" />
+          </button>
+          
+          <button 
+            onClick={onImageAnalyze}
+            className={`${isMobile ? 'w-full' : ''} p-1.5 md:p-2.5 rounded-lg text-gray-700 hover:bg-white hover:text-indigo-600 hover:shadow-sm transition-all duration-200 group border border-gray-200/60 hover:border-gray-300 touch-manipulation`}
+            title="Analyze Image"
+          >
+            <Camera size={16} className="md:w-[18px] md:h-[18px] group-hover:scale-110 transition-transform duration-200 mx-auto" />
           </button>
         </div>
 
