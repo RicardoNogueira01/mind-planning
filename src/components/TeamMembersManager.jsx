@@ -400,112 +400,149 @@ const TeamMembersManager = () => {
     }
   };
 
+  const getPerformanceTopColor = (performance) => {
+    switch(performance) {
+      case 'excellent': return 'bg-green-500';
+      case 'good': return 'bg-blue-500';
+      case 'average': return 'bg-yellow-500';
+      case 'needs-improvement': return 'bg-red-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
   const GridView = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {filteredMembers.map(member => (
-        <div key={member.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div 
-                className="w-12 h-12 rounded-full flex items-center justify-center text-white font-medium text-lg"
-                style={{ backgroundColor: member.color }}
-              >
-                {member.initials}
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900">{member.name}</h3>
-                <p className="text-sm text-gray-500">{member.role}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPerformanceColor(member.performance)}`}>
-                <div className="flex items-center gap-1">
-                  {getPerformanceIcon(member.performance)}
-                  {member.performance.replace('-', ' ')}
+        <div key={member.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 overflow-hidden group">
+          {/* Performance Top Line */}
+          <div className={`h-1 ${getPerformanceTopColor(member.performance)}`}></div>
+          
+          <div className="p-4">
+            {/* Header with Avatar and Actions */}
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div 
+                  className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md relative"
+                  style={{ backgroundColor: member.color }}
+                >
+                  {member.initials}
+                  <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
                 </div>
-              </span>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-base">{member.name}</h3>
+                  <p className="text-xs text-gray-500">{member.role}</p>
+                </div>
+              </div>
               <div className="relative">
                 <button 
-                  className="p-1 hover:bg-gray-100 rounded"
+                  className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
                   onClick={() => setOpenMenuId(openMenuId === member.id ? null : member.id)}
                 >
                   <MoreVertical size={16} className="text-gray-400" />
                 </button>
                 {openMenuId === member.id && (
-                  <div className="absolute right-0 top-8 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                  <div className="absolute right-0 top-8 w-44 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50">
                     <button 
-                      className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50 flex items-center gap-2"
+                      className="w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-50 flex items-center gap-2"
                       onClick={() => handleEdit(member)}
                     >
+                      <Edit2 size={13} />
                       Edit Member
                     </button>
                     <button 
-                      className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                      className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                       onClick={() => handleDelete(member.id, member.name)}
                     >
+                      <Trash2 size={13} />
                       Delete Member
                     </button>
                   </div>
                 )}
               </div>
             </div>
-          </div>
 
-          <div className="space-y-3 mb-4">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Mail size={14} />
-              <span>{member.email}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Users size={14} />
-              <span>{member.department}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Calendar size={14} />
-              <span>Joined {new Date(member.joinDate).toLocaleDateString()}</span>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Task Completion</span>
-              <span className="text-sm font-medium">{member.completionRate}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600"
-                style={{ width: `${member.completionRate}%` }}
-              ></div>
-            </div>
-            
-            <div className="grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="bg-green-50 rounded-lg p-2">
-                <div className="text-green-600 font-semibold">{member.tasksCompleted}</div>
-                <div className="text-gray-500">Completed</div>
+            {/* Contact Info */}
+            <div className="space-y-1.5 mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold ${getPerformanceColor(member.performance)}`}>
+                  {getPerformanceIcon(member.performance)}
+                  {member.performance.replace('-', ' ')}
+                </span>
               </div>
-              <div className="bg-yellow-50 rounded-lg p-2">
-                <div className="text-yellow-600 font-semibold">{member.tasksInProgress}</div>
-                <div className="text-gray-500">In Progress</div>
+              <div className="flex items-center gap-2 text-xs text-gray-600">
+                <Mail size={12} className="text-gray-400" />
+                <span className="truncate">{member.email}</span>
               </div>
-              <div className="bg-red-50 rounded-lg p-2">
-                <div className="text-red-600 font-semibold">{member.overdueTasks}</div>
-                <div className="text-gray-500">Overdue</div>
+              <div className="flex items-center gap-2 text-xs text-gray-600">
+                <Users size={12} className="text-gray-400" />
+                <span>{member.department}</span>
               </div>
             </div>
-          </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <div className="flex flex-wrap gap-1">
+            {/* Task Progress */}
+            <div className="mb-3">
+              <div className="flex justify-between items-center mb-1.5">
+                <span className="text-xs font-medium text-gray-600">Progress</span>
+                <span className="text-xs font-bold text-gray-900">{member.tasksCompleted}/{member.tasksCompleted + member.tasksInProgress + member.overdueTasks}</span>
+              </div>
+              
+              {/* Progress Bar with Segments */}
+              <div className="flex gap-0.5 h-1.5 rounded-full overflow-hidden bg-gray-200">
+                <div 
+                  className="bg-green-500"
+                  style={{ width: `${(member.tasksCompleted / (member.tasksCompleted + member.tasksInProgress + member.overdueTasks)) * 100}%` }}
+                ></div>
+                <div 
+                  className="bg-yellow-500"
+                  style={{ width: `${(member.tasksInProgress / (member.tasksCompleted + member.tasksInProgress + member.overdueTasks)) * 100}%` }}
+                ></div>
+                <div 
+                  className="bg-red-500"
+                  style={{ width: `${(member.overdueTasks / (member.tasksCompleted + member.tasksInProgress + member.overdueTasks)) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+
+            {/* Task Stats */}
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              <div className="bg-green-50 rounded-lg p-2 text-center">
+                <div className="text-green-600 font-bold text-base">{member.tasksCompleted}</div>
+                <div className="text-[10px] text-gray-500">Done</div>
+              </div>
+              <div className="bg-yellow-50 rounded-lg p-2 text-center">
+                <div className="text-yellow-600 font-bold text-base">{member.tasksInProgress}</div>
+                <div className="text-[10px] text-gray-500">Active</div>
+              </div>
+              <div className="bg-red-50 rounded-lg p-2 text-center">
+                <div className="text-red-600 font-bold text-base">{member.overdueTasks}</div>
+                <div className="text-[10px] text-gray-500">Overdue</div>
+              </div>
+            </div>
+
+            {/* Skills/Tags */}
+            <div className="flex flex-wrap gap-1 mb-3">
               {member.skills.slice(0, 3).map(skill => (
-                <span key={skill} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                <span key={skill} className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] rounded font-medium">
                   {skill}
                 </span>
               ))}
               {member.skills.length > 3 && (
-                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                  +{member.skills.length - 3} more
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] rounded font-medium">
+                  +{member.skills.length - 3}
                 </span>
               )}
+            </div>
+
+            {/* Bottom Action Buttons */}
+            <div className="flex gap-2 pt-3 border-t border-gray-100">
+              <button className="flex-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-xs font-medium flex items-center justify-center gap-1.5">
+                <User size={12} />
+                Profile
+              </button>
+              <button className="flex-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-xs font-medium flex items-center justify-center gap-1.5">
+                <Mail size={12} />
+                Message
+              </button>
             </div>
           </div>
         </div>
@@ -613,81 +650,86 @@ const TeamMembersManager = () => {
       )}
       
       {/* Header */}
-      <header className="mb-4 md:mb-8">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
-          <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
-            <Link to="/" className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 touch-manipulation">
+      <header className="mb-6">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+          <div className="flex items-center gap-4">
+            <Link to="/" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
               <ArrowLeft size={20} className="text-gray-600" />
             </Link>
-            <div className="flex-1 md:flex-initial">
-              <h1 className="text-xl md:text-2xl font-bold text-gray-900">Team Members</h1>
-              <p className="text-sm md:text-base text-gray-500">Manage your team and track performance</p>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Team Members</h1>
+              <p className="text-sm text-gray-500">Manage your team and track performance</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
-            <button 
-              onClick={() => setShowAddMemberModal(true)}
-              className="flex-1 md:flex-initial px-3 md:px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center justify-center gap-2 text-sm touch-manipulation"
-            >
-              <Plus size={16} />
-              Add Member
-            </button>
-          </div>
+          <button 
+            onClick={() => setShowAddMemberModal(true)}
+            className="px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-blue-500/30"
+          >
+            <Plus size={18} />
+            Add Member
+          </button>
         </div>
       </header>      {/* Main Content */}
       <main>
-        {/* Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
-          <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Members</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {/* Total Members */}
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg shadow-blue-500/30">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2.5 bg-white/20 backdrop-blur-sm rounded-xl">
+                <Users size={24} />
               </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <Users size={20} className="text-blue-600" />
+              <div>
+                <p className="text-sm font-medium text-blue-100">Total Members</p>
+                <p className="text-3xl font-bold">{stats.total}</p>
               </div>
             </div>
+            <p className="text-xs text-blue-100">+2 this month</p>
           </div>
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Active Members</p>
-                <p className="text-2xl font-bold text-green-600">{stats.active}</p>
+
+          {/* Active Members */}
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-green-100 rounded-xl">
+                <CheckCircle size={24} className="text-green-600" />
               </div>
-              <div className="p-3 bg-green-100 rounded-lg">
-                <CheckCircle size={20} className="text-green-600" />
-              </div>
+              <span className="text-xs font-semibold px-2.5 py-1 bg-green-100 text-green-700 rounded-full">+100%</span>
             </div>
+            <p className="text-sm text-gray-600 mb-1">Active Members</p>
+            <p className="text-3xl font-bold text-gray-900">{stats.active}</p>
+            <p className="text-xs text-gray-500 mt-2">On track</p>
           </div>
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Avg Completion Rate</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.avgCompletionRate}%</p>
+
+          {/* Avg Completion */}
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-purple-100 rounded-xl">
+                <TrendingUp size={24} className="text-purple-600" />
               </div>
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <Award size={20} className="text-purple-600" />
-              </div>
+              <span className="text-xs font-semibold px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full">Good</span>
             </div>
+            <p className="text-sm text-gray-600 mb-1">Avg Completion</p>
+            <p className="text-3xl font-bold text-gray-900">{stats.avgCompletionRate}%</p>
+            <p className="text-xs text-gray-500 mt-2">+1.2% vs last month</p>
           </div>
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Overdue</p>
-                <p className="text-2xl font-bold text-red-600">{stats.totalOverdue}</p>
+
+          {/* Total Overdue */}
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-red-100 rounded-xl">
+                <AlertTriangle size={24} className="text-red-600" />
               </div>
-              <div className="p-3 bg-red-100 rounded-lg">
-                <AlertTriangle size={20} className="text-red-600" />
-              </div>
+              <span className="text-xs font-semibold px-2.5 py-1 bg-red-100 text-red-700 rounded-full">-4 from last week</span>
             </div>
+            <p className="text-sm text-gray-600 mb-1">Total Overdue</p>
+            <p className="text-3xl font-bold text-gray-900">{stats.totalOverdue}</p>
           </div>
         </div>
 
         {/* Controls */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 mb-6">
           <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-            <div className="flex flex-col sm:flex-row gap-4 flex-1">
+            <div className="flex flex-col sm:flex-row gap-3 flex-1 w-full lg:w-auto">
               <div className="relative">
                 <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />                <input
                   type="text"
