@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 import TopBar from './shared/TopBar';
 import { 
   ArrowLeft, 
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 
 const CalendarPage = () => {
+  const { t } = useLanguage();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('month'); // month, week, day
   const [showFilters, setShowFilters] = useState(false);

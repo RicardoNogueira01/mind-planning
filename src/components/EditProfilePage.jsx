@@ -129,7 +129,7 @@ const EditProfilePage = () => {
         <div className="max-w-4xl mx-auto">
           {/* Avatar Section */}
           <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6 mb-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Profile Picture</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-4">{t('editProfile.profilePicture')}</h2>
             <div className="flex items-center gap-6">
               <div className="w-32 h-32 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center text-white font-bold text-4xl shadow-lg">
                 AK
@@ -139,11 +139,11 @@ const EditProfilePage = () => {
                 <div className="flex gap-2">
                   <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium">
                     <Upload size={16} />
-                    Upload Photo
+                    {t('editProfile.uploadPhoto')}
                   </button>
                   <button className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm font-medium">
                     <Camera size={16} />
-                    Take Photo
+                    {t('editProfile.takePhoto')}
                   </button>
                 </div>
               </div>

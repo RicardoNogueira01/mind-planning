@@ -663,8 +663,8 @@ const TeamMembersManager = () => {
               <ArrowLeft size={20} className="text-gray-600" />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Team Members</h1>
-              <p className="text-sm text-gray-500">Manage your team and track performance</p>
+              <h1 className="text-2xl font-bold text-gray-900">{t('teamMembers.title')}</h1>
+              <p className="text-sm text-gray-500">{t('teamMembers.subtitle')}</p>
             </div>
           </div>
           <button 
@@ -672,7 +672,7 @@ const TeamMembersManager = () => {
             className="px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-blue-500/30"
           >
             <Plus size={18} />
-            Add Member
+            {t('teamMembers.addMember')}
           </button>
         </div>
       </header>      {/* Main Content */}

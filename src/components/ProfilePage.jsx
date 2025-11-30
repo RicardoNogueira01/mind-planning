@@ -151,17 +151,17 @@ const ProfilePage = () => {
               <div className="flex gap-2">
                 <Link
                   to={`/profile/${profile.id}/edit`}
-                  className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm font-medium"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium"
                 >
                   <Edit2 size={16} />
-                  Edit Profile
+                  {t('profile.editProfile')}
                 </Link>
                 <Link
                   to={`/profile/${profile.id}/settings`}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium"
+                  className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm font-medium"
                 >
                   <Settings size={16} />
-                  Settings
+                  {t('profile.settings')}
                 </Link>
               </div>
             </div>
@@ -173,7 +173,7 @@ const ProfilePage = () => {
                   <Mail size={18} className="text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Email</p>
+                  <p className="text-xs text-gray-500">{t('profile.email')}</p>
                   <p className="text-sm font-medium text-gray-900">{profile.email}</p>
                 </div>
               </div>
@@ -182,7 +182,7 @@ const ProfilePage = () => {
                   <Phone size={18} className="text-green-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Phone</p>
+                  <p className="text-xs text-gray-500">{t('profile.phone')}</p>
                   <p className="text-sm font-medium text-gray-900">{profile.phone}</p>
                 </div>
               </div>
@@ -191,21 +191,21 @@ const ProfilePage = () => {
                   <MapPin size={18} className="text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Location</p>
+                  <p className="text-xs text-gray-500">{t('profile.location')}</p>
                   <p className="text-sm font-medium text-gray-900">{profile.location}</p>
                 </div>
               </div>
             </div>
 
-            {/* Bio */}
+            {/* About */}
             <div className="mb-6">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">About</h3>
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">{t('profile.about')}</h3>
               <p className="text-sm text-gray-600 leading-relaxed">{profile.bio}</p>
             </div>
 
             {/* Skills */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Skills</h3>
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('profile.skills')}</h3>
               <div className="flex flex-wrap gap-2">
                 {profile.skills.map((skill, index) => (
                   <span key={index} className="px-3 py-1.5 bg-white border border-gray-200 text-gray-700 text-sm rounded-lg font-medium hover:border-blue-300 hover:bg-blue-50 transition-colors">

@@ -25,6 +25,8 @@ import {
 } from 'lucide-react';
 
 const RecentlyCompletedTasksManager = () => {
+  const { t } = useLanguage();
+  
   // Modal and UI state
   const [showEditTaskModal, setShowEditTaskModal] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState(null);

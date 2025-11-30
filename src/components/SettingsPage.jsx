@@ -108,8 +108,8 @@ const SettingsPage = () => {
               <ArrowLeft size={20} className="text-gray-600" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-              <p className="text-sm text-gray-500">Manage your account preferences</p>
+              <h1 className="text-2xl font-bold text-gray-900">{t('settings.title')}</h1>
+              <p className="text-sm text-gray-500">{t('settings.subtitle')}</p>
             </div>
           </div>
           <button
@@ -117,7 +117,7 @@ const SettingsPage = () => {
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium"
           >
             <Check size={16} />
-            Save Changes
+            {t('settings.saveChanges')}
           </button>
         </div>
 
@@ -129,8 +129,8 @@ const SettingsPage = () => {
                 <Bell size={20} className="text-blue-600" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-gray-900">Notifications</h2>
-                <p className="text-sm text-gray-500">Manage how you receive notifications</p>
+                <h2 className="text-lg font-bold text-gray-900">{t('settings.notifications.title')}</h2>
+                <p className="text-sm text-gray-500">{t('settings.notifications.subtitle')}</p>
               </div>
             </div>
 

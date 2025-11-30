@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 
 const TeamHolidaysManager = () => {
+  const { t } = useLanguage();
   const [feedbackMessage, setFeedbackMessage] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
