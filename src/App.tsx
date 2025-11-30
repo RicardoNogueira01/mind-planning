@@ -7,6 +7,9 @@ import TeamMembersManager from './components/TeamMembersManager';
 import RecentlyCompletedTasksManager from './components/RecentlyCompletedTasksManager';
 import UpcomingDeadlinesManager from './components/UpcomingDeadlinesManager';
 import TeamHolidaysManager from './components/TeamHolidaysManager';
+import ProfilePage from './components/ProfilePage';
+import EditProfilePage from './components/EditProfilePage';
+import SettingsPage from './components/SettingsPage';
 import CalendarPage from './components/CalendarPage';
 import ScrollToTop from './components/ScrollToTop';
 import { LanguageProvider } from './context/LanguageContext';
@@ -69,6 +72,9 @@ function App() {
           <Route path="/completed-tasks" element={<RecentlyCompletedTasksManager />} />
           <Route path="/upcoming-deadlines" element={<UpcomingDeadlinesManager />} />
           <Route path="/team-holidays" element={<TeamHolidaysManager />} />
+          <Route path="/profile/:memberId" element={<ProfilePage />} />
+          <Route path="/profile/:memberId/edit" element={<EditProfilePage />} />
+          <Route path="/profile/:memberId/settings" element={<SettingsPage />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

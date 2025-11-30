@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { Search, Bell, Languages, CheckCircle, AlertTriangle, Users, Calendar, FileText, X } from 'lucide-react';
 import PropTypes from 'prop-types';
@@ -257,7 +258,10 @@ const TopBar = ({ showSearch = true }) => {
             </div>
 
             {/* User Profile */}
-            <div className="flex items-center gap-2 pl-2 pr-3 py-1.5 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer">
+            <Link 
+              to="/profile/current-user" 
+              className="flex items-center gap-2 pl-2 pr-3 py-1.5 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
+            >
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold text-sm shadow-sm">
                 JD
               </div>
@@ -265,7 +269,7 @@ const TopBar = ({ showSearch = true }) => {
                 <p className="text-sm font-semibold text-gray-900">John Doe</p>
                 <p className="text-xs text-gray-500">{t('roles.admin')}</p>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
       </div>

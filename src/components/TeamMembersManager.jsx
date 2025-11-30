@@ -535,10 +535,13 @@ const TeamMembersManager = () => {
 
             {/* Bottom Action Buttons */}
             <div className="flex gap-2 pt-3 border-t border-gray-100">
-              <button className="flex-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-xs font-medium flex items-center justify-center gap-1.5">
+              <Link 
+                to={`/profile/${member.id}`}
+                className="flex-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-xs font-medium flex items-center justify-center gap-1.5"
+              >
                 <User size={12} />
                 Profile
-              </button>
+              </Link>
               <button className="flex-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-xs font-medium flex items-center justify-center gap-1.5">
                 <Mail size={12} />
                 Message
