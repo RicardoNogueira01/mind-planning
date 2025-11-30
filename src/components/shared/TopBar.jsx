@@ -252,7 +252,7 @@ const TopBar = ({ showSearch = true }) => {
 
               {/* Notifications Popover */}
               {showNotifications && (
-                <div className="absolute right-0 top-full mt-2 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
+                <div className="fixed inset-x-4 top-20 sm:absolute sm:right-0 sm:left-auto sm:top-full sm:mt-2 w-auto sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden max-w-md mx-auto sm:mx-0">
                   {/* Header */}
                   <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-white border-b border-gray-200 flex items-center justify-between">
                     <div>
@@ -270,7 +270,7 @@ const TopBar = ({ showSearch = true }) => {
                   </div>
 
                   {/* Notifications List */}
-                  <div className="max-h-96 overflow-y-auto">
+                  <div className="max-h-96 sm:max-h-96 overflow-y-auto">
                     {notifications.length > 0 ? (
                       <div className="divide-y divide-gray-100">
                         {notifications.map((notification) => {
