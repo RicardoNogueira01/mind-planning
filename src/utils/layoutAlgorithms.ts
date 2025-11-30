@@ -403,11 +403,8 @@ function applyCircularLayout(
   spacing: number
 ): Node[] {
   const NODE_WIDTH = 300;
-  // Calculate radius to fit all nodes with minimal spacing around circumference
-  const circumference = Math.max(nodes.length - 1, 1) * (NODE_WIDTH + 30); // Just 30px gap
-  const radius = circumference / (2 * Math.PI);
-  const centerX = 0;
-  const centerY = 0;
+  const NODE_SPACING = 30; // Gap between nodes
+  const LAYER_SPACING = 200; // Distance between concentric circles
   
   // Find root or use first node
   const roots = nodes.filter(n => 
@@ -418,19 +415,46 @@ function applyCircularLayout(
   const otherNodes = nodes.filter(n => n.id !== root.id);
   
   // Position root at center
+  const centerX = 0;
+  const centerY = 0;
   const positioned = [
     { ...root, x: centerX, y: centerY }
   ];
   
-  // Position others in circle
-  otherNodes.forEach((node, idx) => {
-    const angle = (idx / otherNodes.length) * 2 * Math.PI - Math.PI / 2;
-    positioned.push({
-      ...node,
-      x: Math.round(centerX + Math.cos(angle) * radius),
-      y: Math.round(centerY + Math.sin(angle) * radius)
+  if (otherNodes.length === 0) return positioned;
+  
+  // Multi-layer circular layout
+  // Calculate optimal nodes per layer to avoid overcrowding
+  const MAX_NODES_PER_LAYER = 12; // Maximum nodes in a single circle
+  
+  let remainingNodes = [...otherNodes];
+  let layerIndex = 0;
+  
+  while (remainingNodes.length > 0) {
+    layerIndex++;
+    const radius = layerIndex * LAYER_SPACING;
+    
+    // Calculate how many nodes fit comfortably in this circle
+    const circumference = 2 * Math.PI * radius;
+    const maxNodesInCircle = Math.floor(circumference / (NODE_WIDTH + NODE_SPACING));
+    const nodesInThisLayer = Math.min(
+      Math.min(remainingNodes.length, MAX_NODES_PER_LAYER),
+      maxNodesInCircle
+    );
+    
+    // Position nodes in this layer
+    const layerNodes = remainingNodes.slice(0, nodesInThisLayer);
+    layerNodes.forEach((node, idx) => {
+      const angle = (idx / nodesInThisLayer) * 2 * Math.PI - Math.PI / 2;
+      positioned.push({
+        ...node,
+        x: Math.round(centerX + Math.cos(angle) * radius),
+        y: Math.round(centerY + Math.sin(angle) * radius)
+      });
     });
-  });
+    
+    remainingNodes = remainingNodes.slice(nodesInThisLayer);
+  }
   
   return positioned;
 }
