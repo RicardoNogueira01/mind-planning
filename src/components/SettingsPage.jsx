@@ -121,9 +121,11 @@ const SettingsPage = () => {
           </button>
         </div>
 
-        <div className="max-w-4xl mx-auto space-y-6">
-          {/* Notifications */}
-          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
+        <div className="space-y-6">
+          {/* Notifications and Privacy - Grid Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Notifications */}
+            <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-blue-100 rounded-lg">
                 <Bell size={20} className="text-blue-600" />
@@ -238,8 +240,8 @@ const SettingsPage = () => {
             </div>
           </div>
 
-          {/* Privacy */}
-          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
+            {/* Privacy */}
+            <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-purple-100 rounded-lg">
                 <Eye size={20} className="text-purple-600" />
@@ -304,7 +306,10 @@ const SettingsPage = () => {
               </div>
             </div>
           </div>
+          </div>
 
+          {/* Preferences and Security - Grid Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Preferences */}
           <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
             <div className="flex items-center gap-3 mb-6">
@@ -440,8 +445,9 @@ const SettingsPage = () => {
               </button>
             </div>
           </div>
+          </div>
 
-          {/* Data & Account */}
+          {/* Data & Account - Full Width */}
           <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-orange-100 rounded-lg">

@@ -126,7 +126,7 @@ const EditProfilePage = () => {
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto">
+        <div>
           {/* Avatar Section */}
           <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6 mb-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4">{t('editProfile.profilePicture')}</h2>
