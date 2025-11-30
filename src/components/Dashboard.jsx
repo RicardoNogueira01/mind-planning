@@ -328,54 +328,45 @@ const Dashboard = () => {
         </div>
 
         {/* Holidays Section - Country & Team */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6 mb-6">
           {/* Country Holidays */}
-          <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 p-5 md:p-6 border-b border-gray-100">
+          <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 p-4 border-b border-gray-100">
               <div className="flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm">
-                    <span className="text-2xl">🎉</span>
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm">
+                    <span className="text-xl">🎉</span>
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-gray-900">{t('holidays.title')}</h2>
+                    <h2 className="text-base font-bold text-gray-900">{t('holidays.title')}</h2>
                     <p className="text-xs text-gray-500">{t('holidays.subtitle')}</p>
                   </div>
                 </div>
-                <span className="text-sm text-gray-600 font-medium bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                <span className="text-xs text-gray-600 font-medium bg-white/80 backdrop-blur-sm px-2 py-1 rounded-lg">
                   {upcomingHolidays.length} {t('holidays.holidays')}
                 </span>
               </div>
             </div>
             
-            <div className="p-5 md:p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {upcomingHolidays.map((holiday) => (
+            <div className="p-4">
+              <div className="space-y-2">
+                {upcomingHolidays.slice(0, 4).map((holiday) => (
                   <div 
                     key={holiday.id} 
-                    className="group relative bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-xl p-4 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 overflow-hidden"
+                    className="group flex items-center gap-3 bg-gray-50 hover:bg-gray-100 rounded-lg p-2.5 transition-all"
                   >
-                    <div className={clsx("absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl opacity-20 -mr-10 -mt-10 transition-opacity group-hover:opacity-30", holiday.color)}></div>
-                    
-                    <div className="relative z-10">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className={clsx("w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition-transform", holiday.color, "bg-opacity-10")}>
-                          {holiday.emoji}
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-gray-500 font-medium">{t('holidays.in')}</p>
-                          <p className="text-lg font-bold text-gray-900">{holiday.daysUntil}</p>
-                          <p className="text-xs text-gray-500">{t('holidays.days')}</p>
-                        </div>
-                      </div>
-                      
-                      <h3 className="font-bold text-gray-900 text-sm mb-1 group-hover:text-gray-700 transition-colors">
+                    <div className={clsx("w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0", holiday.color, "bg-opacity-10")}>
+                      {holiday.emoji}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 text-sm truncate">
                         {holiday.name}
                       </h3>
-                      <p className="text-xs text-gray-500 font-medium flex items-center gap-1.5">
-                        <span className="w-1 h-1 rounded-full bg-gray-400"></span>
-                        {holiday.date}
-                      </p>
+                      <p className="text-xs text-gray-500">{holiday.date}</p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-base font-bold text-gray-900">{holiday.daysUntil}</p>
+                      <p className="text-xs text-gray-500">{t('holidays.days')}</p>
                     </div>
                   </div>
                 ))}
@@ -385,37 +376,35 @@ const Dashboard = () => {
 
           {/* Team Holiday Requests Summary */}
           <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-5 md:p-6 border-b border-gray-100">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm">
-                    <Users size={20} className="text-blue-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-900">{t('holidays.teamTitle')}</h2>
-                    <p className="text-xs text-gray-500">{t('holidays.teamSubtitle')}</p>
-                  </div>
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-gray-100">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-1.5 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm">
+                  <Users size={18} className="text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-gray-900">{t('holidays.teamTitle')}</h2>
+                  <p className="text-xs text-gray-500">{t('holidays.teamSubtitle')}</p>
                 </div>
               </div>
               
-              <div className="grid grid-cols-3 gap-2">
-                <div className="bg-white/80 backdrop-blur-sm rounded-lg p-2 text-center">
-                  <p className="text-xl font-bold text-green-600">
+              <div className="flex gap-2">
+                <div className="flex-1 bg-white/80 backdrop-blur-sm rounded-lg p-2 text-center">
+                  <p className="text-lg font-bold text-green-600">
                     {teamHolidayRequests.filter(r => r.status === 'approved').length}
                   </p>
-                  <p className="text-xs text-gray-600 font-medium">{t('holidays.approved')}</p>
+                  <p className="text-[10px] text-gray-600 font-medium">{t('holidays.approved')}</p>
                 </div>
-                <div className="bg-white/80 backdrop-blur-sm rounded-lg p-2 text-center">
-                  <p className="text-xl font-bold text-amber-600">
+                <div className="flex-1 bg-white/80 backdrop-blur-sm rounded-lg p-2 text-center">
+                  <p className="text-lg font-bold text-amber-600">
                     {teamHolidayRequests.filter(r => r.status === 'pending').length}
                   </p>
-                  <p className="text-xs text-gray-600 font-medium">{t('holidays.pending')}</p>
+                  <p className="text-[10px] text-gray-600 font-medium">{t('holidays.pending')}</p>
                 </div>
-                <div className="bg-white/80 backdrop-blur-sm rounded-lg p-2 text-center">
-                  <p className="text-xl font-bold text-gray-500">
+                <div className="flex-1 bg-white/80 backdrop-blur-sm rounded-lg p-2 text-center">
+                  <p className="text-lg font-bold text-gray-500">
                     {teamHolidayRequests.filter(r => r.status === 'canceled').length}
                   </p>
-                  <p className="text-xs text-gray-600 font-medium">{t('holidays.canceled')}</p>
+                  <p className="text-[10px] text-gray-600 font-medium">{t('holidays.canceled')}</p>
                 </div>
               </div>
             </div>
@@ -428,10 +417,10 @@ const Dashboard = () => {
                   .map((request) => (
                     <div 
                       key={request.id} 
-                      className="group bg-gray-50 hover:bg-gray-100 rounded-lg p-3 transition-colors"
+                      className="group bg-gray-50 hover:bg-gray-100 rounded-lg p-2.5 transition-colors"
                     >
-                      <div className="flex items-start gap-3">
-                        <div className={clsx("w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform", request.color)}>
+                      <div className="flex items-start gap-2.5">
+                        <div className={clsx("w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm", request.color)}>
                           {request.initials}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -439,16 +428,15 @@ const Dashboard = () => {
                             <h3 className="font-semibold text-gray-900 text-sm truncate">
                               {request.employeeName}
                             </h3>
-                            <span className={clsx('text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap', {
+                            <span className={clsx('text-[10px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap', {
                               'bg-green-100 text-green-700': request.status === 'approved',
-                              'bg-amber-100 text-amber-700': request.status === 'pending',
-                              'bg-gray-100 text-gray-600': request.status === 'canceled'
+                              'bg-amber-100 text-amber-700': request.status === 'pending'
                             })}>
-                              {request.status === 'approved' ? `✓ ${t('holidays.approved')}` : `⏱ ${t('holidays.pending')}`}
+                              {request.status === 'approved' ? `✓` : `⏱`}
                             </span>
                           </div>
-                          <p className="text-xs text-gray-600 mb-1">
-                            {request.startDate} - {request.endDate} ({request.days} {t('holidays.days')})
+                          <p className="text-xs text-gray-600 mb-0.5">
+                            {request.startDate} - {request.endDate}
                           </p>
                           <p className="text-xs text-gray-500 truncate">{request.reason}</p>
                         </div>
