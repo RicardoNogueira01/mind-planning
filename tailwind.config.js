@@ -5,7 +5,11 @@ export default {
       "./src/**/*.{js,ts,jsx,tsx}", // Ensures Tailwind scans your React files
     ],
     theme: {
-      extend: {},
+      extend: {
+        fontFamily: {
+          sans: ['Plus Jakarta Sans', 'sans-serif'],
+        },
+      },
     },
     plugins: [],
   };
