@@ -447,17 +447,17 @@ const Dashboard = () => {
                 .map((request) => (
                   <div 
                     key={request.id} 
-                    className="flex items-start gap-3 pb-3 border-b border-gray-100 last:border-0 last:pb-0"
+                    className="flex items-center gap-4 pb-3 border-b border-gray-100 last:border-0 last:pb-0"
                   >
                     <div className={clsx("w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0", request.color)}>
                       {request.initials}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold text-gray-900 text-sm" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                           {request.employeeName}
                         </h3>
-                        <span className={clsx('text-lg flex-shrink-0', {
+                        <span className={clsx('text-base flex-shrink-0', {
                           'text-green-600': request.status === 'approved',
                           'text-amber-600': request.status === 'pending'
                         })}>
