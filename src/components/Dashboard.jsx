@@ -192,9 +192,9 @@ const Dashboard = () => {
                 <h2 className="text-6xl font-bold mb-3" style={{ fontFamily: 'DM Mono, monospace' }}>
                   {completionPercentage}%
                 </h2>
-                <div className="h-2 bg-white/10 rounded-full overflow-hidden max-w-md">
+                <div className="h-3 bg-white/20 rounded-full overflow-hidden max-w-md">
                   <div 
-                    className="h-2 bg-blue-500 rounded-full shadow-lg animate-progress-fill" 
+                    className="h-3 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full shadow-lg transition-all duration-1000 ease-out" 
                     style={{ width: `${completionPercentage}%` }}
                   ></div>
                 </div>
