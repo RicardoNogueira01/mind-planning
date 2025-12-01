@@ -575,10 +575,10 @@ const Dashboard = () => {
                     <h3 className="font-semibold text-gray-900 text-sm mb-0.5" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.title}</h3>
                     <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.assignedTo}</p>
                   </div>
-                  <span className={clsx('text-xs font-semibold px-3 py-1.5 rounded-lg whitespace-nowrap', {
+                  <span className={clsx('text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap tracking-wide', {
                     'bg-red-50 text-red-600': task.status === 'danger',
                     'bg-amber-50 text-amber-600': task.status === 'warning'
-                  })} style={{ fontFamily: 'DM Mono, monospace' }}>
+                  })} style={{ fontFamily: 'DM Sans, sans-serif' }}>
                     {formatDueDate(task.dueDate)}
                   </span>
                 </div>
