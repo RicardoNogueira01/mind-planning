@@ -35,6 +35,20 @@ const ProfilePage = () => {
     location: 'San Francisco, CA',
     bio: 'Passionate full-stack developer with 8+ years of experience building scalable web applications. Love working with React, Node.js, and cloud technologies. Always eager to learn new things and contribute to meaningful projects.',
     skills: ['React', 'Node.js', 'TypeScript', 'Python', 'AWS', 'Docker', 'GraphQL', 'MongoDB'],
+    holidays: {
+      totalDays: 25,
+      taken: 12,
+      pending: 3,
+      rejected: 1,
+      remaining: 9,
+      requests: [
+        { id: 1, startDate: '20 Dec', endDate: '27 Dec', days: 5, status: 'taken', reason: 'Christmas vacation' },
+        { id: 2, startDate: '10 Jan', endDate: '17 Jan', days: 5, status: 'taken', reason: 'Winter break' },
+        { id: 3, startDate: '5 Feb', endDate: '7 Feb', days: 2, status: 'taken', reason: 'Personal matters' },
+        { id: 4, startDate: '15 Mar', endDate: '19 Mar', days: 3, status: 'pending', reason: 'Family trip' },
+        { id: 5, startDate: '1 Apr', endDate: '3 Apr', days: 2, status: 'rejected', reason: 'Project deadline' }
+      ]
+    },
     stats: {
       completed: 248,
       inProgress: 12,
@@ -183,6 +197,75 @@ const ProfilePage = () => {
                   <span key={skill} className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-lg font-medium hover:bg-gray-200 transition-colors">
                     {skill}
                   </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Holidays Section */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">HOLIDAYS</h3>
+              
+              {/* Holiday Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-gray-900 mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
+                    {profile.holidays.totalDays}
+                  </p>
+                  <p className="text-xs text-gray-600 font-medium">Total Days</p>
+                </div>
+                <div className="bg-green-50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-green-600 mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
+                    {profile.holidays.taken}
+                  </p>
+                  <p className="text-xs text-green-700 font-medium">Taken</p>
+                </div>
+                <div className="bg-amber-50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-amber-600 mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
+                    {profile.holidays.pending}
+                  </p>
+                  <p className="text-xs text-amber-700 font-medium">Pending</p>
+                </div>
+                <div className="bg-red-50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-red-600 mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
+                    {profile.holidays.rejected}
+                  </p>
+                  <p className="text-xs text-red-700 font-medium">Rejected</p>
+                </div>
+                <div className="bg-blue-50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-blue-600 mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
+                    {profile.holidays.remaining}
+                  </p>
+                  <p className="text-xs text-blue-700 font-medium">Remaining</p>
+                </div>
+              </div>
+
+              {/* Recent Holiday Requests */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Recent Requests</h4>
+                {profile.holidays.requests.slice(0, 3).map((request) => (
+                  <div key={request.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                        request.status === 'taken' ? 'bg-green-500' : 
+                        request.status === 'pending' ? 'bg-amber-500' : 
+                        'bg-red-500'
+                      }`}></div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{request.startDate} - {request.endDate}</p>
+                        <p className="text-xs text-gray-500">{request.reason}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-semibold text-gray-600">{request.days} days</span>
+                      <span className={`px-2 py-1 rounded-md text-xs font-medium ${
+                        request.status === 'taken' ? 'bg-green-100 text-green-700' : 
+                        request.status === 'pending' ? 'bg-amber-100 text-amber-700' : 
+                        'bg-red-100 text-red-700'
+                      }`}>
+                        {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                      </span>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
