@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Style Guide</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #FAFAFA;
+            --bg-card: #FFFFFF;
+            --bg-subtle: #F5F5F5;
+            --bg-accent: #0A0A0A;
+            
+            --text-primary: #0A0A0A;
+            --text-secondary: #6B6B6B;
+            --text-tertiary: #9A9A9A;
+            --text-inverse: #FFFFFF;
+            
+            --accent-primary: #2563EB;
+            --accent-success: #059669;
+            --accent-warning: #D97706;
+            --accent-danger: #DC2626;
+            
+            --border-light: #E5E5E5;
+            --border-medium: #D4D4D4;
+            
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+            
+            --font-sans: 'DM Sans', -apple-system, sans-serif;
+            --font-mono: 'DM Mono', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: 48px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Page Header */
+        .page-header {
+            margin-bottom: 64px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 64px;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--accent-primary);
+            border-radius: 2px;
+        }
+
+        .section-description {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            font-size: 0.9375rem;
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+        .grid-5 { grid-template-columns: repeat(5, 1fr); }
+        .grid-6 { grid-template-columns: repeat(6, 1fr); }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3, .grid-4, .grid-5, .grid-6 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Color Swatches */
+        .color-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+        }
+
+        .color-swatch {
+            height: 80px;
+            display: flex;
+            align-items: flex-end;
+            padding: 12px;
+        }
+
+        .color-info {
+            padding: 12px;
+        }
+
+        .color-name {
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 2px;
+        }
+
+        .color-value {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        .color-var {
+            font-family: var(--font-mono);
+            font-size: 0.6875rem;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+
+        /* Typography Samples */
+        .type-sample {
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            border: 1px solid var(--border-light);
+            margin-bottom: 16px;
+        }
+
+        .type-label {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-tertiary);
+            margin-bottom: 8px;
+        }
+
+        .type-specs {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            margin-top: 8px;
+        }
+
+        /* Spacing */
+        .spacing-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .spacing-box {
+            background: var(--accent-primary);
+            opacity: 0.2;
+            border-radius: 4px;
+        }
+
+        .spacing-label {
+            font-family: var(--font-mono);
+            font-size: 0.8125rem;
+            min-width: 80px;
+        }
+
+        .spacing-value {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Radius */
+        .radius-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .radius-box {
+            width: 64px;
+            height: 64px;
+            background: var(--accent-primary);
+        }
+
+        .radius-label {
+            font-family: var(--font-mono);
+            font-size: 0.8125rem;
+            text-align: center;
+        }
+
+        .radius-value {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Shadows */
+        .shadow-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .shadow-box {
+            width: 80px;
+            height: 80px;
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+        }
+
+        .shadow-label {
+            font-family: var(--font-mono);
+            font-size: 0.8125rem;
+            text-align: center;
+        }
+
+        /* Avatars */
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text-inverse);
+        }
+
+        .avatar.sm { width: 32px; height: 32px; font-size: 0.75rem; }
+        .avatar.lg { width: 48px; height: 48px; font-size: 1rem; }
+
+        .avatar.blue { background: linear-gradient(135deg, #2563EB, #3B82F6); }
+        .avatar.green { background: linear-gradient(135deg, #059669, #10B981); }
+        .avatar.purple { background: linear-gradient(135deg, #7C3AED, #8B5CF6); }
+        .avatar.orange { background: linear-gradient(135deg, #D97706, #F59E0B); }
+        .avatar.pink { background: linear-gradient(135deg, #DB2777, #EC4899); }
+
+        .avatar-row {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .avatar-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .avatar-group span {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge.success {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--accent-success);
+        }
+
+        .badge.warning {
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--accent-warning);
+        }
+
+        .badge.danger {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--accent-danger);
+        }
+
+        .badge.info {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--accent-primary);
+        }
+
+        .badge.neutral {
+            background: var(--bg-subtle);
+            color: var(--text-secondary);
+        }
+
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .badge-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* Status Icons */
+        .status-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status-icon.approved {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--accent-success);
+        }
+
+        .status-icon.pending {
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--accent-warning);
+        }
+
+        .status-icon.cancelled {
+            background: var(--bg-subtle);
+            color: var(--text-tertiary);
+        }
+
+        .status-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .status-row {
+            display: flex;
+            gap: 24px;
+        }
+
+        .status-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-group span {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Cards */
+        .card-demo {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light);
+            padding: 24px;
+        }
+
+        .card-demo:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Links */
+        .link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--accent-primary);
+            text-decoration: none;
+            transition: gap 0.2s ease;
+        }
+
+        .link:hover {
+            gap: 10px;
+        }
+
+        .link svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: var(--bg-accent);
+            color: var(--text-inverse);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            font-family: var(--font-mono);
+            font-size: 0.8125rem;
+            overflow-x: auto;
+            margin-top: 16px;
+        }
+
+        .code-block .comment {
+            color: #6B7280;
+        }
+
+        .code-block .property {
+            color: #60A5FA;
+        }
+
+        .code-block .value {
+            color: #34D399;
+        }
+
+        /* Usage Notes */
+        .usage-note {
+            background: rgba(37, 99, 235, 0.05);
+            border-left: 3px solid var(--accent-primary);
+            padding: 16px 20px;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            margin-top: 16px;
+        }
+
+        .usage-note-title {
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 4px;
+        }
+
+        .usage-note p {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+
+        /* Table */
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        th {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            font-family: var(--font-mono);
+            font-size: 0.8125rem;
+        }
+
+        .semantic-color {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .semantic-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="page-header">
+        <h1>Dashboard Style Guide</h1>
+        <p>Design system documentation for consistent UI development</p>
+    </header>
+
+    <!-- Colors -->
+    <section class="section">
+        <h2 class="section-title">Colors</h2>
+        <p class="section-description">Core color palette with semantic meaning and usage guidelines.</p>
+        
+        <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 16px; color: var(--text-secondary);">Backgrounds</h3>
+        <div class="grid grid-4" style="margin-bottom: 32px;">
+            <div class="color-card">
+                <div class="color-swatch" style="background: #FAFAFA; border-bottom: 1px solid #E5E5E5;"></div>
+                <div class="color-info">
+                    <div class="color-name">Primary BG</div>
+                    <div class="color-value">#FAFAFA</div>
+                    <div class="color-var">--bg-primary</div>
+                </div>
+            </div>
+            <div class="color-card">
+                <div class="color-swatch" style="background: #FFFFFF; border-bottom: 1px solid #E5E5E5;"></div>
+                <div class="color-info">
+                    <div class="color-name">Card BG</div>
+                    <div class="color-value">#FFFFFF</div>
+                    <div class="color-var">--bg-card</div>
+                </div>
+            </div>
+            <div class="color-card">
+                <div class="color-swatch" style="background: #F5F5F5; border-bottom: 1px solid #E5E5E5;"></div>
+                <div class="color-info">
+                    <div class="color-name">Subtle BG</div>
+                    <div class="color-value">#F5F5F5</div>
+                    <div class="color-var">--bg-subtle</div>
+                </div>
+            </div>
+            <div class="color-card">
+                <div class="color-swatch" style="background: #0A0A0A;"></div>
+                <div class="color-info">
+                    <div class="color-name">Accent BG</div>
+                    <div class="color-value">#0A0A0A</div>
+                    <div class="color-var">--bg-accent</div>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 16px; color: var(--text-secondary);">Text</h3>
+        <div class="grid grid-4" style="margin-bottom: 32px;">
+            <div class="color-card">
+                <div class="color-swatch" style="background: #0A0A0A;"></div>
+                <div class="color-info">
+                    <div class="color-name">Primary</div>
+                    <div class="color-value">#0A0A0A</div>
+                    <div class="color-var">--text-primary</div>
+                </div>
+            </div>
+            <div class="color-card">
+                <div class="color-swatch" style="background: #6B6B6B;"></div>
+                <div class="color-info">
+                    <div class="color-name">Secondary</div>
+                    <div class="color-value">#6B6B6B</div>
+                    <div class="color-var">--text-secondary</div>
+                </div>
+            </div>
+            <div class="color-card">
+                <div class="color-swatch" style="background: #9A9A9A;"></div>
+                <div class="color-info">
+                    <div class="color-name">Tertiary</div>
+                    <div class="color-value">#9A9A9A</div>
+                    <div class="color-var">--text-tertiary</div>
+                </div>
+            </div>
+            <div class="color-card">
+                <div class="color-swatch" style="background: #FFFFFF; border-bottom: 1px solid #E5E5E5;"></div>
+                <div class="color-info">
+                    <div class="color-name">Inverse</div>
+                    <div class="color-value">#FFFFFF</div>
+                    <div class="color-var">--text-inverse</div>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 16px; color: var(--text-secondary);">Semantic / Status</h3>
+        <div class="grid grid-4" style="margin-bottom: 32px;">
+            <div class="color-card">
+                <div class="color-swatch" style="background: #2563EB;"></div>
+                <div class="color-info">
+                    <div class="color-name">Primary</div>
+                    <div class="color-value">#2563EB</div>
+                    <div class="color-var">--accent-primary</div>
+                </div>
+            </div>
+            <div class="color-card">
+                <div class="color-swatch" style="background: #059669;"></div>
+                <div class="color-info">
+                    <div class="color-name">Success</div>
+                    <div class="color-value">#059669</div>
+                    <div class="color-var">--accent-success</div>
+                </div>
+            </div>
+            <div class="color-card">
+                <div class="color-swatch" style="background: #D97706;"></div>
+                <div class="color-info">
+                    <div class="color-name">Warning</div>
+                    <div class="color-value">#D97706</div>
+                    <div class="color-var">--accent-warning</div>
+                </div>
+            </div>
+            <div class="color-card">
+                <div class="color-swatch" style="background: #DC2626;"></div>
+                <div class="color-info">
+                    <div class="color-name">Danger</div>
+                    <div class="color-value">#DC2626</div>
+                    <div class="color-var">--accent-danger</div>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 16px; color: var(--text-secondary);">Semantic Color Usage</h3>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Color</th>
+                        <th>Use For</th>
+                        <th>Never Use For</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="semantic-color"><span class="semantic-dot" style="background: #2563EB;"></span>Blue / Primary</span></td>
+                        <td>Links, CTAs, info badges, "In X days" deadlines</td>
+                        <td>Errors, success states</td>
+                    </tr>
+                    <tr>
+                        <td><span class="semantic-color"><span class="semantic-dot" style="background: #059669;"></span>Green / Success</span></td>
+                        <td>Completed, approved, on track</td>
+                        <td>Warnings, upcoming deadlines</td>
+                    </tr>
+                    <tr>
+                        <td><span class="semantic-color"><span class="semantic-dot" style="background: #D97706;"></span>Orange / Warning</span></td>
+                        <td>At risk, pending, "Tomorrow" deadlines</td>
+                        <td>Success states, errors</td>
+                    </tr>
+                    <tr>
+                        <td><span class="semantic-color"><span class="semantic-dot" style="background: #DC2626;"></span>Red / Danger</span></td>
+                        <td>Overdue, urgent, "Today" deadlines, errors</td>
+                        <td>Success, neutral info</td>
+                    </tr>
+                    <tr>
+                        <td><span class="semantic-color"><span class="semantic-dot" style="background: #F59E0B;"></span>Amber / Holiday</span></td>
+                        <td>Holiday-related components only</td>
+                        <td>Status indicators, badges</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Typography -->
+    <section class="section">
+        <h2 class="section-title">Typography</h2>
+        <p class="section-description">Two font families: DM Sans for UI text, DM Mono for data and code.</p>
+
+        <div class="type-sample">
+            <div class="type-label">Display / Hero Numbers</div>
+            <div style="font-size: 4.5rem; font-weight: 700; letter-spacing: -0.04em; line-height: 1;">52%</div>
+            <div class="type-specs">DM Sans · 4.5rem (72px) · Weight 700 · Letter-spacing -0.04em</div>
+        </div>
+
+        <div class="type-sample">
+            <div class="type-label">Page Title</div>
+            <div style="font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em;">Team Dashboard</div>
+            <div class="type-specs">DM Sans · 1.5rem (24px) · Weight 600 · Letter-spacing -0.02em</div>
+        </div>
+
+        <div class="type-sample">
+            <div class="type-label">Card Title</div>
+            <div style="font-size: 0.9375rem; font-weight: 600;">Recent Activity</div>
+            <div class="type-specs">DM Sans · 0.9375rem (15px) · Weight 600</div>
+        </div>
+
+        <div class="type-sample">
+            <div class="type-label">Card Label / Overline</div>
+            <div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary);">TASK STATUS</div>
+            <div class="type-specs">DM Sans · 0.75rem (12px) · Weight 600 · Uppercase · Letter-spacing 0.08em</div>
+        </div>
+
+        <div class="type-sample">
+            <div class="type-label">Body Text</div>
+            <div style="font-size: 0.875rem; color: var(--text-secondary);">62 of 119 tasks completed this sprint</div>
+            <div class="type-specs">DM Sans · 0.875rem (14px) · Weight 400</div>
+        </div>
+
+        <div class="type-sample">
+            <div class="type-label">Mono / Data</div>
+            <div style="font-family: var(--font-mono); font-size: 0.875rem;">8/14 · Dec 1, 2025 · 2h ago</div>
+            <div class="type-specs">DM Mono · 0.875rem (14px) · Weight 400 — Use for numbers, dates, timestamps</div>
+        </div>
+
+        <div class="usage-note">
+            <div class="usage-note-title">Usage Rule</div>
+            <p>Use DM Mono for any data that changes or is machine-generated: progress counts (8/14), dates, timestamps, percentages. Use DM Sans for everything else.</p>
+        </div>
+    </section>
+
+    <!-- Spacing -->
+    <section class="section">
+        <h2 class="section-title">Spacing</h2>
+        <p class="section-description">Consistent spacing scale based on 4px increments.</p>
+
+        <div style="background: var(--bg-card); border-radius: var(--radius-md); padding: 24px; border: 1px solid var(--border-light);">
+            <div class="spacing-row">
+                <span class="spacing-label">4px</span>
+                <div class="spacing-box" style="width: 4px; height: 24px;"></div>
+                <span class="spacing-value">Tight spacing, inside badges</span>
+            </div>
+            <div class="spacing-row">
+                <span class="spacing-label">8px</span>
+                <div class="spacing-box" style="width: 8px; height: 24px;"></div>
+                <span class="spacing-value">Between related items</span>
+            </div>
+            <div class="spacing-row">
+                <span class="spacing-label">12px</span>
+                <div class="spacing-box" style="width: 12px; height: 24px;"></div>
+                <span class="spacing-value">List item padding</span>
+            </div>
+            <div class="spacing-row">
+                <span class="spacing-label">16px</span>
+                <div class="spacing-box" style="width: 16px; height: 24px;"></div>
+                <span class="spacing-value">Between components, grid gaps</span>
+            </div>
+            <div class="spacing-row">
+                <span class="spacing-label">24px</span>
+                <div class="spacing-box" style="width: 24px; height: 24px;"></div>
+                <span class="spacing-value">Card padding, section spacing</span>
+            </div>
+            <div class="spacing-row">
+                <span class="spacing-label">32px</span>
+                <div class="spacing-box" style="width: 32px; height: 24px;"></div>
+                <span class="spacing-value">Hero card padding, large gaps</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Border Radius -->
+    <section class="section">
+        <h2 class="section-title">Border Radius</h2>
+        <p class="section-description">Rounded corners for different component sizes.</p>
+
+        <div class="grid grid-4">
+            <div class="radius-item">
+                <div class="radius-box" style="border-radius: 8px;"></div>
+                <div class="radius-label">
+                    Small
+                    <div class="radius-value">8px · --radius-sm</div>
+                </div>
+            </div>
+            <div class="radius-item">
+                <div class="radius-box" style="border-radius: 12px;"></div>
+                <div class="radius-label">
+                    Medium
+                    <div class="radius-value">12px · --radius-md</div>
+                </div>
+            </div>
+            <div class="radius-item">
+                <div class="radius-box" style="border-radius: 16px;"></div>
+                <div class="radius-label">
+                    Large
+                    <div class="radius-value">16px · --radius-lg</div>
+                </div>
+            </div>
+            <div class="radius-item">
+                <div class="radius-box" style="border-radius: 100px; width: 96px;"></div>
+                <div class="radius-label">
+                    Pill
+                    <div class="radius-value">100px · badges, bars</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="usage-note">
+            <div class="usage-note-title">When to Use</div>
+            <p><strong>8px:</strong> Icons, small buttons, inner elements · <strong>12px:</strong> List items, stat boxes · <strong>16px:</strong> Cards, modals · <strong>100px:</strong> Badges, progress bars, avatars</p>
+        </div>
+    </section>
+
+    <!-- Shadows -->
+    <section class="section">
+        <h2 class="section-title">Shadows</h2>
+        <p class="section-description">Subtle elevation for interactive feedback.</p>
+
+        <div class="grid grid-3">
+            <div class="shadow-item">
+                <div class="shadow-box" style="box-shadow: 0 1px 2px rgba(0,0,0,0.04);"></div>
+                <div class="shadow-label">
+                    Small
+                    <div class="radius-value">--shadow-sm</div>
+                </div>
+            </div>
+            <div class="shadow-item">
+                <div class="shadow-box" style="box-shadow: 0 4px 12px rgba(0,0,0,0.06);"></div>
+                <div class="shadow-label">
+                    Medium
+                    <div class="radius-value">--shadow-md</div>
+                </div>
+            </div>
+            <div class="shadow-item">
+                <div class="shadow-box" style="box-shadow: 0 8px 24px rgba(0,0,0,0.08);"></div>
+                <div class="shadow-label">
+                    Large
+                    <div class="radius-value">--shadow-lg</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="usage-note">
+            <div class="usage-note-title">Usage Rule</div>
+            <p>Cards start with no shadow and gain <strong>shadow-md</strong> on hover. This creates subtle depth without visual noise at rest.</p>
+        </div>
+    </section>
+
+    <!-- Components: Avatars -->
+    <section class="section">
+        <h2 class="section-title">Avatars</h2>
+        <p class="section-description">User identification with gradient backgrounds.</p>
+
+        <div style="background: var(--bg-card); border-radius: var(--radius-md); padding: 24px; border: 1px solid var(--border-light);">
+            <h3 style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 16px;">Sizes</h3>
+            <div class="avatar-row" style="margin-bottom: 32px;">
+                <div class="avatar-group">
+                    <div class="avatar sm blue">JD</div>
+                    <span>32px · .sm</span>
+                </div>
+                <div class="avatar-group">
+                    <div class="avatar blue">JD</div>
+                    <span>40px · default</span>
+                </div>
+                <div class="avatar-group">
+                    <div class="avatar lg blue">JD</div>
+                    <span>48px · .lg</span>
+                </div>
+            </div>
+
+            <h3 style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 16px;">Colors</h3>
+            <div class="avatar-row">
+                <div class="avatar-group">
+                    <div class="avatar blue">JD</div>
+                    <span>.blue</span>
+                </div>
+                <div class="avatar-group">
+                    <div class="avatar green">AK</div>
+                    <span>.green</span>
+                </div>
+                <div class="avatar-group">
+                    <div class="avatar purple">MR</div>
+                    <span>.purple</span>
+                </div>
+                <div class="avatar-group">
+                    <div class="avatar orange">SL</div>
+                    <span>.orange</span>
+                </div>
+                <div class="avatar-group">
+                    <div class="avatar pink">TS</div>
+                    <span>.pink</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="usage-note">
+            <div class="usage-note-title">Color Assignment</div>
+            <p>Assign avatar colors based on user ID or name hash for consistency. The same user should always have the same color across the app.</p>
+        </div>
+    </section>
+
+    <!-- Components: Badges -->
+    <section class="section">
+        <h2 class="section-title">Badges & Status</h2>
+        <p class="section-description">Visual indicators for states and categories.</p>
+
+        <div style="background: var(--bg-card); border-radius: var(--radius-md); padding: 24px; border: 1px solid var(--border-light);">
+            <h3 style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 16px;">Status Badges (with dot)</h3>
+            <div class="badge-row" style="margin-bottom: 24px;">
+                <span class="badge success"><span class="badge-dot"></span>On track</span>
+                <span class="badge warning"><span class="badge-dot"></span>At risk</span>
+                <span class="badge danger"><span class="badge-dot"></span>2 overdue</span>
+            </div>
+
+            <h3 style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 16px;">Deadline Badges (no dot)</h3>
+            <div class="badge-row" style="margin-bottom: 24px;">
+                <span class="badge danger">Today</span>
+                <span class="badge warning">Tomorrow</span>
+                <span class="badge info">In 2 days</span>
+                <span class="badge info">In 3 days</span>
+            </div>
+
+            <h3 style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 16px;">Status Icons (for approvals)</h3>
+            <div class="status-row">
+                <div class="status-group">
+                    <div class="status-icon approved">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </div>
+                    <span>Approved</span>
+                </div>
+                <div class="status-group">
+                    <div class="status-icon pending">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <circle cx="12" cy="12" r="8"/>
+                            <polyline points="12 7 12 12 15 13"/>
+                        </svg>
+                    </div>
+                    <span>Pending</span>
+                </div>
+                <div class="status-group">
+                    <div class="status-icon cancelled">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </div>
+                    <span>Cancelled</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Components: Cards -->
+    <section class="section">
+        <h2 class="section-title">Card Structure</h2>
+        <p class="section-description">Consistent card layout pattern across the dashboard.</p>
+
+        <div class="card-demo">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px dashed var(--border-light);">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 36px; height: 36px; border-radius: 8px; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; color: var(--text-secondary);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9375rem; font-weight: 600;">Card Title</div>
+                        <div style="font-size: 0.75rem; color: var(--text-tertiary);">Subtitle or count</div>
+                    </div>
+                </div>
+                <a href="#" class="link">
+                    View All
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </div>
+            <div style="color: var(--text-tertiary); font-size: 0.875rem; text-align: center; padding: 32px;">
+                Card content goes here
+            </div>
+        </div>
+
+        <div class="usage-note">
+            <div class="usage-note-title">Card Header Pattern</div>
+            <p><strong>Left:</strong> Icon (36px, bg-subtle) + Title + Subtitle · <strong>Right:</strong> "View All →" link · All cards should follow this structure for consistency.</p>
+        </div>
+    </section>
+
+    <!-- CSS Variables -->
+    <section class="section">
+        <h2 class="section-title">CSS Variables</h2>
+        <p class="section-description">Copy this to your stylesheet root.</p>
+
+        <div class="code-block">
+<span class="comment">/* Backgrounds */</span>
+<span class="property">--bg-primary</span>: <span class="value">#FAFAFA</span>;
+<span class="property">--bg-card</span>: <span class="value">#FFFFFF</span>;
+<span class="property">--bg-subtle</span>: <span class="value">#F5F5F5</span>;
+<span class="property">--bg-accent</span>: <span class="value">#0A0A0A</span>;
+
+<span class="comment">/* Text */</span>
+<span class="property">--text-primary</span>: <span class="value">#0A0A0A</span>;
+<span class="property">--text-secondary</span>: <span class="value">#6B6B6B</span>;
+<span class="property">--text-tertiary</span>: <span class="value">#9A9A9A</span>;
+<span class="property">--text-inverse</span>: <span class="value">#FFFFFF</span>;
+
+<span class="comment">/* Semantic */</span>
+<span class="property">--accent-primary</span>: <span class="value">#2563EB</span>;
+<span class="property">--accent-success</span>: <span class="value">#059669</span>;
+<span class="property">--accent-warning</span>: <span class="value">#D97706</span>;
+<span class="property">--accent-danger</span>: <span class="value">#DC2626</span>;
+
+<span class="comment">/* Borders */</span>
+<span class="property">--border-light</span>: <span class="value">#E5E5E5</span>;
+<span class="property">--border-medium</span>: <span class="value">#D4D4D4</span>;
+
+<span class="comment">/* Radius */</span>
+<span class="property">--radius-sm</span>: <span class="value">8px</span>;
+<span class="property">--radius-md</span>: <span class="value">12px</span>;
+<span class="property">--radius-lg</span>: <span class="value">16px</span>;
+
+<span class="comment">/* Shadows */</span>
+<span class="property">--shadow-sm</span>: <span class="value">0 1px 2px rgba(0,0,0,0.04)</span>;
+<span class="property">--shadow-md</span>: <span class="value">0 4px 12px rgba(0,0,0,0.06)</span>;
+<span class="property">--shadow-lg</span>: <span class="value">0 8px 24px rgba(0,0,0,0.08)</span>;
+
+<span class="comment">/* Typography */</span>
+<span class="property">--font-sans</span>: <span class="value">'DM Sans', -apple-system, sans-serif</span>;
+<span class="property">--font-mono</span>: <span class="value">'DM Mono', monospace</span>;
+        </div>
+    </section>
+
+</body>
+</html>
