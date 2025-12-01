@@ -728,8 +728,8 @@ export default function MindMap({ mapId, onBack }) {
     const centralNodeObj = {
       id: centralNodeId,
       text: centralNode.text,
-      x: centerX - viewState.panX,
-      y: centerY - viewState.panY,
+      x: centerX,
+      y: centerY,
       width: 180,
       height: 60,
       bgColor: centralNode.bgColor,
@@ -746,8 +746,8 @@ export default function MindMap({ mapId, onBack }) {
       const angleRad = (angle * Math.PI) / 180;
       
       // Calculate position using polar coordinates
-      const x = (centerX - viewState.panX) + distance * Math.cos(angleRad);
-      const y = (centerY - viewState.panY) + distance * Math.sin(angleRad);
+      const x = centerX + distance * Math.cos(angleRad);
+      const y = centerY + distance * Math.sin(angleRad);
       
       const nodeId = `node-${Date.now()}-${index}`;
       newNodes.push({

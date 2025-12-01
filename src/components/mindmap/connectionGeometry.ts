@@ -116,26 +116,27 @@ export function computeBezierPath(
   // STEP 1: Determine optimal connection point on CHILD node
   // ============================================================
   // Choose edge of child based on where parent is located
+  // The child should receive the connection on the side FACING the parent
   // Inset from edges to target middle area of node
   const inset = 40; // Distance from edge toward center
   let childConnectionX, childConnectionY;
   
   if (fromCenterX < toRect.left) {
-    // Parent is to the LEFT → connect to child's LEFT edge (inset)
+    // Parent is to the LEFT → connect to child's LEFT edge (facing parent)
     childConnectionX = toRect.left + inset;
     childConnectionY = toCenterY;
   } else if (fromCenterX > toRect.right) {
-    // Parent is to the RIGHT → connect to child's RIGHT edge (inset)
-    childConnectionX = toRect.right - inset;
+    // Parent is to the RIGHT → connect to child's LEFT edge (facing parent)
+    childConnectionX = toRect.left + inset;
     childConnectionY = toCenterY;
   } else if (fromCenterY < toRect.top) {
-    // Parent is ABOVE → connect to child's TOP edge (inset)
+    // Parent is ABOVE → connect to child's TOP edge (facing parent)
     childConnectionX = toCenterX;
     childConnectionY = toRect.top + inset;
   } else if (fromCenterY > toRect.bottom) {
-    // Parent is BELOW → connect to child's BOTTOM edge (inset)
+    // Parent is BELOW → connect to child's TOP edge (facing parent)
     childConnectionX = toCenterX;
-    childConnectionY = toRect.bottom - inset;
+    childConnectionY = toRect.top + inset;
   } else {
     // Parent overlaps child (rare) → use center
     childConnectionX = toCenterX;
