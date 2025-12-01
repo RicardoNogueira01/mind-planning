@@ -43,8 +43,8 @@ const ShareDialog = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start gap-3 sm:gap-4 mb-4 sm:mb-6">
-          <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
+          <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 rounded-full flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-black">
               <circle cx="18" cy="5" r="3"></circle>
               <circle cx="6" cy="12" r="3"></circle>
               <circle cx="18" cy="19" r="3"></circle>
@@ -75,7 +75,7 @@ const ShareDialog = ({
                 value="view"
                 checked={sharePermission === 'view'}
                 onChange={(e) => setSharePermission(e.target.value)}
-                className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500 flex-shrink-0"
+                className="w-4 h-4 text-black focus:ring-2 focus:ring-black flex-shrink-0"
               />
               <div className="flex-1 min-w-0">
                 <div className="text-sm sm:text-base font-medium text-gray-900">View Only</div>
@@ -89,7 +89,7 @@ const ShareDialog = ({
                 value="edit"
                 checked={sharePermission === 'edit'}
                 onChange={(e) => setSharePermission(e.target.value)}
-                className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500 flex-shrink-0"
+                className="w-4 h-4 text-black focus:ring-2 focus:ring-black flex-shrink-0"
               />
               <div className="flex-1 min-w-0">
                 <div className="text-sm sm:text-base font-medium text-gray-900">Can Edit</div>
@@ -109,7 +109,7 @@ const ShareDialog = ({
               {shareVisitors.map((visitor) => (
                 <div key={visitor.id} className="flex items-center justify-between gap-2 p-1.5 sm:p-2 hover:bg-gray-50 rounded-lg transition-colors group">
                   <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-black rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
                       {visitor.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -121,7 +121,7 @@ const ShareDialog = ({
                     <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full ${
                       visitor.permission === 'edit' 
                         ? 'bg-green-100 text-green-700' 
-                        : 'bg-blue-100 text-blue-700'
+                        : 'bg-gray-100 text-gray-700'
                     }`}>
                       {visitor.permission === 'edit' ? 'Edit' : 'View'}
                     </span>
@@ -164,7 +164,7 @@ const ShareDialog = ({
               />
               <button
                 onClick={onCopyLink}
-                className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm touch-manipulation flex-shrink-0"
+                className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition-colors duration-200 shadow-sm touch-manipulation flex-shrink-0">
               >
                 Copy
               </button>
@@ -181,8 +181,8 @@ const ShareDialog = ({
             Cancel
           </button>
           <button
-            className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm touch-manipulation"
-            onClick={onGenerateLink}
+            className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition-colors duration-200 shadow-sm touch-manipulation"
+            onClick={onGenerateLink}>
           >
             {shareLink ? 'Regenerate Link' : 'Generate Link'}
           </button>
