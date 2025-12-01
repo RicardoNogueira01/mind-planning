@@ -17,6 +17,9 @@ export const analyzeImage = async (imageDataUrl) => {
     return generateMockMindMapData();
   }
 
+  console.log('Starting image analysis with Gemini API...');
+  console.log('API Key present:', GEMINI_API_KEY ? 'Yes' : 'No');
+
   try {
     // Remove data URL prefix to get base64 string
     const base64Data = imageDataUrl.split(',')[1];
@@ -83,7 +86,14 @@ Guidelines:
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Gemini API error: ${response.status} - ${errorData.error?.message || response.statusText}`);
+      const errorMessage = errorData.error?.message || response.statusText;
+      console.error('Gemini API error details:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData: errorData,
+        apiKey: GEMINI_API_KEY ? `${GEMINI_API_KEY.substring(0, 10)}...` : 'not set'
+      });
+      throw new Error(`Gemini API error: ${response.status} - ${errorMessage}`);
     }
 
     const data = await response.json();

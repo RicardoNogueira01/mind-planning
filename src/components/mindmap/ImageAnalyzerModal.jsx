@@ -43,7 +43,23 @@ const ImageAnalyzerModal = ({ isOpen, onClose, onAnalyze }) => {
       handleClose();
     } catch (error) {
       console.error('Error analyzing image:', error);
-      setError('Failed to analyze image. Please try again or check your API key configuration.');
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to analyze image. ';
+      
+      if (error.message.includes('403') || error.message.includes('API key')) {
+        errorMessage += 'API key may be invalid or restricted. Please check your API key and ensure it has access to Gemini API.';
+      } else if (error.message.includes('429')) {
+        errorMessage += 'API rate limit exceeded. Please wait a moment and try again.';
+      } else if (error.message.includes('400')) {
+        errorMessage += 'Invalid request. The image format may not be supported.';
+      } else if (error.message.includes('network') || error.message.includes('fetch')) {
+        errorMessage += 'Network error. Please check your internet connection.';
+      } else {
+        errorMessage += error.message || 'Please try again or check the console for details.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsAnalyzing(false);
     }

@@ -9,8 +9,12 @@ The AI Image Analyzer feature allows you to upload hand-drawn mind maps, sketche
 
 1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
 2. Sign in with your Google account
-3. Click "Create API Key"
-4. Copy your API key
+3. Click "Create API Key" or "Get API Key"
+4. **IMPORTANT**: Make sure the API key has access to Gemini API
+   - The API should automatically be enabled, but if you get errors:
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Enable "Generative Language API" for your project
+5. Copy your API key
 
 ### 2. Configure the Application
 
@@ -71,6 +75,46 @@ Google Gemini API offers a generous free tier:
 - More info: [Google AI Pricing](https://ai.google.dev/pricing)
 
 ## Troubleshooting
+
+### "Analysis Failed" - API key may be invalid or restricted
+
+**Most Common Issue**: The API key needs proper permissions
+
+1. **Verify API Key Format**: 
+   - Should look like: `AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`
+   - No extra spaces or quotes in `.env` file
+
+2. **Enable Generative Language API**:
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Search for "Generative Language API"
+   - Click "Enable" if not already enabled
+   - Wait 1-2 minutes for activation
+
+3. **Check API Key Restrictions**:
+   - Go to [Google Cloud Console > Credentials](https://console.cloud.google.com/apis/credentials)
+   - Find your API key
+   - Click "Edit API key"
+   - Under "API restrictions", either:
+     - Select "Don't restrict key" (for development), OR
+     - Select "Restrict key" and add "Generative Language API"
+   - Save changes
+
+4. **Test Your API Key**:
+   - Open browser console (F12)
+   - Try uploading an image
+   - Check console for detailed error messages
+   - Look for specific error codes (403, 400, 429)
+
+### Error Code Meanings
+
+- **403 Forbidden**: API key invalid or doesn't have permission
+  - Solution: Enable Generative Language API or check API restrictions
+  
+- **400 Bad Request**: Invalid request format or unsupported image
+  - Solution: Try a different image format (PNG, JPG)
+  
+- **429 Too Many Requests**: Rate limit exceeded
+  - Solution: Wait a moment and try again (15 requests/minute limit)
 
 ### "No API key found" warning
 - Ensure `.env` file exists in project root
