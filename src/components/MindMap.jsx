@@ -2121,10 +2121,10 @@ export default function MindMap({ mapId, onBack }) {
               
               {/* Per-node toolbar overlay - Only visible when exactly ONE node is selected */}
               {selectedNodes.length === 1 && selectedNodes.includes(node.id) && (
-              <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-full z-20" style={{ top: '-25px' }}>
-                <div className="enhanced-node-toolbar backdrop-blur-md bg-white/90 shadow-lg border border-white/20 rounded-2xl p-2 lg:flex lg:items-center lg:gap-1 grid grid-cols-4 gap-1 max-w-[90vw] lg:max-w-none">
+              <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-full z-20" style={{ top: '-16px' }}>
+                <div className="enhanced-node-toolbar bg-white shadow-lg border border-gray-100 rounded-2xl p-2 lg:flex lg:items-center lg:gap-0.5 grid grid-cols-4 gap-1 max-w-[90vw] lg:max-w-none">
                   {/* PRIMARY GROUP - always visible */}
-                  <div className="col-span-4 lg:col-span-auto flex items-center gap-1 justify-center lg:justify-start">
+                  <div className="col-span-4 lg:col-span-auto flex items-center gap-0.5 justify-center lg:justify-start">
                     <NodeToolbarPrimary
                       node={node}
                       isToolbarExpanded={isNodeToolbarExpanded(node.id)}
@@ -2146,7 +2146,7 @@ export default function MindMap({ mapId, onBack }) {
 
                   {/* Visual group when expanded - Desktop only */}
                   {isNodeToolbarExpanded(node.id) && (
-                    <div className="hidden lg:block w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
+                    <div className="hidden lg:block w-px h-6 mx-1 bg-gray-200"></div>
                   )}
 
                   {/* Content group when expanded */}
@@ -2154,11 +2154,11 @@ export default function MindMap({ mapId, onBack }) {
                     <>
                       <button
                         ref={(el) => { attachBtnRefs.current[node.id] = el; }}
-                        className="node-toolbar-btn p-2 rounded-xl hover:bg-purple-50 text-purple-600 transition-colors duration-200 border border-purple-200 hover:border-purple-300 touch-manipulation col-span-1"
+                        className="p-2 rounded-lg text-purple-600 hover:bg-purple-50 transition-colors duration-200 col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'attach'); }}
                         title="Manage file attachments"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
                         </svg>
                       </button>
@@ -2177,11 +2177,11 @@ export default function MindMap({ mapId, onBack }) {
                       
                       <button
                         ref={(el) => { notesBtnRefs.current[node.id] = el; }}
-                        className="node-toolbar-btn p-2 rounded-xl hover:bg-blue-50 text-blue-600 transition-colors duration-200 border border-blue-200 hover:border-blue-300 col-span-1"
+                        className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors duration-200 col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'notes'); }}
                         title="Add or edit notes"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
                           <polyline points="14 2 14 8 20 8"></polyline>
                           <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -2199,7 +2199,7 @@ export default function MindMap({ mapId, onBack }) {
 
                       <button
                         ref={(el) => { emojiBtnRefs.current[node.id] = el; }}
-                        className="node-toolbar-btn p-2 rounded-xl hover:bg-amber-50 text-amber-600 transition-colors duration-200 border border-amber-200 hover:border-amber-300 col-span-1"
+                        className="p-2 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors duration-200 col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'emoji'); }}
                         title="Choose emoji icon"
                       >
@@ -2217,11 +2217,11 @@ export default function MindMap({ mapId, onBack }) {
 
                       <button
                         ref={(el) => { tagBtnRefs.current[node.id] = el; }}
-                        className="node-toolbar-btn p-2 rounded-xl hover:bg-teal-50 text-teal-600 transition-colors duration-200 border border-teal-200 hover:border-teal-300 col-span-1"
+                        className="p-2 rounded-lg text-teal-600 hover:bg-teal-50 transition-colors duration-200 col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'tags'); }}
                         title="Add or manage tags"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
                           <line x1="7" y1="7" x2="7.01" y2="7"></line>
                         </svg>
@@ -2241,7 +2241,7 @@ export default function MindMap({ mapId, onBack }) {
 
                   {/* Divider - Desktop only */}
                   {isNodeToolbarExpanded(node.id) && (
-                    <div className="hidden lg:block w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
+                    <div className="hidden lg:block w-px h-6 mx-1 bg-gray-200"></div>
                   )}
 
                   {/* Meta group when expanded */}
@@ -2249,11 +2249,11 @@ export default function MindMap({ mapId, onBack }) {
                     <>
                       <button
                         ref={(el) => { detailsBtnRefs.current[node.id] = el; }}
-                        className="node-toolbar-btn p-2 rounded-xl hover:bg-indigo-50 text-indigo-600 transition-colors duration-200 border border-indigo-200 hover:border-indigo-300 touch-manipulation col-span-1"
+                        className="p-2 rounded-lg text-indigo-600 hover:bg-indigo-50 transition-colors duration-200 col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'details'); }}
                         title="Edit priority, status, and description"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <circle cx="12" cy="12" r="10"></circle>
                           <line x1="12" y1="16" x2="12" y2="12"></line>
                           <line x1="12" y1="8" x2="12.01" y2="8"></line>
@@ -2274,11 +2274,11 @@ export default function MindMap({ mapId, onBack }) {
 
                       <button
                         ref={(el) => { dateBtnRefs.current[node.id] = el; }}
-                        className="node-toolbar-btn p-2 rounded-xl hover:bg-rose-50 text-rose-600 transition-colors duration-200 border border-rose-200 hover:border-rose-300 col-span-1"
+                        className="p-2 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors duration-200 col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'date'); }}
                         title="Set due date"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
                           <line x1="16" y1="2" x2="16" y2="6"></line>
                           <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -2296,11 +2296,11 @@ export default function MindMap({ mapId, onBack }) {
 
                       <button
                         ref={(el) => { collaboratorBtnRefs.current[node.id] = el; }}
-                        className="node-toolbar-btn p-2 rounded-xl hover:bg-cyan-50 text-cyan-600 transition-colors duration-200 border border-cyan-200 hover:border-cyan-300 col-span-1"
+                        className="p-2 rounded-lg text-cyan-600 hover:bg-cyan-50 transition-colors duration-200 col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'collaborator'); }}
                         title="Assign team member"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
                           <circle cx="9" cy="7" r="4"></circle>
                           <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -2322,11 +2322,11 @@ export default function MindMap({ mapId, onBack }) {
 
                   {/* Divider - Desktop only */}
                   {isNodeToolbarExpanded(node.id) && (
-                    <div className="hidden lg:block w-px h-6 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60"></div>
+                    <div className="hidden lg:block w-px h-6 mx-1 bg-gray-200"></div>
                   )}
 
                   {/* Final controls group */}
-                  <div className="col-span-4 lg:col-span-auto flex items-center gap-1 justify-center lg:justify-start">
+                  <div className="col-span-4 lg:col-span-auto flex items-center gap-0.5 justify-center lg:justify-start">
                     {/* Auto-layout button - show for any node with children */}
                     {(() => {
                       const hasChildren = connections.some(conn => conn.from === node.id);
@@ -2334,14 +2334,14 @@ export default function MindMap({ mapId, onBack }) {
                         <div className="relative">
                           <button
                             ref={(el) => { layoutBtnRefs.current[node.id] = el; }}
-                            className="node-toolbar-btn p-2 rounded-xl hover:bg-purple-50 text-purple-600 transition-colors duration-200 border border-purple-200 hover:border-purple-300"
+                            className="p-2 rounded-lg text-purple-600 hover:bg-purple-50 transition-colors duration-200"
                             onClick={(e) => {
                               e.stopPropagation();
                               setNodeLayoutMenuOpen(nodeLayoutMenuOpen === node.id ? null : node.id);
                             }}
                             title="Auto-arrange children"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
                             </svg>
                           </button>
@@ -2409,11 +2409,11 @@ export default function MindMap({ mapId, onBack }) {
                     {/* Delete button at the end - Always visible for non-root nodes */}
                     {node.id !== 'root' && (
                       <button
-                        className="node-toolbar-btn p-2 rounded-xl hover:bg-red-100 text-red-600 transition-colors duration-200 border border-red-200 hover:border-red-300 touch-manipulation"
+                        className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors duration-200"
                         onClick={(e) => { e.stopPropagation(); setDeleteConfirmNodeId(node.id); }}
                         title="Delete node"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="3 6 5 6 21 6"></polyline>
                           <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                           <line x1="10" y1="11" x2="10" y2="17"></line>
