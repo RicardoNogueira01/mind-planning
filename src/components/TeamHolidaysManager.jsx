@@ -347,7 +347,7 @@ const TeamHolidaysManager = () => {
                   className={`px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-gray-700 ${showFilters ? 'bg-gray-50' : ''}`}
                 >
                   <Filter size={16} />
-                  Filters
+                  {t('common.filters')}
                 </button>
               </div>
             </div>
@@ -357,13 +357,13 @@ const TeamHolidaysManager = () => {
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('common.status')}</label>
                     <select
                       value={selectedStatus}
                       onChange={(e) => setSelectedStatus(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                     >
-                      <option value="all">All Statuses</option>
+                      <option value="all">{t('common.allStatuses')}</option>
                       <option value="pending">Pending</option>
                       <option value="approved">Approved</option>
                       <option value="rejected">Rejected</option>

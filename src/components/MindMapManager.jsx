@@ -147,9 +147,9 @@ const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="flex-1 lg:flex-initial px-2 md:px-3 py-2 border border-gray-300 rounded-lg bg-white text-xs md:text-sm focus:ring-2 focus:ring-blue-500 text-gray-900 touch-manipulation"
               >
-                <option value="updated">Last Modified</option>
-                <option value="created">Date Created</option>
-                <option value="name">Name</option>
+                <option value="updated">{t('mindMaps.lastModified')}</option>
+                <option value="created">{t('common.date')} Created</option>
+                <option value="name">{t('common.name')}</option>
                 <option value="size">Size</option>
               </select>
 

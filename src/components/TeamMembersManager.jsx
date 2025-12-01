@@ -751,7 +751,7 @@ const TeamMembersManager = () => {
                 className={`px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-black ${showFilters ? 'bg-gray-50' : ''}`}
               >
                 <Filter size={16} />
-                Filters
+                {t('common.filters')}
               </button>
             </div>
 
@@ -761,11 +761,11 @@ const TeamMembersManager = () => {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black text-sm md:text-base min-w-0 flex-shrink"
               >
-                <option value="name">Name</option>
-                <option value="role">Role</option>
-                <option value="completionRate">Completion</option>
-                <option value="tasksAssigned">Tasks</option>
-                <option value="overdueTasks">Overdue</option>
+                <option value="name">{t('common.name')}</option>
+                <option value="role">{t('common.role')}</option>
+                <option value="completionRate">{t('common.completion')}</option>
+                <option value="tasksAssigned">{t('common.tasks')}</option>
+                <option value="overdueTasks">{t('common.overdue')}</option>
               </select>
               <button
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
@@ -808,7 +808,7 @@ const TeamMembersManager = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>                  <select
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('common.status')}</label>                  <select
                     value={selectedStatus}
                     onChange={(e) => setSelectedStatus(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black"
@@ -838,7 +838,7 @@ const TeamMembersManager = () => {
         {/* Results */}
         <div className="mb-4">
           <p className="text-sm text-gray-600">
-            Showing {filteredMembers.length} of {teamMembers.length} members
+            {t('common.showing')} {filteredMembers.length} {t('common.of')} {teamMembers.length} {t('common.members')}
           </p>
         </div>        {/* Members List */}
         {viewMode === 'grid' ? <GridView /> : <ListView />}

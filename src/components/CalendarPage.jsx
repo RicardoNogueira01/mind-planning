@@ -581,7 +581,7 @@ const CalendarPage = () => {
                 }`}
               >
                 <Filter size={16} />
-                Filters
+                {t('common.filters')}
               </button>
             </div>
 
@@ -595,7 +595,7 @@ const CalendarPage = () => {
                     : 'bg-white text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                Month
+                {t('common.month')}
               </button>
               <button
                 onClick={() => setViewMode('week')}
@@ -605,7 +605,7 @@ const CalendarPage = () => {
                     : 'bg-white text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                Week
+                {t('common.week')}
               </button>
               <button
                 onClick={() => setViewMode('day')}
@@ -615,7 +615,7 @@ const CalendarPage = () => {
                     : 'bg-white text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                Day
+                {t('common.day')}
               </button>
             </div>
           </div>
@@ -625,7 +625,7 @@ const CalendarPage = () => {
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label htmlFor="category-select" className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                  <label htmlFor="category-select" className="block text-sm font-medium text-gray-700 mb-2">{t('common.category')}</label>
                   <select
                     id="category-select"
                     value={selectedCategory}

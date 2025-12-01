@@ -556,7 +556,7 @@ const UpcomingDeadlinesManager = () => {
               <th className="text-left py-3 px-4 font-medium text-gray-700">Priority</th>
               <th className="text-left py-3 px-4 font-medium text-gray-700">Due Date</th>
               <th className="text-left py-3 px-4 font-medium text-gray-700">Progress</th>
-              <th className="text-left py-3 px-4 font-medium text-gray-700">Status</th>
+              <th className="text-left py-3 px-4 font-medium text-gray-700">{t('common.status')}</th>
               <th className="text-right py-3 px-4 font-medium text-gray-700">Actions</th>
             </tr>
           </thead>
@@ -758,7 +758,7 @@ const UpcomingDeadlinesManager = () => {
               <div className="relative">
                 <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />                <input
                   type="text"
-                  placeholder="Search tasks..."
+                  placeholder={t('common.searchTasks')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64 text-gray-900 placeholder-gray-500"
@@ -769,7 +769,7 @@ const UpcomingDeadlinesManager = () => {
                 className={`px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-black ${showFilters ? 'bg-gray-50' : ''}`}
               >
                 <Filter size={16} />
-                Filters
+                {t('common.filters')}
               </button>
             </div>
 
@@ -778,11 +778,11 @@ const UpcomingDeadlinesManager = () => {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               >
-                <option value="dueDate">Sort by Due Date</option>
-                <option value="title">Sort by Title</option>
-                <option value="priority">Sort by Priority</option>
-                <option value="progress">Sort by Progress</option>
-                <option value="urgencyLevel">Sort by Urgency</option>
+                <option value="dueDate">{t('common.sortBy')} {t('common.dueDate')}</option>
+                <option value="title">{t('common.sortBy')} {t('common.title')}</option>
+                <option value="priority">{t('common.sortBy')} {t('common.priority')}</option>
+                <option value="progress">{t('common.sortBy')} {t('common.progress')}</option>
+                <option value="urgencyLevel">{t('common.sortBy')} {t('common.urgency')}</option>
               </select>              <button
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                 className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-700"
@@ -812,7 +812,7 @@ const UpcomingDeadlinesManager = () => {
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="dueDateFilter">Due Date</label>                  <select
+                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="dueDateFilter">{t('common.dueDate')}</label>                  <select
                     id="dueDateFilter"
                     value={dueDateFilter}
                     onChange={(e) => setDueDateFilter(e.target.value)}
@@ -853,16 +853,16 @@ const UpcomingDeadlinesManager = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="statusFilter">Status</label>                  <select
+                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="statusFilter">{t('common.status')}</label>                  <select
                     id="statusFilter"
-                    value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value)}
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black"
                   >
-                    <option value="all">All Statuses</option>
-                    <option value="not-started">Not Started</option>
-                    <option value="in-progress">In Progress</option>
-                    <option value="blocked">Blocked</option>
+                    <option value="all">{t('common.allStatuses')}</option>
+                    <option value="not-started">{t('common.notStarted')}</option>
+                    <option value="in-progress">{t('common.inProgress')}</option>
+                    <option value="blocked">{t('common.blocked')}</option>
                   </select>
                 </div>
               </div>
@@ -873,7 +873,7 @@ const UpcomingDeadlinesManager = () => {
         {/* Results */}
         <div className="mb-4">
           <p className="text-sm text-gray-600">
-            Showing {filteredTasks.length} of {upcomingTasks.length} upcoming tasks
+            {t('common.showing')} {filteredTasks.length} {t('common.of')} {upcomingTasks.length} {t('common.upcomingTasks')}
           </p>
         </div>
 

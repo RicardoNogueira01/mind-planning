@@ -377,7 +377,7 @@ const RecentlyCompletedTasksManager = () => {
       const hours = Math.floor(diffInHours);
       return hours === 0 ? 'Just now' : `${hours} hours ago`;
     } else if (diffInHours < 48) {
-      return 'Yesterday';
+      return t('common.yesterday');
     } else {
       return date.toLocaleDateString();
     }
@@ -671,7 +671,7 @@ const RecentlyCompletedTasksManager = () => {
                 className={`px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-gray-700 ${showFilters ? 'bg-gray-50' : ''}`}
               >
                 <Filter size={16} />
-                Filters
+                {t('common.filters')}
               </button>
             </div>
 
@@ -681,11 +681,11 @@ const RecentlyCompletedTasksManager = () => {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-sm md:text-base min-w-0 flex-shrink"
               >
-                <option value="completedAt">Date</option>
-                <option value="title">Title</option>
-                <option value="priority">Priority</option>
-                <option value="quality">Quality</option>
-                <option value="timeSpent">Time</option>
+                <option value="completedAt">{t('common.date')}</option>
+                <option value="title">{t('common.title')}</option>
+                <option value="priority">{t('common.priority')}</option>
+                <option value="quality">{t('common.quality')}</option>
+                <option value="timeSpent">{t('common.time')}</option>
               </select>
               <button
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
@@ -716,15 +716,15 @@ const RecentlyCompletedTasksManager = () => {
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>                  <select
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('common.dateRange')}</label>                  <select
                     value={dateRange}
                     onChange={(e) => setDateRange(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black"
                   >
-                    <option value="all">All Time</option>
-                    <option value="today">Today</option>
-                    <option value="week">Last 7 Days</option>
-                    <option value="month">Last 30 Days</option>
+                    <option value="all">{t('common.allTime')}</option>
+                    <option value="today">{t('activity.today')}</option>
+                    <option value="week">{t('common.last7Days')}</option>
+                    <option value="month">{t('common.last30Days')}</option>
                   </select>
                 </div>
                 <div>
@@ -795,7 +795,7 @@ const RecentlyCompletedTasksManager = () => {
         {/* Results */}
         <div className="mb-4">
           <p className="text-sm text-gray-600">
-            Showing {filteredTasks.length} of {completedTasks.length} completed tasks
+            {t('common.showing')} {filteredTasks.length} {t('common.of')} {completedTasks.length} {t('common.completedTasks')}
           </p>
         </div>        {/* Tasks List */}
         {viewMode === 'grid' ? <GridView /> : <ListView />}
