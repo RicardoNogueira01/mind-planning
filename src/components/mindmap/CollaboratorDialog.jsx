@@ -51,8 +51,8 @@ const CollaboratorDialog = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-5 backdrop-blur-sm flex items-center justify-center z-50">
-  <div className="bg-white bg-opacity-80 rounded-xl shadow-xl border border-gray-200 p-5 w-72">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl shadow-xl border border-gray-200 p-5 w-72">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           {collaboratorNodeId ? 'Assign Collaborators' : 'Assign Collaborator to Group'}
         </h3>
