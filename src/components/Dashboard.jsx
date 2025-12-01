@@ -178,42 +178,63 @@ const Dashboard = () => {
         {/* Quick Stats Overview with Modern Cards */}
         <div className="space-y-6 mb-6 md:mb-8">
           {/* Completion Progress Card - Featured - Full Width */}
-          <div className="bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] rounded-2xl p-6 md:p-8 shadow-xl text-white relative overflow-hidden transition-all duration-300 hover:shadow-2xl">
+          <div className="bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] rounded-2xl p-8 shadow-xl text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -mr-20 -mt-20"></div>
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/3 rounded-full -ml-16 -mb-16"></div>
             
             <div className="relative z-10">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <p className="text-gray-300 text-sm font-medium mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>{t('stats.overallProgress')}</p>
-                  <h2 className="text-5xl md:text-6xl font-bold" style={{ fontFamily: 'DM Mono, monospace' }}>{completionPercentage}%</h2>
-                </div>
-                <div className="p-3 bg-white/10 backdrop-blur-sm rounded-xl">
-                  <BarChart2 size={24} />
-                </div>
-              </div>
-              
-              <div className="mb-4">
-                <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+              {/* Header */}
+              <div className="mb-6">
+                <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                  Overall Progress
+                </p>
+                <h2 className="text-6xl font-bold mb-3" style={{ fontFamily: 'DM Mono, monospace' }}>
+                  {completionPercentage}%
+                </h2>
+                <div className="h-2 bg-white/10 rounded-full overflow-hidden max-w-md">
                   <div 
-                    className="h-3 bg-white rounded-full shadow-lg animate-progress-fill" 
+                    className="h-2 bg-blue-500 rounded-full shadow-lg animate-progress-fill" 
                     style={{ width: `${completionPercentage}%` }}
                   ></div>
                 </div>
+                <p className="text-gray-400 text-sm mt-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                  {stats.tasksCompleted} of {stats.totalTasks} tasks completed
+                </p>
               </div>
               
-              <div className="grid grid-cols-3 gap-4">
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-                  <p className="text-3xl font-bold" style={{ fontFamily: 'DM Mono, monospace' }}>{stats.tasksCompleted}</p>
-                  <p className="text-xs text-gray-300 mt-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>{t('stats.completed')}</p>
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-white/10">
+                  <p className="text-5xl font-bold mb-1" style={{ fontFamily: 'DM Mono, monospace', color: '#10B981' }}>
+                    {stats.tasksCompleted}
+                  </p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wider font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                    Completed
+                  </p>
                 </div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-                  <p className="text-3xl font-bold" style={{ fontFamily: 'DM Mono, monospace' }}>{stats.tasksInProgress}</p>
-                  <p className="text-xs text-gray-300 mt-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>{t('stats.inProgress')}</p>
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-white/10">
+                  <p className="text-5xl font-bold mb-1" style={{ fontFamily: 'DM Mono, monospace', color: '#3B82F6' }}>
+                    {stats.tasksInProgress}
+                  </p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wider font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                    In Progress
+                  </p>
                 </div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-                  <p className="text-3xl font-bold" style={{ fontFamily: 'DM Mono, monospace' }}>{stats.tasksNotStarted}</p>
-                  <p className="text-xs text-gray-300 mt-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>{t('stats.toStart')}</p>
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-white/10">
+                  <p className="text-5xl font-bold mb-1" style={{ fontFamily: 'DM Mono, monospace', color: '#9CA3AF' }}>
+                    {stats.tasksNotStarted}
+                  </p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wider font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                    Not Started
+                  </p>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-white/10">
+                  <p className="text-5xl font-bold mb-1" style={{ fontFamily: 'DM Mono, monospace', color: '#EF4444' }}>
+                    {stats.overdueTasks}
+                  </p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wider font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                    Overdue
+                  </p>
                 </div>
               </div>
             </div>
@@ -277,41 +298,45 @@ const Dashboard = () => {
             </div>
 
             {/* Team Overview Card */}
-            <div className="bg-white rounded-2xl p-5 md:p-6 shadow-lg border border-gray-100 transition-shadow duration-300 hover:shadow-xl">
-              <div className="flex justify-between items-start mb-5">
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <div className="flex justify-between items-start mb-6">
                 <div>
-                  <p className="text-gray-500 text-xs font-medium mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>{t('stats.team').toUpperCase()}</p>
-                  <h2 className="text-xl font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>{collaborators.length} {t('stats.members')}</h2>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>TEAM</p>
+                  <h2 className="text-lg font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>{collaborators.length} Members</h2>
                 </div>
-                <div className="p-2.5 bg-purple-100 text-purple-600 rounded-xl">
-                  <Users size={20} />
+                <div className="p-2.5 bg-purple-50 rounded-xl">
+                  <Users size={18} className="text-purple-600" strokeWidth={2} />
                 </div>
               </div>
               
-              <div className="space-y-3">
+              <div className="space-y-5">
                 {collaborators.map(collab => (
-                  <div key={collab.id} className="flex items-center gap-3 group hover:bg-gray-50 p-2 rounded-xl -m-2 transition-colors">
-                    <div className={clsx("w-10 h-10 rounded-xl flex items-center justify-center text-white font-semibold text-sm shadow-sm group-hover:scale-105 transition-transform", collab.color)}>
+                  <div key={collab.id} className="flex items-center gap-4">
+                    <div className={clsx("w-12 h-12 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0", collab.color)}>
                       {collab.initials}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-center mb-0.5">
-                        <h3 className="font-semibold text-gray-800 text-sm truncate">{collab.name.split(' ')[0]}</h3>
-                        <span className={clsx('text-xs px-2 py-0.5 rounded-full font-semibold', {
-                          'bg-red-100 text-red-700': collab.overdueTasks > 0,
-                          'bg-emerald-100 text-emerald-700': collab.overdueTasks === 0
-                        })}>
-                          {collab.overdueTasks > 0 ? `${collab.overdueTasks} ${t('stats.overdueTasks')}` : t('stats.onTrack')}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div 
-                            className={clsx("h-1.5 rounded-full", collab.color)} 
-                            style={{ width: `${(collab.tasksCompleted / collab.tasksAssigned) * 100}%` }}
-                          ></div>
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-semibold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>{collab.name}</h3>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-mono text-gray-500" style={{ fontFamily: 'DM Mono, monospace' }}>{collab.tasksCompleted}/{collab.tasksAssigned}</span>
+                          <span className={clsx('text-xs px-2.5 py-1 rounded-md font-medium flex items-center gap-1', {
+                            'bg-red-50 text-red-600': collab.overdueTasks > 0,
+                            'bg-emerald-50 text-emerald-600': collab.overdueTasks === 0
+                          })} style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                            <span className={clsx("w-1.5 h-1.5 rounded-full", {
+                              'bg-red-600': collab.overdueTasks > 0,
+                              'bg-emerald-600': collab.overdueTasks === 0
+                            })}></span>
+                            {collab.overdueTasks > 0 ? `${collab.overdueTasks} overdue` : 'On track'}
+                          </span>
                         </div>
-                        <span className="text-xs text-gray-500 font-medium whitespace-nowrap">{collab.tasksCompleted}/{collab.tasksAssigned}</span>
+                      </div>
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div 
+                          className={clsx("h-2 rounded-full transition-all duration-500", collab.color)} 
+                          style={{ width: `${(collab.tasksCompleted / collab.tasksAssigned) * 100}%` }}
+                        ></div>
                       </div>
                     </div>
                   </div>
