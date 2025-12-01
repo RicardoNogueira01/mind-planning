@@ -68,25 +68,25 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#FAFAFA]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
       <TopBar showSearch={false} />
-      <div className="p-3 md:p-6">
+      <div className="p-4 md:p-8">
         {/* Header with Back Button */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-8">
           <button 
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-white rounded-xl transition-colors shadow-sm border border-gray-100"
           >
-            <ArrowLeft size={20} className="text-gray-600" />
+            <ArrowLeft size={20} className="text-gray-700" strokeWidth={2} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{t('profile.title')}</h1>
-            <p className="text-sm text-gray-500">{t('profile.subtitle')}</p>
+            <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>{t('profile.title')}</h1>
+            <p className="text-sm text-gray-500 mt-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>{t('profile.subtitle')}</p>
           </div>
         </div>
 
         {/* Profile Header Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
           {/* Cover Gradient */}
           <div className="h-32 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
           

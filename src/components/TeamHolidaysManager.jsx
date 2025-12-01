@@ -225,7 +225,7 @@ const TeamHolidaysManager = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#FAFAFA]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
       <TopBar showSearch={false} />
       <div className="p-3 md:p-6">
         {/* Feedback Message */}

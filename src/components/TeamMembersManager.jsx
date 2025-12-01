@@ -416,7 +416,7 @@ const TeamMembersManager = () => {
   const GridView = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {filteredMembers.map(member => (
-        <div key={member.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 overflow-hidden group">
+        <div key={member.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 overflow-hidden group">
           {/* Performance Top Line */}
           <div className={`h-1 ${getPerformanceTopColor(member.performance)}`}></div>
           
@@ -557,7 +557,7 @@ const TeamMembersManager = () => {
   );
 
   const ListView = () => (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
@@ -638,40 +638,41 @@ const TeamMembersManager = () => {
     </div>
   );
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#FAFAFA]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
       <TopBar showSearch={false} />
       
-      <div className="p-3 md:p-6">
+      <div className="p-4 md:p-8">
         {/* Feedback Message */}
         {feedbackMessage && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[60] animate-fade-in">
-          <div className={`px-6 py-3 rounded-lg shadow-lg border ${
+          <div className={`px-6 py-3 rounded-xl shadow-sm border ${
             feedbackMessage.type === 'success' 
-              ? 'bg-green-50 border-green-200 text-green-800' 
-              : 'bg-red-50 border-red-200 text-red-800'
+              ? 'bg-emerald-50 border-emerald-100 text-emerald-700' 
+              : 'bg-red-50 border-red-100 text-red-700'
           }`}>
-            <p className="font-medium">{feedbackMessage.message}</p>
+            <p className="font-semibold">{feedbackMessage.message}</p>
           </div>
         </div>
       )}
       
       {/* Header */}
-      <header className="mb-6">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+      <header className="mb-8">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Link to="/" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <ArrowLeft size={20} className="text-gray-600" />
+            <Link to="/" className="p-2 hover:bg-white rounded-xl transition-colors shadow-sm border border-gray-100">
+              <ArrowLeft size={20} className="text-gray-700" strokeWidth={2} />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{t('teamMembers.title')}</h1>
-              <p className="text-sm text-gray-500">{t('teamMembers.subtitle')}</p>
+              <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>{t('teamMembers.title')}</h1>
+              <p className="text-sm text-gray-500 mt-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>{t('teamMembers.subtitle')}</p>
             </div>
           </div>
           <button 
             onClick={() => setShowAddMemberModal(true)}
-            className="px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-blue-500/30"
+            className="px-5 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2 font-semibold shadow-sm"
+            style={{ fontFamily: 'DM Sans, sans-serif' }}
           >
-            <Plus size={18} />
+            <Plus size={18} strokeWidth={2} />
             {t('teamMembers.addMember')}
           </button>
         </div>
