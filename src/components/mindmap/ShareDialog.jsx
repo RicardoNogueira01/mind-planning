@@ -164,7 +164,7 @@ const ShareDialog = ({
               />
               <button
                 onClick={onCopyLink}
-                className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition-colors duration-200 shadow-sm touch-manipulation flex-shrink-0">
+                className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition-colors duration-200 shadow-sm touch-manipulation flex-shrink-0"
               >
                 Copy
               </button>
@@ -182,7 +182,7 @@ const ShareDialog = ({
           </button>
           <button
             className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition-colors duration-200 shadow-sm touch-manipulation"
-            onClick={onGenerateLink}>
+            onClick={onGenerateLink}
           >
             {shareLink ? 'Regenerate Link' : 'Generate Link'}
           </button>

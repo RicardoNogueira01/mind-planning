@@ -338,7 +338,7 @@ const TopBar = ({ showSearch = true }) => {
               to="/profile/current-user" 
               className="flex items-center gap-2 pl-2 pr-3 py-1.5 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold text-sm shadow-sm">
+              <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white font-semibold text-sm shadow-sm">
                 JD
               </div>
               <div className="hidden sm:block">

@@ -6,8 +6,10 @@ import { useMindMaps } from '../hooks/useMindMaps';
 import { useMindMapFilters } from '../hooks/useMindMapFilters';
 import { getRelativeTime } from '../utils/dateUtils';
 import MindMapCard from './mindmap/MindMapCard';
+import { useLanguage } from '../context/LanguageContext';
 
 const MindMapManager = ({ onCreateNew, onOpenMindMap, onBack }) => {
+  const { t } = useLanguage();
   const { mindMaps, createMap, deleteMap, deleteMaps, toggleFavorite, updateMapColor, updateMapTitle } = useMindMaps();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterBy, setFilterBy] = useState('all');

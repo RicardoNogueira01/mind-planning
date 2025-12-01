@@ -30,6 +30,11 @@ import DueDatePicker from './popups/DueDatePicker';
 import AttachmentsPopup from './popups/AttachmentsPopup';
 import CollaboratorPicker from './popups/CollaboratorPicker';
 import ImageAnalyzerModal from './mindmap/ImageAnalyzerModal';
+import ViewSelector from './mindmap/ViewSelector';
+import GanttView from './mindmap/views/GanttView';
+import BoardView from './mindmap/views/BoardView';
+import ListView from './mindmap/views/ListView';
+import AnalyticsView from './mindmap/views/AnalyticsView';
 
 import { getDescendantNodeIds, getAncestorNodeIds } from './mindmap/graphUtils';
 import ShapePalette from './mindmap/ShapePalette';
@@ -102,6 +107,7 @@ export default function MindMap({ mapId, onBack }) {
   const [showLayoutMenu, setShowLayoutMenu] = useState(false); // Auto-layout dropdown
   const [nodeLayoutMenuOpen, setNodeLayoutMenuOpen] = useState(null); // Track which node's layout menu is open
   const [showImageAnalyzer, setShowImageAnalyzer] = useState(false); // Image upload & analysis modal
+  const [viewMode, setViewMode] = useState('mindmap'); // View mode: mindmap, gantt, board, list, analytics
 
   // Per-node button anchor refs for popovers
   const detailsBtnRefs = useRef({});
@@ -1657,6 +1663,15 @@ export default function MindMap({ mapId, onBack }) {
     cursorStyle = 'grab';
   }
 
+  // Handle node updates from BoardView (status changes from drag-and-drop)
+  const handleNodeUpdate = (nodeId, updates) => {
+    setNodes(prevNodes => 
+      prevNodes.map(node => 
+        node.id === nodeId ? { ...node, ...updates } : node
+      )
+    );
+  };
+
   return (
     <div className="flex w-full h-screen overflow-hidden bg-gray-50">
       <div
@@ -1763,6 +1778,14 @@ export default function MindMap({ mapId, onBack }) {
             setPan={setPan}
             deleteNode={deleteNode}
             deleteNodeCascade={deleteNodeCascade}
+          />
+        </div>
+
+        {/* View Selector - Top Center */}
+        <div className="absolute top-2 md:top-4 left-1/2 transform -translate-x-1/2 z-20">
+          <ViewSelector 
+            currentView={viewMode} 
+            onViewChange={setViewMode}
           />
         </div>
 
@@ -1930,12 +1953,49 @@ export default function MindMap({ mapId, onBack }) {
           </div>
         )}
 
-        {/* Canvas with pan/zoom */}
-        <MindMapCanvas
-          pan={dragging.pan}
-          zoom={zoom}
-          renderNodeGroups={renderNodeGroups}
-          renderConnections={(
+        {/* Different View Modes */}
+        {viewMode === 'gantt' && (
+          <div className="absolute inset-0 top-16 md:top-20 overflow-hidden">
+            <GanttView 
+              nodes={nodes} 
+              connections={connections} 
+            />
+          </div>
+        )}
+
+        {viewMode === 'board' && (
+          <div className="absolute inset-0 top-16 md:top-20 overflow-auto">
+            <BoardView 
+              nodes={nodes} 
+              onNodeUpdate={handleNodeUpdate}
+            />
+          </div>
+        )}
+
+        {viewMode === 'list' && (
+          <div className="absolute inset-0 top-16 md:top-20 overflow-hidden">
+            <ListView 
+              nodes={nodes}
+            />
+          </div>
+        )}
+
+        {viewMode === 'analytics' && (
+          <div className="absolute inset-0 top-16 md:top-20 overflow-auto">
+            <AnalyticsView 
+              nodes={nodes} 
+              connections={connections}
+            />
+          </div>
+        )}
+
+        {/* Canvas with pan/zoom - Mind Map View */}
+        {viewMode === 'mindmap' && (
+          <MindMapCanvas
+            pan={dragging.pan}
+            zoom={zoom}
+            renderNodeGroups={renderNodeGroups}
+            renderConnections={(
             <ConnectionsSvg
               connections={connections}
               nodes={nodes}
@@ -2441,6 +2501,7 @@ export default function MindMap({ mapId, onBack }) {
             );
           })}
         </MindMapCanvas>
+        )}
 
         {/* Selection Rectangle for Collaborator Mode */}
         {isSelecting && selectionRect && (
