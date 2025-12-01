@@ -2,7 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
-import { Check, LayoutTemplate, Sparkles, Camera } from 'lucide-react';
+import { Check, LayoutTemplate, Sparkles } from 'lucide-react';
 import TemplateGallery from './templates/TemplateGallery';
 import { instantiateTemplate } from '../templates/templateEngine';
 import { applyLayout } from '../utils/layoutAlgorithms';
@@ -102,8 +102,6 @@ export default function MindMap({ mapId, onBack }) {
   const [showLayoutMenu, setShowLayoutMenu] = useState(false); // Auto-layout dropdown
   const [nodeLayoutMenuOpen, setNodeLayoutMenuOpen] = useState(null); // Track which node's layout menu is open
   const [showImageAnalyzer, setShowImageAnalyzer] = useState(false); // Image upload & analysis modal
-  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false); // Loading state for AI analysis
-  const [analyzedImagePreview, setAnalyzedImagePreview] = useState(null); // Preview of uploaded image
 
   // Per-node button anchor refs for popovers
   const detailsBtnRefs = useRef({});
@@ -2506,10 +2504,7 @@ export default function MindMap({ mapId, onBack }) {
       {/* Image Analyzer Modal */}
       <ImageAnalyzerModal
         isOpen={showImageAnalyzer}
-        onClose={() => {
-          setShowImageAnalyzer(false);
-          setAnalyzedImagePreview(null);
-        }}
+        onClose={() => setShowImageAnalyzer(false)}
         onAnalyze={handleImageAnalyze}
       />
 
