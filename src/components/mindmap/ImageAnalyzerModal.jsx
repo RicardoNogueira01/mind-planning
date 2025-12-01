@@ -1,11 +1,13 @@
 import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { X, Upload, Camera, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { X, Upload, Camera, Sparkles, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { analyzeImage } from '../../services/imageAnalysisService';
 
 const ImageAnalyzerModal = ({ isOpen, onClose, onAnalyze }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
   if (!isOpen) return null;
@@ -28,56 +30,32 @@ const ImageAnalyzerModal = ({ isOpen, onClose, onAnalyze }) => {
     if (!selectedImage) return;
 
     setIsAnalyzing(true);
+    setError(null);
     
     try {
-      // Simulate AI analysis - In production, this would call an AI API
-      // like OpenAI Vision, Google Cloud Vision, or a custom model
-      await simulateImageAnalysis(imagePreview);
+      // Call the AI analysis service with the image
+      const mindMapData = await analyzeImage(imagePreview);
       
-      // Call the parent's analyze function with mock data
-      const mockMindMapData = generateMockMindMapFromImage();
-      onAnalyze(mockMindMapData);
+      // Call the parent's analyze function with the extracted data
+      onAnalyze(mindMapData);
       
       // Close modal
       handleClose();
     } catch (error) {
       console.error('Error analyzing image:', error);
-      alert('Failed to analyze image. Please try again.');
+      setError('Failed to analyze image. Please try again or check your API key configuration.');
     } finally {
       setIsAnalyzing(false);
     }
   };
 
-  const simulateImageAnalysis = (imageData) => {
-    // Simulate API delay
-    return new Promise((resolve) => {
-      setTimeout(resolve, 2000);
-    });
-  };
 
-  const generateMockMindMapFromImage = () => {
-    // This is mock data - in production, this would come from AI analysis
-    // The AI would detect nodes, connections, text, and structure from the image
-    return {
-      centralNode: {
-        text: 'Main Idea',
-        bgColor: '#ffffff',
-        fontColor: '#2d3748'
-      },
-      nodes: [
-        { text: 'Branch 1', bgColor: '#EFF6FF', fontColor: '#1E40AF', relativePosition: { angle: 0, distance: 250 } },
-        { text: 'Branch 2', bgColor: '#F0FDF4', fontColor: '#166534', relativePosition: { angle: 72, distance: 250 } },
-        { text: 'Branch 3', bgColor: '#FEF3C7', fontColor: '#92400E', relativePosition: { angle: 144, distance: 250 } },
-        { text: 'Branch 4', bgColor: '#FCE7F3', fontColor: '#9F1239', relativePosition: { angle: 216, distance: 250 } },
-        { text: 'Branch 5', bgColor: '#EDE9FE', fontColor: '#6B21A8', relativePosition: { angle: 288, distance: 250 } }
-      ]
-    };
-  };
 
   const handleClose = () => {
     setSelectedImage(null);
     setImagePreview(null);
     setIsAnalyzing(false);
+    setError(null);
     onClose();
   };
 
@@ -175,11 +153,24 @@ const ImageAnalyzerModal = ({ isOpen, onClose, onAnalyze }) => {
                 )}
               </div>
 
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <div className="flex gap-3">
+                    <AlertCircle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-red-900">
+                      <p className="font-semibold mb-1">Analysis Failed</p>
+                      <p className="text-red-800">{error}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <button
                   onClick={() => {
                     setSelectedImage(null);
                     setImagePreview(null);
+                    setError(null);
                   }}
                   className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                   disabled={isAnalyzing}
