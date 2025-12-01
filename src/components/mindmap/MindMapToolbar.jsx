@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Plus, Trash2, MousePointer, Hand, Users, Home, Sparkles, X, Camera } from 'lucide-react';
+import { Plus, Trash2, MousePointer, Hand, Users, Home, Sparkles, X, Camera, SquareDashedMousePointer } from 'lucide-react';
 
 const MindMapToolbar = ({
   mode,
@@ -84,6 +84,21 @@ const MindMapToolbar = ({
             title="Selection Mode"
           >
             <MousePointer size={18} strokeWidth={2} className="mx-auto" />
+          </button>
+          
+          <button 
+            onClick={() => {
+              setMode('cursor');
+              setSelectionType('multi');
+            }}
+            className={`${isMobile ? 'w-full' : ''} p-2 rounded-lg transition-all duration-200 ${
+              mode === 'cursor' && selectionType === 'multi' 
+                ? 'bg-green-500 text-white shadow-lg shadow-green-500/25' 
+                : 'text-gray-700 hover:bg-green-50 hover:text-green-600'
+            }`}
+            title="Multi-Select Mode"
+          >
+            <SquareDashedMousePointer size={18} strokeWidth={2} className="mx-auto" />
           </button>
           
           <button 

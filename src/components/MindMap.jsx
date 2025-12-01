@@ -2,7 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
-import { Check, LayoutTemplate, Sparkles } from 'lucide-react';
+import { Check, LayoutTemplate, Sparkles, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import TemplateGallery from './templates/TemplateGallery';
 import { instantiateTemplate } from '../templates/templateEngine';
 import { applyLayout } from '../utils/layoutAlgorithms';
@@ -442,11 +442,15 @@ export default function MindMap({ mapId, onBack }) {
         return isInside;
       }).map(node => node.id);
 
-      // Update selected nodes
+      // Update selected nodes based on mode
       if (selectedIds.length > 0) {
         selection.selectNodesByIds(selectedIds);
-        // Show collaborator dialog to assign all selected nodes
-        setShowCollaboratorDialog(true);
+        
+        // Show collaborator dialog only in collaborator mode
+        if (selectionType === 'collaborator') {
+          setShowCollaboratorDialog(true);
+        }
+        // In multi-select mode, just select the nodes (no dialog)
       }
     }
 
@@ -717,7 +721,7 @@ export default function MindMap({ mapId, onBack }) {
   const onToggleComplete = nodeOps.toggleNodeComplete;
   const updateNodeText = nodeOps.updateNodeText;
   const onAddChild = nodeOps.addChildNode;
-  const onRequestDelete = (node) => nodeOps.deleteNodes([node.id]);
+  const onRequestDelete = (nodeId) => setDeleteConfirmNodeId(nodeId);
   const addStandaloneNode = nodeOps.addStandaloneNode;
 
   // Handle analyzed image data and create mind map
@@ -1652,6 +1656,8 @@ export default function MindMap({ mapId, onBack }) {
   let cursorStyle = 'default';
   if (mode === 'cursor' && selectionType === 'collaborator') {
     cursorStyle = 'crosshair';
+  } else if (mode === 'cursor' && selectionType === 'multi') {
+    cursorStyle = 'crosshair';
   } else if (isPanning) {
     cursorStyle = 'grabbing';
   } else if (connectionFrom) {
@@ -1687,8 +1693,8 @@ export default function MindMap({ mapId, onBack }) {
             setPopupOpenFor({});
           }
           
-          // Check if in collaborator selection mode
-          if (mode === 'cursor' && selectionType === 'collaborator') {
+          // Check if in collaborator or multi-select mode
+          if (mode === 'cursor' && (selectionType === 'collaborator' || selectionType === 'multi')) {
             startSelection(e);
           } else {
             dragging.startPanning(e);
@@ -1954,6 +1960,33 @@ export default function MindMap({ mapId, onBack }) {
               <span className="font-semibold text-xs md:text-sm">Collaborator Selection</span>
               <span className="text-[10px] md:text-xs text-cyan-100 hidden sm:block">Drag to select nodes, then assign to a collaborator</span>
             </div>
+          </div>
+        )}
+
+        {/* Multi-Select Mode Banner */}
+        {mode === 'cursor' && selectionType === 'multi' && (
+          <div 
+            className="fixed top-16 md:top-20 left-1/2 transform -translate-x-1/2 z-50 px-3 md:px-6 py-2 md:py-3 bg-green-600 text-white rounded-lg shadow-xl shadow-green-600/40 flex items-center gap-2 md:gap-3 mx-2"
+            style={{ animation: 'slideDown 0.3s ease-out', maxWidth: '90vw' }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect width="18" height="18" x="3" y="3" rx="2" strokeDasharray="4 4"></rect>
+              <path d="m9 9 10 10"></path>
+            </svg>
+            <div className="flex flex-col gap-0.5 md:gap-1">
+              <span className="font-semibold text-xs md:text-sm">Multi-Select Mode</span>
+              <span className="text-[10px] md:text-xs text-green-100 hidden sm:block">Drag to select multiple nodes for bulk operations</span>
+            </div>
+            <button 
+              onClick={() => setSelectionType('simple')}
+              className="ml-auto p-1 hover:bg-green-700 rounded-full transition-colors"
+              title="Exit Multi-Select Mode"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 md:w-4 md:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
         )}
 
@@ -2523,6 +2556,41 @@ export default function MindMap({ mapId, onBack }) {
             }}
           />
         )}
+
+        {/* Zoom Controls - Bottom Right */}
+        {viewMode === 'mindmap' && (
+          <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-30">
+            {/* Zoom In */}
+            <button
+              onClick={() => setZoom(prev => Math.min(prev * 1.2, 3))}
+              className="p-3 bg-white hover:bg-gray-50 text-gray-700 rounded-lg shadow-lg border border-gray-200 transition-all duration-200 hover:shadow-xl"
+              title="Zoom In"
+            >
+              <ZoomIn size={20} strokeWidth={2} />
+            </button>
+            
+            {/* Zoom Out */}
+            <button
+              onClick={() => setZoom(prev => Math.max(prev / 1.2, 0.2))}
+              className="p-3 bg-white hover:bg-gray-50 text-gray-700 rounded-lg shadow-lg border border-gray-200 transition-all duration-200 hover:shadow-xl"
+              title="Zoom Out"
+            >
+              <ZoomOut size={20} strokeWidth={2} />
+            </button>
+            
+            {/* Re-center */}
+            <button
+              onClick={() => {
+                dragging.setPan({ x: 0, y: 0 });
+                setZoom(initialZoom);
+              }}
+              className="p-3 bg-white hover:bg-gray-50 text-gray-700 rounded-lg shadow-lg border border-gray-200 transition-all duration-200 hover:shadow-xl"
+              title="Re-center and Reset Zoom"
+            >
+              <Maximize2 size={20} strokeWidth={2} />
+            </button>
+          </div>
+        )}
       </div>
       
       {/* Backdrop Overlay for Shapes Palette */}
@@ -2622,8 +2690,25 @@ export default function MindMap({ mapId, onBack }) {
       <DeleteConfirmDialog
         show={!!deleteConfirmNodeId}
         onClose={() => setDeleteConfirmNodeId(null)}
+        hasChildren={deleteConfirmNodeId ? getDescendantNodeIds(connections, deleteConfirmNodeId).size > 0 : false}
+        childrenCount={deleteConfirmNodeId ? getDescendantNodeIds(connections, deleteConfirmNodeId).size : 0}
         onConfirm={() => {
-          nodeOps.deleteNodes([deleteConfirmNodeId]);
+          // Delete only the node, keep children by removing connections
+          if (deleteConfirmNodeId) {
+            // Remove only connections where this node is involved
+            setConnections(connections.filter(c => c.from !== deleteConfirmNodeId && c.to !== deleteConfirmNodeId));
+            // Delete the node
+            nodeOps.deleteNodes([deleteConfirmNodeId]);
+          }
+          setDeleteConfirmNodeId(null);
+        }}
+        onConfirmWithChildren={() => {
+          // Delete node and all its descendants
+          if (deleteConfirmNodeId) {
+            const descendants = getDescendantNodeIds(connections, deleteConfirmNodeId);
+            const allToDelete = [deleteConfirmNodeId, ...Array.from(descendants)];
+            nodeOps.deleteNodes(allToDelete);
+          }
           setDeleteConfirmNodeId(null);
         }}
       />

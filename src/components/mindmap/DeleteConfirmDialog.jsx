@@ -8,7 +8,10 @@ import PropTypes from 'prop-types';
 const DeleteConfirmDialog = ({
   show,
   onClose,
-  onConfirm
+  onConfirm,
+  onConfirmWithChildren,
+  hasChildren = false,
+  childrenCount = 0
 }) => {
   // Lock body scroll when dialog is open
   React.useEffect(() => {
@@ -49,23 +52,47 @@ const DeleteConfirmDialog = ({
               Delete Node?
             </h3>
             <p className="text-sm text-gray-600">
-              Are you sure you want to delete this node? This action cannot be undone.
+              Are you sure you want to delete this node?
             </p>
+            {hasChildren && (
+              <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-sm text-amber-800 font-medium">
+                  ⚠️ This node has {childrenCount} {childrenCount === 1 ? 'child' : 'children'} (including all descendants)
+                </p>
+              </div>
+            )}
           </div>
         </div>
-        <div className="flex gap-3 justify-end">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-end">
           <button
-            className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors order-last sm:order-first"
             onClick={onClose}
           >
             Cancel
           </button>
-          <button
-            className="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors shadow-sm"
-            onClick={onConfirm}
-          >
-            Yes, Delete
-          </button>
+          {hasChildren ? (
+            <>
+              <button
+                className="px-4 py-2 text-sm font-semibold text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors shadow-sm"
+                onClick={onConfirm}
+              >
+                Delete Node Only
+              </button>
+              <button
+                className="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors shadow-sm"
+                onClick={onConfirmWithChildren}
+              >
+                Delete with All Children
+              </button>
+            </>
+          ) : (
+            <button
+              className="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors shadow-sm"
+              onClick={onConfirm}
+            >
+              Yes, Delete
+            </button>
+          )}
         </div>
       </div>
     </div>,
@@ -76,7 +103,10 @@ const DeleteConfirmDialog = ({
 DeleteConfirmDialog.propTypes = {
   show: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  onConfirm: PropTypes.func.isRequired
+  onConfirm: PropTypes.func.isRequired,
+  onConfirmWithChildren: PropTypes.func,
+  hasChildren: PropTypes.bool,
+  childrenCount: PropTypes.number
 };
 
 export default DeleteConfirmDialog;
