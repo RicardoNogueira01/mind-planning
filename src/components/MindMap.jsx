@@ -1723,8 +1723,8 @@ export default function MindMap({ mapId, onBack }) {
         tabIndex={0}
         aria-label="Mind map canvas"
       >
-        {/* Toolbar rendered via Portal to avoid parent stacking context issues */}
-        {createPortal(
+        {/* Toolbar rendered via Portal to avoid parent stacking context issues - Only show in mindmap view */}
+        {viewMode === 'mindmap' && createPortal(
           <MindMapToolbar
             mode={mode}
             setMode={setMode}
@@ -1748,7 +1748,8 @@ export default function MindMap({ mapId, onBack }) {
           document.body
         )}
 
-        {/* Hamburger Menu and Search Bar - Top Left */}
+        {/* Hamburger Menu and Search Bar - Top Left - Only show in mindmap view */}
+        {viewMode === 'mindmap' && (
         <div className="absolute top-2 md:top-28 left-2 md:left-4 z-20 flex items-center gap-2">
           {/* Hamburger Menu Button - Mobile/Tablet Only */}
           <button
@@ -1780,6 +1781,7 @@ export default function MindMap({ mapId, onBack }) {
             deleteNodeCascade={deleteNodeCascade}
           />
         </div>
+        )}
 
         {/* View Selector - Top Center */}
         <div className="absolute top-2 md:top-4 left-1/2 transform -translate-x-1/2 z-20">
@@ -1789,7 +1791,8 @@ export default function MindMap({ mapId, onBack }) {
           />
         </div>
 
-        {/* Template, Layout, Share, Bookmark, and Shapes Toggle Buttons - Top Right */}
+        {/* Template, Layout, Share, Bookmark, and Shapes Toggle Buttons - Top Right - Only show in mindmap view */}
+        {viewMode === 'mindmap' && (
         <div className="absolute top-2 md:top-4 right-2 md:right-4 z-20 flex items-center gap-1 md:gap-2">
           {/* Template Button */}
           <button
@@ -1909,6 +1912,7 @@ export default function MindMap({ mapId, onBack }) {
             </svg>
           </button>
         </div>
+        )}
 
         {/* Connection Mode Banner */}
         {connectionFrom && (
