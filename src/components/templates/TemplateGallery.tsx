@@ -97,7 +97,7 @@ export default function TemplateGallery({ show, onSelectTemplate, onClose, onSta
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
                   selectedCategory === cat.id
-                    ? 'bg-blue-500 text-white shadow-md shadow-blue-500/30'
+                    ? 'bg-black text-white shadow-md'
                     : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
                 }`}
               >
