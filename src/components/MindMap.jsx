@@ -2069,32 +2069,44 @@ export default function MindMap({ mapId, onBack }) {
               )}
               
               {/* Collaborator avatars on node */}
-              {Array.isArray(node.collaborators) && node.collaborators.length > 0 && (
-                <div
-                  className="flex gap-1 z-30"
-                  style={{
-                    position: 'absolute',
-                    top: '-18px',
-                    left: '50%',
-                    transform: 'translateX(-50%)'
-                  }}
-                >
-                  {node.collaborators.map(collabId => {
-                    const collab = collaborators.find(c => c.id === collabId);
-                    if (!collab) return null;
-                    return (
-                      <div
-                        key={collabId}
-                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-sm"
-                        style={{ backgroundColor: collab.color, color: 'white' }}
-                        title={collab.name}
-                      >
-                        {collab.initials}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              {(() => {
+                // Get group collaborators if node is in a group
+                const nodeGroup = getNodeGroup(node.id);
+                const groupCollaborators = nodeGroup?.collaborator?.id ? [nodeGroup.collaborator.id] : [];
+                const extraGroupCollabs = nodeGroup?.extraCollaborators?.map(c => c.id) || [];
+                const allGroupCollabs = [...groupCollaborators, ...extraGroupCollabs];
+                
+                // Combine node collaborators with group collaborators
+                const nodeCollabs = Array.isArray(node.collaborators) ? node.collaborators : [];
+                const allCollabs = [...new Set([...nodeCollabs, ...allGroupCollabs])]; // Remove duplicates
+                
+                return allCollabs.length > 0 && (
+                  <div
+                    className="flex gap-1 z-30"
+                    style={{
+                      position: 'absolute',
+                      top: '-18px',
+                      left: '50%',
+                      transform: 'translateX(-50%)'
+                    }}
+                  >
+                    {allCollabs.map(collabId => {
+                      const collab = collaborators.find(c => c.id === collabId);
+                      if (!collab) return null;
+                      return (
+                        <div
+                          key={collabId}
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-sm"
+                          style={{ backgroundColor: collab.color, color: 'white' }}
+                          title={collab.name}
+                        >
+                          {collab.initials}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
               
               {/* Remove from group button - Shows when node is selected AND in a group */}
               {selectedNodes.includes(node.id) && (() => {
@@ -2106,13 +2118,13 @@ export default function MindMap({ mapId, onBack }) {
                       e.stopPropagation();
                       removeNodeFromGroup(node.id);
                     }}
-                    className="absolute top-1 right-1 w-7 h-7 rounded-full flex items-center justify-center bg-red-500 hover:bg-red-600 text-white shadow-lg transition-all duration-200 z-40 hover:scale-110"
+                    className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center bg-red-500 hover:bg-red-600 text-white shadow-md transition-all duration-200 z-40 hover:scale-110"
                     title={`Remove from ${nodeGroup.collaborator?.name || 'group'}'s group`}
                     style={{
                       boxShadow: `0 2px 8px ${nodeGroup.collaborator?.color || '#ef4444'}40`
                     }}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M18 6L6 18M6 6l12 12"></path>
                     </svg>
                   </button>
