@@ -77,10 +77,11 @@ const Dashboard = () => {
   };
   
   const [upcomingHolidays] = useState([
-    { id: 1, name: 'Christmas Day', date: '25 Dec', daysUntil: 25, emoji: '🎄', color: 'bg-red-500', type: 'country' },
-    { id: 2, name: 'New Year\'s Day', date: '1 Jan', daysUntil: 32, emoji: '🎆', color: 'bg-indigo-500', type: 'country' },
-    { id: 3, name: 'Valentine\'s Day', date: '14 Feb', daysUntil: 76, emoji: '💝', color: 'bg-pink-500', type: 'country' },
-    { id: 4, name: 'Easter Sunday', date: '20 Apr', daysUntil: 141, emoji: '🐰', color: 'bg-purple-500', type: 'country' }
+    { id: 1, name: 'First Friday', date: '2025-12-05', daysUntil: 4, emoji: '🎉', color: 'bg-blue-500', type: 'country' },
+    { id: 2, name: 'Christmas Day', date: '2025-12-25', daysUntil: 25, emoji: '🎄', color: 'bg-red-500', type: 'country' },
+    { id: 3, name: 'New Year\'s Day', date: '2026-01-01', daysUntil: 32, emoji: '🎆', color: 'bg-indigo-500', type: 'country' },
+    { id: 4, name: 'Valentine\'s Day', date: '2026-02-14', daysUntil: 76, emoji: '💝', color: 'bg-pink-500', type: 'country' },
+    { id: 5, name: 'Easter Sunday', date: '2026-04-20', daysUntil: 141, emoji: '🐰', color: 'bg-purple-500', type: 'country' }
   ]);
   
   const [teamHolidayRequests] = useState([
@@ -329,48 +330,41 @@ const Dashboard = () => {
 
         {/* Holidays Section - Country & Team */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6 mb-6">
-          {/* Country Holidays */}
+          {/* Next Holiday - Compact */}
           <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
             <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 p-4 border-b border-gray-100">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm">
-                    <span className="text-xl">🎉</span>
-                  </div>
-                  <div>
-                    <h2 className="text-base font-bold text-gray-900">{t('holidays.title')}</h2>
-                    <p className="text-xs text-gray-500">{t('holidays.subtitle')}</p>
-                  </div>
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm">
+                  <span className="text-xl">🎉</span>
                 </div>
-                <span className="text-xs text-gray-600 font-medium bg-white/80 backdrop-blur-sm px-2 py-1 rounded-lg">
-                  {upcomingHolidays.length} {t('holidays.holidays')}
-                </span>
+                <div>
+                  <h2 className="text-base font-bold text-gray-900">{t('holidays.nextHoliday')}</h2>
+                  <p className="text-xs text-gray-500">{t('holidays.subtitle')}</p>
+                </div>
               </div>
             </div>
             
-            <div className="p-4">
-              <div className="space-y-2">
-                {upcomingHolidays.slice(0, 4).map((holiday) => (
-                  <div 
-                    key={holiday.id} 
-                    className="group flex items-center gap-3 bg-gray-50 hover:bg-gray-100 rounded-lg p-2.5 transition-all"
-                  >
-                    <div className={clsx("w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0", holiday.color, "bg-opacity-10")}>
-                      {holiday.emoji}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 text-sm truncate">
-                        {holiday.name}
-                      </h3>
-                      <p className="text-xs text-gray-500">{holiday.date}</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-base font-bold text-gray-900">{holiday.daysUntil}</p>
-                      <p className="text-xs text-gray-500">{t('holidays.days')}</p>
+            <div className="p-6">
+              {upcomingHolidays.length > 0 && (
+                <div className="flex items-center gap-4">
+                  <div className={clsx("w-16 h-16 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 shadow-lg", upcomingHolidays[0].color, "bg-opacity-20")}>
+                    {upcomingHolidays[0].emoji}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-gray-900 text-lg mb-1">
+                      {upcomingHolidays[0].name}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-2">
+                      {new Date(upcomingHolidays[0].date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className={clsx("px-3 py-1 rounded-full text-sm font-bold text-white", upcomingHolidays[0].color)}>
+                        {upcomingHolidays[0].daysUntil} {t('holidays.days')}
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -550,7 +544,7 @@ const Dashboard = () => {
 
         {/* Weekly Calendar Widget */}
         <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
-          <WeeklyCalendarWidget />
+          <WeeklyCalendarWidget holidays={upcomingHolidays} />
         </div>
       </main>
       </div>

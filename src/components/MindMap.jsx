@@ -2086,8 +2086,7 @@ export default function MindMap({ mapId, onBack }) {
                     style={{
                       position: 'absolute',
                       top: '-18px',
-                      left: '50%',
-                      transform: 'translateX(-50%)'
+                      left: '8px'
                     }}
                   >
                     {allCollabs.map(collabId => {

@@ -56,6 +56,7 @@ export const translations = {
     // Holidays
     holidays: {
       title: 'Upcoming Holidays',
+      nextHoliday: 'Next Holiday',
       subtitle: 'National holidays & celebrations',
       holidays: 'holidays',
       in: 'In',
@@ -459,6 +460,7 @@ export const translations = {
     // Feriados
     holidays: {
       title: 'Próximos Feriados',
+      nextHoliday: 'Próximo Feriado',
       subtitle: 'Feriados nacionais e celebrações',
       holidays: 'feriados',
       in: 'Em',

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Calendar, Clock, Plus } from 'lucide-react';
+import PropTypes from 'prop-types';
 
-const WeeklyCalendarWidget = () => {
+const WeeklyCalendarWidget = ({ holidays = [] }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   // Sample tasks data - in a real app, this would come from props or state
@@ -11,7 +12,7 @@ const WeeklyCalendarWidget = () => {
       id: 1,
       title: 'Team standup',
       time: '09:00',
-      date: '2024-01-15',
+      date: '2025-12-01',
       color: '#3B82F6',
       type: 'meeting'
     },
@@ -19,7 +20,7 @@ const WeeklyCalendarWidget = () => {
       id: 2,
       title: 'API review',
       time: '14:30',
-      date: '2024-01-15',
+      date: '2025-12-01',
       color: '#10B981',
       type: 'review'
     },
@@ -27,7 +28,7 @@ const WeeklyCalendarWidget = () => {
       id: 3,
       title: 'Client presentation',
       time: '16:00',
-      date: '2024-01-15',
+      date: '2025-12-02',
       color: '#F59E0B',
       type: 'presentation'
     },
@@ -35,7 +36,7 @@ const WeeklyCalendarWidget = () => {
       id: 4,
       title: 'Design workshop',
       time: '10:00',
-      date: '2024-01-16',
+      date: '2025-12-03',
       color: '#8B5CF6',
       type: 'workshop'
     },
@@ -43,7 +44,7 @@ const WeeklyCalendarWidget = () => {
       id: 5,
       title: 'Sprint planning',
       time: '15:00',
-      date: '2024-01-16',
+      date: '2025-12-03',
       color: '#EF4444',
       type: 'planning'
     },
@@ -51,7 +52,7 @@ const WeeklyCalendarWidget = () => {
       id: 6,
       title: 'Code review',
       time: '11:00',
-      date: '2024-01-17',
+      date: '2025-12-04',
       color: '#06B6D4',
       type: 'review'
     },
@@ -59,7 +60,7 @@ const WeeklyCalendarWidget = () => {
       id: 7,
       title: 'Product demo',
       time: '13:30',
-      date: '2024-01-17',
+      date: '2025-12-05',
       color: '#84CC16',
       type: 'demo'
     },
@@ -67,7 +68,7 @@ const WeeklyCalendarWidget = () => {
       id: 8,
       title: 'Team retrospective',
       time: '09:30',
-      date: '2024-01-18',
+      date: '2025-12-05',
       color: '#F97316',
       type: 'meeting'
     },
@@ -75,7 +76,7 @@ const WeeklyCalendarWidget = () => {
       id: 9,
       title: 'User testing',
       time: '14:00',
-      date: '2024-01-19',
+      date: '2025-12-06',
       color: '#EC4899',
       type: 'testing'
     },
@@ -83,7 +84,7 @@ const WeeklyCalendarWidget = () => {
       id: 10,
       title: 'Weekly report',
       time: '16:30',
-      date: '2024-01-19',
+      date: '2025-12-07',
       color: '#6366F1',
       type: 'report'
     }
@@ -119,6 +120,12 @@ const WeeklyCalendarWidget = () => {
   const getTasksForDate = (date) => {
     const dateStr = date.toISOString().split('T')[0];
     return tasks.filter(task => task.date === dateStr).slice(0, 3); // Max 3 tasks per day
+  };
+
+  // Get holidays for a specific date
+  const getHolidaysForDate = (date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    return holidays.filter(holiday => holiday.date === dateStr);
   };
 
   // Check if date is today
@@ -186,13 +193,17 @@ const WeeklyCalendarWidget = () => {
       <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
         {weekDates.map((date, index) => {
           const dayTasks = getTasksForDate(date);
+          const dayHolidays = getHolidaysForDate(date);
           const isTodayDate = isToday(date);
+          const hasHoliday = dayHolidays.length > 0;
           
           return (
             <div
               key={index}
               className={`p-2 md:p-3 rounded-lg border-2 transition-colors ${
-                isTodayDate 
+                hasHoliday
+                  ? 'border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50'
+                  : isTodayDate 
                   ? 'border-blue-200 bg-blue-50' 
                   : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
               }`}
@@ -203,11 +214,31 @@ const WeeklyCalendarWidget = () => {
                   {dayNames[index]}
                 </div>
                 <div className={`text-base md:text-lg font-semibold ${
-                  isTodayDate ? 'text-blue-600' : 'text-gray-800'
+                  hasHoliday ? 'text-purple-600' : isTodayDate ? 'text-blue-600' : 'text-gray-800'
                 }`}>
                   {date.getDate()}
                 </div>
               </div>
+
+              {/* Holidays */}
+              {dayHolidays.map(holiday => (
+                <div
+                  key={holiday.id}
+                  className="mb-2 p-2 rounded-lg bg-white border-2 border-purple-200 shadow-sm"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-base">{holiday.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] md:text-xs font-bold text-purple-700 line-clamp-1">
+                        {holiday.name}
+                      </div>
+                      <div className="text-[9px] md:text-[10px] text-purple-600 font-medium">
+                        Holiday
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
 
               {/* Tasks */}
               <div className="space-y-1">
@@ -237,8 +268,8 @@ const WeeklyCalendarWidget = () => {
                   </div>
                 )}
 
-                {/* Empty state for days with no tasks */}
-                {dayTasks.length === 0 && (
+                {/* Empty state for days with no tasks or holidays */}
+                {dayTasks.length === 0 && dayHolidays.length === 0 && (
                   <div className="text-center py-2 md:py-4">
                     <button className="w-5 h-5 md:w-6 md:h-6 border border-dashed border-gray-300 rounded-md flex items-center justify-center hover:border-gray-400 transition-colors group touch-manipulation">
                       <Plus size={10} className="text-gray-400 group-hover:text-gray-600 md:w-3 md:h-3" />
@@ -269,6 +300,17 @@ const WeeklyCalendarWidget = () => {
       </div>
     </div>
   );
+};
+
+WeeklyCalendarWidget.propTypes = {
+  holidays: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+    date: PropTypes.string.isRequired,
+    emoji: PropTypes.string.isRequired,
+    color: PropTypes.string,
+    daysUntil: PropTypes.number
+  }))
 };
 
 export default WeeklyCalendarWidget;

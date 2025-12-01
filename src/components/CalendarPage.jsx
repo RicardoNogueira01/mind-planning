@@ -27,6 +27,13 @@ const CalendarPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
+  // Holidays data
+  const [holidays] = useState([
+    { id: 1, name: 'First Friday', date: '2025-12-05', emoji: '🎉', color: '#8B5CF6' },
+    { id: 2, name: 'Christmas Day', date: '2025-12-25', emoji: '🎄', color: '#EF4444' },
+    { id: 3, name: 'New Year\'s Day', date: '2026-01-01', emoji: '🎆', color: '#6366F1' }
+  ]);
+
   // Sample tasks/events data
   const [events] = useState([
     {
@@ -35,7 +42,7 @@ const CalendarPage = () => {
       description: 'Daily team synchronization meeting',
       startTime: '09:00',
       endTime: '09:30',
-      date: '2024-01-15',
+      date: '2025-12-01',
       color: '#3B82F6',
       category: 'meeting',
       attendees: ['John Doe', 'Alex Kim'],
@@ -48,7 +55,7 @@ const CalendarPage = () => {
       description: 'Review the new API endpoints and documentation',
       startTime: '14:30',
       endTime: '15:30',
-      date: '2024-01-15',
+      date: '2025-12-02',
       color: '#10B981',
       category: 'review',
       attendees: ['Maria Rodriguez', 'Taylor Smith'],
@@ -61,7 +68,7 @@ const CalendarPage = () => {
       description: 'Quarterly business review with key client',
       startTime: '16:00',
       endTime: '17:00',
-      date: '2024-01-15',
+      date: '2025-12-03',
       color: '#F59E0B',
       category: 'presentation',
       attendees: ['Alex Kim', 'Sarah Wilson'],
@@ -74,7 +81,7 @@ const CalendarPage = () => {
       description: 'Collaborative design session for new features',
       startTime: '10:00',
       endTime: '12:00',
-      date: '2024-01-16',
+      date: '2025-12-04',
       color: '#8B5CF6',
       category: 'workshop',
       attendees: ['Design Team'],
@@ -87,7 +94,7 @@ const CalendarPage = () => {
       description: 'Plan tasks and estimates for next sprint',
       startTime: '15:00',
       endTime: '16:30',
-      date: '2024-01-16',
+      date: '2025-12-05',
       color: '#EF4444',
       category: 'planning',
       attendees: ['Development Team'],
@@ -100,7 +107,7 @@ const CalendarPage = () => {
       description: 'Review pull requests and code quality',
       startTime: '11:00',
       endTime: '12:00',
-      date: '2024-01-17',
+      date: '2025-12-08',
       color: '#06B6D4',
       category: 'review',
       attendees: ['John Doe', 'Taylor Smith'],
@@ -113,7 +120,7 @@ const CalendarPage = () => {
       description: 'Demonstrate new features to stakeholders',
       startTime: '13:30',
       endTime: '14:30',
-      date: '2024-01-17',
+      date: '2025-12-10',
       color: '#84CC16',
       category: 'demo',
       attendees: ['Product Team', 'Stakeholders'],
@@ -126,7 +133,7 @@ const CalendarPage = () => {
       description: 'Reflect on sprint performance and improvements',
       startTime: '09:30',
       endTime: '10:30',
-      date: '2024-01-18',
+      date: '2025-12-15',
       color: '#F97316',
       category: 'meeting',
       attendees: ['Full Team'],
@@ -139,7 +146,7 @@ const CalendarPage = () => {
       description: 'Conduct usability tests with real users',
       startTime: '14:00',
       endTime: '16:00',
-      date: '2024-01-19',
+      date: '2025-12-18',
       color: '#EC4899',
       category: 'testing',
       attendees: ['UX Team', 'Research Team'],
@@ -152,7 +159,7 @@ const CalendarPage = () => {
       description: 'Compile and prepare weekly progress report',
       startTime: '16:30',
       endTime: '17:30',
-      date: '2024-01-19',
+      date: '2025-12-22',
       color: '#6366F1',
       category: 'administrative',
       attendees: ['Project Managers'],
@@ -227,6 +234,12 @@ const CalendarPage = () => {
     });
   };
 
+  // Get holidays for a specific date
+  const getHolidaysForDate = (date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    return holidays.filter(holiday => holiday.date === dateStr);
+  };
+
   // Check if date is today
   const isToday = (date) => {
     const today = new Date();
@@ -281,19 +294,24 @@ const CalendarPage = () => {
         <div className="grid grid-cols-7">
           {dates.map((date, index) => {
             const dayEvents = getEventsForDate(date);
+            const dayHolidays = getHolidaysForDate(date);
             const isTodayDate = isToday(date);
             const isCurrentMonthDate = isCurrentMonth(date);
+            const hasHoliday = dayHolidays.length > 0;
 
             return (
               <div
                 key={index}
                 className={`min-h-32 p-2 border-r border-b border-gray-100 ${
+                  hasHoliday ? 'bg-gradient-to-br from-purple-50 to-pink-50' :
                   !isCurrentMonthDate ? 'bg-gray-50' : 'bg-white'
                 } hover:bg-gray-50 transition-colors`}
               >
                 <div className={`text-sm font-medium mb-2 ${
                   isTodayDate 
                     ? 'text-white bg-indigo-600 rounded-full w-6 h-6 flex items-center justify-center' 
+                    : hasHoliday
+                      ? 'text-purple-600'
                     : isCurrentMonthDate 
                       ? 'text-gray-900' 
                       : 'text-gray-400'
@@ -302,6 +320,17 @@ const CalendarPage = () => {
                 </div>
 
                 <div className="space-y-1">
+                  {dayHolidays.map(holiday => (
+                    <div
+                      key={holiday.id}
+                      className="text-xs p-1.5 rounded bg-white border-2 border-purple-200 shadow-sm"
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>{holiday.emoji}</span>
+                        <div className="font-bold text-purple-700 truncate">{holiday.name}</div>
+                      </div>
+                    </div>
+                  ))}
                   {dayEvents.slice(0, 3).map(event => (
                     <div
                       key={event.id}

@@ -67,8 +67,8 @@ export function useNodeHandlers(
 
   // Node appearance handlers
   const setNodeEmoji = useCallback((nodeId, emoji) => {
-    setNodes(nodes.map(n => n.id === nodeId ? { ...n, emoji } : n));
-  }, [nodes, setNodes]);
+    setNodes(prevNodes => prevNodes.map(n => n.id === nodeId ? { ...n, emoji } : n));
+  }, [setNodes]);
 
   const selectBgColor = useCallback((nodeId, color) => {
     setNodes(nodes.map(n => n.id === nodeId ? { ...n, bgColor: color } : n));
