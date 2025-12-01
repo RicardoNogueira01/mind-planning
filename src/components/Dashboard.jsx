@@ -244,7 +244,7 @@ const Dashboard = () => {
           {/* Task Status and Team - Side by Side */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {/* Task Status Card */}
-            <div className="bg-white rounded-2xl p-5 md:p-6 shadow-lg border border-gray-100 transition-shadow duration-300 hover:shadow-xl">
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <div className="flex justify-between items-start mb-5">
                 <div>
                   <p className="text-gray-500 text-xs font-medium mb-1">{t('stats.taskStatus').toUpperCase()}</p>
@@ -256,9 +256,9 @@ const Dashboard = () => {
               </div>
               
               <div className="space-y-3.5">
-                <div className="flex items-center justify-between group">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-1.5 bg-green-100 rounded-lg group-hover:scale-110 transition-transform">
+                    <div className="p-1.5 bg-green-100 rounded-lg">
                       <CheckCircle size={16} className="text-green-600" />
                     </div>
                     <span className="text-gray-700 font-medium text-sm">{t('stats.completed')}</span>
@@ -266,9 +266,9 @@ const Dashboard = () => {
                   <span className="text-gray-900 font-bold text-lg">{stats.tasksCompleted}</span>
                 </div>
                 
-                <div className="flex items-center justify-between group">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-1.5 bg-amber-100 rounded-lg group-hover:scale-110 transition-transform">
+                    <div className="p-1.5 bg-amber-100 rounded-lg">
                       <Clock size={16} className="text-amber-600" />
                     </div>
                     <span className="text-gray-700 font-medium text-sm">{t('stats.inProgress')}</span>
@@ -276,9 +276,9 @@ const Dashboard = () => {
                   <span className="text-gray-900 font-bold text-lg">{stats.tasksInProgress}</span>
                 </div>
                 
-                <div className="flex items-center justify-between group">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-1.5 bg-gray-100 rounded-lg group-hover:scale-110 transition-transform">
+                    <div className="p-1.5 bg-gray-100 rounded-lg">
                       <Circle size={16} className="text-gray-500" />
                     </div>
                     <span className="text-gray-700 font-medium text-sm">{t('stats.notStarted')}</span>
@@ -286,9 +286,9 @@ const Dashboard = () => {
                   <span className="text-gray-900 font-bold text-lg">{stats.tasksNotStarted}</span>
                 </div>
                 
-                <div className="flex items-center justify-between pt-2 border-t border-gray-100 group">
+                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                   <div className="flex items-center gap-3">
-                    <div className="p-1.5 bg-red-100 rounded-lg group-hover:scale-110 transition-transform">
+                    <div className="p-1.5 bg-red-100 rounded-lg">
                       <AlertTriangle size={16} className="text-red-600" />
                     </div>
                     <span className="text-gray-700 font-medium text-sm">{t('stats.overdue')}</span>
