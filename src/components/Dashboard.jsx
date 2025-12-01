@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import WeeklyCalendarWidget from './WeeklyCalendarWidget';
 import TopBar from './shared/TopBar';
@@ -175,30 +175,28 @@ const Dashboard = () => {
           </div>
         </div>
 
-      {/* Main Content */}
-      <main>
         {/* Quick Stats Overview with Modern Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
-          {/* Completion Progress Card - Featured */}
-          <div className="lg:col-span-2 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-6 md:p-8 shadow-xl shadow-blue-500/20 text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20"></div>
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full -ml-16 -mb-16"></div>
+        <div className="space-y-6 mb-6 md:mb-8">
+          {/* Completion Progress Card - Featured - Full Width */}
+          <div className="bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] rounded-2xl p-6 md:p-8 shadow-xl text-white relative overflow-hidden transition-all duration-300 hover:shadow-2xl">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -mr-20 -mt-20"></div>
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/3 rounded-full -ml-16 -mb-16"></div>
             
             <div className="relative z-10">
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <p className="text-blue-100 text-sm font-medium mb-1">{t('stats.overallProgress')}</p>
-                  <h2 className="text-5xl md:text-6xl font-bold">{completionPercentage}%</h2>
+                  <p className="text-gray-300 text-sm font-medium mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>{t('stats.overallProgress')}</p>
+                  <h2 className="text-5xl md:text-6xl font-bold" style={{ fontFamily: 'DM Mono, monospace' }}>{completionPercentage}%</h2>
                 </div>
-                <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
+                <div className="p-3 bg-white/10 backdrop-blur-sm rounded-xl">
                   <BarChart2 size={24} />
                 </div>
               </div>
               
               <div className="mb-4">
-                <div className="h-3 bg-white/20 rounded-full overflow-hidden">
+                <div className="h-3 bg-white/10 rounded-full overflow-hidden">
                   <div 
-                    className="h-3 bg-white rounded-full shadow-lg transition-all duration-1000" 
+                    className="h-3 bg-white rounded-full shadow-lg animate-progress-fill" 
                     style={{ width: `${completionPercentage}%` }}
                   ></div>
                 </div>
@@ -206,338 +204,347 @@ const Dashboard = () => {
               
               <div className="grid grid-cols-3 gap-4">
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-                  <p className="text-3xl font-bold">{stats.tasksCompleted}</p>
-                  <p className="text-xs text-blue-100 mt-1">{t('stats.completed')}</p>
+                  <p className="text-3xl font-bold" style={{ fontFamily: 'DM Mono, monospace' }}>{stats.tasksCompleted}</p>
+                  <p className="text-xs text-gray-300 mt-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>{t('stats.completed')}</p>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-                  <p className="text-3xl font-bold">{stats.tasksInProgress}</p>
-                  <p className="text-xs text-blue-100 mt-1">{t('stats.inProgress')}</p>
+                  <p className="text-3xl font-bold" style={{ fontFamily: 'DM Mono, monospace' }}>{stats.tasksInProgress}</p>
+                  <p className="text-xs text-gray-300 mt-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>{t('stats.inProgress')}</p>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-                  <p className="text-3xl font-bold">{stats.tasksNotStarted}</p>
-                  <p className="text-xs text-blue-100 mt-1">{t('stats.toStart')}</p>
+                  <p className="text-3xl font-bold" style={{ fontFamily: 'DM Mono, monospace' }}>{stats.tasksNotStarted}</p>
+                  <p className="text-xs text-gray-300 mt-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>{t('stats.toStart')}</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Task Status Card */}
-          <div className="bg-white rounded-2xl p-5 md:p-6 shadow-lg shadow-gray-200/50 border border-gray-100 hover:shadow-xl hover:shadow-gray-200/60 transition-all duration-300">
-            <div className="flex justify-between items-start mb-5">
-              <div>
-                <p className="text-gray-500 text-xs font-medium mb-1">{t('stats.taskStatus').toUpperCase()}</p>
-                <h2 className="text-xl font-bold text-gray-900">{t('stats.status')}</h2>
-              </div>
-              <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-xl">
-                <Activity size={20} />
-              </div>
-            </div>
-            
-            <div className="space-y-3.5">
-              <div className="flex items-center justify-between group">
-                <div className="flex items-center gap-3">
-                  <div className="p-1.5 bg-green-100 rounded-lg group-hover:scale-110 transition-transform">
-                    <CheckCircle size={16} className="text-green-600" />
-                  </div>
-                  <span className="text-gray-700 font-medium text-sm">{t('stats.completed')}</span>
+          {/* Task Status and Team - Side by Side */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            {/* Task Status Card */}
+            <div className="bg-white rounded-2xl p-5 md:p-6 shadow-lg border border-gray-100 transition-shadow duration-300 hover:shadow-xl">
+              <div className="flex justify-between items-start mb-5">
+                <div>
+                  <p className="text-gray-500 text-xs font-medium mb-1">{t('stats.taskStatus').toUpperCase()}</p>
+                  <h2 className="text-xl font-bold text-gray-900">{t('stats.status')}</h2>
                 </div>
-                <span className="text-gray-900 font-bold text-lg">{stats.tasksCompleted}</span>
+                <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-xl">
+                  <Activity size={20} />
+                </div>
               </div>
               
-              <div className="flex items-center justify-between group">
-                <div className="flex items-center gap-3">
-                  <div className="p-1.5 bg-amber-100 rounded-lg group-hover:scale-110 transition-transform">
-                    <Clock size={16} className="text-amber-600" />
-                  </div>
-                  <span className="text-gray-700 font-medium text-sm">{t('stats.inProgress')}</span>
-                </div>
-                <span className="text-gray-900 font-bold text-lg">{stats.tasksInProgress}</span>
-              </div>
-              
-              <div className="flex items-center justify-between group">
-                <div className="flex items-center gap-3">
-                  <div className="p-1.5 bg-gray-100 rounded-lg group-hover:scale-110 transition-transform">
-                    <Circle size={16} className="text-gray-500" />
-                  </div>
-                  <span className="text-gray-700 font-medium text-sm">{t('stats.notStarted')}</span>
-                </div>
-                <span className="text-gray-900 font-bold text-lg">{stats.tasksNotStarted}</span>
-              </div>
-              
-              <div className="flex items-center justify-between pt-2 border-t border-gray-100 group">
-                <div className="flex items-center gap-3">
-                  <div className="p-1.5 bg-red-100 rounded-lg group-hover:scale-110 transition-transform">
-                    <AlertTriangle size={16} className="text-red-600" />
-                  </div>
-                  <span className="text-gray-700 font-medium text-sm">{t('stats.overdue')}</span>
-                </div>
-                <span className="text-red-600 font-bold text-lg">{stats.overdueTasks}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Team Overview Card */}
-          <div className="bg-white rounded-2xl p-5 md:p-6 shadow-lg shadow-gray-200/50 border border-gray-100 hover:shadow-xl hover:shadow-gray-200/60 transition-all duration-300">
-            <div className="flex justify-between items-start mb-5">
-              <div>
-                <p className="text-gray-500 text-xs font-medium mb-1">{t('stats.team').toUpperCase()}</p>
-                <h2 className="text-xl font-bold text-gray-900">{collaborators.length} {t('stats.members')}</h2>
-              </div>
-              <div className="p-2.5 bg-purple-100 text-purple-600 rounded-xl">
-                <Users size={20} />
-              </div>
-            </div>
-            
-            <div className="space-y-3">
-              {collaborators.slice(0, 3).map(collab => (
-                <div key={collab.id} className="flex items-center gap-3 group hover:bg-gray-50 p-2 rounded-xl -m-2 transition-colors">
-                  <div className={clsx("w-10 h-10 rounded-xl flex items-center justify-center text-white font-semibold text-sm shadow-sm group-hover:scale-105 transition-transform", collab.color)}>
-                    {collab.initials}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center mb-0.5">
-                      <h3 className="font-semibold text-gray-800 text-sm truncate">{collab.name.split(' ')[0]}</h3>
-                      <span className={clsx('text-xs px-2 py-0.5 rounded-full font-semibold', {
-                        'bg-red-100 text-red-700': collab.overdueTasks > 0,
-                        'bg-emerald-100 text-emerald-700': collab.overdueTasks === 0
-                      })}>
-                        {collab.overdueTasks > 0 ? `${collab.overdueTasks} ${t('stats.overdueTasks')}` : t('stats.onTrack')}
-                      </span>
+              <div className="space-y-3.5">
+                <div className="flex items-center justify-between group">
+                  <div className="flex items-center gap-3">
+                    <div className="p-1.5 bg-green-100 rounded-lg group-hover:scale-110 transition-transform">
+                      <CheckCircle size={16} className="text-green-600" />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div 
-                          className={clsx("h-1.5 rounded-full", collab.color)} 
-                          style={{ width: `${(collab.tasksCompleted / collab.tasksAssigned) * 100}%` }}
-                        ></div>
+                    <span className="text-gray-700 font-medium text-sm">{t('stats.completed')}</span>
+                  </div>
+                  <span className="text-gray-900 font-bold text-lg">{stats.tasksCompleted}</span>
+                </div>
+                
+                <div className="flex items-center justify-between group">
+                  <div className="flex items-center gap-3">
+                    <div className="p-1.5 bg-amber-100 rounded-lg group-hover:scale-110 transition-transform">
+                      <Clock size={16} className="text-amber-600" />
+                    </div>
+                    <span className="text-gray-700 font-medium text-sm">{t('stats.inProgress')}</span>
+                  </div>
+                  <span className="text-gray-900 font-bold text-lg">{stats.tasksInProgress}</span>
+                </div>
+                
+                <div className="flex items-center justify-between group">
+                  <div className="flex items-center gap-3">
+                    <div className="p-1.5 bg-gray-100 rounded-lg group-hover:scale-110 transition-transform">
+                      <Circle size={16} className="text-gray-500" />
+                    </div>
+                    <span className="text-gray-700 font-medium text-sm">{t('stats.notStarted')}</span>
+                  </div>
+                  <span className="text-gray-900 font-bold text-lg">{stats.tasksNotStarted}</span>
+                </div>
+                
+                <div className="flex items-center justify-between pt-2 border-t border-gray-100 group">
+                  <div className="flex items-center gap-3">
+                    <div className="p-1.5 bg-red-100 rounded-lg group-hover:scale-110 transition-transform">
+                      <AlertTriangle size={16} className="text-red-600" />
+                    </div>
+                    <span className="text-gray-700 font-medium text-sm">{t('stats.overdue')}</span>
+                  </div>
+                  <span className="text-red-600 font-bold text-lg">{stats.overdueTasks}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Team Overview Card */}
+            <div className="bg-white rounded-2xl p-5 md:p-6 shadow-lg border border-gray-100 transition-shadow duration-300 hover:shadow-xl">
+              <div className="flex justify-between items-start mb-5">
+                <div>
+                  <p className="text-gray-500 text-xs font-medium mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>{t('stats.team').toUpperCase()}</p>
+                  <h2 className="text-xl font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>{collaborators.length} {t('stats.members')}</h2>
+                </div>
+                <div className="p-2.5 bg-purple-100 text-purple-600 rounded-xl">
+                  <Users size={20} />
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                {collaborators.map(collab => (
+                  <div key={collab.id} className="flex items-center gap-3 group hover:bg-gray-50 p-2 rounded-xl -m-2 transition-colors">
+                    <div className={clsx("w-10 h-10 rounded-xl flex items-center justify-center text-white font-semibold text-sm shadow-sm group-hover:scale-105 transition-transform", collab.color)}>
+                      {collab.initials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-center mb-0.5">
+                        <h3 className="font-semibold text-gray-800 text-sm truncate">{collab.name.split(' ')[0]}</h3>
+                        <span className={clsx('text-xs px-2 py-0.5 rounded-full font-semibold', {
+                          'bg-red-100 text-red-700': collab.overdueTasks > 0,
+                          'bg-emerald-100 text-emerald-700': collab.overdueTasks === 0
+                        })}>
+                          {collab.overdueTasks > 0 ? `${collab.overdueTasks} ${t('stats.overdueTasks')}` : t('stats.onTrack')}
+                        </span>
                       </div>
-                      <span className="text-xs text-gray-500 font-medium whitespace-nowrap">{collab.tasksCompleted}/{collab.tasksAssigned}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div 
+                            className={clsx("h-1.5 rounded-full", collab.color)} 
+                            style={{ width: `${(collab.tasksCompleted / collab.tasksAssigned) * 100}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-xs text-gray-500 font-medium whitespace-nowrap">{collab.tasksCompleted}/{collab.tasksAssigned}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-            
-            <Link 
-              to="/team-members" 
-              className="w-full mt-4 text-sm text-blue-600 font-semibold hover:text-blue-700 flex items-center justify-center gap-1.5 transition-colors py-2 hover:bg-blue-50 rounded-lg"
-            >
-              <span>{t('stats.viewAllMembers')}</span>
-              <ArrowRight size={14} />
-            </Link>
           </div>
         </div>
 
-        {/* Holidays Section - Country & Team */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6 mb-6">
-          {/* Next Holiday - Compact */}
-          <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 p-4 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm">
-                  <span className="text-xl">🎉</span>
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-gray-900">{t('holidays.nextHoliday')}</h2>
-                  <p className="text-xs text-gray-500">{t('holidays.subtitle')}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="p-6">
-              {upcomingHolidays.length > 0 && (
-                <div className="flex items-center gap-4">
-                  <div className={clsx("w-16 h-16 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 shadow-lg", upcomingHolidays[0].color, "bg-opacity-20")}>
+        {/* Next Holiday Banner - Compact */}
+        <div className="mb-6">
+          {upcomingHolidays.length > 0 && (
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
                     {upcomingHolidays[0].emoji}
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-gray-900 text-lg mb-1">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                      Next Holiday
+                    </p>
+                    <h3 className="text-base font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                       {upcomingHolidays[0].name}
                     </h3>
-                    <p className="text-sm text-gray-600 mb-2">
-                      {new Date(upcomingHolidays[0].date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                      {new Date(upcomingHolidays[0].date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
                     </p>
-                    <div className="flex items-center gap-2">
-                      <div className={clsx("px-3 py-1 rounded-full text-sm font-bold text-white", upcomingHolidays[0].color)}>
-                        {upcomingHolidays[0].daysUntil} {t('holidays.days')}
-                      </div>
-                    </div>
                   </div>
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Team Holiday Requests Summary */}
-          <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-gray-100">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="p-1.5 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm">
-                  <Users size={18} className="text-blue-600" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-gray-900">{t('holidays.teamTitle')}</h2>
-                  <p className="text-xs text-gray-500">{t('holidays.teamSubtitle')}</p>
+                <div className="bg-blue-600 px-4 py-3 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-white leading-none mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
+                    {upcomingHolidays[0].daysUntil}
+                  </div>
+                  <div className="text-xs text-white/90 font-medium uppercase tracking-wider" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                    Days
+                  </div>
                 </div>
               </div>
-              
-              <div className="flex gap-2">
-                <div className="flex-1 bg-white/80 backdrop-blur-sm rounded-lg p-2 text-center">
-                  <p className="text-lg font-bold text-green-600">
-                    {teamHolidayRequests.filter(r => r.status === 'approved').length}
-                  </p>
-                  <p className="text-[10px] text-gray-600 font-medium">{t('holidays.approved')}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Holidays Section - Team */}
+        <div className="mb-6">
+          {/* Team Holiday Requests Summary */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <Users size={18} className="text-gray-700" />
                 </div>
-                <div className="flex-1 bg-white/80 backdrop-blur-sm rounded-lg p-2 text-center">
-                  <p className="text-lg font-bold text-amber-600">
-                    {teamHolidayRequests.filter(r => r.status === 'pending').length}
-                  </p>
-                  <p className="text-[10px] text-gray-600 font-medium">{t('holidays.pending')}</p>
+                <div>
+                  <h2 className="text-base font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>Team Holidays</h2>
+                  <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>Holiday requests</p>
                 </div>
-                <div className="flex-1 bg-white/80 backdrop-blur-sm rounded-lg p-2 text-center">
-                  <p className="text-lg font-bold text-gray-500">
-                    {teamHolidayRequests.filter(r => r.status === 'canceled').length}
-                  </p>
-                  <p className="text-[10px] text-gray-600 font-medium">{t('holidays.canceled')}</p>
-                </div>
+              </div>
+              <Link 
+                to="/team-holidays" 
+                className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors"
+                style={{ fontFamily: 'DM Sans, sans-serif' }}
+              >
+                View All
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+            
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              <div className="bg-gray-50 rounded-xl p-4 text-center">
+                <p className="text-2xl font-bold text-gray-900 mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
+                  {teamHolidayRequests.filter(r => r.status === 'approved').length}
+                </p>
+                <p className="text-xs text-gray-600 font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>Approved</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-4 text-center">
+                <p className="text-2xl font-bold text-gray-900 mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
+                  {teamHolidayRequests.filter(r => r.status === 'pending').length}
+                </p>
+                <p className="text-xs text-gray-600 font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>Pending</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-4 text-center">
+                <p className="text-2xl font-bold text-gray-900 mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
+                  {teamHolidayRequests.filter(r => r.status === 'canceled').length}
+                </p>
+                <p className="text-xs text-gray-600 font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>Canceled</p>
               </div>
             </div>
             
-            <div className="p-4">
-              <div className="space-y-2 mb-4">
-                {teamHolidayRequests
-                  .filter(req => req.status !== 'canceled')
-                  .slice(0, 3)
-                  .map((request) => (
-                    <div 
-                      key={request.id} 
-                      className="group bg-gray-50 hover:bg-gray-100 rounded-lg p-2.5 transition-colors"
-                    >
-                      <div className="flex items-start gap-2.5">
-                        <div className={clsx("w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm", request.color)}>
-                          {request.initials}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <h3 className="font-semibold text-gray-900 text-sm truncate">
-                              {request.employeeName}
-                            </h3>
-                            <span className={clsx('text-[10px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap', {
-                              'bg-green-100 text-green-700': request.status === 'approved',
-                              'bg-amber-100 text-amber-700': request.status === 'pending'
-                            })}>
-                              {request.status === 'approved' ? `✓` : `⏱`}
-                            </span>
-                          </div>
-                          <p className="text-xs text-gray-600 mb-0.5">
-                            {request.startDate} - {request.endDate}
-                          </p>
-                          <p className="text-xs text-gray-500 truncate">{request.reason}</p>
-                        </div>
-                      </div>
+            {/* Holiday Requests List */}
+            <div className="space-y-3">
+              {teamHolidayRequests
+                .filter(req => req.status !== 'canceled')
+                .slice(0, 3)
+                .map((request) => (
+                  <div 
+                    key={request.id} 
+                    className="flex items-start gap-3 pb-3 border-b border-gray-100 last:border-0 last:pb-0"
+                  >
+                    <div className={clsx("w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0", request.color)}>
+                      {request.initials}
                     </div>
-                  ))}
-              </div>
-              
-              <Link 
-                to="/team-holidays" 
-                className="w-full text-sm text-blue-600 font-semibold hover:text-blue-700 flex items-center justify-center gap-1.5 transition-colors py-2 hover:bg-blue-50 rounded-lg"
-              >
-                <span>{t('holidays.viewAllRequests')}</span>
-                <ArrowRight size={14} />
-              </Link>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <h3 className="font-semibold text-gray-900 text-sm" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                          {request.employeeName}
+                        </h3>
+                        <span className={clsx('text-lg flex-shrink-0', {
+                          'text-green-600': request.status === 'approved',
+                          'text-amber-600': request.status === 'pending'
+                        })}>
+                          {request.status === 'approved' ? '✓' : '🕐'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                        {request.startDate} - {request.endDate}
+                      </p>
+                      <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>{request.reason}</p>
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
         </div>
 
         {/* Activity Sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Recent Activity */}
-          <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-gray-50 to-white p-5 md:p-6 border-b border-gray-100">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <CheckCircle className="text-green-600" size={20} />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-900">{t('activity.recentTitle')}</h2>
-                    <p className="text-xs text-gray-500">{t('activity.recentSubtitle')}</p>
-                  </div>
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <CheckCircle className="text-gray-700" size={18} />
                 </div>
-                <Link to="/completed-tasks" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 font-semibold hover:gap-2 transition-all">
-                  <span className="hidden sm:inline">{t('activity.viewAll')}</span>
-                  <ArrowRight size={16} />
-                </Link>
+                <div>
+                  <h2 className="text-base font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>Recent Activity</h2>
+                  <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>Completed tasks</p>
+                </div>
               </div>
+              <Link 
+                to="/completed-tasks" 
+                className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors"
+                style={{ fontFamily: 'DM Sans, sans-serif' }}
+              >
+                View All
+                <ArrowRight size={14} />
+              </Link>
             </div>
             
-            <div className="p-4 md:p-5">
-              <div className="space-y-2">
-                {recentCompletedTasks.map((task, idx) => (
-                  <div 
-                    key={task.id} 
-                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group"
-                    style={{ animationDelay: `${idx * 50}ms` }}
-                  >
-                    <div className={clsx("w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform", task.color)}>
-                      {task.initials}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-800 text-sm truncate">{task.title}</h3>
-                      <p className="text-xs text-gray-500 truncate">{t('activity.completedBy')} {task.completedBy}</p>
-                    </div>
-                    <span className="text-xs text-gray-400 font-medium whitespace-nowrap">{task.completedAt}</span>
-                  </div>
-                ))}
+            <div className="space-y-1">
+              <div className="grid grid-cols-2 gap-3 mb-4 text-xs font-semibold text-gray-500 uppercase tracking-wide px-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                <div>TODAY</div>
               </div>
+              {recentCompletedTasks.slice(0, 2).map((task) => (
+                <div 
+                  key={task.id} 
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className={clsx("w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0", task.color)}>
+                    {task.initials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-900 text-sm mb-0.5" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.title}</h3>
+                    <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.completedBy}</p>
+                  </div>
+                  <span className="text-xs text-gray-400 font-medium whitespace-nowrap" style={{ fontFamily: 'DM Mono, monospace' }}>{task.completedAt}</span>
+                </div>
+              ))}
+              
+              <div className="grid grid-cols-2 gap-3 mt-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wide px-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                <div>YESTERDAY</div>
+              </div>
+              {recentCompletedTasks.slice(2).map((task) => (
+                <div 
+                  key={task.id} 
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className={clsx("w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0", task.color)}>
+                    {task.initials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-900 text-sm mb-0.5" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.title}</h3>
+                    <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.completedBy}</p>
+                  </div>
+                  <span className="text-xs text-gray-400 font-medium whitespace-nowrap" style={{ fontFamily: 'DM Mono, monospace' }}>{task.completedAt}</span>
+                </div>
+              ))}
             </div>
           </div>
           
           {/* Deadlines */}
-          <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-red-50 to-white p-5 md:p-6 border-b border-gray-100">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-red-100 rounded-lg">
-                    <Clock className="text-red-600" size={20} />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-900">{t('activity.deadlinesTitle')}</h2>
-                    <p className="text-xs text-gray-500">{t('activity.deadlinesSubtitle')}</p>
-                  </div>
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <Clock className="text-gray-700" size={18} />
                 </div>
-                <Link to="/upcoming-deadlines" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 font-semibold hover:gap-2 transition-all">
-                  <span className="hidden sm:inline">{t('activity.viewAll')}</span>
-                  <ArrowRight size={16} />
-                </Link>
+                <div>
+                  <h2 className="text-base font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>Deadlines</h2>
+                  <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>Upcoming due dates</p>
+                </div>
               </div>
+              <Link 
+                to="/upcoming-deadlines" 
+                className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors"
+                style={{ fontFamily: 'DM Sans, sans-serif' }}
+              >
+                View All
+                <ArrowRight size={14} />
+              </Link>
             </div>
             
-            <div className="p-4 md:p-5">
-              <div className="space-y-2">
-                {upcomingDeadlines.map((task, idx) => (
-                  <div 
-                    key={task.id} 
-                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group"
-                    style={{ animationDelay: `${idx * 50}ms` }}
-                  >
-                    <div className={clsx("w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform", task.color)}>
-                      {task.initials}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-800 text-sm truncate">{task.title}</h3>
-                      <p className="text-xs text-gray-500 truncate">{task.assignedTo}</p>
-                    </div>
-                    <span className={clsx('text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap', {
-                      'bg-red-100 text-red-700': task.status === 'danger',
-                      'bg-amber-100 text-amber-700': task.status === 'warning'
-                    })}>
-                      {formatDueDate(task.dueDate)}
-                    </span>
+            <div className="space-y-3">
+              {upcomingDeadlines.map((task) => (
+                <div 
+                  key={task.id} 
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className={clsx("w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0", task.color)}>
+                    {task.initials}
                   </div>
-                ))}
-              </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-900 text-sm mb-0.5" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.title}</h3>
+                    <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.assignedTo}</p>
+                  </div>
+                  <span className={clsx('text-xs font-semibold px-3 py-1.5 rounded-lg whitespace-nowrap', {
+                    'bg-red-50 text-red-600': task.status === 'danger',
+                    'bg-amber-50 text-amber-600': task.status === 'warning'
+                  })} style={{ fontFamily: 'DM Mono, monospace' }}>
+                    {formatDueDate(task.dueDate)}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -546,7 +553,6 @@ const Dashboard = () => {
         <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
           <WeeklyCalendarWidget holidays={upcomingHolidays} />
         </div>
-      </main>
       </div>
     </div>
   );
