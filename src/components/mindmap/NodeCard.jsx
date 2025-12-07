@@ -172,7 +172,16 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
             placeholder="Type here... (Ctrl+Enter to save, Esc to cancel)"
           />
         ) : (
-          <div className="text-center text-gray-800 font-medium whitespace-pre-wrap break-words" style={{ paddingLeft: hasProgress ? '48px' : '0' }}>{node.text || 'New Task'}</div>
+          <div className="flex flex-col items-center gap-1">
+            {node.emoji && (
+              <div className="text-3xl">
+                {node.emoji}
+              </div>
+            )}
+            <div className="text-center text-gray-800 font-medium whitespace-pre-wrap break-words" style={{ paddingLeft: hasProgress ? '48px' : '0' }}>
+              {node.text || 'New Task'}
+            </div>
+          </div>
         )}
       </button>
       {children}
@@ -187,7 +196,8 @@ NodeCard.propTypes = {
     x: PropTypes.number.isRequired,
     y: PropTypes.number.isRequired,
     bgColor: PropTypes.string,
-    fontColor: PropTypes.string
+    fontColor: PropTypes.string,
+    emoji: PropTypes.string
   }).isRequired,
   selected: PropTypes.bool,
   onSelect: PropTypes.func,

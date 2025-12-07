@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import NodePopup from '../mindmap/NodePopup';
 
-export default function PropertiesPanel({ show, anchorRef, nodeId, priority, status, description, onPriorityChange, onStatusChange, onDescriptionChange, onClose }) {
+export default function PropertiesPanel({ show, anchorRef, nodeId, priority, status, description, startDate, onPriorityChange, onStatusChange, onDescriptionChange, onStartDateChange, onClose }) {
   if (!show) return null;
 
   const rect = anchorRef?.current?.getBoundingClientRect() || 
@@ -51,6 +51,17 @@ export default function PropertiesPanel({ show, anchorRef, nodeId, priority, sta
           </select>
         </div>
         <div>
+          <label htmlFor={`startDate-${nodeId}`} className="text-sm md:text-base text-gray-600 block mb-1">Task Start Date</label>
+          <input
+            id={`startDate-${nodeId}`}
+            type="datetime-local"
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm md:text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation cursor-pointer"
+            value={startDate || ''}
+            onChange={(e) => onStartDateChange && onStartDateChange(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+        <div>
           <label htmlFor={`description-${nodeId}`} className="text-sm md:text-base text-gray-600 block mb-1">Description</label>
           <textarea
             id={`description-${nodeId}`}
@@ -78,8 +89,10 @@ PropertiesPanel.propTypes = {
   priority: PropTypes.string,
   status: PropTypes.string,
   description: PropTypes.string,
+  startDate: PropTypes.string,
   onPriorityChange: PropTypes.func,
   onStatusChange: PropTypes.func,
   onDescriptionChange: PropTypes.func,
+  onStartDateChange: PropTypes.func,
   onClose: PropTypes.func.isRequired
 };

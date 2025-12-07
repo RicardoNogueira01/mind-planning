@@ -18,7 +18,7 @@ export default function EmojiPicker({ show, anchorRef, onSelect, onClose }) {
   const rect = anchorRef?.current?.getBoundingClientRect() || 
     { left: window.innerWidth / 2, top: 80, width: 0, height: 0, bottom: 100 };
   
-  const popupWidth = 280;
+  const popupWidth = 400;
   const left = Math.max(8, Math.min(rect.left + (rect.width / 2) - (popupWidth / 2), window.innerWidth - popupWidth - 8));
   const top = Math.max(8, rect.bottom + 20);
 
@@ -28,13 +28,13 @@ export default function EmojiPicker({ show, anchorRef, onSelect, onClose }) {
       width={popupWidth}
       maxHeight="400px"
       onClose={onClose}
-      style={{ padding: '8px' }}
+      style={{ padding: '12px' }}
     >
-      <div className="grid grid-cols-6 md:grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-2">
         {EMOJIS.map(emoji => (
           <button
             key={emoji}
-            className="p-2 md:p-1 text-xl md:text-lg hover:bg-gray-100 rounded cursor-pointer touch-manipulation"
+            className="p-3 text-2xl hover:bg-gray-100 rounded-lg cursor-pointer transition-colors flex items-center justify-center"
             onClick={(e) => {
               e.stopPropagation();
               onSelect(emoji);

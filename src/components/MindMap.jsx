@@ -2380,9 +2380,29 @@ export default function MindMap({ mapId, onBack }) {
                         priority={node.priority}
                         status={node.status}
                         description={node.description}
-                        onPriorityChange={(priority) => setNodes(nodes.map(n => n.id === node.id ? { ...n, priority } : n))}
-                        onStatusChange={(status) => setNodes(nodes.map(n => n.id === node.id ? { ...n, status } : n))}
-                        onDescriptionChange={(description) => setNodes(nodes.map(n => n.id === node.id ? { ...n, description } : n))}
+                        startDate={node.startDate}
+                        onPriorityChange={(priority) => setNodes(prevNodes => prevNodes.map(n => n.id === node.id ? { ...n, priority } : n))}
+                        onStatusChange={(status) => {
+                          setNodes(prevNodes => prevNodes.map(n => {
+                            if (n.id === node.id) {
+                              const updates = { ...n, status };
+                              // Auto-fill startDate when status changes to 'in-progress' for the first time
+                              if (status === 'in-progress' && !n.startDate) {
+                                const now = new Date();
+                                const year = now.getFullYear();
+                                const month = String(now.getMonth() + 1).padStart(2, '0');
+                                const day = String(now.getDate()).padStart(2, '0');
+                                const hours = String(now.getHours()).padStart(2, '0');
+                                const minutes = String(now.getMinutes()).padStart(2, '0');
+                                updates.startDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+                              }
+                              return updates;
+                            }
+                            return n;
+                          }));
+                        }}
+                        onDescriptionChange={(description) => setNodes(prevNodes => prevNodes.map(n => n.id === node.id ? { ...n, description } : n))}
+                        onStartDateChange={(startDate) => setNodes(prevNodes => prevNodes.map(n => n.id === node.id ? { ...n, startDate } : n))}
                         onClose={() => togglePopup(node.id, 'details')}
                       />
 
