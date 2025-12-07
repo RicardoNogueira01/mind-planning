@@ -11,13 +11,16 @@ import {
   ArrowRight,
   Activity,
   BarChart2,
-  Circle
+  Circle,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import clsx from 'clsx';
 
 const Dashboard = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const [currentHolidayIndex, setCurrentHolidayIndex] = useState(0);
   
   // Get current date info
   const getCurrentDayInfo = () => {
@@ -168,7 +171,7 @@ const Dashboard = () => {
             </div>
             <Link 
               to="/mindmaps" 
-              className="w-full md:w-auto px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-300 flex items-center justify-center gap-2 text-sm touch-manipulation transform hover:scale-[1.02]"
+              className="w-full md:w-auto px-4 md:px-6 py-2.5 md:py-3 bg-black hover:bg-gray-900 text-white rounded-xl font-semibold shadow-lg shadow-black/30 hover:shadow-xl hover:shadow-black/40 transition-all duration-300 flex items-center justify-center gap-2 text-sm touch-manipulation transform hover:scale-[1.02]"
             >
               <Activity size={18} />
               {t('buttons.openMindMaps')}
@@ -241,63 +244,8 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Task Status and Team - Side by Side */}
+          {/* Team and Team Holidays - Side by Side */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            {/* Task Status Card */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <div className="flex justify-between items-start mb-5">
-                <div>
-                  <p className="text-gray-500 text-xs font-medium mb-1">{t('stats.taskStatus').toUpperCase()}</p>
-                  <h2 className="text-xl font-bold text-gray-900">{t('stats.status')}</h2>
-                </div>
-                <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-xl">
-                  <Activity size={20} />
-                </div>
-              </div>
-              
-              <div className="space-y-3.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-1.5 bg-green-100 rounded-lg">
-                      <CheckCircle size={16} className="text-green-600" />
-                    </div>
-                    <span className="text-gray-700 font-medium text-sm">{t('stats.completed')}</span>
-                  </div>
-                  <span className="text-gray-900 font-bold text-lg">{stats.tasksCompleted}</span>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-1.5 bg-amber-100 rounded-lg">
-                      <Clock size={16} className="text-amber-600" />
-                    </div>
-                    <span className="text-gray-700 font-medium text-sm">{t('stats.inProgress')}</span>
-                  </div>
-                  <span className="text-gray-900 font-bold text-lg">{stats.tasksInProgress}</span>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-1.5 bg-gray-100 rounded-lg">
-                      <Circle size={16} className="text-gray-500" />
-                    </div>
-                    <span className="text-gray-700 font-medium text-sm">{t('stats.notStarted')}</span>
-                  </div>
-                  <span className="text-gray-900 font-bold text-lg">{stats.tasksNotStarted}</span>
-                </div>
-                
-                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <div className="p-1.5 bg-red-100 rounded-lg">
-                      <AlertTriangle size={16} className="text-red-600" />
-                    </div>
-                    <span className="text-gray-700 font-medium text-sm">{t('stats.overdue')}</span>
-                  </div>
-                  <span className="text-red-600 font-bold text-lg">{stats.overdueTasks}</span>
-                </div>
-              </div>
-            </div>
-
             {/* Team Overview Card */}
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <div className="flex justify-between items-center mb-6">
@@ -356,123 +304,139 @@ const Dashboard = () => {
                 ))}
               </div>
             </div>
+
+            {/* Team Holiday Requests Summary */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-gray-50 rounded-lg">
+                    <Users size={18} className="text-gray-700" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>Team Holidays</h2>
+                    <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>Holiday requests</p>
+                  </div>
+                </div>
+                <Link 
+                  to="/team-holidays" 
+                  className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors"
+                  style={{ fontFamily: 'DM Sans, sans-serif' }}
+                >
+                  View All
+                  <ArrowRight size={14} />
+                </Link>
+              </div>
+              
+              {/* Statistics Cards */}
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                <div className="bg-gray-50 rounded-xl p-4 text-center">
+                  <p className="text-2xl font-bold text-gray-900 mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
+                    {teamHolidayRequests.filter(r => r.status === 'approved').length}
+                  </p>
+                  <p className="text-xs text-gray-600 font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>Approved</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4 text-center">
+                  <p className="text-2xl font-bold text-gray-900 mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
+                    {teamHolidayRequests.filter(r => r.status === 'pending').length}
+                  </p>
+                  <p className="text-xs text-gray-600 font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>Pending</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4 text-center">
+                  <p className="text-2xl font-bold text-gray-900 mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
+                    {teamHolidayRequests.filter(r => r.status === 'canceled').length}
+                  </p>
+                  <p className="text-xs text-gray-600 font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>Canceled</p>
+                </div>
+              </div>
+              
+              {/* Holiday Requests List */}
+              <div className="space-y-3">
+                {teamHolidayRequests
+                  .filter(req => req.status !== 'canceled')
+                  .slice(0, 3)
+                  .map((request) => (
+                    <div 
+                      key={request.id} 
+                      className="flex items-center gap-4 pb-3 border-b border-gray-100 last:border-0 last:pb-0"
+                    >
+                      <div className={clsx("w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0", request.color)}>
+                        {request.initials}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-gray-900 text-sm" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                            {request.employeeName}
+                          </h3>
+                          <span className={clsx('text-base flex-shrink-0', {
+                            'text-green-600': request.status === 'approved',
+                            'text-amber-600': request.status === 'pending'
+                          })}>
+                            {request.status === 'approved' ? '✓' : '🕐'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                          {request.startDate} - {request.endDate}
+                        </p>
+                        <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>{request.reason}</p>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Next Holiday Banner - Compact */}
+        {/* Next Holiday Banner - Compact with Carousel */}
         <div className="mb-6">
           {upcomingHolidays.length > 0 && (
             <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
               <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
+                {/* Left Arrow */}
+                <button
+                  onClick={() => setCurrentHolidayIndex((prev) => (prev === 0 ? upcomingHolidays.length - 1 : prev - 1))}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+                  disabled={upcomingHolidays.length === 1}
+                >
+                  <ChevronLeft size={20} className={upcomingHolidays.length === 1 ? 'text-gray-300' : 'text-gray-600'} />
+                </button>
+
+                <div className="flex items-center gap-3 flex-1">
                   <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
-                    {upcomingHolidays[0].emoji}
+                    {upcomingHolidays[currentHolidayIndex].emoji}
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                      Next Holiday
+                      {currentHolidayIndex === 0 ? 'Next Holiday' : `Upcoming Holiday ${currentHolidayIndex + 1}`}
                     </p>
                     <h3 className="text-base font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                      {upcomingHolidays[0].name}
+                      {upcomingHolidays[currentHolidayIndex].name}
                     </h3>
                     <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                      {new Date(upcomingHolidays[0].date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                      {new Date(upcomingHolidays[currentHolidayIndex].date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
                     </p>
                   </div>
                 </div>
-                <div className="bg-blue-600 px-4 py-3 rounded-lg text-center">
+
+                <div className="bg-blue-600 px-4 py-3 rounded-lg text-center flex-shrink-0">
                   <div className="text-2xl font-bold text-white leading-none mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
-                    {upcomingHolidays[0].daysUntil}
+                    {upcomingHolidays[currentHolidayIndex].daysUntil}
                   </div>
                   <div className="text-xs text-white/90 font-medium uppercase tracking-wider" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                     Days
                   </div>
                 </div>
+
+                {/* Right Arrow */}
+                <button
+                  onClick={() => setCurrentHolidayIndex((prev) => (prev === upcomingHolidays.length - 1 ? 0 : prev + 1))}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+                  disabled={upcomingHolidays.length === 1}
+                >
+                  <ChevronRight size={20} className={upcomingHolidays.length === 1 ? 'text-gray-300' : 'text-gray-600'} />
+                </button>
               </div>
             </div>
           )}
-        </div>
-
-        {/* Holidays Section - Team */}
-        <div className="mb-6">
-          {/* Team Holiday Requests Summary */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <Users size={18} className="text-gray-700" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>Team Holidays</h2>
-                  <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>Holiday requests</p>
-                </div>
-              </div>
-              <Link 
-                to="/team-holidays" 
-                className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors"
-                style={{ fontFamily: 'DM Sans, sans-serif' }}
-              >
-                View All
-                <ArrowRight size={14} />
-              </Link>
-            </div>
-            
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-3 gap-3 mb-6">
-              <div className="bg-gray-50 rounded-xl p-4 text-center">
-                <p className="text-2xl font-bold text-gray-900 mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
-                  {teamHolidayRequests.filter(r => r.status === 'approved').length}
-                </p>
-                <p className="text-xs text-gray-600 font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>Approved</p>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-4 text-center">
-                <p className="text-2xl font-bold text-gray-900 mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
-                  {teamHolidayRequests.filter(r => r.status === 'pending').length}
-                </p>
-                <p className="text-xs text-gray-600 font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>Pending</p>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-4 text-center">
-                <p className="text-2xl font-bold text-gray-900 mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
-                  {teamHolidayRequests.filter(r => r.status === 'canceled').length}
-                </p>
-                <p className="text-xs text-gray-600 font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>Canceled</p>
-              </div>
-            </div>
-            
-            {/* Holiday Requests List */}
-            <div className="space-y-3">
-              {teamHolidayRequests
-                .filter(req => req.status !== 'canceled')
-                .slice(0, 3)
-                .map((request) => (
-                  <div 
-                    key={request.id} 
-                    className="flex items-center gap-4 pb-3 border-b border-gray-100 last:border-0 last:pb-0"
-                  >
-                    <div className={clsx("w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0", request.color)}>
-                      {request.initials}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-gray-900 text-sm" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                          {request.employeeName}
-                        </h3>
-                        <span className={clsx('text-base flex-shrink-0', {
-                          'text-green-600': request.status === 'approved',
-                          'text-amber-600': request.status === 'pending'
-                        })}>
-                          {request.status === 'approved' ? '✓' : '🕐'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-600 mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                        {request.startDate} - {request.endDate}
-                      </p>
-                      <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>{request.reason}</p>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
         </div>
 
         {/* Activity Sections */}
