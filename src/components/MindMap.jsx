@@ -1762,7 +1762,7 @@ export default function MindMap({ mapId, onBack }) {
 
         {/* Hamburger Menu and Search Bar - Top Left - Only show in mindmap view */}
         {viewMode === 'mindmap' && (
-        <div className="absolute top-2 md:top-28 left-2 md:left-4 z-20 flex items-center gap-2">
+        <div className="absolute top-2 md:top-[74px] left-2 md:left-4 z-20 flex items-center gap-2">
           {/* Hamburger Menu Button - Mobile/Tablet Only */}
           <button
             onClick={() => setShowMobileToolbar(!showMobileToolbar)}

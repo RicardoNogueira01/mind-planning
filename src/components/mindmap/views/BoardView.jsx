@@ -66,7 +66,7 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
   };
 
   const handleDragStart = (e, task) => {
-    e.dataTransfer.setData('taskId', task.id);
+    e.dataTransfer.setData('text/plain', task.id); // Use text/plain for better compatibility
     e.dataTransfer.effectAllowed = 'move';
     e.currentTarget.style.opacity = '0.5';
   };
@@ -78,23 +78,35 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
 
   const handleDragOver = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDragEnter = (columnId) => {
+  const handleDragEnter = (e, columnId) => {
+    e.preventDefault();
+    e.stopPropagation();
     setDraggedOverColumn(columnId);
   };
 
   const handleDragLeave = (e) => {
-    if (e.currentTarget === e.target) {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only clear if we're leaving the column entirely
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
       setDraggedOverColumn(null);
     }
   };
 
   const handleDrop = (e, columnId) => {
     e.preventDefault();
+    e.stopPropagation();
     setDraggedOverColumn(null);
-    const taskId = e.dataTransfer.getData('taskId');
+    
+    const taskId = e.dataTransfer.getData('text/plain');
     
     if (onNodeUpdate && taskId) {
       onNodeUpdate(taskId, { status: columnId });
@@ -111,7 +123,7 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
     
     if (!newTask.text.trim()) return;
 
-    // Create new task with generated ID
+    // Create new task with generated ID and required properties
     const taskId = `task-${Date.now()}`;
     const task = {
       id: taskId,
@@ -120,6 +132,8 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
       status: selectedColumn,
       dueDate: newTask.dueDate || null,
       progress: 0,
+      x: 100, // Default position
+      y: 100, // Default position
       assignee: newTask.assignee ? { 
         name: newTask.assignee, 
         color: '#3B82F6' 
@@ -172,7 +186,7 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
                     : 'border-gray-200'
                 }`}
                 onDragOver={handleDragOver}
-                onDragEnter={() => handleDragEnter(column.id)}
+                onDragEnter={(e) => handleDragEnter(e, column.id)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, column.id)}
               >

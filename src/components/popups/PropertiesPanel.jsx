@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import NodePopup from '../mindmap/NodePopup';
 
-export default function PropertiesPanel({ show, anchorRef, nodeId, priority, status, description, onChange, onClose }) {
+export default function PropertiesPanel({ show, anchorRef, nodeId, priority, status, description, onPriorityChange, onStatusChange, onDescriptionChange, onClose }) {
   if (!show) return null;
 
   const rect = anchorRef?.current?.getBoundingClientRect() || 
@@ -25,13 +25,13 @@ export default function PropertiesPanel({ show, anchorRef, nodeId, priority, sta
           <label htmlFor={`priority-${nodeId}`} className="text-sm md:text-base text-gray-600 block mb-1">Priority</label>
           <select
             id={`priority-${nodeId}`}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm md:text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation"
-            value={priority || 'normal'}
-            onChange={(e) => onChange({ priority: e.target.value })}
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm md:text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation cursor-pointer"
+            value={priority || 'medium'}
+            onChange={(e) => onPriorityChange && onPriorityChange(e.target.value)}
             onClick={(e) => e.stopPropagation()}
           >
             <option value="low">Low</option>
-            <option value="normal">Normal</option>
+            <option value="medium">Medium</option>
             <option value="high">High</option>
           </select>
         </div>
@@ -39,14 +39,15 @@ export default function PropertiesPanel({ show, anchorRef, nodeId, priority, sta
           <label htmlFor={`status-${nodeId}`} className="text-sm md:text-base text-gray-600 block mb-1">Status</label>
           <select
             id={`status-${nodeId}`}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm md:text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation"
-            value={status || 'todo'}
-            onChange={(e) => onChange({ status: e.target.value })}
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm md:text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation cursor-pointer"
+            value={status || 'not-started'}
+            onChange={(e) => onStatusChange && onStatusChange(e.target.value)}
             onClick={(e) => e.stopPropagation()}
           >
-            <option value="todo">To do</option>
-            <option value="doing">Doing</option>
-            <option value="done">Done</option>
+            <option value="not-started">Not Started</option>
+            <option value="in-progress">In Progress</option>
+            <option value="review">Review</option>
+            <option value="completed">Completed</option>
           </select>
         </div>
         <div>
@@ -57,7 +58,7 @@ export default function PropertiesPanel({ show, anchorRef, nodeId, priority, sta
             rows={3}
             placeholder="Add a description..."
             value={description || ''}
-            onChange={(e) => onChange({ description: e.target.value })}
+            onChange={(e) => onDescriptionChange && onDescriptionChange(e.target.value)}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             onFocus={(e) => e.stopPropagation()}
@@ -77,6 +78,8 @@ PropertiesPanel.propTypes = {
   priority: PropTypes.string,
   status: PropTypes.string,
   description: PropTypes.string,
-  onChange: PropTypes.func.isRequired,
+  onPriorityChange: PropTypes.func,
+  onStatusChange: PropTypes.func,
+  onDescriptionChange: PropTypes.func,
   onClose: PropTypes.func.isRequired
 };

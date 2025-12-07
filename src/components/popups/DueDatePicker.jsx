@@ -3,13 +3,13 @@ import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import NodePopup from '../mindmap/NodePopup';
 
-export default function DueDatePicker({ show, anchorRef, dueDate, onChange, onClear, onClose }) {
+export default function DueDatePicker({ show, anchorRef, dueDate, onDueDateChange, onClearDate, onClose }) {
   if (!show) return null;
 
   const rect = anchorRef?.current?.getBoundingClientRect() || 
     { left: window.innerWidth / 2, top: 80, width: 0, height: 0, bottom: 100 };
   
-  const popupWidth = 220;
+  const popupWidth = 320;
   const left = Math.max(8, Math.min(rect.left + (rect.width / 2) - (popupWidth / 2), window.innerWidth - popupWidth - 8));
   const top = Math.max(8, rect.bottom + 20);
 
@@ -22,19 +22,19 @@ export default function DueDatePicker({ show, anchorRef, dueDate, onChange, onCl
     >
       <input
         type="date"
-        className="w-full border border-gray-300 rounded px-3 py-2 text-sm md:text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation"
+        className="w-full border border-gray-300 rounded px-3 py-2 text-sm md:text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation cursor-pointer"
         value={dueDate || ''}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => onDueDateChange && onDueDateChange(e.target.value)}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onFocus={(e) => e.stopPropagation()}
       />
       {dueDate && (
         <button
-          className="mt-2 text-xs text-red-600 hover:text-red-700 w-full py-1 hover:bg-red-50 rounded"
+          className="mt-2 text-xs text-red-600 hover:text-red-700 w-full py-1 hover:bg-red-50 rounded cursor-pointer"
           onClick={(e) => { 
             e.stopPropagation(); 
-            onClear();
+            onClearDate && onClearDate();
           }}
         >
           Clear date
@@ -49,7 +49,7 @@ DueDatePicker.propTypes = {
   show: PropTypes.bool.isRequired,
   anchorRef: PropTypes.object,
   dueDate: PropTypes.string,
-  onChange: PropTypes.func.isRequired,
-  onClear: PropTypes.func.isRequired,
+  onDueDateChange: PropTypes.func,
+  onClearDate: PropTypes.func,
   onClose: PropTypes.func.isRequired
 };
