@@ -248,26 +248,24 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {/* Team Overview Card */}
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>TEAM</p>
-                  <h2 className="text-lg font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>{collaborators.length} Members</h2>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => navigate('/team-members')}
-                    className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 transition-colors cursor-pointer"
-                    style={{ fontFamily: 'DM Sans, sans-serif' }}
-                  >
-                    View All
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                  <div className="p-2.5 bg-purple-50 rounded-xl">
-                    <Users size={18} className="text-purple-600" strokeWidth={2} />
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-gray-50 rounded-lg">
+                    <Users size={18} className="text-gray-700" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>Team</h2>
+                    <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>{collaborators.length} Members</p>
                   </div>
                 </div>
+                <button
+                  onClick={() => navigate('/team-members')}
+                  className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors cursor-pointer"
+                  style={{ fontFamily: 'DM Sans, sans-serif' }}
+                >
+                  View All
+                  <ArrowRight size={14} />
+                </button>
               </div>
               
               <div className="space-y-5">
