@@ -59,6 +59,8 @@ export default function PropertiesPanel({ show, anchorRef, nodeId, priority, sta
             value={startDate || ''}
             onChange={(e) => onStartDateChange && onStartDateChange(e.target.value)}
             onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onFocus={(e) => e.stopPropagation()}
           />
         </div>
         <div>

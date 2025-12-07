@@ -599,7 +599,7 @@ const TopBar = ({ showSearch = true }) => {
                     />
                     <button
                       type="submit"
-                      className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                      className="p-2 bg-black hover:bg-gray-800 text-white rounded-lg transition-colors"
                     >
                       <Send size={18} />
                     </button>
