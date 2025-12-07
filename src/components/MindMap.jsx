@@ -1671,11 +1671,17 @@ export default function MindMap({ mapId, onBack }) {
 
   // Handle node updates from BoardView (status changes from drag-and-drop)
   const handleNodeUpdate = (nodeId, updates) => {
-    setNodes(prevNodes => 
-      prevNodes.map(node => 
-        node.id === nodeId ? { ...node, ...updates } : node
-      )
-    );
+    // Handle new task creation
+    if (nodeId === '__new__') {
+      setNodes(prevNodes => [...prevNodes, updates]);
+    } else {
+      // Handle existing task update
+      setNodes(prevNodes => 
+        prevNodes.map(node => 
+          node.id === nodeId ? { ...node, ...updates } : node
+        )
+      );
+    }
   };
 
   return (

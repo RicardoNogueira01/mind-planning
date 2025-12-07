@@ -1,12 +1,22 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Columns, Plus, Clock, AlertCircle } from 'lucide-react';
+import { Columns, Plus, Clock, AlertCircle, X } from 'lucide-react';
 
 /**
  * Kanban Board View for Mind Map Tasks
  * Displays tasks organized by status columns
  */
 const BoardView = ({ nodes, onNodeUpdate }) => {
+  const [showAddTaskModal, setShowAddTaskModal] = useState(false);
+  const [selectedColumn, setSelectedColumn] = useState(null);
+  const [draggedOverColumn, setDraggedOverColumn] = useState(null);
+  const [newTask, setNewTask] = useState({
+    text: '',
+    priority: 'medium',
+    dueDate: '',
+    assignee: '',
+    tags: ''
+  });
   const columns = [
     { id: 'not-started', title: 'Not Started', color: 'bg-gray-100', textColor: 'text-gray-700' },
     { id: 'in-progress', title: 'In Progress', color: 'bg-blue-100', textColor: 'text-blue-700' },
@@ -58,6 +68,12 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
   const handleDragStart = (e, task) => {
     e.dataTransfer.setData('taskId', task.id);
     e.dataTransfer.effectAllowed = 'move';
+    e.currentTarget.style.opacity = '0.5';
+  };
+
+  const handleDragEnd = (e) => {
+    e.currentTarget.style.opacity = '1';
+    setDraggedOverColumn(null);
   };
 
   const handleDragOver = (e) => {
@@ -65,13 +81,67 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
     e.dataTransfer.dropEffect = 'move';
   };
 
+  const handleDragEnter = (columnId) => {
+    setDraggedOverColumn(columnId);
+  };
+
+  const handleDragLeave = (e) => {
+    if (e.currentTarget === e.target) {
+      setDraggedOverColumn(null);
+    }
+  };
+
   const handleDrop = (e, columnId) => {
     e.preventDefault();
+    setDraggedOverColumn(null);
     const taskId = e.dataTransfer.getData('taskId');
     
-    if (onNodeUpdate) {
+    if (onNodeUpdate && taskId) {
       onNodeUpdate(taskId, { status: columnId });
     }
+  };
+
+  const handleAddTask = (columnId) => {
+    setSelectedColumn(columnId);
+    setShowAddTaskModal(true);
+  };
+
+  const handleCreateTask = (e) => {
+    e.preventDefault();
+    
+    if (!newTask.text.trim()) return;
+
+    // Create new task with generated ID
+    const taskId = `task-${Date.now()}`;
+    const task = {
+      id: taskId,
+      text: newTask.text,
+      priority: newTask.priority,
+      status: selectedColumn,
+      dueDate: newTask.dueDate || null,
+      progress: 0,
+      assignee: newTask.assignee ? { 
+        name: newTask.assignee, 
+        color: '#3B82F6' 
+      } : null,
+      tags: newTask.tags ? newTask.tags.split(',').map(t => t.trim()).filter(t => t) : []
+    };
+
+    // Add task via onNodeUpdate (this should add it to the nodes array)
+    if (onNodeUpdate) {
+      onNodeUpdate('__new__', task);
+    }
+
+    // Reset form
+    setNewTask({
+      text: '',
+      priority: 'medium',
+      dueDate: '',
+      assignee: '',
+      tags: ''
+    });
+    setShowAddTaskModal(false);
+    setSelectedColumn(null);
   };
 
   return (
@@ -96,8 +166,14 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
             return (
               <div
                 key={column.id}
-                className="flex flex-col w-80 bg-white rounded-lg shadow-sm border border-gray-200"
+                className={`flex flex-col w-80 bg-white rounded-lg shadow-sm border-2 transition-all ${
+                  draggedOverColumn === column.id 
+                    ? 'border-blue-500 bg-blue-50/30' 
+                    : 'border-gray-200'
+                }`}
                 onDragOver={handleDragOver}
+                onDragEnter={() => handleDragEnter(column.id)}
+                onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, column.id)}
               >
                 {/* Column Header */}
@@ -125,7 +201,8 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
                           key={task.id}
                           draggable
                           onDragStart={(e) => handleDragStart(e, task)}
-                          className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow cursor-move"
+                          onDragEnd={handleDragEnd}
+                          className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-all cursor-move active:cursor-grabbing"
                         >
                           {/* Task Title */}
                           <h4 className="font-medium text-gray-900 mb-2 line-clamp-2">
@@ -206,7 +283,10 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
 
                 {/* Add Task Button */}
                 <div className="p-3 border-t border-gray-200">
-                  <button className="w-full py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center gap-2">
+                  <button 
+                    onClick={() => handleAddTask(column.id)}
+                    className="w-full py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                  >
                     <Plus size={16} />
                     Add task
                   </button>
@@ -216,6 +296,129 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
           })}
         </div>
       </div>
+
+      {/* Add Task Modal */}
+      {showAddTaskModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
+            {/* Modal Header */}
+            <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-xl">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Add New Task</h2>
+                <p className="text-sm text-gray-500">
+                  Create task in "{columns.find(c => c.id === selectedColumn)?.title}"
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowAddTaskModal(false);
+                  setSelectedColumn(null);
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleCreateTask} className="p-6 space-y-4">
+              {/* Task Title */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Task Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newTask.text}
+                  onChange={(e) => setNewTask({...newTask, text: e.target.value})}
+                  placeholder="e.g., Complete design mockups"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  autoFocus
+                />
+              </div>
+
+              {/* Priority */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Priority
+                </label>
+                <select
+                  value={newTask.priority}
+                  onChange={(e) => setNewTask({...newTask, priority: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 cursor-pointer"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+
+              {/* Due Date */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Due Date
+                </label>
+                <input
+                  type="date"
+                  value={newTask.dueDate}
+                  onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 cursor-pointer"
+                />
+              </div>
+
+              {/* Assignee */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Assignee
+                </label>
+                <input
+                  type="text"
+                  value={newTask.assignee}
+                  onChange={(e) => setNewTask({...newTask, assignee: e.target.value})}
+                  placeholder="e.g., John Doe"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                />
+              </div>
+
+              {/* Tags */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tags
+                </label>
+                <input
+                  type="text"
+                  value={newTask.tags}
+                  onChange={(e) => setNewTask({...newTask, tags: e.target.value})}
+                  placeholder="e.g., UI, Design, Frontend (comma-separated)"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                />
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddTaskModal(false);
+                    setSelectedColumn(null);
+                  }}
+                  className="px-5 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors font-medium flex items-center gap-2 cursor-pointer"
+                >
+                  <Plus size={18} />
+                  Create Task
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

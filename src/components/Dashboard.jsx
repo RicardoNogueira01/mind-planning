@@ -13,7 +13,9 @@ import {
   BarChart2,
   Circle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Map,
+  Star
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -86,6 +88,53 @@ const Dashboard = () => {
     { id: 3, name: 'New Year\'s Day', date: '2026-01-01', daysUntil: 32, emoji: '🎆', color: 'bg-indigo-500', type: 'country' },
     { id: 4, name: 'Valentine\'s Day', date: '2026-02-14', daysUntil: 76, emoji: '💝', color: 'bg-pink-500', type: 'country' },
     { id: 5, name: 'Easter Sunday', date: '2026-04-20', daysUntil: 141, emoji: '🐰', color: 'bg-purple-500', type: 'country' }
+  ]);
+  
+  const [recentMindMaps] = useState([
+    { 
+      id: 1, 
+      title: 'Q1 Marketing Strategy', 
+      lastModified: '2 hours ago', 
+      nodeCount: 24, 
+      color: 'bg-blue-500',
+      isFavorite: true,
+      createdBy: 'Alex Kim',
+      initials: 'AK',
+      avatarColor: 'bg-green-500'
+    },
+    { 
+      id: 2, 
+      title: 'Product Development Roadmap', 
+      lastModified: '5 hours ago', 
+      nodeCount: 18, 
+      color: 'bg-purple-500',
+      isFavorite: false,
+      createdBy: 'John Doe',
+      initials: 'JD',
+      avatarColor: 'bg-blue-500'
+    },
+    { 
+      id: 3, 
+      title: 'Team Brainstorming Session', 
+      lastModified: 'Yesterday', 
+      nodeCount: 32, 
+      color: 'bg-green-500',
+      isFavorite: true,
+      createdBy: 'Maria Rodriguez',
+      initials: 'MR',
+      avatarColor: 'bg-yellow-500'
+    },
+    { 
+      id: 4, 
+      title: 'Project Alpha Planning', 
+      lastModified: '2 days ago', 
+      nodeCount: 15, 
+      color: 'bg-orange-500',
+      isFavorite: false,
+      createdBy: 'Taylor Smith',
+      initials: 'TS',
+      avatarColor: 'bg-purple-500'
+    }
   ]);
   
   const [teamHolidayRequests] = useState([
@@ -241,6 +290,72 @@ const Dashboard = () => {
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Recent Mind Maps Card */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <Map size={18} className="text-gray-700" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>Recent Mind Maps</h2>
+                  <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>Recently modified maps</p>
+                </div>
+              </div>
+              <Link
+                to="/mindmaps"
+                className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors cursor-pointer"
+                style={{ fontFamily: 'DM Sans, sans-serif' }}
+              >
+                View All
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+            
+            <div className="space-y-3">
+              {recentMindMaps.map((mindMap) => (
+                <div
+                  key={mindMap.id}
+                  onClick={() => navigate(`/mindmap/${mindMap.id}`)}
+                  className="group flex items-center gap-4 p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all cursor-pointer border border-transparent hover:border-gray-200"
+                >
+                  {/* Mind Map Icon/Color */}
+                  <div className={`w-12 h-12 ${mindMap.color} rounded-xl flex items-center justify-center text-white flex-shrink-0 shadow-sm`}>
+                    <Map size={24} />
+                  </div>
+                  
+                  {/* Mind Map Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-gray-900 truncate text-sm" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                        {mindMap.title}
+                      </h3>
+                      {mindMap.isFavorite && (
+                        <Star size={14} className="text-yellow-500 fill-yellow-500 flex-shrink-0" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <Circle size={10} className="fill-gray-400 text-gray-400" />
+                        {mindMap.nodeCount} nodes
+                      </span>
+                      <span>•</span>
+                      <span>{mindMap.lastModified}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Creator Avatar */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className={`w-8 h-8 ${mindMap.avatarColor} rounded-full flex items-center justify-center text-white text-xs font-semibold`}>
+                      {mindMap.initials}
+                    </div>
+                    <ArrowRight size={16} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
