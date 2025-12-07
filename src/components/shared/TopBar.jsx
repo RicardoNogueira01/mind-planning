@@ -1,15 +1,92 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
-import { Search, Bell, Languages, CheckCircle, AlertTriangle, Users, Calendar, FileText, X, Check } from 'lucide-react';
+import { Search, Bell, Languages, CheckCircle, AlertTriangle, Users, Calendar, FileText, X, Check, MessageCircle, Send, Maximize2, Minimize2 } from 'lucide-react';
 import PropTypes from 'prop-types';
 
 const TopBar = ({ showSearch = true }) => {
   const { language, changeLanguage, t } = useLanguage();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showLanguages, setShowLanguages] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [isChatFullscreen, setIsChatFullscreen] = useState(false);
+  const [selectedContact, setSelectedContact] = useState(null);
+  const [messageInput, setMessageInput] = useState('');
   const notificationRef = useRef(null);
   const languageRef = useRef(null);
+  
+  // Dummy chat contacts
+  const [contacts] = useState([
+    {
+      id: 1,
+      name: 'Alex Kim',
+      initials: 'AK',
+      color: 'bg-green-500',
+      lastMessage: 'Thanks for the update!',
+      lastMessageTime: '2 min ago',
+      unreadCount: 3,
+      online: true
+    },
+    {
+      id: 2,
+      name: 'Maria Rodriguez',
+      initials: 'MR',
+      color: 'bg-yellow-500',
+      lastMessage: 'Can we discuss the project?',
+      lastMessageTime: '15 min ago',
+      unreadCount: 1,
+      online: true
+    },
+    {
+      id: 3,
+      name: 'John Doe',
+      initials: 'JD',
+      color: 'bg-blue-500',
+      lastMessage: 'See you tomorrow',
+      lastMessageTime: '1 hour ago',
+      unreadCount: 0,
+      online: false
+    },
+    {
+      id: 4,
+      name: 'Taylor Smith',
+      initials: 'TS',
+      color: 'bg-purple-500',
+      lastMessage: 'Perfect!',
+      lastMessageTime: '3 hours ago',
+      unreadCount: 0,
+      online: true
+    }
+  ]);
+
+  // Dummy messages for selected contact
+  const [messages] = useState({
+    1: [
+      { id: 1, sender: 'them', text: 'Hey! How is the project coming along?', time: '10:30 AM' },
+      { id: 2, sender: 'me', text: 'Going well! Just finished the design phase.', time: '10:32 AM' },
+      { id: 3, sender: 'them', text: 'That\'s great! Can you share the mockups?', time: '10:33 AM' },
+      { id: 4, sender: 'me', text: 'Sure, I\'ll send them over in a few minutes.', time: '10:35 AM' },
+      { id: 5, sender: 'them', text: 'Thanks for the update!', time: '10:36 AM' }
+    ],
+    2: [
+      { id: 1, sender: 'them', text: 'Hi! Do you have time for a quick call?', time: '9:15 AM' },
+      { id: 2, sender: 'me', text: 'Sure, give me 10 minutes.', time: '9:16 AM' },
+      { id: 3, sender: 'them', text: 'Can we discuss the project?', time: '9:20 AM' }
+    ],
+    3: [
+      { id: 1, sender: 'me', text: 'Are we still meeting tomorrow?', time: 'Yesterday' },
+      { id: 2, sender: 'them', text: 'Yes, at 2 PM', time: 'Yesterday' },
+      { id: 3, sender: 'me', text: 'Perfect!', time: 'Yesterday' },
+      { id: 4, sender: 'them', text: 'See you tomorrow', time: 'Yesterday' }
+    ],
+    4: [
+      { id: 1, sender: 'them', text: 'The report looks great!', time: '8:00 AM' },
+      { id: 2, sender: 'me', text: 'Thanks! Let me know if you need any changes.', time: '8:05 AM' },
+      { id: 3, sender: 'them', text: 'Perfect!', time: '8:06 AM' }
+    ]
+  });
+
+  const totalUnreadMessages = contacts.reduce((sum, contact) => sum + contact.unreadCount, 0);
   
   // Dummy notifications data
   const [notifications] = useState([
@@ -236,6 +313,21 @@ const TopBar = ({ showSearch = true }) => {
               )}
             </div>
 
+            {/* Chat */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowChat(!showChat)}
+                className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <MessageCircle size={20} className="text-gray-600" />
+                {totalUnreadMessages > 0 && (
+                  <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full ring-2 ring-white flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">{totalUnreadMessages}</span>
+                  </span>
+                )}
+              </button>
+            </div>
+
             {/* Notifications */}
             <div className="relative" ref={notificationRef}>
               <button 
@@ -349,6 +441,183 @@ const TopBar = ({ showSearch = true }) => {
           </div>
         </div>
       </div>
+
+      {/* Chat Panel */}
+      {showChat && (
+        <div className={`fixed top-0 bg-white shadow-2xl border-l border-gray-200 z-50 transition-all duration-300 ${
+          isChatFullscreen ? 'left-0 right-0' : 'right-0 w-full sm:w-[550px]'
+        }`}
+        style={{ height: 'calc(100vh)' }}
+        >
+          {/* Chat Header */}
+          <div className="bg-black px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <MessageCircle size={20} className="text-white" />
+              <div>
+                <h3 className="text-white font-bold text-sm">Messages</h3>
+                <p className="text-gray-400 text-xs">{totalUnreadMessages} unread</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsChatFullscreen(!isChatFullscreen)}
+                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                {isChatFullscreen ? (
+                  <Minimize2 size={18} className="text-white" />
+                ) : (
+                  <Maximize2 size={18} className="text-white" />
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setShowChat(false);
+                  setSelectedContact(null);
+                  setIsChatFullscreen(false);
+                }}
+                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <X size={18} className="text-white" />
+              </button>
+            </div>
+          </div>
+
+          {/* Chat Content */}
+          <div className="flex" style={{ height: 'calc(100vh - 60px)' }}>
+            {/* Contacts List */}
+            <div className={`${
+              selectedContact && !isChatFullscreen ? 'hidden sm:block' : ''
+            } w-full sm:w-60 border-r border-gray-200 bg-gray-50 overflow-y-auto`}>
+              <div className="p-3">
+                <input
+                  type="text"
+                  placeholder="Search messages..."
+                  className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="divide-y divide-gray-200">
+                {contacts.map(contact => (
+                  <div
+                    key={contact.id}
+                    onClick={() => setSelectedContact(contact)}
+                    className={`px-4 py-3 hover:bg-white cursor-pointer transition-colors ${
+                      selectedContact?.id === contact.id ? 'bg-white border-l-4 border-blue-600' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <div className={`w-12 h-12 rounded-full ${contact.color} flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}>
+                          {contact.initials}
+                        </div>
+                        {contact.online && (
+                          <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full ring-2 ring-white"></span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{contact.name}</p>
+                          <span className="text-xs text-gray-500 flex-shrink-0 ml-2">{contact.lastMessageTime}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-gray-600 truncate">{contact.lastMessage}</p>
+                          {contact.unreadCount > 0 && (
+                            <span className="ml-2 px-2 py-0.5 bg-blue-600 text-white text-xs font-bold rounded-full flex-shrink-0">
+                              {contact.unreadCount}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Chat Conversation */}
+            {selectedContact ? (
+              <div className="flex-1 flex flex-col bg-white">
+                {/* Chat Header */}
+                <div className="px-4 py-3 border-b border-gray-200 flex items-center gap-3">
+                  {!isChatFullscreen && (
+                    <button
+                      onClick={() => setSelectedContact(null)}
+                      className="sm:hidden p-1 hover:bg-gray-100 rounded-lg"
+                    >
+                      <X size={20} className="text-gray-600" />
+                    </button>
+                  )}
+                  <div className={`w-10 h-10 rounded-full ${selectedContact.color} flex items-center justify-center text-white font-bold text-sm`}>
+                    {selectedContact.initials}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-900">{selectedContact.name}</p>
+                    <p className="text-xs text-gray-500">{selectedContact.online ? 'Online' : 'Offline'}</p>
+                  </div>
+                </div>
+
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {messages[selectedContact.id]?.map(message => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.sender === 'me' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div className={`max-w-[70%] ${
+                        message.sender === 'me'
+                          ? 'bg-blue-600 text-white rounded-2xl rounded-br-sm'
+                          : 'bg-gray-100 text-gray-900 rounded-2xl rounded-bl-sm'
+                      } px-4 py-2`}>
+                        <p className="text-sm">{message.text}</p>
+                        <p className={`text-xs mt-1 ${
+                          message.sender === 'me' ? 'text-blue-100' : 'text-gray-500'
+                        }`}>
+                          {message.time}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Message Input */}
+                <div className="p-4 border-t border-gray-200">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (messageInput.trim()) {
+                        console.log('Sending message:', messageInput);
+                        setMessageInput('');
+                      }
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <input
+                      type="text"
+                      value={messageInput}
+                      onChange={(e) => setMessageInput(e.target.value)}
+                      placeholder="Type a message..."
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                    <button
+                      type="submit"
+                      className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                    >
+                      <Send size={18} />
+                    </button>
+                  </form>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 hidden sm:flex items-center justify-center bg-gray-50">
+                <div className="text-center">
+                  <MessageCircle size={48} className="text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm font-medium">Select a conversation</p>
+                  <p className="text-gray-400 text-xs mt-1">Choose a contact to start messaging</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

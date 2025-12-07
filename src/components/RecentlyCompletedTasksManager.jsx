@@ -18,7 +18,7 @@ import {
   ExternalLink,
   MoreVertical,
   Download,
-  RefreshCw,
+  Plus,
   Edit2,
   Trash2,
   X
@@ -29,9 +29,63 @@ const RecentlyCompletedTasksManager = () => {
   
   // Modal and UI state
   const [showEditTaskModal, setShowEditTaskModal] = useState(false);
+  const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [feedbackMessage, setFeedbackMessage] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
+
+  // Export to CSV function
+  const exportToCSV = () => {
+    // Define CSV headers
+    const headers = ['Title', 'Description', 'Completed By', 'Project', 'Priority', 'Category', 'Tags', 'Completed At', 'Due Date', 'Time Spent', 'Estimated Time', 'Status', 'Complexity', 'Quality'];
+    
+    // Convert tasks to CSV rows
+    const csvRows = completedTasks.map(task => [
+      `"${task.title.replace(/"/g, '""')}"`,
+      `"${task.description.replace(/"/g, '""')}"`,
+      `"${task.completedBy.name}"`,
+      `"${task.project}"`,
+      task.priority,
+      task.category,
+      `"${task.tags.join(', ')}"`,
+      new Date(task.completedAt).toLocaleString(),
+      new Date(task.dueDate).toLocaleString(),
+      task.timeSpent,
+      task.estimatedTime,
+      task.status,
+      task.complexity,
+      task.quality
+    ]);
+    
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...csvRows.map(row => row.join(','))
+    ].join('\n');
+    
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `completed-tasks-${new Date().toISOString().split('T')[0]}.xlsx`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Form state for new task
+  const [newTask, setNewTask] = useState({
+    title: '',
+    description: '',
+    project: '',
+    priority: 'medium',
+    category: '',
+    dueDate: '',
+    estimatedTime: '',
+    tags: []
+  });
 
   // Sample data
   const [completedTasks, setCompletedTasks] = useState([
@@ -582,13 +636,18 @@ const RecentlyCompletedTasksManager = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
-            <button className="flex-1 md:flex-initial px-3 md:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm touch-manipulation">
+            <button 
+              onClick={exportToCSV}
+              className="flex-1 md:flex-initial px-3 md:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm touch-manipulation cursor-pointer"
+            >
               <Download size={16} />
               <span className="hidden md:inline">Export</span>
             </button>
-            <button className="flex-1 md:flex-initial px-3 md:px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center justify-center gap-2 text-sm touch-manipulation">
-              <RefreshCw size={16} />
-              <span className="hidden md:inline">Refresh</span>
+            <button className="flex-1 md:flex-initial px-3 md:px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center justify-center gap-2 text-sm touch-manipulation cursor-pointer"
+              onClick={() => setShowAddTaskModal(true)}
+            >
+              <Plus size={16} />
+              <span className="hidden md:inline">Add Task</span>
             </button>
           </div>
         </div>
@@ -800,6 +859,194 @@ const RecentlyCompletedTasksManager = () => {
         </div>        {/* Tasks List */}
         {viewMode === 'grid' ? <GridView /> : <ListView />}
       </main>
+
+      {/* Add Task Modal */}
+      {showAddTaskModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Add New Task</h2>
+                <p className="text-sm text-gray-500">Create a new task to track</p>
+              </div>
+              <button
+                onClick={() => setShowAddTaskModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              // Handle task creation here
+              console.log('New task:', newTask);
+              setShowAddTaskModal(false);
+              setNewTask({
+                title: '',
+                description: '',
+                project: '',
+                priority: 'medium',
+                category: '',
+                dueDate: '',
+                estimatedTime: '',
+                tags: []
+              });
+            }} className="p-6">
+              {/* Task Title */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Task Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newTask.title}
+                  onChange={(e) => setNewTask({...newTask, title: e.target.value})}
+                  placeholder="e.g., Design new landing page"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                />
+              </div>
+
+              {/* Description */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={newTask.description}
+                  onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+                  placeholder="Describe the task details..."
+                  rows="3"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 resize-none"
+                />
+              </div>
+
+              {/* Project and Category in Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Project <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    required
+                    value={newTask.project}
+                    onChange={(e) => setNewTask({...newTask, project: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  >
+                    <option value="">Select a project</option>
+                    <option value="Project Alpha">Project Alpha</option>
+                    <option value="Project Beta">Project Beta</option>
+                    <option value="Project Gamma">Project Gamma</option>
+                    <option value="Project Delta">Project Delta</option>
+                    <option value="Project Epsilon">Project Epsilon</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Category <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    required
+                    value={newTask.category}
+                    onChange={(e) => setNewTask({...newTask, category: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  >
+                    <option value="">Select a category</option>
+                    <option value="Design">Design</option>
+                    <option value="Development">Development</option>
+                    <option value="Management">Management</option>
+                    <option value="Documentation">Documentation</option>
+                    <option value="Testing">Testing</option>
+                    <option value="Marketing">Marketing</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Priority and Due Date in Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Priority <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    required
+                    value={newTask.priority}
+                    onChange={(e) => setNewTask({...newTask, priority: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  >
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Due Date <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={newTask.dueDate}
+                    onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  />
+                </div>
+              </div>
+
+              {/* Estimated Time */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Estimated Time
+                </label>
+                <input
+                  type="text"
+                  value={newTask.estimatedTime}
+                  onChange={(e) => setNewTask({...newTask, estimatedTime: e.target.value})}
+                  placeholder="e.g., 4 hours"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                />
+              </div>
+
+              {/* Tags */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tags (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={newTask.tags.join(', ')}
+                  onChange={(e) => setNewTask({...newTask, tags: e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag)})}
+                  placeholder="e.g., UI/UX, Design, Responsive"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                />
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setShowAddTaskModal(false)}
+                  className="px-5 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors font-medium flex items-center gap-2 cursor-pointer"
+                >
+                  <Plus size={18} />
+                  Create Task
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );

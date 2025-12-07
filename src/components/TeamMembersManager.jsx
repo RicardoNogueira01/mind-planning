@@ -540,13 +540,13 @@ const TeamMembersManager = () => {
             <div className="flex gap-2 pt-3 border-t border-gray-100">
               <Link 
                 to={`/profile/${member.id}`}
-                className="flex-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-xs font-medium flex items-center justify-center gap-1.5"
+                className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
               >
-                <User size={12} />
+                <User size={16} />
                 Profile
               </Link>
-              <button className="flex-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-xs font-medium flex items-center justify-center gap-1.5">
-                <Mail size={12} />
+              <button className="flex-1 px-4 py-2.5 bg-black hover:bg-gray-900 text-white rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2">
+                <Mail size={16} />
                 Message
               </button>
             </div>
@@ -669,10 +669,10 @@ const TeamMembersManager = () => {
           </div>
           <button 
             onClick={() => setShowAddMemberModal(true)}
-            className="px-5 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2 font-semibold shadow-sm"
+            className="px-3 md:px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2 text-sm touch-manipulation cursor-pointer"
             style={{ fontFamily: 'DM Sans, sans-serif' }}
           >
-            <Plus size={18} strokeWidth={2} />
+            <Plus size={16} />
             {t('teamMembers.addMember')}
           </button>
         </div>
@@ -856,7 +856,7 @@ const TeamMembersManager = () => {
               </div>
               <button
                 onClick={() => setShowAddMemberModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
               >
                 <X size={20} className="text-gray-500" />
               </button>
@@ -996,13 +996,13 @@ const TeamMembersManager = () => {
                 <button
                   type="button"
                   onClick={() => setShowAddMemberModal(false)}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2"
+                  className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2 cursor-pointer"
                 >
                   <Plus size={16} />
                   Add Member

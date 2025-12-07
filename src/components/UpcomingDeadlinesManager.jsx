@@ -22,7 +22,8 @@ import {
   XCircle,
   Edit2,
   Trash2,
-  X
+  X,
+  Download
 } from 'lucide-react';
 
 const UpcomingDeadlinesManager = () => {
@@ -33,6 +34,40 @@ const UpcomingDeadlinesManager = () => {
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [feedbackMessage, setFeedbackMessage] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
+
+  // Export to CSV function
+  const exportToCSV = () => {
+    const headers = ['Title', 'Description', 'Assigned To', 'Project', 'Priority', 'Category', 'Tags', 'Due Date', 'Status', 'Days Remaining', 'Urgency'];
+    
+    const csvRows = upcomingTasks.map(task => [
+      `"${task.title.replace(/"/g, '""')}"`,
+      `"${task.description.replace(/"/g, '""')}"`,
+      `"${task.assignedTo.name}"`,
+      `"${task.project}"`,
+      task.priority,
+      task.category,
+      `"${task.tags.join(', ')}"`,
+      new Date(task.dueDate).toLocaleString(),
+      task.status,
+      task.daysRemaining,
+      task.urgency
+    ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...csvRows.map(row => row.join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `upcoming-deadlines-${new Date().toISOString().split('T')[0]}.xlsx`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // Sample data
   const [upcomingTasks, setUpcomingTasks] = useState([
@@ -670,10 +705,12 @@ const UpcomingDeadlinesManager = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
-            <button className="flex-1 md:flex-initial px-3 md:px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center justify-center gap-2 text-sm touch-manipulation">
-              <Plus size={16} />
-              <span className="hidden md:inline">Add Task</span>
-              <span className="md:hidden">Add</span>
+            <button 
+              onClick={exportToCSV}
+              className="flex-1 md:flex-initial px-3 md:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm touch-manipulation cursor-pointer"
+            >
+              <Download size={16} />
+              <span className="hidden md:inline">Export</span>
             </button>
           </div>
         </div>

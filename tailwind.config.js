@@ -9,8 +9,19 @@ export default {
         fontFamily: {
           sans: ['Plus Jakarta Sans', 'sans-serif'],
         },
+        cursor: {
+          'pointer': 'pointer',
+        },
       },
     },
-    plugins: [],
+    plugins: [
+      function({ addBase }) {
+        addBase({
+          'button, a, [role="button"], input[type="submit"], input[type="button"], select': {
+            cursor: 'pointer',
+          },
+        })
+      },
+    ],
   };
   
