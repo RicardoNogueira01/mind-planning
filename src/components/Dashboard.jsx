@@ -388,14 +388,14 @@ const Dashboard = () => {
           {/* Team and Team Holidays - Side by Side */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {/* Team Overview Card */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-6">
+            <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-gray-50 rounded-lg">
                     <Users size={18} className="text-gray-700" />
                   </div>
                   <div>
-                    <h2 className="text-base font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>Team</h2>
+                    <h2 className="text-sm sm:text-base font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>Team</h2>
                     <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>{collaborators.length} Members</p>
                   </div>
                 </div>
@@ -409,14 +409,33 @@ const Dashboard = () => {
                 </button>
               </div>
               
-              <div className="space-y-5">
+              <div className="space-y-4 sm:space-y-5">
                 {collaborators.map(collab => (
-                  <div key={collab.id} className="flex items-center gap-4">
-                    <div className={clsx("w-12 h-12 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0", collab.color)}>
-                      {collab.initials}
+                  <div key={collab.id} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                    {/* Mobile: Avatar and name in one row */}
+                    <div className="flex items-center gap-3 sm:gap-0">
+                      <div className={clsx("w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0", collab.color)}>
+                        {collab.initials}
+                      </div>
+                      <div className="flex-1 sm:hidden">
+                        <h3 className="font-semibold text-gray-900 text-sm" style={{ fontFamily: 'DM Sans, sans-serif' }}>{collab.name}</h3>
+                        <span className="text-xs font-mono text-gray-500" style={{ fontFamily: 'DM Mono, monospace' }}>{collab.tasksCompleted}/{collab.tasksAssigned}</span>
+                      </div>
+                      <span className={clsx('text-[10px] sm:hidden px-2 py-1 rounded-md font-medium flex items-center gap-1 whitespace-nowrap', {
+                        'bg-red-50 text-red-600': collab.overdueTasks > 0,
+                        'bg-emerald-50 text-emerald-600': collab.overdueTasks === 0
+                      })} style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                        <span className={clsx("w-1.5 h-1.5 rounded-full", {
+                          'bg-red-600': collab.overdueTasks > 0,
+                          'bg-emerald-600': collab.overdueTasks === 0
+                        })}></span>
+                        {collab.overdueTasks > 0 ? `${collab.overdueTasks} overdue` : 'On track'}
+                      </span>
                     </div>
+                    
+                    {/* Desktop: Full layout */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-center mb-2">
+                      <div className="hidden sm:flex justify-between items-center mb-2">
                         <h3 className="font-semibold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>{collab.name}</h3>
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-mono text-gray-500" style={{ fontFamily: 'DM Mono, monospace' }}>{collab.tasksCompleted}/{collab.tasksAssigned}</span>
