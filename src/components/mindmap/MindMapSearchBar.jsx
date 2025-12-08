@@ -55,7 +55,7 @@ const MindMapSearchBar = ({
           onClick={toggleSearch}
           className={`p-2 md:p-3 rounded-xl md:rounded-2xl transition-all duration-300 touch-manipulation ${
             isSearchOpen 
-              ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' 
+              ? 'bg-black text-white shadow-lg shadow-black/20' 
               : 'bg-white/95 backdrop-blur-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 shadow-xl border border-gray-200/50'
           }`}
           title="Search nodes"
@@ -100,7 +100,7 @@ const MindMapSearchBar = ({
       
       {/* Enhanced Search Results */}
       {isSearchOpen && showSearchList && searchQuery && (
-        <div className="absolute left-10 md:left-14 top-full mt-4 w-64 md:w-80 bg-white/95 backdrop-blur-lg shadow-2xl border border-gray-200/50 rounded-xl md:rounded-2xl p-2 md:p-3 max-h-72 md:max-h-96 overflow-y-auto">
+        <div className="absolute left-10 md:left-14 top-full mt-4 w-64 md:w-80 bg-white/95 backdrop-blur-lg shadow-2xl border border-gray-200/50 rounded-xl md:rounded-2xl p-2 md:p-3 max-h-72 md:max-h-96 overflow-y-auto z-50">
           {nodes
             .filter(node => node.text.toLowerCase().includes(searchQuery.toLowerCase()))
             .map(node => (

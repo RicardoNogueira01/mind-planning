@@ -2695,23 +2695,23 @@ export default function MindMap({ mapId, onBack }) {
 
         {/* Zoom Controls - Bottom Right */}
         {viewMode === 'mindmap' && (
-          <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-30">
+          <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 flex flex-col gap-1.5 sm:gap-2 z-30">
             {/* Zoom In */}
             <button
               onClick={() => setZoom(prev => Math.min(prev * 1.2, 3))}
-              className="p-3 bg-white hover:bg-gray-50 text-gray-700 rounded-lg shadow-lg border border-gray-200 transition-all duration-200 hover:shadow-xl"
+              className="p-2 sm:p-3 bg-white hover:bg-gray-50 text-gray-700 rounded-lg shadow-lg border border-gray-200 transition-all duration-200 hover:shadow-xl"
               title="Zoom In"
             >
-              <ZoomIn size={20} strokeWidth={2} />
+              <ZoomIn size={18} className="sm:w-5 sm:h-5" strokeWidth={2} />
             </button>
             
             {/* Zoom Out */}
             <button
               onClick={() => setZoom(prev => Math.max(prev / 1.2, 0.2))}
-              className="p-3 bg-white hover:bg-gray-50 text-gray-700 rounded-lg shadow-lg border border-gray-200 transition-all duration-200 hover:shadow-xl"
+              className="p-2 sm:p-3 bg-white hover:bg-gray-50 text-gray-700 rounded-lg shadow-lg border border-gray-200 transition-all duration-200 hover:shadow-xl"
               title="Zoom Out"
             >
-              <ZoomOut size={20} strokeWidth={2} />
+              <ZoomOut size={18} className="sm:w-5 sm:h-5" strokeWidth={2} />
             </button>
             
             {/* Re-center */}
@@ -2720,10 +2720,10 @@ export default function MindMap({ mapId, onBack }) {
                 dragging.setPan({ x: 0, y: 0 });
                 setZoom(initialZoom);
               }}
-              className="p-3 bg-white hover:bg-gray-50 text-gray-700 rounded-lg shadow-lg border border-gray-200 transition-all duration-200 hover:shadow-xl"
+              className="p-2 sm:p-3 bg-white hover:bg-gray-50 text-gray-700 rounded-lg shadow-lg border border-gray-200 transition-all duration-200 hover:shadow-xl"
               title="Re-center and Reset Zoom"
             >
-              <Maximize2 size={20} strokeWidth={2} />
+              <Maximize2 size={18} className="sm:w-5 sm:h-5" strokeWidth={2} />
             </button>
           </div>
         )}

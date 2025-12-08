@@ -528,39 +528,39 @@ const Dashboard = () => {
         {/* Next Holiday Banner - Compact with Carousel */}
         <div className="mb-6">
           {upcomingHolidays.length > 0 && (
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between gap-4">
+            <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between gap-2 sm:gap-4">
                 {/* Left Arrow */}
                 <button
                   onClick={() => setCurrentHolidayIndex((prev) => (prev === 0 ? upcomingHolidays.length - 1 : prev - 1))}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+                  className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
                   disabled={upcomingHolidays.length === 1}
                 >
-                  <ChevronLeft size={20} className={upcomingHolidays.length === 1 ? 'text-gray-300' : 'text-gray-600'} />
+                  <ChevronLeft size={18} className={upcomingHolidays.length === 1 ? 'text-gray-300' : 'text-gray-600'} />
                 </button>
 
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
+                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-50 rounded-xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">
                     {upcomingHolidays[currentHolidayIndex].emoji}
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wider mb-0.5 sm:mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                       {currentHolidayIndex === 0 ? 'Next Holiday' : `Upcoming Holiday ${currentHolidayIndex + 1}`}
                     </p>
-                    <h3 className="text-base font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                    <h3 className="text-sm sm:text-base font-bold text-gray-900 truncate" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                       {upcomingHolidays[currentHolidayIndex].name}
                     </h3>
-                    <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                    <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5 truncate" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                       {new Date(upcomingHolidays[currentHolidayIndex].date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
                     </p>
                   </div>
                 </div>
 
-                <div className="bg-blue-600 px-4 py-3 rounded-lg text-center flex-shrink-0">
-                  <div className="text-2xl font-bold text-white leading-none mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
+                <div className="bg-blue-600 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-center flex-shrink-0">
+                  <div className="text-xl sm:text-2xl font-bold text-white leading-none mb-0.5 sm:mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
                     {upcomingHolidays[currentHolidayIndex].daysUntil}
                   </div>
-                  <div className="text-xs text-white/90 font-medium uppercase tracking-wider" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                  <div className="text-[10px] sm:text-xs text-white/90 font-medium uppercase tracking-wider" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                     Days
                   </div>
                 </div>
@@ -568,10 +568,10 @@ const Dashboard = () => {
                 {/* Right Arrow */}
                 <button
                   onClick={() => setCurrentHolidayIndex((prev) => (prev === upcomingHolidays.length - 1 ? 0 : prev + 1))}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+                  className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
                   disabled={upcomingHolidays.length === 1}
                 >
-                  <ChevronRight size={20} className={upcomingHolidays.length === 1 ? 'text-gray-300' : 'text-gray-600'} />
+                  <ChevronRight size={18} className={upcomingHolidays.length === 1 ? 'text-gray-300' : 'text-gray-600'} />
                 </button>
               </div>
             </div>

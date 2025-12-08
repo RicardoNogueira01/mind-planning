@@ -534,89 +534,92 @@ const CalendarPage = () => {
         </div>
       </header>      {/* Controls */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-4 mb-4 md:mb-6">
-          <div className="flex flex-col lg:flex-row gap-3 md:gap-4 items-start lg:items-center justify-between">
-            {/* Navigation */}
-            <div className="flex items-center gap-2 md:gap-4 w-full lg:w-auto">
-              <div className="flex items-center gap-2 flex-1 lg:flex-initial">
+          <div className="flex flex-col gap-3">
+            {/* Top row: Navigation and Today button */}
+            <div className="flex items-center gap-2 w-full">
+              <div className="flex items-center gap-2 flex-1">
                 <button
                   onClick={() => navigateDate(-1)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors touch-manipulation"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors touch-manipulation flex-shrink-0"
                 >
                   <ChevronLeft size={18} className="text-gray-600" />
                 </button>
-                <div className="px-3 md:px-4 py-2 font-semibold text-gray-900 text-center flex-1 lg:min-w-[240px] text-sm md:text-base">
+                <div className="px-2 sm:px-3 md:px-4 py-2 font-semibold text-gray-900 text-center flex-1 text-xs sm:text-sm md:text-base">
                   {getDateRangeText()}
                 </div>
                 <button
                   onClick={() => navigateDate(1)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
                 >
                   <ChevronRight size={18} className="text-gray-600" />
                 </button>
               </div>
               <button
                 onClick={() => setCurrentDate(new Date())}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                className="px-3 sm:px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm whitespace-nowrap flex-shrink-0"
               >
                 Today
               </button>
             </div>
 
-            {/* Search and filters */}
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search events..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
-                />
+            {/* Bottom row: Search, filters, and view mode */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+              {/* Search and filters */}
+              <div className="flex items-center gap-2 flex-1">
+                <div className="relative flex-1">
+                  <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search events..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500 text-sm"
+                  />
+                </div>
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`px-3 sm:px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-gray-700 text-sm whitespace-nowrap flex-shrink-0 ${
+                    showFilters ? 'bg-gray-50' : ''
+                  }`}
+                >
+                  <Filter size={16} />
+                  <span className="hidden sm:inline">{t('common.filters')}</span>
+                </button>
               </div>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-gray-700 ${
-                  showFilters ? 'bg-gray-50' : ''
-                }`}
-              >
-                <Filter size={16} />
-                {t('common.filters')}
-              </button>
-            </div>
 
-            {/* View mode toggle */}
-            <div className="flex border border-gray-300 rounded-lg overflow-hidden">
-              <button
-                onClick={() => setViewMode('month')}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                  viewMode === 'month' 
-                    ? 'bg-gray-800 text-white' 
-                    : 'bg-white text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                {t('common.month')}
-              </button>
-              <button
-                onClick={() => setViewMode('week')}
-                className={`px-4 py-2 text-sm font-medium transition-colors border-l border-gray-300 ${
-                  viewMode === 'week' 
-                    ? 'bg-gray-800 text-white' 
-                    : 'bg-white text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                {t('common.week')}
-              </button>
-              <button
-                onClick={() => setViewMode('day')}
-                className={`px-4 py-2 text-sm font-medium transition-colors border-l border-gray-300 ${
-                  viewMode === 'day' 
-                    ? 'bg-gray-800 text-white' 
-                    : 'bg-white text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                {t('common.day')}
-              </button>
+              {/* View mode toggle */}
+              <div className="flex border border-gray-300 rounded-lg overflow-hidden flex-shrink-0">
+                <button
+                  onClick={() => setViewMode('month')}
+                  className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors flex-1 sm:flex-initial ${
+                    viewMode === 'month' 
+                      ? 'bg-gray-800 text-white' 
+                      : 'bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {t('common.month')}
+                </button>
+                <button
+                  onClick={() => setViewMode('week')}
+                  className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors border-l border-gray-300 flex-1 sm:flex-initial ${
+                    viewMode === 'week' 
+                      ? 'bg-gray-800 text-white' 
+                      : 'bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {t('common.week')}
+                </button>
+                <button
+                  onClick={() => setViewMode('day')}
+                  className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors border-l border-gray-300 flex-1 sm:flex-initial ${
+                    viewMode === 'day' 
+                      ? 'bg-gray-800 text-white' 
+                      : 'bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {t('common.day')}
+                </button>
+              </div>
             </div>
           </div>
 
