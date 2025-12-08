@@ -244,7 +244,7 @@ const TopBar = ({ showSearch = true }) => {
 
               {/* Language Dropdown */}
               {showLanguages && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
+                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
                   <button
                     onClick={() => {
                       changeLanguage('en');
