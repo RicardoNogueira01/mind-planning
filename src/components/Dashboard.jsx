@@ -320,16 +320,40 @@ const Dashboard = () => {
                 <div
                   key={mindMap.id}
                   onClick={() => navigate(`/mindmap/${mindMap.id}`)}
-                  className="group flex items-center gap-4 p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all cursor-pointer border border-transparent hover:border-gray-200"
+                  className="group flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all cursor-pointer border border-transparent hover:border-gray-200"
                 >
-                  {/* Mind Map Icon/Color */}
-                  <div className={`w-12 h-12 ${mindMap.color} rounded-xl flex items-center justify-center text-white flex-shrink-0 shadow-sm`}>
-                    <Map size={24} />
+                  {/* Top row on mobile: Icon + Title + Avatar */}
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                    {/* Mind Map Icon/Color */}
+                    <div className={`w-12 h-12 ${mindMap.color} rounded-xl flex items-center justify-center text-white flex-shrink-0 shadow-sm`}>
+                      <Map size={24} />
+                    </div>
+                    
+                    {/* Mind Map Title (mobile) */}
+                    <div className="flex-1 min-w-0 sm:hidden">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-gray-900 truncate text-sm" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                          {mindMap.title}
+                        </h3>
+                        {mindMap.isFavorite && (
+                          <Star size={14} className="text-yellow-500 fill-yellow-500 flex-shrink-0" />
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Creator Avatar (mobile - top right) */}
+                    <div className="sm:hidden flex items-center gap-2 flex-shrink-0">
+                      <div className={`w-8 h-8 ${mindMap.avatarColor} rounded-full flex items-center justify-center text-white text-xs font-semibold`}>
+                        {mindMap.initials}
+                      </div>
+                      <ArrowRight size={16} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
+                    </div>
                   </div>
                   
-                  {/* Mind Map Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                  {/* Mind Map Info (desktop layout) */}
+                  <div className="flex-1 min-w-0 w-full sm:w-auto">
+                    {/* Title for desktop only */}
+                    <div className="hidden sm:flex items-center gap-2 mb-1">
                       <h3 className="font-semibold text-gray-900 truncate text-sm" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                         {mindMap.title}
                       </h3>
@@ -337,7 +361,9 @@ const Dashboard = () => {
                         <Star size={14} className="text-yellow-500 fill-yellow-500 flex-shrink-0" />
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                    
+                    {/* Stats - always visible */}
+                    <div className="flex items-center gap-3 text-xs text-gray-500 sm:mt-0">
                       <span className="flex items-center gap-1">
                         <Circle size={10} className="fill-gray-400 text-gray-400" />
                         {mindMap.nodeCount} nodes
@@ -347,8 +373,8 @@ const Dashboard = () => {
                     </div>
                   </div>
                   
-                  {/* Creator Avatar */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  {/* Creator Avatar (desktop only) */}
+                  <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
                     <div className={`w-8 h-8 ${mindMap.avatarColor} rounded-full flex items-center justify-center text-white text-xs font-semibold`}>
                       {mindMap.initials}
                     </div>
