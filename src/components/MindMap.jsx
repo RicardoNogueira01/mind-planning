@@ -2,7 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
-import { Check, LayoutTemplate, Sparkles, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import { Check, LayoutTemplate, Sparkles, ZoomIn, ZoomOut, Maximize2, Brain, Target, Link2, Users, Clock, AlertTriangle } from 'lucide-react';
 import TemplateGallery from './templates/TemplateGallery';
 import { instantiateTemplate } from '../templates/templateEngine';
 import { applyLayout } from '../utils/layoutAlgorithms';
@@ -35,6 +35,16 @@ import GanttView from './mindmap/views/GanttView';
 import BoardView from './mindmap/views/BoardView';
 import ListView from './mindmap/views/ListView';
 import AnalyticsView from './mindmap/views/AnalyticsView';
+
+// Enhanced Features
+import { 
+  AITaskDecomposer, 
+  DependencyAnalyzer, 
+  WorkloadHeatmap, 
+  TimeTravel, 
+  FocusMode, 
+  RiskMatrix 
+} from './enhanced';
 
 import { getDescendantNodeIds, getAncestorNodeIds } from './mindmap/graphUtils';
 import ShapePalette from './mindmap/ShapePalette';
@@ -155,6 +165,13 @@ export default function MindMap({ mapId, onBack }) {
   });
   const [joiningGroupNodes, setJoiningGroupNodes] = useState(new Set()); // Track nodes with join animation
   const [pulsingGroups, setPulsingGroups] = useState(new Set()); // Track groups with pulse animation
+
+  // ============================================
+  // ENHANCED FEATURES STATE
+  // ============================================
+  const [showEnhancedPanel, setShowEnhancedPanel] = useState(null); // 'ai' | 'dependencies' | 'workload' | 'timetravel' | 'focus' | 'risk'
+  const [projectSnapshots, setProjectSnapshots] = useState([]);
+  const [focusTaskNode, setFocusTaskNode] = useState(null);
 
   // Canvas ref
   const canvasRef = useRef(null);
@@ -2847,6 +2864,192 @@ export default function MindMap({ mapId, onBack }) {
           setGroupMembershipDialog({ show: false, nodeId: null, nodeName: '', group: null });
         }}
       />
+
+      {/* ============================================
+          ENHANCED FEATURES PANEL
+          ============================================ */}
+      {showEnhancedPanel && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowEnhancedPanel(null)}>
+          <div onClick={(e) => e.stopPropagation()}>
+            {showEnhancedPanel === 'ai' && selectedNodes.length > 0 && (
+              <AITaskDecomposer
+                node={nodes.find(n => n.id === selectedNodes[0])}
+                onDecompose={(subtasks) => {
+                  const parentNode = nodes.find(n => n.id === selectedNodes[0]);
+                  if (!parentNode) return;
+                  
+                  const newNodes = subtasks.map((subtask, index) => ({
+                    id: `${parentNode.id}-subtask-${Date.now()}-${index}`,
+                    text: subtask.text,
+                    x: parentNode.x + 200 + (index % 3) * 220,
+                    y: parentNode.y + Math.floor(index / 3) * 120,
+                    bgColor: '#ffffff',
+                    fontColor: '#2d3748',
+                    priority: subtask.priority,
+                    estimatedHours: subtask.estimatedHours
+                  }));
+                  
+                  const newConnections = newNodes.map(node => ({
+                    from: parentNode.id,
+                    to: node.id
+                  }));
+                  
+                  setNodes(prev => [...prev, ...newNodes]);
+                  setConnections(prev => [...prev, ...newConnections]);
+                  setShowEnhancedPanel(null);
+                }}
+                onClose={() => setShowEnhancedPanel(null)}
+              />
+            )}
+            
+            {showEnhancedPanel === 'dependencies' && (
+              <DependencyAnalyzer
+                nodes={nodes}
+                connections={connections}
+                onCreateConnection={(fromId, toId) => {
+                  setConnections(prev => [...prev, { from: fromId, to: toId }]);
+                }}
+                onClose={() => setShowEnhancedPanel(null)}
+              />
+            )}
+            
+            {showEnhancedPanel === 'workload' && (
+              <WorkloadHeatmap
+                nodes={nodes}
+                collaborators={collaborators}
+                onReassignTask={(taskId, newAssignee) => {
+                  setNodes(prev => prev.map(n => 
+                    n.id === taskId ? { ...n, collaborators: [newAssignee] } : n
+                  ));
+                }}
+              />
+            )}
+            
+            {showEnhancedPanel === 'timetravel' && (
+              <TimeTravel
+                snapshots={projectSnapshots}
+                currentNodes={nodes}
+                currentConnections={connections}
+                onCreateSnapshot={(snapshot) => {
+                  setProjectSnapshots(prev => [snapshot, ...prev]);
+                }}
+                onRestoreSnapshot={(snapshot) => {
+                  setNodes(snapshot.nodes);
+                  setConnections(snapshot.connections);
+                  setShowEnhancedPanel(null);
+                }}
+                onDeleteSnapshot={(snapshotId) => {
+                  setProjectSnapshots(prev => prev.filter(s => s.id !== snapshotId));
+                }}
+                onImportSnapshot={(snapshot) => {
+                  setProjectSnapshots(prev => [snapshot, ...prev]);
+                }}
+              />
+            )}
+            
+            {showEnhancedPanel === 'focus' && (
+              <FocusMode
+                selectedNode={focusTaskNode || (selectedNodes.length > 0 ? nodes.find(n => n.id === selectedNodes[0]) : null)}
+                onComplete={(nodeId) => {
+                  setNodes(prev => prev.map(n => 
+                    n.id === nodeId ? { ...n, completed: true } : n
+                  ));
+                }}
+                onClose={() => {
+                  setShowEnhancedPanel(null);
+                  setFocusTaskNode(null);
+                }}
+              />
+            )}
+            
+            {showEnhancedPanel === 'risk' && (
+              <RiskMatrix
+                nodes={nodes}
+                connections={connections}
+                collaborators={collaborators}
+                onClose={() => setShowEnhancedPanel(null)}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced Features Quick Access Toolbar */}
+      {viewMode === 'mindmap' && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-40">
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-2 flex items-center gap-1">
+            <button
+              onClick={() => {
+                if (selectedNodes.length > 0) {
+                  setShowEnhancedPanel('ai');
+                }
+              }}
+              disabled={selectedNodes.length === 0}
+              className={`p-3 rounded-xl transition-all flex flex-col items-center gap-1 ${
+                selectedNodes.length > 0 
+                  ? 'hover:bg-purple-50 text-purple-600' 
+                  : 'text-gray-300 cursor-not-allowed'
+              }`}
+              title="AI Task Breakdown"
+            >
+              <Sparkles className="w-5 h-5" />
+              <span className="text-xs font-medium hidden sm:block">AI Breakdown</span>
+            </button>
+            
+            <button
+              onClick={() => setShowEnhancedPanel('dependencies')}
+              className="p-3 rounded-xl hover:bg-amber-50 text-amber-600 transition-all flex flex-col items-center gap-1"
+              title="Smart Dependencies"
+            >
+              <Link2 className="w-5 h-5" />
+              <span className="text-xs font-medium hidden sm:block">Dependencies</span>
+            </button>
+            
+            <button
+              onClick={() => setShowEnhancedPanel('workload')}
+              className="p-3 rounded-xl hover:bg-indigo-50 text-indigo-600 transition-all flex flex-col items-center gap-1"
+              title="Team Workload"
+            >
+              <Users className="w-5 h-5" />
+              <span className="text-xs font-medium hidden sm:block">Workload</span>
+            </button>
+            
+            <div className="w-px h-8 bg-gray-200 mx-1" />
+            
+            <button
+              onClick={() => setShowEnhancedPanel('timetravel')}
+              className="p-3 rounded-xl hover:bg-cyan-50 text-cyan-600 transition-all flex flex-col items-center gap-1"
+              title="Time Travel (Snapshots)"
+            >
+              <Clock className="w-5 h-5" />
+              <span className="text-xs font-medium hidden sm:block">Snapshots</span>
+            </button>
+            
+            <button
+              onClick={() => {
+                if (selectedNodes.length > 0) {
+                  setFocusTaskNode(nodes.find(n => n.id === selectedNodes[0]));
+                }
+                setShowEnhancedPanel('focus');
+              }}
+              className="p-3 rounded-xl hover:bg-green-50 text-green-600 transition-all flex flex-col items-center gap-1"
+              title="Focus Mode"
+            >
+              <Target className="w-5 h-5" />
+              <span className="text-xs font-medium hidden sm:block">Focus</span>
+            </button>
+            
+            <button
+              onClick={() => setShowEnhancedPanel('risk')}
+              className="p-3 rounded-xl hover:bg-red-50 text-red-600 transition-all flex flex-col items-center gap-1"
+              title="Risk Assessment"
+            >
+              <AlertTriangle className="w-5 h-5" />
+              <span className="text-xs font-medium hidden sm:block">Risks</span>
+            </button>
+          </div>
+        </div>
+      )}
       
       {/* Template Gallery */}
       <TemplateGallery
