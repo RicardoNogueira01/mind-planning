@@ -119,7 +119,7 @@ const ProfilePage = () => {
               <div className="flex gap-2">
                 <Link
                   to={`/profile/${profile.id}/edit`}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium"
+                  className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-2 text-sm font-medium"
                 >
                   <Edit2 size={16} />
                   {t('profile.editProfile')}
@@ -273,15 +273,15 @@ const ProfilePage = () => {
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
-          <div className="flex border-b border-gray-200">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 overflow-x-auto">
+          <div className="flex border-b border-gray-200 min-w-max">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-6 py-3.5 text-sm font-medium transition-colors relative ${
+                  className={`flex items-center gap-2 px-4 sm:px-6 py-3.5 text-xs sm:text-sm font-medium transition-colors relative whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'text-indigo-600 border-b-2 border-indigo-600'
                       : 'text-gray-500 hover:text-gray-900'
@@ -341,7 +341,7 @@ const ProfilePage = () => {
 
               {/* Task Completion Trend */}
               <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
                   <h3 className="text-lg font-bold text-gray-900">Task Completion Trend</h3>
                   <div className="flex gap-2">
                     <button className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">Week</button>

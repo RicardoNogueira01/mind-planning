@@ -99,8 +99,8 @@ const SettingsPage = () => {
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-4">
             <button 
               onClick={() => navigate(`/profile/${memberId}`)}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -108,13 +108,13 @@ const SettingsPage = () => {
               <ArrowLeft size={20} className="text-gray-600" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{t('settings.title')}</h1>
-              <p className="text-sm text-gray-500">{t('settings.subtitle')}</p>
+              <h1 className="text-xl md:text-2xl font-bold text-gray-900">{t('settings.title')}</h1>
+              <p className="text-xs md:text-sm text-gray-500">{t('settings.subtitle')}</p>
             </div>
           </div>
           <button
             onClick={handleSave}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium"
+            className="w-full sm:w-auto px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
           >
             <Check size={16} />
             {t('settings.saveChanges')}

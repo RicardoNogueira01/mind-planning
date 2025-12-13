@@ -295,7 +295,7 @@ const Dashboard = () => {
 
           {/* Recent Mind Maps Card */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-6">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-gray-50 rounded-lg">
                   <Map size={18} className="text-gray-700" />
@@ -307,7 +307,7 @@ const Dashboard = () => {
               </div>
               <Link
                 to="/mindmaps"
-                className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors cursor-pointer"
+                className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
                 style={{ fontFamily: 'DM Sans, sans-serif' }}
               >
                 View All
@@ -320,33 +320,34 @@ const Dashboard = () => {
                 <div
                   key={mindMap.id}
                   onClick={() => navigate(`/mindmap/${mindMap.id}`)}
-                  className="group flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all cursor-pointer border border-transparent hover:border-gray-200"
+                  className="group flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all cursor-pointer border border-transparent hover:border-gray-200"
                 >
                   {/* Top row on mobile: Icon + Title + Avatar */}
-                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
                     {/* Mind Map Icon/Color */}
-                    <div className={`w-12 h-12 ${mindMap.color} rounded-xl flex items-center justify-center text-white flex-shrink-0 shadow-sm`}>
-                      <Map size={24} />
+                    <div className={`w-9 h-9 sm:w-12 sm:h-12 ${mindMap.color} rounded-lg sm:rounded-xl flex items-center justify-center text-white flex-shrink-0 shadow-sm`}>
+                      <Map size={16} className="sm:hidden" />
+                      <Map size={24} className="hidden sm:block" />
                     </div>
                     
                     {/* Mind Map Title (mobile) */}
                     <div className="flex-1 min-w-0 sm:hidden">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-1.5 mb-0.5">
                         <h3 className="font-semibold text-gray-900 truncate text-sm" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                           {mindMap.title}
                         </h3>
                         {mindMap.isFavorite && (
-                          <Star size={14} className="text-yellow-500 fill-yellow-500 flex-shrink-0" />
+                          <Star size={12} className="text-yellow-500 fill-yellow-500 flex-shrink-0" />
                         )}
                       </div>
                     </div>
                     
                     {/* Creator Avatar (mobile - top right) */}
-                    <div className="sm:hidden flex items-center gap-2 flex-shrink-0">
-                      <div className={`w-8 h-8 ${mindMap.avatarColor} rounded-full flex items-center justify-center text-white text-xs font-semibold`}>
+                    <div className="sm:hidden flex items-center gap-1.5 flex-shrink-0">
+                      <div className={`w-7 h-7 ${mindMap.avatarColor} rounded-full flex items-center justify-center text-white text-xs font-semibold`}>
                         {mindMap.initials}
                       </div>
-                      <ArrowRight size={16} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
+                      <ArrowRight size={14} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
                     </div>
                   </div>
                   
@@ -363,13 +364,14 @@ const Dashboard = () => {
                     </div>
                     
                     {/* Stats - always visible */}
-                    <div className="flex items-center gap-3 text-xs text-gray-500 sm:mt-0">
+                    <div className="flex items-center gap-2 sm:gap-3 text-xs text-gray-500 sm:mt-0">
                       <span className="flex items-center gap-1">
-                        <Circle size={10} className="fill-gray-400 text-gray-400" />
+                        <Circle size={8} className="fill-gray-400 text-gray-400 sm:hidden" />
+                        <Circle size={10} className="fill-gray-400 text-gray-400 hidden sm:block" />
                         {mindMap.nodeCount} nodes
                       </span>
                       <span>•</span>
-                      <span>{mindMap.lastModified}</span>
+                      <span className="text-xs">{mindMap.lastModified}</span>
                     </div>
                   </div>
                   
@@ -465,7 +467,7 @@ const Dashboard = () => {
 
             {/* Team Holiday Requests Summary */}
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-6">
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-gray-50 rounded-lg">
                     <Users size={18} className="text-gray-700" />
@@ -477,7 +479,7 @@ const Dashboard = () => {
                 </div>
                 <Link 
                   to="/team-holidays" 
-                  className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors"
+                  className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors whitespace-nowrap"
                   style={{ fontFamily: 'DM Sans, sans-serif' }}
                 >
                   View All
@@ -601,7 +603,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Recent Activity */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-6">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-gray-50 rounded-lg">
                   <CheckCircle className="text-gray-700" size={18} />
@@ -613,7 +615,7 @@ const Dashboard = () => {
               </div>
               <Link 
                 to="/completed-tasks" 
-                className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors"
+                className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors whitespace-nowrap"
                 style={{ fontFamily: 'DM Sans, sans-serif' }}
               >
                 View All
@@ -622,41 +624,45 @@ const Dashboard = () => {
             </div>
             
             <div className="space-y-1">
-              <div className="grid grid-cols-2 gap-3 mb-4 text-xs font-semibold text-gray-500 uppercase tracking-wide px-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+              <div className="grid grid-cols-2 gap-3 mb-3 text-xs font-semibold text-gray-500 uppercase tracking-wide px-1 sm:px-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                 <div>TODAY</div>
               </div>
               {recentCompletedTasks.slice(0, 2).map((task) => (
                 <div 
                   key={task.id} 
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <div className={clsx("w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0", task.color)}>
-                    {task.initials}
+                  <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                    <div className={clsx("w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-semibold flex-shrink-0", task.color)}>
+                      {task.initials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 text-sm mb-0.5 truncate" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.title}</h3>
+                      <p className="text-xs text-gray-500 truncate" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.completedBy}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 text-sm mb-0.5" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.title}</h3>
-                    <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.completedBy}</p>
-                  </div>
-                  <span className="text-xs text-gray-400 font-medium whitespace-nowrap" style={{ fontFamily: 'DM Mono, monospace' }}>{task.completedAt}</span>
+                  <span className="text-xs text-gray-400 font-medium pl-10 sm:pl-0" style={{ fontFamily: 'DM Mono, monospace' }}>{task.completedAt}</span>
                 </div>
               ))}
               
-              <div className="grid grid-cols-2 gap-3 mt-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wide px-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+              <div className="grid grid-cols-2 gap-3 mt-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wide px-1 sm:px-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                 <div>YESTERDAY</div>
               </div>
               {recentCompletedTasks.slice(2).map((task) => (
                 <div 
                   key={task.id} 
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <div className={clsx("w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0", task.color)}>
-                    {task.initials}
+                  <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                    <div className={clsx("w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-semibold flex-shrink-0", task.color)}>
+                      {task.initials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 text-sm mb-0.5 truncate" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.title}</h3>
+                      <p className="text-xs text-gray-500 truncate" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.completedBy}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 text-sm mb-0.5" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.title}</h3>
-                    <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.completedBy}</p>
-                  </div>
-                  <span className="text-xs text-gray-400 font-medium whitespace-nowrap" style={{ fontFamily: 'DM Mono, monospace' }}>{task.completedAt}</span>
+                  <span className="text-xs text-gray-400 font-medium pl-10 sm:pl-0" style={{ fontFamily: 'DM Mono, monospace' }}>{task.completedAt}</span>
                 </div>
               ))}
             </div>
@@ -664,7 +670,7 @@ const Dashboard = () => {
           
           {/* Deadlines */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-6">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-gray-50 rounded-lg">
                   <Clock className="text-gray-700" size={18} />
@@ -676,7 +682,7 @@ const Dashboard = () => {
               </div>
               <Link 
                 to="/upcoming-deadlines" 
-                className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors"
+                className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors whitespace-nowrap"
                 style={{ fontFamily: 'DM Sans, sans-serif' }}
               >
                 View All
@@ -688,16 +694,18 @@ const Dashboard = () => {
               {upcomingDeadlines.map((task) => (
                 <div 
                   key={task.id} 
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center gap-2 p-2 sm:p-3 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <div className={clsx("w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0", task.color)}>
-                    {task.initials}
+                  <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                    <div className={clsx("w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-semibold flex-shrink-0", task.color)}>
+                      {task.initials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 text-sm mb-0.5 truncate" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.title}</h3>
+                      <p className="text-xs text-gray-500 truncate" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.assignedTo}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 text-sm mb-0.5" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.title}</h3>
-                    <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>{task.assignedTo}</p>
-                  </div>
-                  <span className={clsx('text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap tracking-wide', {
+                  <span className={clsx('text-xs font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg whitespace-nowrap tracking-wide self-start sm:self-center ml-10 sm:ml-0', {
                     'bg-red-50 text-red-600': task.status === 'danger',
                     'bg-amber-50 text-amber-600': task.status === 'warning'
                   })} style={{ fontFamily: 'DM Sans, sans-serif' }}>

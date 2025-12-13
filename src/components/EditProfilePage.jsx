@@ -95,8 +95,8 @@ const EditProfilePage = () => {
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-4">
             <button 
               onClick={handleCancel}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -104,44 +104,46 @@ const EditProfilePage = () => {
               <ArrowLeft size={20} className="text-gray-600" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{t('editProfile.title')}</h1>
-              <p className="text-sm text-gray-500">{t('editProfile.subtitle')}</p>
+              <h1 className="text-xl md:text-2xl font-bold text-gray-900">{t('editProfile.title')}</h1>
+              <p className="text-xs md:text-sm text-gray-500">{t('editProfile.subtitle')}</p>
             </div>
           </div>
           <div className="flex gap-2">
             <button
               onClick={handleCancel}
-              className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm font-medium"
+              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm font-medium"
             >
               <X size={16} />
-              {t('editProfile.cancel')}
+              <span className="hidden sm:inline">{t('editProfile.cancel')}</span>
+              <span className="sm:hidden">Cancel</span>
             </button>
             <button
               onClick={handleSave}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium"
+              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm font-medium"
             >
               <Save size={16} />
-              {t('editProfile.save')}
+              <span className="hidden sm:inline">{t('editProfile.save')}</span>
+              <span className="sm:hidden">Save Changes</span>
             </button>
           </div>
         </div>
 
         <div>
           {/* Avatar Section */}
-          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6 mb-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">{t('editProfile.profilePicture')}</h2>
-            <div className="flex items-center gap-6">
-              <div className="w-32 h-32 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center text-white font-bold text-4xl shadow-lg">
+          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-4 sm:p-6 mb-6">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4">{t('editProfile.profilePicture')}</h2>
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
+              <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center text-white font-bold text-3xl sm:text-4xl shadow-lg flex-shrink-0">
                 AK
               </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-600 mb-3">Upload a new profile picture. JPG, PNG or GIF. Max size 5MB.</p>
-                <div className="flex gap-2">
-                  <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium">
+              <div className="flex-1 w-full text-center sm:text-left">
+                <p className="text-xs sm:text-sm text-gray-600 mb-3">Upload a new profile picture. JPG, PNG or GIF. Max size 5MB.</p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button className="px-3 sm:px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm font-medium">
                     <Upload size={16} />
                     {t('editProfile.uploadPhoto')}
                   </button>
-                  <button className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm font-medium">
+                  <button className="px-3 sm:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm font-medium">
                     <Camera size={16} />
                     {t('editProfile.takePhoto')}
                   </button>
@@ -151,8 +153,8 @@ const EditProfilePage = () => {
           </div>
 
           {/* Basic Information */}
-          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6 mb-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Basic Information</h2>
+          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-4 sm:p-6 mb-6">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4">Basic Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
@@ -204,8 +206,8 @@ const EditProfilePage = () => {
           </div>
 
           {/* Contact Information */}
-          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6 mb-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Contact Information</h2>
+          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-4 sm:p-6 mb-6">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4">Contact Information</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
@@ -251,8 +253,8 @@ const EditProfilePage = () => {
           </div>
 
           {/* Social Links */}
-          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6 mb-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Social Links</h2>
+          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-4 sm:p-6 mb-6">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4">Social Links</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
@@ -300,8 +302,8 @@ const EditProfilePage = () => {
           </div>
 
           {/* Bio */}
-          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6 mb-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Bio</h2>
+          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-4 sm:p-6 mb-6">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4">Bio</h2>
             <textarea
               name="bio"
               value={formData.bio}
@@ -314,23 +316,23 @@ const EditProfilePage = () => {
           </div>
 
           {/* Skills */}
-          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6 mb-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Skills</h2>
+          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-4 sm:p-6 mb-6">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4">Skills</h2>
             <div className="flex gap-2 mb-4">
               <input
                 type="text"
                 value={newSkill}
                 onChange={(e) => setNewSkill(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleAddSkill()}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Add a skill (e.g., React, Python)"
+                className="flex-1 px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                placeholder="Add a skill"
               />
               <button
                 onClick={handleAddSkill}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium"
+                className="px-3 sm:px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-1 sm:gap-2 text-xs sm:text-sm font-medium flex-shrink-0"
               >
                 <Plus size={16} />
-                Add
+                <span className="hidden sm:inline">Add</span>
               </button>
             </div>
             <div className="flex flex-wrap gap-2">
