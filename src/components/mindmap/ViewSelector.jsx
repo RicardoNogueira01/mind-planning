@@ -70,11 +70,14 @@ const ViewSelector = ({ currentView, onViewChange }) => {
       <div className="md:hidden relative" ref={dropdownRef}>
         <button
           onClick={() => setShowDropdown(!showDropdown)}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-all touch-manipulation"
+          className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-all touch-manipulation min-w-[44px]"
+          title={currentViewData?.label}
         >
-          <CurrentIcon size={18} />
-          <span className="text-sm font-medium text-gray-900">{currentViewData?.label}</span>
-          <ChevronDown size={16} className={`text-gray-500 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+          <CurrentIcon size={18} className="flex-shrink-0" />
+          <span className="hidden sm:inline text-sm font-medium text-gray-900">
+            {currentViewData?.label}
+          </span>
+          <ChevronDown size={16} className={`text-gray-500 transition-transform flex-shrink-0 ${showDropdown ? 'rotate-180' : ''}`} />
         </button>
 
         {/* Dropdown menu */}

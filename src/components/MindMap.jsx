@@ -1829,8 +1829,8 @@ export default function MindMap({ mapId, onBack }) {
         </div>
         )}
 
-        {/* View Selector - Top Center */}
-        <div className="absolute top-2 md:top-4 left-1/2 transform -translate-x-1/2 z-20">
+        {/* View Selector - Top Center on desktop, Top Right below buttons on mobile */}
+        <div className="absolute top-2 md:top-4 left-1/2 md:left-1/2 right-2 md:right-auto transform md:-translate-x-1/2 z-20 hidden md:block">
           <ViewSelector 
             currentView={viewMode} 
             onViewChange={setViewMode}
@@ -1839,7 +1839,15 @@ export default function MindMap({ mapId, onBack }) {
 
         {/* Template, Layout, Share, Bookmark, and Shapes Toggle Buttons - Top Right */}
         <div className="absolute top-2 md:top-4 right-2 md:right-4 z-20">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col md:flex-row items-end md:items-center gap-2">
+            {/* View Selector - Mobile Only (below action buttons) */}
+            <div className="md:hidden w-full flex justify-end">
+              <ViewSelector 
+                currentView={viewMode} 
+                onViewChange={setViewMode}
+              />
+            </div>
+            
             {/* Mindmap-only buttons */}
             {viewMode === 'mindmap' && (
             <>
@@ -2697,7 +2705,7 @@ export default function MindMap({ mapId, onBack }) {
 
         {/* Zoom Controls - Bottom Right */}
         {viewMode === 'mindmap' && (
-          <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 flex flex-col gap-1.5 sm:gap-2 z-30">
+          <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 flex flex-col gap-1.5 sm:gap-2 z-30">
             {/* Zoom In */}
             <button
               onClick={() => setZoom(prev => Math.min(prev * 1.2, 3))}
