@@ -1794,9 +1794,9 @@ export default function MindMap({ mapId, onBack }) {
         </div>
         )}
 
-        {/* Hamburger Menu and Search Bar - Top left for mindmap view */}
+        {/* Hamburger Menu - Top left for mindmap view */}
         {viewMode === 'mindmap' && (
-        <div className="absolute top-2 md:top-4 left-2 md:left-4 z-40 flex items-center gap-2">
+        <div className="absolute top-2 md:top-4 left-2 md:left-4 z-40">
           {/* Hamburger Menu Button - Mobile/Tablet Only, mindmap view only */}
           <button
             onClick={() => setShowMobileToolbar(!showMobileToolbar)}
@@ -1813,8 +1813,12 @@ export default function MindMap({ mapId, onBack }) {
               <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
           </button>
+        </div>
+        )}
 
-          {/* Search Bar - mindmap view only */}
+        {/* Search Bar - Below toolbar for mindmap view */}
+        {viewMode === 'mindmap' && (
+        <div className="absolute top-16 md:top-20 left-2 md:left-4 z-30">
           <MindMapSearchBar
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
