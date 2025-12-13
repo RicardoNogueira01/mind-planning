@@ -1761,10 +1761,26 @@ export default function MindMap({ mapId, onBack }) {
           document.body
         )}
 
-        {/* Hamburger Menu and Search Bar - Top Left - Only show in mindmap view */}
+        {/* Back Button - Top Left for non-mindmap views */}
+        {viewMode !== 'mindmap' && (
+        <div className="absolute top-2 md:top-4 left-2 md:left-4 z-30">
+          <button
+            onClick={onBack}
+            className="p-2.5 md:p-3 rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all duration-200 touch-manipulation"
+            title="Back to Dashboard"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+          </button>
+        </div>
+        )}
+
+        {/* Hamburger Menu and Search Bar - Below toolbar for mindmap view */}
         {viewMode === 'mindmap' && (
-        <div className="absolute top-2 md:top-[74px] left-2 md:left-4 z-[100] flex items-center gap-2">
-          {/* Hamburger Menu Button - Mobile/Tablet Only */}
+        <div className="absolute top-16 md:top-20 left-2 md:left-4 z-30 flex items-center gap-2">
+          {/* Hamburger Menu Button - Mobile/Tablet Only, mindmap view only */}
           <button
             onClick={() => setShowMobileToolbar(!showMobileToolbar)}
             className={`lg:hidden p-2 rounded-lg shadow-lg border transition-all duration-200 touch-manipulation ${
@@ -1781,7 +1797,7 @@ export default function MindMap({ mapId, onBack }) {
             </svg>
           </button>
 
-          {/* Search Bar */}
+          {/* Search Bar - mindmap view only */}
           <MindMapSearchBar
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
@@ -1804,180 +1820,171 @@ export default function MindMap({ mapId, onBack }) {
           />
         </div>
 
-        {/* Template, Layout, Share, Bookmark, and Shapes Toggle Buttons - Top Right - Only show in mindmap view */}
-        {viewMode === 'mindmap' && (
+        {/* Template, Layout, Share, Bookmark, and Shapes Toggle Buttons - Top Right */}
         <div className="absolute top-2 md:top-4 right-2 md:right-4 z-20">
-          {/* Mobile: Single menu button */}
-          <div className="md:hidden relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowMobileActionsMenu(!showMobileActionsMenu);
-              }}
-              className="p-2.5 rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-gray-100 transition-all duration-200 touch-manipulation"
-              title="Actions"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="1"></circle>
-                <circle cx="12" cy="5" r="1"></circle>
-                <circle cx="12" cy="19" r="1"></circle>
-              </svg>
-            </button>
-
-            {/* Mobile Actions Dropdown */}
-            {showMobileActionsMenu && (
-              <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-50">
+          <div className="flex items-center gap-2">
+            {/* Mindmap-only buttons */}
+            {viewMode === 'mindmap' && (
+            <>
+              {/* Mobile: Single menu button */}
+              <div className="md:hidden relative">
                 <button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowMobileActionsMenu(!showMobileActionsMenu);
+                  }}
+                  className="p-2.5 rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-gray-100 transition-all duration-200 touch-manipulation"
+                  title="Actions"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="1"></circle>
+                    <circle cx="12" cy="5" r="1"></circle>
+                    <circle cx="12" cy="19" r="1"></circle>
+                  </svg>
+                </button>
+
+                {/* Mobile Actions Dropdown */}
+                {showMobileActionsMenu && (
+                  <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-50">
+                    <button
+                      onClick={() => {
+                        setShowTemplateGallery(true);
+                        setShowMobileActionsMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-purple-50 transition-colors"
+                    >
+                      <LayoutTemplate className="w-5 h-5 text-purple-600" />
+                      <div className="flex-1 text-left">
+                        <div className="text-sm font-medium text-gray-900">Use Template</div>
+                        <div className="text-xs text-gray-500">Apply layout template</div>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setShowLayoutMenu(true);
+                        setShowMobileActionsMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 transition-colors"
+                    >
+                      <Sparkles className="w-5 h-5 text-indigo-600" />
+                      <div className="flex-1 text-left">
+                        <div className="text-sm font-medium text-gray-900">Auto Layout</div>
+                        <div className="text-xs text-gray-500">Organize nodes</div>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setShowShapesPalette(true);
+                        setShowMobileActionsMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                      </svg>
+                      <div className="flex-1 text-left">
+                        <div className="text-sm font-medium text-gray-900">Shapes</div>
+                        <div className="text-xs text-gray-500">Node shapes</div>
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Desktop: Individual buttons */}
+              <div className="hidden md:flex items-center gap-2">
+                {/* Template Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
                     setShowTemplateGallery(true);
-                    setShowMobileActionsMenu(false);
+                    setShowShapesPalette(false);
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-purple-50 transition-colors"
+                  className="p-3 rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-all duration-200"
+                  title="Use Template"
                 >
-                  <LayoutTemplate className="w-5 h-5 text-purple-600" />
-                  <div className="flex-1 text-left">
-                    <div className="text-sm font-medium text-gray-900">Use Template</div>
-                    <div className="text-xs text-gray-500">Apply layout template</div>
-                  </div>
+                  <LayoutTemplate className="w-5 h-5" />
                 </button>
+                
+                {/* Auto-Layout Button */}
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowLayoutMenu(!showLayoutMenu);
+                      setShowShapesPalette(false);
+                    }}
+                    className={`p-3 rounded-xl shadow-lg border transition-all duration-200 ${
+                      showLayoutMenu
+                        ? 'bg-indigo-500 text-white border-indigo-600'
+                        : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300'
+                    }`}
+                    title="Auto Layout"
+                  >
+                    <Sparkles className="w-5 h-5" />
+                  </button>
+                  
+                  {/* Layout dropdown */}
+                  {showLayoutMenu && (
+                    <div className="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 p-2 z-50 w-56">
+                      <h3 className="font-semibold text-sm text-gray-900 px-3 py-2 border-b">Choose Layout</h3>
+                      <div className="flex flex-col gap-1 pt-2">
+                        {[
+                          { type: 'force-directed', label: 'Force Directed', icon: '⚡', desc: 'Physics-based' },
+                          { type: 'tree-vertical', label: 'Tree (Vertical)', icon: '🌲', desc: 'Top to bottom' },
+                          { type: 'tree-horizontal', label: 'Tree (Horizontal)', icon: '🌳', desc: 'Left to right' },
+                          { type: 'radial', label: 'Radial', icon: '🎯', desc: 'Circular layers' },
+                          { type: 'circular', label: 'Circular', icon: '⭕', desc: 'Perfect circle' },
+                          { type: 'grid', label: 'Grid Snap', icon: '⚙️', desc: 'Align to grid' }
+                        ].map(layout => (
+                          <button
+                            key={layout.type}
+                            onClick={() => handleApplyLayout(layout.type)}
+                            className="flex items-center gap-3 px-3 py-2 text-left hover:bg-indigo-50 rounded-lg transition-colors group"
+                          >
+                            <span className="text-xl">{layout.icon}</span>
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-gray-900 group-hover:text-indigo-600">{layout.label}</div>
+                              <div className="text-xs text-gray-500">{layout.desc}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
+                {/* Shapes Palette Toggle */}
                 <button
-                  onClick={() => {
-                    setShowLayoutMenu(true);
-                    setShowMobileActionsMenu(false);
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowShapesPalette(!showShapesPalette);
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 transition-colors"
+                  className={`p-3 rounded-xl shadow-lg border transition-all duration-200 ${
+                    showShapesPalette
+                      ? 'bg-indigo-500 text-white border-indigo-600'
+                      : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300'
+                  }`}
+                  title={showShapesPalette ? 'Hide shapes' : 'Show shapes'}
                 >
-                  <Sparkles className="w-5 h-5 text-indigo-600" />
-                  <div className="flex-1 text-left">
-                    <div className="text-sm font-medium text-gray-900">Auto Layout</div>
-                    <div className="text-xs text-gray-500">Organize nodes</div>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setShowShareDialog(true);
-                    setShowMobileActionsMenu(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="18" cy="5" r="3"></circle>
-                    <circle cx="6" cy="12" r="3"></circle>
-                    <circle cx="18" cy="19" r="3"></circle>
-                    <line x1="8.59" x2="15.42" y1="13.51" y2="17.49"></line>
-                    <line x1="15.41" x2="8.59" y1="6.51" y2="10.49"></line>
-                  </svg>
-                  <div className="flex-1 text-left">
-                    <div className="text-sm font-medium text-gray-900">Share</div>
-                    <div className="text-xs text-gray-500">Share mind map</div>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => {
-                    toggleBookmark();
-                    setShowMobileActionsMenu(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-yellow-50 transition-colors"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-yellow-600" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-                  </svg>
-                  <div className="flex-1 text-left">
-                    <div className="text-sm font-medium text-gray-900">{isBookmarked ? 'Remove Bookmark' : 'Add Bookmark'}</div>
-                    <div className="text-xs text-gray-500">Toggle favorite</div>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setShowShapesPalette(true);
-                    setShowMobileActionsMenu(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 transition-colors"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="3" width="7" height="7"></rect>
                     <rect x="14" y="3" width="7" height="7"></rect>
                     <rect x="14" y="14" width="7" height="7"></rect>
                     <rect x="3" y="14" width="7" height="7"></rect>
                   </svg>
-                  <div className="flex-1 text-left">
-                    <div className="text-sm font-medium text-gray-900">Shapes</div>
-                    <div className="text-xs text-gray-500">Node shapes</div>
-                  </div>
                 </button>
               </div>
+            </>
             )}
-          </div>
 
-          {/* Desktop: Individual buttons */}
-          <div className="hidden md:flex items-center gap-2">
-            {/* Template Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                setShowTemplateGallery(true);
-                setShowShapesPalette(false);
-              }}
-              className="p-3 rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-all duration-200"
-              title="Use Template"
-            >
-              <LayoutTemplate className="w-5 h-5" />
-            </button>
-            
-            {/* Auto-Layout Button */}
-            <div className="relative">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowLayoutMenu(!showLayoutMenu);
-                  setShowShapesPalette(false);
-                }}
-                className={`p-3 rounded-xl shadow-lg border transition-all duration-200 ${
-                  showLayoutMenu
-                    ? 'bg-indigo-500 text-white border-indigo-600'
-                    : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300'
-                }`}
-                title="Auto Layout"
-              >
-                <Sparkles className="w-5 h-5" />
-              </button>
-              
-              {/* Layout dropdown */}
-              {showLayoutMenu && (
-                <div className="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 p-2 z-50 w-56">
-                  <h3 className="font-semibold text-sm text-gray-900 px-3 py-2 border-b">Choose Layout</h3>
-                  <div className="flex flex-col gap-1 pt-2">
-                    {[
-                      { type: 'force-directed', label: 'Force Directed', icon: '⚡', desc: 'Physics-based' },
-                      { type: 'tree-vertical', label: 'Tree (Vertical)', icon: '🌲', desc: 'Top to bottom' },
-                      { type: 'tree-horizontal', label: 'Tree (Horizontal)', icon: '🌳', desc: 'Left to right' },
-                      { type: 'radial', label: 'Radial', icon: '🎯', desc: 'Circular layers' },
-                      { type: 'circular', label: 'Circular', icon: '⭕', desc: 'Perfect circle' },
-                      { type: 'grid', label: 'Grid Snap', icon: '⚙️', desc: 'Align to grid' }
-                    ].map(layout => (
-                      <button
-                        key={layout.type}
-                        onClick={() => handleApplyLayout(layout.type)}
-                        className="flex items-center gap-3 px-3 py-2 text-left hover:bg-indigo-50 rounded-lg transition-colors group"
-                      >
-                        <span className="text-xl">{layout.icon}</span>
-                        <div className="flex-1">
-                          <div className="text-sm font-medium text-gray-900 group-hover:text-indigo-600">{layout.label}</div>
-                          <div className="text-xs text-gray-500">{layout.desc}</div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Share Button */}
+            {/* Share Button - Always visible */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -1985,10 +1992,10 @@ export default function MindMap({ mapId, onBack }) {
                 setShowShareDialog(true);
                 setShowShapesPalette(false);
               }}
-              className="p-3 rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all duration-200"
+              className="p-2.5 md:p-3 rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all duration-200"
               title="Share mind map"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="18" cy="5" r="3"></circle>
                 <circle cx="6" cy="12" r="3"></circle>
                 <circle cx="18" cy="19" r="3"></circle>
@@ -1997,44 +2004,22 @@ export default function MindMap({ mapId, onBack }) {
               </svg>
             </button>
             
-            {/* Bookmark Button */}
+            {/* Bookmark Button - Always visible */}
             <button
               onClick={toggleBookmark}
-              className={`p-3 rounded-xl shadow-lg border transition-all duration-200 ${
+              className={`p-2.5 md:p-3 rounded-xl shadow-lg border transition-all duration-200 ${
                 isBookmarked 
                   ? 'bg-yellow-500 text-white border-yellow-600 hover:bg-yellow-600' 
                   : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-yellow-50 hover:text-yellow-600 hover:border-yellow-300'
               }`}
               title={isBookmarked ? 'Remove from favorites' : 'Add to favorites'}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-              </svg>
-            </button>
-            
-            {/* Shapes Palette Toggle */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowShapesPalette(!showShapesPalette);
-              }}
-              className={`p-3 rounded-xl shadow-lg border transition-all duration-200 ${
-                showShapesPalette
-                  ? 'bg-indigo-500 text-white border-indigo-600'
-                  : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300'
-              }`}
-              title={showShapesPalette ? 'Hide shapes' : 'Show shapes'}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="7" height="7"></rect>
-                <rect x="14" y="3" width="7" height="7"></rect>
-                <rect x="14" y="14" width="7" height="7"></rect>
-                <rect x="3" y="14" width="7" height="7"></rect>
               </svg>
             </button>
           </div>
         </div>
-        )}
 
         {/* Connection Mode Banner */}
         {connectionFrom && (
