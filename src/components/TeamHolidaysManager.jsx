@@ -269,66 +269,69 @@ const TeamHolidaysManager = () => {
 
         {/* Main Content */}
         <main>
-          {/* Statistics */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-4 md:mb-6">
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Requests</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                </div>
-                <div className="p-3 bg-blue-100 rounded-lg">
-                  <Calendar size={20} className="text-blue-600" />
-                </div>
+        {/* Statistics */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-4 md:mb-6">
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs sm:text-sm text-gray-600">Total Requests</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.total}</p>
               </div>
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Pending</p>
-                  <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
-                </div>
-                <div className="p-3 bg-yellow-100 rounded-lg">
-                  <Clock size={20} className="text-yellow-600" />
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Approved</p>
-                  <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
-                </div>
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <CheckCircle size={20} className="text-green-600" />
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Rejected</p>
-                  <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
-                </div>
-                <div className="p-3 bg-red-100 rounded-lg">
-                  <XCircle size={20} className="text-red-600" />
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Days</p>
-                  <p className="text-2xl font-bold text-purple-600">{stats.totalDays}</p>
-                </div>
-                <div className="p-3 bg-purple-100 rounded-lg">
-                  <Calendar size={20} className="text-purple-600" />
-                </div>
+              <div className="p-2 sm:p-3 bg-blue-100 rounded-lg">
+                <Calendar size={16} className="sm:hidden text-blue-600" />
+                <Calendar size={20} className="hidden sm:block text-blue-600" />
               </div>
             </div>
           </div>
-
-          {/* Controls */}
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs sm:text-sm text-gray-600">Pending</p>
+                <p className="text-xl sm:text-2xl font-bold text-yellow-600">{stats.pending}</p>
+              </div>
+              <div className="p-2 sm:p-3 bg-yellow-100 rounded-lg">
+                <Clock size={16} className="sm:hidden text-yellow-600" />
+                <Clock size={20} className="hidden sm:block text-yellow-600" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs sm:text-sm text-gray-600">Approved</p>
+                <p className="text-xl sm:text-2xl font-bold text-green-600">{stats.approved}</p>
+              </div>
+              <div className="p-2 sm:p-3 bg-green-100 rounded-lg">
+                <CheckCircle size={16} className="sm:hidden text-green-600" />
+                <CheckCircle size={20} className="hidden sm:block text-green-600" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs sm:text-sm text-gray-600">Rejected</p>
+                <p className="text-xl sm:text-2xl font-bold text-red-600">{stats.rejected}</p>
+              </div>
+              <div className="p-2 sm:p-3 bg-red-100 rounded-lg">
+                <XCircle size={16} className="sm:hidden text-red-600" />
+                <XCircle size={20} className="hidden sm:block text-red-600" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs sm:text-sm text-gray-600">Total Days</p>
+                <p className="text-xl sm:text-2xl font-bold text-purple-600">{stats.totalDays}</p>
+              </div>
+              <div className="p-2 sm:p-3 bg-purple-100 rounded-lg">
+                <Calendar size={16} className="sm:hidden text-purple-600" />
+                <Calendar size={20} className="hidden sm:block text-purple-600" />
+              </div>
+            </div>
+          </div>
+        </div>          {/* Controls */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
             <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
               <div className="flex flex-col sm:flex-row gap-4 flex-1">

@@ -720,69 +720,75 @@ const UpcomingDeadlinesManager = () => {
       <main>
         {/* Statistics */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-4 md:mb-6">
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Tasks</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Total Tasks</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.total}</p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <Calendar size={20} className="text-blue-600" />
+              <div className="p-2 sm:p-3 bg-blue-100 rounded-lg">
+                <Calendar size={16} className="sm:hidden text-blue-600" />
+                <Calendar size={20} className="hidden sm:block text-blue-600" />
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Overdue</p>
-                <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Overdue</p>
+                <p className="text-xl sm:text-2xl font-bold text-red-600">{stats.overdue}</p>
               </div>
-              <div className="p-3 bg-red-100 rounded-lg">
-                <AlertTriangle size={20} className="text-red-600" />
+              <div className="p-2 sm:p-3 bg-red-100 rounded-lg">
+                <AlertTriangle size={16} className="sm:hidden text-red-600" />
+                <AlertTriangle size={20} className="hidden sm:block text-red-600" />
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Due Today</p>
-                <p className="text-2xl font-bold text-orange-600">{stats.dueToday}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Due Today</p>
+                <p className="text-xl sm:text-2xl font-bold text-orange-600">{stats.dueToday}</p>
               </div>
-              <div className="p-3 bg-orange-100 rounded-lg">
-                <Clock size={20} className="text-orange-600" />
+              <div className="p-2 sm:p-3 bg-orange-100 rounded-lg">
+                <Clock size={16} className="sm:hidden text-orange-600" />
+                <Clock size={20} className="hidden sm:block text-orange-600" />
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Critical</p>
-                <p className="text-2xl font-bold text-red-700">{stats.critical}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Critical</p>
+                <p className="text-xl sm:text-2xl font-bold text-red-700">{stats.critical}</p>
               </div>
-              <div className="p-3 bg-red-100 rounded-lg">
-                <AlertTriangle size={20} className="text-red-700" />
+              <div className="p-2 sm:p-3 bg-red-100 rounded-lg">
+                <AlertTriangle size={16} className="sm:hidden text-red-700" />
+                <AlertTriangle size={20} className="hidden sm:block text-red-700" />
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">In Progress</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.inProgress}</p>
+                <p className="text-xs sm:text-sm text-gray-600">In Progress</p>
+                <p className="text-xl sm:text-2xl font-bold text-blue-600">{stats.inProgress}</p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <TrendingUp size={20} className="text-blue-600" />
+              <div className="p-2 sm:p-3 bg-blue-100 rounded-lg">
+                <TrendingUp size={16} className="sm:hidden text-blue-600" />
+                <TrendingUp size={20} className="hidden sm:block text-blue-600" />
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Avg Progress</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.avgProgress}%</p>
+                <p className="text-xs sm:text-sm text-gray-600">Avg Progress</p>
+                <p className="text-xl sm:text-2xl font-bold text-purple-600">{stats.avgProgress}%</p>
               </div>
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <TrendingUp size={20} className="text-purple-600" />
+              <div className="p-2 sm:p-3 bg-purple-100 rounded-lg">
+                <TrendingUp size={16} className="sm:hidden text-purple-600" />
+                <TrendingUp size={20} className="hidden sm:block text-purple-600" />
               </div>
             </div>
           </div>

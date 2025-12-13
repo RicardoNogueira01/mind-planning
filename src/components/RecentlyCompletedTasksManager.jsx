@@ -655,58 +655,63 @@ const RecentlyCompletedTasksManager = () => {
       <main>
         {/* Statistics */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-4 md:mb-6">
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Completed</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Total Completed</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.total}</p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <CheckCircle size={20} className="text-blue-600" />
+              <div className="p-2 sm:p-3 bg-blue-100 rounded-lg">
+                <CheckCircle size={16} className="sm:hidden text-blue-600" />
+                <CheckCircle size={20} className="hidden sm:block text-blue-600" />
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">On Time</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.onTime}</p>
+                <p className="text-xs sm:text-sm text-gray-600">On Time</p>
+                <p className="text-xl sm:text-2xl font-bold text-blue-600">{stats.onTime}</p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <Clock size={20} className="text-blue-600" />
+              <div className="p-2 sm:p-3 bg-blue-100 rounded-lg">
+                <Clock size={16} className="sm:hidden text-blue-600" />
+                <Clock size={20} className="hidden sm:block text-blue-600" />
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Early</p>
-                <p className="text-2xl font-bold text-green-600">{stats.early}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Early</p>
+                <p className="text-xl sm:text-2xl font-bold text-green-600">{stats.early}</p>
               </div>
-              <div className="p-3 bg-green-100 rounded-lg">
-                <TrendingUp size={20} className="text-green-600" />
+              <div className="p-2 sm:p-3 bg-green-100 rounded-lg">
+                <TrendingUp size={16} className="sm:hidden text-green-600" />
+                <TrendingUp size={20} className="hidden sm:block text-green-600" />
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Excellent Quality</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.avgQuality}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Excellent Quality</p>
+                <p className="text-xl sm:text-2xl font-bold text-purple-600">{stats.avgQuality}</p>
               </div>
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <Award size={20} className="text-purple-600" />
+              <div className="p-2 sm:p-3 bg-purple-100 rounded-lg">
+                <Award size={16} className="sm:hidden text-purple-600" />
+                <Award size={20} className="hidden sm:block text-purple-600" />
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Hours</p>
-                <p className="text-2xl font-bold text-orange-600">{stats.totalTimeSpent}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Total Hours</p>
+                <p className="text-xl sm:text-2xl font-bold text-orange-600">{stats.totalTimeSpent}</p>
               </div>
-              <div className="p-3 bg-orange-100 rounded-lg">
-                <Clock size={20} className="text-orange-600" />
+              <div className="p-2 sm:p-3 bg-orange-100 rounded-lg">
+                <Clock size={16} className="sm:hidden text-orange-600" />
+                <Clock size={20} className="hidden sm:block text-orange-600" />
               </div>
             </div>
           </div>

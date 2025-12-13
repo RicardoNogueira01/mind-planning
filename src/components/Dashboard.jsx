@@ -488,21 +488,21 @@ const Dashboard = () => {
               </div>
               
               {/* Statistics Cards */}
-              <div className="grid grid-cols-3 gap-3 mb-6">
-                <div className="bg-gray-50 rounded-xl p-4 text-center">
-                  <p className="text-2xl font-bold text-gray-900 mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
+                <div className="bg-gray-50 rounded-xl p-3 sm:p-4 text-center">
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 mb-0.5 sm:mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
                     {teamHolidayRequests.filter(r => r.status === 'approved').length}
                   </p>
                   <p className="text-xs text-gray-600 font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>Approved</p>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-4 text-center">
-                  <p className="text-2xl font-bold text-gray-900 mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
+                <div className="bg-gray-50 rounded-xl p-3 sm:p-4 text-center">
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 mb-0.5 sm:mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
                     {teamHolidayRequests.filter(r => r.status === 'pending').length}
                   </p>
                   <p className="text-xs text-gray-600 font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>Pending</p>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-4 text-center">
-                  <p className="text-2xl font-bold text-gray-900 mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
+                <div className="bg-gray-50 rounded-xl p-3 sm:p-4 text-center">
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 mb-0.5 sm:mb-1" style={{ fontFamily: 'DM Mono, monospace' }}>
                     {teamHolidayRequests.filter(r => r.status === 'canceled').length}
                   </p>
                   <p className="text-xs text-gray-600 font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>Canceled</p>
@@ -517,14 +517,14 @@ const Dashboard = () => {
                   .map((request) => (
                     <div 
                       key={request.id} 
-                      className="flex items-center gap-4 pb-3 border-b border-gray-100 last:border-0 last:pb-0"
+                      className="flex items-center gap-3 sm:gap-4 pb-3 border-b border-gray-100 last:border-0 last:pb-0"
                     >
-                      <div className={clsx("w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0", request.color)}>
+                      <div className={clsx("w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-semibold flex-shrink-0", request.color)}>
                         {request.initials}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-gray-900 text-sm" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                          <h3 className="font-semibold text-gray-900 text-sm truncate" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                             {request.employeeName}
                           </h3>
                           <span className={clsx('text-base flex-shrink-0', {
@@ -534,10 +534,10 @@ const Dashboard = () => {
                             {request.status === 'approved' ? '✓' : '🕐'}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-600 mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                        <p className="text-xs text-gray-600 mb-1 truncate" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                           {request.startDate} - {request.endDate}
                         </p>
-                        <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>{request.reason}</p>
+                        <p className="text-xs text-gray-500 truncate" style={{ fontFamily: 'DM Sans, sans-serif' }}>{request.reason}</p>
                       </div>
                     </div>
                   ))}

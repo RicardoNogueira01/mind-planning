@@ -679,57 +679,61 @@ const TeamMembersManager = () => {
       </header>      {/* Main Content */}
       <main>
         {/* Statistics Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 md:mb-6">
           {/* Total Members */}
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg shadow-blue-500/30">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2.5 bg-white/20 backdrop-blur-sm rounded-xl">
-                <Users size={24} />
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg shadow-blue-500/30">
+            <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+              <div className="p-2 sm:p-2.5 bg-white/20 backdrop-blur-sm rounded-xl">
+                <Users size={20} className="sm:hidden" />
+                <Users size={24} className="hidden sm:block" />
               </div>
               <div>
-                <p className="text-sm font-medium text-blue-100">Total Members</p>
-                <p className="text-3xl font-bold">{stats.total}</p>
+                <p className="text-xs sm:text-sm font-medium text-blue-100">Total Members</p>
+                <p className="text-2xl sm:text-3xl font-bold">{stats.total}</p>
               </div>
             </div>
             <p className="text-xs text-blue-100">+2 this month</p>
           </div>
 
           {/* Active Members */}
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-green-100 rounded-xl">
-                <CheckCircle size={24} className="text-green-600" />
+          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-100">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="p-2 sm:p-3 bg-green-100 rounded-xl">
+                <CheckCircle size={20} className="sm:hidden text-green-600" />
+                <CheckCircle size={24} className="hidden sm:block text-green-600" />
               </div>
-              <span className="text-xs font-semibold px-2.5 py-1 bg-green-100 text-green-700 rounded-full">+100%</span>
+              <span className="text-xs font-semibold px-2 sm:px-2.5 py-1 bg-green-100 text-green-700 rounded-full">+100%</span>
             </div>
-            <p className="text-sm text-gray-600 mb-1">Active Members</p>
-            <p className="text-3xl font-bold text-gray-900">{stats.active}</p>
-            <p className="text-xs text-gray-500 mt-2">On track</p>
+            <p className="text-xs sm:text-sm text-gray-600 mb-1">Active Members</p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.active}</p>
+            <p className="text-xs text-gray-500 mt-1 sm:mt-2">On track</p>
           </div>
 
           {/* Avg Completion */}
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-purple-100 rounded-xl">
-                <TrendingUp size={24} className="text-purple-600" />
+          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-100">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="p-2 sm:p-3 bg-purple-100 rounded-xl">
+                <TrendingUp size={20} className="sm:hidden text-purple-600" />
+                <TrendingUp size={24} className="hidden sm:block text-purple-600" />
               </div>
-              <span className="text-xs font-semibold px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full">Good</span>
+              <span className="text-xs font-semibold px-2 sm:px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full">Good</span>
             </div>
-            <p className="text-sm text-gray-600 mb-1">Avg Completion</p>
-            <p className="text-3xl font-bold text-gray-900">{stats.avgCompletionRate}%</p>
-            <p className="text-xs text-gray-500 mt-2">+1.2% vs last month</p>
+            <p className="text-xs sm:text-sm text-gray-600 mb-1">Avg Completion</p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.avgCompletionRate}%</p>
+            <p className="text-xs text-gray-500 mt-1 sm:mt-2">+1.2% vs last month</p>
           </div>
 
           {/* Total Overdue */}
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-red-100 rounded-xl">
-                <AlertTriangle size={24} className="text-red-600" />
+          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-100">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="p-2 sm:p-3 bg-red-100 rounded-xl">
+                <AlertTriangle size={20} className="sm:hidden text-red-600" />
+                <AlertTriangle size={24} className="hidden sm:block text-red-600" />
               </div>
-              <span className="text-xs font-semibold px-2.5 py-1 bg-red-100 text-red-700 rounded-full">-4 from last week</span>
+              <span className="text-xs font-semibold px-2 sm:px-2.5 py-1 bg-red-100 text-red-700 rounded-full">-4 from last week</span>
             </div>
-            <p className="text-sm text-gray-600 mb-1">Total Overdue</p>
-            <p className="text-3xl font-bold text-gray-900">{stats.totalOverdue}</p>
+            <p className="text-xs sm:text-sm text-gray-600 mb-1">Total Overdue</p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.totalOverdue}</p>
           </div>
         </div>
 
