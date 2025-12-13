@@ -226,7 +226,7 @@ export default function RiskMatrix({ nodes, connections, collaborators, onClose 
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden w-96 max-h-[80vh] flex flex-col">
+    <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden w-full max-w-sm sm:max-w-md md:w-96 max-h-[80vh] flex flex-col mx-4">
       {/* Header */}
       <div className="bg-gradient-to-r from-red-500 to-rose-600 p-4 text-white">
         <div className="flex items-center justify-between">

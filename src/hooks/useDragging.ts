@@ -4,7 +4,7 @@
  */
 
 import { useRef, useState, useCallback } from 'react';
-import type { Node } from '../types/mindmap';
+import type { Node, Position } from '../types/mindmap';
 
 export function useDragging(
   nodes: Node[],
@@ -14,7 +14,8 @@ export function useDragging(
   selectedNodes: string[],
   getNodeGroup?: (nodeId: string) => any,
   constrainPositionToGroup?: (x: number, y: number, boundingBox: any) => { x: number; y: number },
-  zoom?: number
+  zoom?: number,
+  snapToNonCollidingPosition?: (nodeId: string, x: number, y: number) => Position
 ) {
   // Dragging state
   const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
@@ -174,10 +175,28 @@ export function useDragging(
 
   /**
    * Handle mouse up - stop dragging/panning
+   * If a node was dragged and it's overlapping another node, snap it to nearest free position
    */
   const stopPanning = useCallback(() => {
     const wasDraggingNode = draggingNodeId !== null;
     const draggedNodeId = draggingNodeId;
+    
+    // Apply collision snapping if available
+    if (wasDraggingNode && draggedNodeId && snapToNonCollidingPosition) {
+      const draggedNode = nodes.find(n => n.id === draggedNodeId);
+      if (draggedNode) {
+        const snappedPosition = snapToNonCollidingPosition(draggedNodeId, draggedNode.x, draggedNode.y);
+        
+        // If position changed, update the node
+        if (snappedPosition.x !== draggedNode.x || snappedPosition.y !== draggedNode.y) {
+          setNodes(prev => prev.map(n => 
+            n.id === draggedNodeId 
+              ? { ...n, x: snappedPosition.x, y: snappedPosition.y }
+              : n
+          ));
+        }
+      }
+    }
     
     setIsPanning(false);
     setDraggingNodeId(null);
@@ -185,7 +204,7 @@ export function useDragging(
     
     // Return info about what was being dragged for the caller to handle
     return { wasDraggingNode, draggedNodeId };
-  }, [draggingNodeId]);
+  }, [draggingNodeId, nodes, snapToNonCollidingPosition, setNodes]);
 
   return {
     // Dragging state

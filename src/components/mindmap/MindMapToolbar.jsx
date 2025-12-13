@@ -26,7 +26,7 @@ const MindMapToolbar = ({
     <div 
       className={`${
         isMobile 
-          ? `fixed left-0 top-0 h-full z-20 bg-white shadow-2xl border-r border-gray-200 w-20 p-4 transition-transform duration-300 ease-in-out ${
+          ? `fixed left-0 top-0 h-full z-[70] bg-white shadow-2xl border-r border-gray-200 w-20 p-4 transition-transform duration-300 ease-in-out ${
               showMobileToolbar ? 'translate-x-0' : 'translate-x-[-100%]'
             }` 
           : 'absolute top-4 left-4 z-20 bg-white shadow-lg border border-gray-100 rounded-2xl p-2.5'

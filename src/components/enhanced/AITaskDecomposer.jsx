@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Loader2, Plus, CheckCircle, ChevronDown, ChevronUp, Zap, Clock, Flag } from 'lucide-react';
+import { Sparkles, Loader2, Plus, CheckCircle, ChevronDown, ChevronUp, Zap, Clock, Flag, X } from 'lucide-react';
 import PropTypes from 'prop-types';
 
 /**
@@ -215,19 +215,29 @@ export default function AITaskDecomposer({ node, onDecompose, onClose }) {
     .reduce((sum, s) => sum + s.estimatedHours, 0);
 
   return (
-    <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-96 max-h-[80vh] overflow-hidden flex flex-col">
+    <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-sm sm:max-w-md md:w-96 max-h-[80vh] overflow-hidden flex flex-col mx-4">
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-500 to-indigo-600 p-4 text-white">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-            <Sparkles className="w-5 h-5" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-semibold">AI Task Breakdown</h3>
+              <p className="text-sm text-purple-100 truncate max-w-[250px]">
+                {node?.text || 'Select a task'}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold">AI Task Breakdown</h3>
-            <p className="text-sm text-purple-100 truncate max-w-[250px]">
-              {node?.text || 'Select a task'}
-            </p>
-          </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -242,7 +252,7 @@ export default function AITaskDecomposer({ node, onDecompose, onClose }) {
             <button
               onClick={analyzeTask}
               disabled={isAnalyzing || !node}
-              className="w-full py-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-xl font-medium hover:from-purple-600 hover:to-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-purple-500/30"
+              className="w-full py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
             >
               {isAnalyzing ? (
                 <>
@@ -352,7 +362,7 @@ export default function AITaskDecomposer({ node, onDecompose, onClose }) {
                   <button
                     onClick={handleAddCustom}
                     disabled={!customSubtask.trim()}
-                    className="px-3 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200 transition-colors disabled:opacity-50"
+                    className="px-3 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
@@ -376,7 +386,7 @@ export default function AITaskDecomposer({ node, onDecompose, onClose }) {
             <button
               onClick={handleAddAll}
               disabled={selectedSuggestions.size === 0}
-              className="flex-1 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-indigo-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Add {selectedSuggestions.size} Subtasks

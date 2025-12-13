@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Clock, Camera, RotateCcw, ChevronRight, ChevronDown, Trash2, History, Calendar, CheckCircle, GitBranch, Download, Upload, AlertTriangle } from 'lucide-react';
+import { Clock, Camera, RotateCcw, ChevronRight, ChevronDown, Trash2, History, Calendar, CheckCircle, GitBranch, Download, Upload, AlertTriangle, X } from 'lucide-react';
 import PropTypes from 'prop-types';
 
 /**
@@ -15,7 +15,8 @@ export default function TimeTravel({
   onExportSnapshot,
   onImportSnapshot,
   currentNodes = [],
-  currentConnections = []
+  currentConnections = [],
+  onClose
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [snapshotName, setSnapshotName] = useState('');
@@ -132,7 +133,7 @@ export default function TimeTravel({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden w-96 max-h-[80vh] flex flex-col">
+    <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden w-full max-w-sm sm:max-w-md md:w-96 max-h-[80vh] flex flex-col mx-4">
       {/* Header */}
       <div
         className="bg-gradient-to-r from-cyan-500 to-blue-600 p-4 text-white cursor-pointer"
@@ -150,11 +151,21 @@ export default function TimeTravel({
               </p>
             </div>
           </div>
-          {isExpanded ? (
-            <ChevronDown className="w-5 h-5" />
-          ) : (
-            <ChevronRight className="w-5 h-5" />
-          )}
+          <div className="flex items-center gap-2">
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+            {isExpanded ? (
+              <ChevronDown className="w-5 h-5" />
+            ) : (
+              <ChevronRight className="w-5 h-5" />
+            )}
+          </div>
         </div>
       </div>
 
@@ -185,7 +196,7 @@ export default function TimeTravel({
             {!showNameInput ? (
               <button
                 onClick={() => setShowNameInput(true)}
-                className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl font-medium hover:from-cyan-600 hover:to-blue-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/30"
+                className="w-full py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-800 transition-all flex items-center justify-center gap-2 shadow-lg"
               >
                 <Camera className="w-5 h-5" />
                 Create Snapshot
@@ -224,7 +235,7 @@ export default function TimeTravel({
                   <button
                     onClick={handleCreateSnapshot}
                     disabled={!snapshotName.trim()}
-                    className="flex-1 py-2 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex-1 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     <Camera className="w-4 h-4" />
                     Save

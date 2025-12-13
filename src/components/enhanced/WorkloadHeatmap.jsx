@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Users, AlertTriangle, TrendingUp, TrendingDown, BarChart3, ChevronDown, ChevronUp, UserPlus, Clock, CheckCircle } from 'lucide-react';
+import { Users, AlertTriangle, TrendingUp, TrendingDown, BarChart3, ChevronDown, ChevronUp, UserPlus, Clock, CheckCircle, X } from 'lucide-react';
 import PropTypes from 'prop-types';
 
 /**
@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
  * Displays workload distribution across team members with visual indicators
  * to help prevent burnout and optimize resource allocation.
  */
-export default function WorkloadHeatmap({ nodes, collaborators, onReassignTask }) {
+export default function WorkloadHeatmap({ nodes, collaborators, onReassignTask, onClose }) {
   const [expandedMember, setExpandedMember] = useState(null);
   const [sortBy, setSortBy] = useState('workload'); // 'workload' | 'name' | 'tasks'
 
@@ -152,19 +152,29 @@ export default function WorkloadHeatmap({ nodes, collaborators, onReassignTask }
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden w-96 max-h-[80vh] flex flex-col">
+    <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden w-full max-w-sm sm:max-w-md md:w-96 max-h-[80vh] flex flex-col mx-4">
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 text-white">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-            <BarChart3 className="w-5 h-5" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+              <BarChart3 className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Team Workload</h3>
+              <p className="text-sm text-indigo-100">
+                {workloadData.length} team member{workloadData.length !== 1 ? 's' : ''}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold">Team Workload</h3>
-            <p className="text-sm text-indigo-100">
-              {workloadData.length} team member{workloadData.length !== 1 ? 's' : ''}
-            </p>
-          </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -358,5 +368,6 @@ WorkloadHeatmap.propTypes = {
     initials: PropTypes.string,
     color: PropTypes.string
   })).isRequired,
-  onReassignTask: PropTypes.func
+  onReassignTask: PropTypes.func,
+  onClose: PropTypes.func
 };

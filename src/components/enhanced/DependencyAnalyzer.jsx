@@ -170,7 +170,7 @@ export default function DependencyAnalyzer({ nodes, connections, onCreateConnect
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-96 max-h-[80vh] overflow-hidden flex flex-col">
+    <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-sm sm:max-w-md md:w-96 max-h-[80vh] overflow-hidden flex flex-col mx-4">
       {/* Header */}
       <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-4 text-white">
         <div className="flex items-center justify-between">

@@ -6,23 +6,54 @@
 import { useCallback } from 'react';
 import type { Node, Position, Connection } from '../types/mindmap';
 
+const NODE_WIDTH = 300;
 const NODE_HEIGHT = 56;
 const MARGIN = 25; // 25px spacing between nodes
-const COLLISION_DISTANCE = 80; // Reduced for tighter spacing
+const COLLISION_DISTANCE = 100; // Minimum distance between node centers
+const MIN_HORIZONTAL_SPACING = NODE_WIDTH + 40; // Prevent horizontal overlap
+const MIN_VERTICAL_SPACING = NODE_HEIGHT + MARGIN; // Prevent vertical overlap
 
 export function useNodePositioning(nodes: Node[], connections: Connection[] = []) {
   /**
    * Check if position is valid (not occupied by another node)
+   * Uses rectangular collision detection for better accuracy
    */
-  const isPositionAvailable = useCallback((x: number, y: number, excludeId: string | null = null): boolean => {
+  const isPositionAvailable = useCallback((x: number, y: number, excludeId: string | null = null, excludeIds: string[] = []): boolean => {
+    const allExcluded = excludeId ? [excludeId, ...excludeIds] : excludeIds;
+    
     return !nodes.some(n => {
-      if (excludeId && n.id === excludeId) return false;
-      const dx = n.x - x;
-      const dy = n.y - y;
-      const distance = Math.hypot(dx, dy);
-      return distance < COLLISION_DISTANCE;
+      if (allExcluded.includes(n.id)) return false;
+      
+      // Rectangular collision check (more accurate for nodes)
+      const horizontalOverlap = Math.abs(n.x - x) < MIN_HORIZONTAL_SPACING;
+      const verticalOverlap = Math.abs(n.y - y) < MIN_VERTICAL_SPACING;
+      
+      // Also check distance for diagonal cases
+      const distance = Math.hypot(n.x - x, n.y - y);
+      
+      return (horizontalOverlap && verticalOverlap) || distance < COLLISION_DISTANCE;
     });
   }, [nodes]);
+
+  /**
+   * Check if position is valid against a specific set of nodes (for batch positioning)
+   */
+  const isPositionAvailableAgainst = useCallback((
+    x: number, 
+    y: number, 
+    existingNodes: Array<{ x: number; y: number; id?: string }>,
+    excludeId: string | null = null
+  ): boolean => {
+    return !existingNodes.some(n => {
+      if (excludeId && n.id === excludeId) return false;
+      
+      const horizontalOverlap = Math.abs(n.x - x) < MIN_HORIZONTAL_SPACING;
+      const verticalOverlap = Math.abs(n.y - y) < MIN_VERTICAL_SPACING;
+      const distance = Math.hypot(n.x - x, n.y - y);
+      
+      return (horizontalOverlap && verticalOverlap) || distance < COLLISION_DISTANCE;
+    });
+  }, []);
 
   /**
    * Find available position around center in spider web pattern
@@ -191,10 +222,198 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
     }
   }, [nodes, connections]);
 
+  /**
+   * Find non-colliding position for a node by spiraling outward from preferred position
+   * More aggressive than findAvailablePosition - checks many more positions
+   */
+  const findNonCollidingPosition = useCallback((
+    preferredX: number, 
+    preferredY: number, 
+    excludeId: string | null = null,
+    additionalNodes: Array<{ x: number; y: number; id?: string }> = []
+  ): Position => {
+    // Check if preferred position is available
+    const allNodes = [...nodes, ...additionalNodes];
+    if (isPositionAvailableAgainst(preferredX, preferredY, allNodes, excludeId)) {
+      return { x: preferredX, y: preferredY };
+    }
+
+    // Spiral outward from preferred position to find a free spot
+    const directions = [
+      { dx: 1, dy: 0 },   // right
+      { dx: 1, dy: 1 },   // down-right
+      { dx: 0, dy: 1 },   // down
+      { dx: -1, dy: 1 },  // down-left
+      { dx: -1, dy: 0 },  // left
+      { dx: -1, dy: -1 }, // up-left
+      { dx: 0, dy: -1 },  // up
+      { dx: 1, dy: -1 },  // up-right
+    ];
+
+    // Try increasing distances with more granularity
+    for (let distance = 1; distance <= 10; distance++) {
+      const stepX = MIN_HORIZONTAL_SPACING * distance;
+      const stepY = MIN_VERTICAL_SPACING * distance;
+
+      for (const dir of directions) {
+        const testX = preferredX + dir.dx * stepX;
+        const testY = preferredY + dir.dy * stepY;
+
+        if (isPositionAvailableAgainst(testX, testY, allNodes, excludeId)) {
+          return { x: testX, y: testY };
+        }
+      }
+    }
+
+    // Fallback: return position far to the right
+    return { 
+      x: preferredX + MIN_HORIZONTAL_SPACING * 3, 
+      y: preferredY 
+    };
+  }, [nodes, isPositionAvailableAgainst]);
+
+  /**
+   * Position multiple child nodes around a parent without overlaps
+   * This is ideal for AI task decomposition where multiple nodes are created at once
+   */
+  const positionMultipleChildren = useCallback((
+    parentId: string,
+    count: number,
+    startDirection: 'right' | 'down' | 'left' | 'up' = 'right'
+  ): Position[] => {
+    const parent = nodes.find(n => n.id === parentId);
+    if (!parent) {
+      // Fallback positions if no parent
+      return Array.from({ length: count }, (_, i) => ({
+        x: 200 + (i % 3) * MIN_HORIZONTAL_SPACING,
+        y: 200 + Math.floor(i / 3) * MIN_VERTICAL_SPACING
+      }));
+    }
+
+    const OFFSET_DISTANCE = NODE_WIDTH + 100;
+    const positions: Position[] = [];
+    const placedPositions: Array<{ x: number; y: number }> = [];
+
+    // Determine base position based on direction
+    let baseX = parent.x;
+    let baseY = parent.y;
+
+    switch (startDirection) {
+      case 'right':
+        baseX = parent.x + OFFSET_DISTANCE;
+        break;
+      case 'down':
+        baseY = parent.y + OFFSET_DISTANCE;
+        break;
+      case 'left':
+        baseX = parent.x - OFFSET_DISTANCE;
+        break;
+      case 'up':
+        baseY = parent.y - OFFSET_DISTANCE;
+        break;
+    }
+
+    // Calculate grid layout based on count
+    const columns = Math.min(count, 3); // Max 3 columns
+    const rows = Math.ceil(count / columns);
+
+    // Center the grid
+    const gridWidth = (columns - 1) * MIN_HORIZONTAL_SPACING;
+    const gridHeight = (rows - 1) * MIN_VERTICAL_SPACING;
+
+    let startX = baseX;
+    let startY = baseY - gridHeight / 2;
+
+    if (startDirection === 'down' || startDirection === 'up') {
+      startX = baseX - gridWidth / 2;
+      startY = baseY;
+    }
+
+    for (let i = 0; i < count; i++) {
+      let preferredX: number;
+      let preferredY: number;
+
+      if (startDirection === 'right' || startDirection === 'left') {
+        // Stack vertically when going horizontal
+        const row = i;
+        preferredX = startX;
+        preferredY = startY + row * MIN_VERTICAL_SPACING;
+      } else {
+        // Stack horizontally when going vertical  
+        const col = i % columns;
+        const row = Math.floor(i / columns);
+        preferredX = startX + col * MIN_HORIZONTAL_SPACING;
+        preferredY = startY + row * MIN_VERTICAL_SPACING;
+      }
+
+      // Find non-colliding position considering both existing nodes and already placed positions
+      const position = findNonCollidingPosition(
+        preferredX, 
+        preferredY, 
+        null, 
+        placedPositions
+      );
+
+      positions.push(position);
+      placedPositions.push(position);
+    }
+
+    return positions;
+  }, [nodes, findNonCollidingPosition]);
+
+  /**
+   * Resolve collisions for all nodes - moves overlapping nodes to nearest free position
+   * Call this after any batch node operations
+   */
+  const resolveAllCollisions = useCallback((nodeList: Node[]): Node[] => {
+    const resolvedNodes: Node[] = [];
+    
+    for (const node of nodeList) {
+      // Check if this node collides with any already-resolved nodes
+      const hasCollision = resolvedNodes.some(resolved => {
+        const horizontalOverlap = Math.abs(resolved.x - node.x) < MIN_HORIZONTAL_SPACING;
+        const verticalOverlap = Math.abs(resolved.y - node.y) < MIN_VERTICAL_SPACING;
+        const distance = Math.hypot(resolved.x - node.x, resolved.y - node.y);
+        
+        return (horizontalOverlap && verticalOverlap) || distance < COLLISION_DISTANCE;
+      });
+
+      if (hasCollision) {
+        // Find new position that doesn't collide
+        const newPosition = findNonCollidingPosition(node.x, node.y, node.id, resolvedNodes);
+        resolvedNodes.push({ ...node, x: newPosition.x, y: newPosition.y });
+      } else {
+        resolvedNodes.push(node);
+      }
+    }
+
+    return resolvedNodes;
+  }, [findNonCollidingPosition]);
+
+  /**
+   * Check and fix position after drag - ensures node doesn't overlap with others
+   */
+  const snapToNonCollidingPosition = useCallback((
+    nodeId: string, 
+    x: number, 
+    y: number
+  ): Position => {
+    if (isPositionAvailable(x, y, nodeId)) {
+      return { x, y };
+    }
+    return findNonCollidingPosition(x, y, nodeId);
+  }, [isPositionAvailable, findNonCollidingPosition]);
+
   return {
     isPositionAvailable,
     findAvailablePosition,
     findStackedPosition,
     findStackedChildPosition,
+    findNonCollidingPosition,
+    positionMultipleChildren,
+    resolveAllCollisions,
+    snapToNonCollidingPosition,
+    // Export constants for external use
+    NODE_DIMENSIONS: { width: NODE_WIDTH, height: NODE_HEIGHT, margin: MARGIN },
   };
 }

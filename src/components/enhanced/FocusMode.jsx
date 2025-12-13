@@ -221,7 +221,7 @@ export default function FocusMode({ selectedNode, onComplete, onClose }) {
   // Settings panel
   if (showSettings) {
     return (
-      <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-80 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-xs sm:w-80 overflow-hidden mx-4">
         <div className="bg-gray-100 p-4 border-b border-gray-200 flex items-center justify-between">
           <h3 className="font-semibold text-gray-900">Timer Settings</h3>
           <button
@@ -338,7 +338,7 @@ export default function FocusMode({ selectedNode, onComplete, onClose }) {
   // No task selected state
   if (!selectedNode) {
     return (
-      <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-80 p-6 text-center">
+      <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-xs sm:w-80 p-6 text-center mx-4">
         <div className="p-4 bg-gray-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
           <Target className="w-8 h-8 text-gray-400" />
         </div>
@@ -349,7 +349,7 @@ export default function FocusMode({ selectedNode, onComplete, onClose }) {
   }
 
   return (
-    <div className={`rounded-2xl shadow-2xl overflow-hidden w-80 bg-gradient-to-br ${colors.bg}`}>
+    <div className={`rounded-2xl shadow-2xl overflow-hidden w-full max-w-xs sm:w-80 bg-gradient-to-br ${colors.bg} mx-4`}>
       {/* Header */}
       <div className="p-4 text-white">
         <div className="flex items-center justify-between mb-3">
