@@ -293,9 +293,9 @@ export interface MindMap extends OwnedEntity {
   sharedWithTeamIds: string[];
   sharedWithTeams?: Team[];
   
-  // Content (stored as JSON)
-  nodes: MindMapNode[];
-  connections: MindMapConnection[];
+  // Content - Nodes and Connections are now separate entities
+  nodes?: Node[];
+  connections?: NodeConnection[];
   
   // Versioning / Snapshots
   snapshots?: MindMapSnapshot[];
@@ -309,67 +309,25 @@ export interface MindMap extends OwnedEntity {
   lastModifiedBy?: User;
 }
 
-export interface MindMapNode {
-  id: string;
+/**
+ * Node - Unified entity that represents both visual node AND task
+ * Each node in a MindMap IS a task with visual properties
+ */
+export interface Node extends OwnedEntity {
+  // ===== VISUAL PROPERTIES =====
   text: string;
   x: number;
   y: number;
   bgColor?: string;
   fontColor?: string;
-  shapeType?: string;
+  shapeType?: 'rectangle' | 'rounded' | 'diamond' | 'ellipse' | 'hexagon';
   emoji?: string;
-  completed?: boolean;
   
-  // Rich content
+  // ===== TASK PROPERTIES =====
   notes?: string;
-  tags?: string[];
-  attachments?: Attachment[];
-  
-  // Task linkage (optional - node can represent a task)
-  taskId?: string;
-  
-  // Assignment
-  assigneeId?: string;
-  
-  // Dates
-  dueDate?: Date;
-  
-  // Priority
-  priority?: TaskPriority;
-  
-  // Time tracking
-  estimatedHours?: number;
-  loggedHours?: number;
-}
-
-export interface MindMapConnection {
-  id: string;
-  from: string;
-  to: string;
-  label?: string;
-  style?: 'solid' | 'dashed' | 'dotted';
-  color?: string;
-}
-
-export interface MindMapSnapshot extends BaseEntity {
-  name: string;
-  description?: string;
-  nodes: MindMapNode[];
-  connections: MindMapConnection[];
-  
-  mindMapId: string;
-  createdById: string;
-  createdBy?: User;
-}
-
-/**
- * Task - Work item that can exist independently or linked to MindMap nodes
- */
-export interface Task extends OwnedEntity {
-  title: string;
-  description?: string;
   status: TaskStatus;
   priority: TaskPriority;
+  completed: boolean;
   
   // Dates
   startDate?: Date;
@@ -380,27 +338,37 @@ export interface Task extends OwnedEntity {
   estimatedHours?: number;
   loggedHours?: number;
   
-  // Assignment
+  // ===== RELATIONSHIPS =====
+  
+  // MindMap this node belongs to
+  mindMapId: string;
+  mindMap?: MindMap;
+  
+  // Project (denormalized)
+  projectId?: string;
+  project?: Project;
+  
+  // Primary Assignee
   assigneeId?: string;
   assignee?: User;
   
-  // Relationships
-  projectId?: string;
-  project?: Project;
-  mindMapId?: string;
-  mindMap?: MindMap;
-  nodeId?: string; // Link to specific node in mindmap
+  // Multiple assignees
+  assignees?: NodeAssignee[];
   
-  // Parent task (for subtasks)
-  parentTaskId?: string;
-  parentTask?: Task;
-  subtasks?: Task[];
+  // Parent node (for hierarchy/subtasks)
+  parentId?: string;
+  parent?: Node;
+  children?: Node[];
   
-  // Dependencies
-  blockedByTaskIds?: string[];
-  blockedByTasks?: Task[];
-  blockingTaskIds?: string[];
-  blockingTasks?: Task[];
+  // Connections
+  connectionsFrom?: NodeConnection[];
+  connectionsTo?: NodeConnection[];
+  
+  // Dependencies (blocking relationships)
+  blockedByNodeIds?: string[];
+  blockedByNodes?: Node[];
+  blockingNodeIds?: string[];
+  blockingNodes?: Node[];
   
   // Rich content
   tags?: string[];
@@ -409,6 +377,48 @@ export interface Task extends OwnedEntity {
   
   // Activity
   activityLog?: ActivityLogEntry[];
+}
+
+// Alias for backwards compatibility
+export type MindMapNode = Node;
+
+// Alias Task -> Node for backwards compatibility
+export type Task = Node;
+
+export interface NodeAssignee {
+  id: string;
+  nodeId: string;
+  userId: string;
+  user?: User;
+  role: 'assignee' | 'reviewer' | 'observer';
+  allocatedHours?: number;
+  createdAt: Date;
+}
+
+export interface NodeConnection {
+  id: string;
+  fromId: string;
+  from?: Node;
+  toId: string;
+  to?: Node;
+  label?: string;
+  style?: 'solid' | 'dashed' | 'dotted';
+  color?: string;
+  mindMapId: string;
+}
+
+// Alias for backwards compatibility
+export type MindMapConnection = NodeConnection;
+
+export interface MindMapSnapshot extends BaseEntity {
+  name: string;
+  description?: string;
+  nodes: Node[];
+  connections: NodeConnection[];
+  
+  mindMapId: string;
+  createdById: string;
+  createdBy?: User;
 }
 
 /**
@@ -433,7 +443,7 @@ export interface HolidayRequest extends OwnedEntity {
 }
 
 /**
- * Attachment - File attached to tasks, nodes, etc.
+ * Attachment - File attached to nodes, mindmaps, etc.
  */
 export interface Attachment extends BaseEntity {
   name: string;
@@ -444,13 +454,14 @@ export interface Attachment extends BaseEntity {
   // Relationships
   uploadedById: string;
   uploadedBy?: User;
-  taskId?: string;
-  mindMapId?: string;
   nodeId?: string;
+  node?: Node;
+  mindMapId?: string;
+  mindMap?: MindMap;
 }
 
 /**
- * Comment - Comments on tasks
+ * Comment - Comments on nodes
  */
 export interface Comment extends BaseEntity {
   content: string;
@@ -458,8 +469,8 @@ export interface Comment extends BaseEntity {
   // Relationships
   authorId: string;
   author?: User;
-  taskId: string;
-  task?: Task;
+  nodeId: string;
+  node?: Node;
   
   // Reply threading
   parentCommentId?: string;
@@ -484,8 +495,8 @@ export interface Notification extends BaseEntity {
   // Related entities
   userId: string;
   user?: User;
-  taskId?: string;
-  task?: Task;
+  nodeId?: string;
+  node?: Node;
   projectId?: string;
   project?: Project;
   triggeredById?: string;
@@ -500,7 +511,7 @@ export interface Notification extends BaseEntity {
  */
 export interface ActivityLogEntry extends BaseEntity {
   action: string;
-  entityType: 'task' | 'project' | 'mindmap' | 'user' | 'holiday' | 'comment';
+  entityType: 'node' | 'project' | 'mindmap' | 'user' | 'holiday' | 'comment';
   entityId: string;
   changes?: Record<string, { old: unknown; new: unknown }>;
   

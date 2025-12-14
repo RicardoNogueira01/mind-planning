@@ -67,6 +67,7 @@ enum NotificationType {
   holiday_rejected
   project_update
   deadline_reminder
+  handoff
   system
 }
 
@@ -77,6 +78,9 @@ enum ExpenseCategory {
   travel
   office
   training
+  events
+  meals
+  gifts
   other
 }
 
@@ -101,6 +105,40 @@ enum DecisionStatus {
   final
   pending
   revised
+}
+
+enum DocumentType {
+  document
+  image
+  pdf
+  link
+  other
+}
+
+enum DocumentCategory {
+  guides
+  templates
+  policies
+  onboarding
+  technical
+  design
+  other
+}
+
+enum HandoffStatus {
+  pending
+  in_progress
+  completed
+  cancelled
+}
+
+enum ResourceType {
+  person
+  equipment
+  room
+  software
+  license
+  other
 }
 
 // ============================================
@@ -163,9 +201,9 @@ model User {
   modifiedMindMaps  MindMap[]     @relation("MindMapLastModifier")
   mindMapSnapshots  MindMapSnapshot[]
   
-  // Tasks
-  createdTasks      Task[]        @relation("TaskCreator")
-  assignedTasks     Task[]        @relation("TaskAssignee")
+  // Nodes (Tasks)
+  createdNodes      Node[]        @relation("NodeCreator")
+  assignedNodes     Node[]        @relation("NodeAssignee")
   
   // Holidays
   holidayRequests   HolidayRequest[] @relation("HolidayRequestor")
@@ -198,6 +236,29 @@ model User {
   
   // Automations
   createdAutomations AutomationRule[]
+  
+  // Knowledge Base
+  createdDocuments   KnowledgeDocument[]  @relation("DocumentCreator")
+  modifiedDocuments  KnowledgeDocument[]  @relation("DocumentModifier")
+  starredDocuments   DocumentStar[]
+  
+  // Time Tracking & Workload
+  timeEntries        TimeEntry[]
+  workloadEntries    WorkloadEntry[]
+  
+  // Handoffs
+  handoffsFrom       NodeHandoff[]        @relation("HandoffFrom")
+  handoffsTo         NodeHandoff[]        @relation("HandoffTo")
+  
+  // Resources
+  createdResources   Resource[]           @relation("ResourceCreator")
+  resourceAllocations ResourceAllocation[]
+  
+  // Budgets
+  createdBudgets     Budget[]             @relation("BudgetCreator")
+  
+  // Node multiple assignees
+  nodeAssignments    NodeAssignee[]
   
   // Sessions
   sessions          Session[]
@@ -244,6 +305,18 @@ model Organization {
   teams     Team[]
   projects  Project[]
   automations AutomationRule[]
+  
+  // Knowledge Base
+  documents KnowledgeDocument[]
+  
+  // Resources
+  resources Resource[]
+  
+  // Budgets
+  budgets   Budget[]
+  
+  // Country Holidays (org-specific)
+  holidays  CountryHoliday[]
   
   @@index([slug])
   @@index([ownerId])
@@ -329,10 +402,25 @@ model Project {
   
   // Content
   mindMaps    MindMap[]
-  tasks       Task[]
+  nodes       Node[]
   decisions   Decision[]
   expenses    Expense[]
   automations AutomationRule[]
+  
+  // Knowledge Base
+  documents   KnowledgeDocument[]
+  
+  // Time Tracking
+  timeEntries TimeEntry[]
+  
+  // Budgets
+  budgets     Budget[]
+  
+  // Timeline / Gantt
+  timelineItems TimelineItem[]
+  
+  // Resource Allocations
+  resourceAllocations ResourceAllocation[]
   
   @@index([organizationId])
   @@index([teamId])
@@ -370,10 +458,6 @@ model MindMap {
   isTemplate  Boolean   @default(false)
   isPublic    Boolean   @default(false)
   
-  // Content (stored as JSON)
-  nodes       Json      @default("[]")
-  connections Json      @default("[]")
-  
   // Project (optional)
   projectId   String?
   project     Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
@@ -393,8 +477,11 @@ model MindMap {
   // Snapshots
   snapshots   MindMapSnapshot[]
   
-  // Tasks linked to nodes
-  tasks       Task[]
+  // Nodes (each node is a task)
+  nodes       Node[]
+  
+  // Connections between nodes
+  connections NodeConnection[]
   
   // Attachments
   attachments Attachment[]
@@ -445,8 +532,8 @@ model MindMapSnapshot {
   
   name        String
   description String?
-  nodes       Json
-  connections Json
+  nodes       Json     // Snapshot of nodes state
+  connections Json     // Snapshot of connections state
   
   mindMapId   String
   mindMap     MindMap  @relation(fields: [mindMapId], references: [id], onDelete: Cascade)
@@ -458,15 +545,36 @@ model MindMapSnapshot {
   @@index([createdById])
 }
 
-model Task {
+// ============================================
+// NODE - Unified Task/Node Entity
+// Each node in a MindMap IS a task
+// ============================================
+
+model Node {
   id          String       @id @default(cuid())
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   
-  title       String
-  description String?
+  // ===== VISUAL PROPERTIES =====
+  // Position on canvas
+  x           Float        @default(0)
+  y           Float        @default(0)
+  
+  // Appearance
+  bgColor     String       @default("#ffffff")
+  fontColor   String       @default("#000000")
+  shapeType   String       @default("rectangle") // rectangle, rounded, diamond, ellipse, hexagon
+  emoji       String?
+  
+  // ===== TASK PROPERTIES =====
+  // Content
+  text        String       // Main text/title
+  notes       String?      @db.Text // Rich text notes/description
+  
+  // Status & Priority
   status      TaskStatus   @default(not_started)
   priority    TaskPriority @default(medium)
+  completed   Boolean      @default(false)
   
   // Dates
   startDate   DateTime?
@@ -477,34 +585,42 @@ model Task {
   estimatedHours Float?
   loggedHours    Float?    @default(0)
   
+  // Tags (stored as JSON array)
+  tags        Json         @default("[]")
+  
+  // ===== RELATIONSHIPS =====
+  
+  // MindMap this node belongs to
+  mindMapId   String
+  mindMap     MindMap      @relation(fields: [mindMapId], references: [id], onDelete: Cascade)
+  
   // Creator
   createdById String
-  createdBy   User         @relation("TaskCreator", fields: [createdById], references: [id])
+  createdBy   User         @relation("NodeCreator", fields: [createdById], references: [id])
   
-  // Assignee
+  // Primary Assignee
   assigneeId  String?
-  assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  assignee    User?        @relation("NodeAssignee", fields: [assigneeId], references: [id])
   
-  // Project
+  // Project (denormalized from MindMap for easier queries)
   projectId   String?
   project     Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
   
-  // MindMap (optional link)
-  mindMapId   String?
-  mindMap     MindMap?     @relation(fields: [mindMapId], references: [id], onDelete: SetNull)
-  nodeId      String?      // ID of the node within the mindmap
+  // Parent node (for hierarchical/subtask structure)
+  parentId    String?
+  parent      Node?        @relation("NodeHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Node[]       @relation("NodeHierarchy")
   
-  // Parent task (for subtasks)
-  parentTaskId String?
-  parentTask   Task?       @relation("TaskHierarchy", fields: [parentTaskId], references: [id], onDelete: SetNull)
-  subtasks     Task[]      @relation("TaskHierarchy")
+  // Connections (outgoing)
+  connectionsFrom NodeConnection[] @relation("ConnectionFrom")
+  connectionsTo   NodeConnection[] @relation("ConnectionTo")
   
-  // Dependencies
-  blockedByTasks  TaskDependency[] @relation("BlockedTask")
-  blockingTasks   TaskDependency[] @relation("BlockingTask")
+  // Dependencies (blocking relationships)
+  blockedByNodes  NodeDependency[] @relation("BlockedNode")
+  blockingNodes   NodeDependency[] @relation("BlockingNode")
   
-  // Tags (stored as JSON)
-  tags        Json         @default("[]")
+  // Multiple assignees (for collaborative tasks)
+  assignees   NodeAssignee[]
   
   // Attachments
   attachments Attachment[]
@@ -518,32 +634,92 @@ model Task {
   // Notifications
   notifications Notification[]
   
-  // Decisions
-  decisions   TaskDecision[]
+  // Decisions linked to this node
+  decisions   NodeDecision[]
   
+  // Handoffs
+  handoffs    NodeHandoff[]
+  
+  // Time entries
+  timeEntries TimeEntry[]
+  
+  @@index([mindMapId])
   @@index([createdById])
   @@index([assigneeId])
   @@index([projectId])
-  @@index([mindMapId])
-  @@index([parentTaskId])
+  @@index([parentId])
   @@index([status])
   @@index([priority])
   @@index([dueDate])
+  @@index([completed])
 }
 
-model TaskDependency {
+// Connection between two nodes in a MindMap
+model NodeConnection {
   id          String   @id @default(cuid())
   createdAt   DateTime @default(now())
   
-  blockedTaskId  String
-  blockedTask    Task    @relation("BlockedTask", fields: [blockedTaskId], references: [id], onDelete: Cascade)
+  // Visual properties
+  label       String?
+  style       String   @default("solid") // solid, dashed, dotted
+  color       String?
   
-  blockingTaskId String
-  blockingTask   Task    @relation("BlockingTask", fields: [blockingTaskId], references: [id], onDelete: Cascade)
+  // Source node
+  fromId      String
+  from        Node     @relation("ConnectionFrom", fields: [fromId], references: [id], onDelete: Cascade)
   
-  @@unique([blockedTaskId, blockingTaskId])
-  @@index([blockedTaskId])
-  @@index([blockingTaskId])
+  // Target node
+  toId        String
+  to          Node     @relation("ConnectionTo", fields: [toId], references: [id], onDelete: Cascade)
+  
+  // MindMap (denormalized for easier queries)
+  mindMapId   String
+  mindMap     MindMap  @relation(fields: [mindMapId], references: [id], onDelete: Cascade)
+  
+  @@unique([fromId, toId])
+  @@index([fromId])
+  @@index([toId])
+  @@index([mindMapId])
+}
+
+// Dependency relationship (blocking) between nodes
+model NodeDependency {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  // The node that is blocked
+  blockedNodeId  String
+  blockedNode    Node    @relation("BlockedNode", fields: [blockedNodeId], references: [id], onDelete: Cascade)
+  
+  // The node that is blocking
+  blockingNodeId String
+  blockingNode   Node    @relation("BlockingNode", fields: [blockingNodeId], references: [id], onDelete: Cascade)
+  
+  @@unique([blockedNodeId, blockingNodeId])
+  @@index([blockedNodeId])
+  @@index([blockingNodeId])
+}
+
+// Many-to-many relationship for multiple node assignees
+model NodeAssignee {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  
+  nodeId    String
+  node      Node     @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Role in this node/task
+  role      String   @default("assignee") // assignee, reviewer, observer
+  
+  // Hours allocated to this person
+  allocatedHours Float?
+  
+  @@unique([nodeId, userId])
+  @@index([nodeId])
+  @@index([userId])
 }
 
 model HolidayRequest {
@@ -587,17 +763,15 @@ model Attachment {
   uploadedById String
   uploadedBy   User     @relation(fields: [uploadedById], references: [id])
   
-  // Can be attached to Task or MindMap
-  taskId    String?
-  task      Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  // Can be attached to Node or MindMap
+  nodeId    String?
+  node      Node?    @relation(fields: [nodeId], references: [id], onDelete: Cascade)
   
   mindMapId String?
   mindMap   MindMap? @relation(fields: [mindMapId], references: [id], onDelete: Cascade)
   
-  nodeId    String?  // Node within mindmap
-  
   @@index([uploadedById])
-  @@index([taskId])
+  @@index([nodeId])
   @@index([mindMapId])
 }
 
@@ -612,9 +786,9 @@ model Comment {
   authorId  String
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   
-  // Task
-  taskId    String
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  // Node
+  nodeId    String
+  node      Node     @relation(fields: [nodeId], references: [id], onDelete: Cascade)
   
   // Reply threading
   parentCommentId String?
@@ -625,7 +799,7 @@ model Comment {
   mentions  CommentMention[]
   
   @@index([authorId])
-  @@index([taskId])
+  @@index([nodeId])
   @@index([parentCommentId])
 }
 
@@ -663,15 +837,15 @@ model Notification {
   triggeredBy   User?        @relation("NotificationTrigger", fields: [triggeredById], references: [id])
   
   // Related entities (optional)
-  taskId    String?
-  task      Task?            @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  nodeId    String?
+  node      Node?            @relation(fields: [nodeId], references: [id], onDelete: Cascade)
   
   // Action URL
   actionUrl String?
   
   @@index([userId])
   @@index([triggeredById])
-  @@index([taskId])
+  @@index([nodeId])
   @@index([isRead])
   @@index([createdAt])
 }
@@ -681,7 +855,7 @@ model ActivityLog {
   createdAt   DateTime @default(now())
   
   action      String
-  entityType  String   // task, project, mindmap, user, holiday, comment
+  entityType  String   // node, project, mindmap, user, holiday, comment
   entityId    String
   changes     Json?    // { field: { old: value, new: value } }
   
@@ -693,13 +867,13 @@ model ActivityLog {
   ipAddress   String?
   userAgent   String?
   
-  // Optional task reference for quick queries
-  taskId      String?
-  task        Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  // Optional node reference for quick queries
+  nodeId      String?
+  node        Node?    @relation(fields: [nodeId], references: [id], onDelete: SetNull)
   
   @@index([userId])
   @@index([entityType, entityId])
-  @@index([taskId])
+  @@index([nodeId])
   @@index([createdAt])
 }
 
@@ -726,8 +900,8 @@ model Decision {
   projectId   String?
   project     Project?         @relation(fields: [projectId], references: [id], onDelete: SetNull)
   
-  // Related tasks
-  tasks       TaskDecision[]
+  // Related nodes
+  nodes       NodeDecision[]
   
   // Stakeholders
   stakeholders DecisionStakeholder[]
@@ -738,18 +912,18 @@ model Decision {
   @@index([status])
 }
 
-model TaskDecision {
+model NodeDecision {
   id         String   @id @default(cuid())
   createdAt  DateTime @default(now())
   
-  taskId     String
-  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  nodeId     String
+  node       Node     @relation(fields: [nodeId], references: [id], onDelete: Cascade)
   
   decisionId String
   decision   Decision @relation(fields: [decisionId], references: [id], onDelete: Cascade)
   
-  @@unique([taskId, decisionId])
-  @@index([taskId])
+  @@unique([nodeId, decisionId])
+  @@index([nodeId])
   @@index([decisionId])
 }
 
@@ -859,4 +1033,429 @@ model AutomationRule {
   @@index([projectId])
   @@index([organizationId])
   @@index([isEnabled])
+}
+
+// ============================================
+// KNOWLEDGE BASE / WIKI
+// ============================================
+
+model KnowledgeDocument {
+  id          String           @id @default(cuid())
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  
+  title       String
+  content     String           @db.Text
+  type        DocumentType     @default(document)
+  category    DocumentCategory @default(other)
+  
+  // File info (for non-document types)
+  fileUrl     String?
+  fileSize    Int?
+  mimeType    String?
+  
+  // Metadata
+  tags        Json             @default("[]")
+  
+  // Creator
+  createdById String
+  createdBy   User             @relation("DocumentCreator", fields: [createdById], references: [id])
+  
+  // Last modifier
+  lastModifiedById String?
+  lastModifiedBy   User?       @relation("DocumentModifier", fields: [lastModifiedById], references: [id])
+  
+  // Project (optional - docs can be org-wide or project-specific)
+  projectId   String?
+  project     Project?         @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  
+  // Organization
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  // Stars/favorites
+  stars       DocumentStar[]
+  
+  // Linked nodes
+  linkedNodes DocumentNodeLink[]
+  
+  @@index([createdById])
+  @@index([projectId])
+  @@index([organizationId])
+  @@index([category])
+  @@index([type])
+  @@index([title])
+}
+
+model DocumentStar {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  documentId  String
+  document    KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([documentId, userId])
+  @@index([documentId])
+  @@index([userId])
+}
+
+model DocumentNodeLink {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  documentId  String
+  document    KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  nodeId      String
+  
+  @@unique([documentId, nodeId])
+  @@index([documentId])
+  @@index([nodeId])
+}
+
+// ============================================
+// TIME TRACKING & WORKLOAD
+// ============================================
+
+model TimeEntry {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  date        DateTime
+  hours       Float
+  description String?
+  billable    Boolean  @default(true)
+  
+  // User who logged the time
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Node (required - time is always logged against a node)
+  nodeId      String
+  node        Node     @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  
+  // Project (denormalized for easier queries)
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  
+  @@index([userId])
+  @@index([nodeId])
+  @@index([projectId])
+  @@index([date])
+}
+
+model WorkloadEntry {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Week start date (normalized to Monday)
+  weekStart   DateTime
+  
+  // User
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Capacity and allocation
+  capacityHours    Float    @default(40)
+  allocatedHours   Float    @default(0)
+  actualHours      Float    @default(0)
+  
+  // Computed score (0-100)
+  workloadScore    Int      @default(0)
+  
+  // Status
+  status      String   @default("balanced") // overloaded, busy, balanced, available
+  
+  // Stats
+  nodesCount       Int      @default(0)
+  overdueCount     Int      @default(0)
+  completedCount   Int      @default(0)
+  
+  @@unique([userId, weekStart])
+  @@index([userId])
+  @@index([weekStart])
+  @@index([status])
+}
+
+// ============================================
+// NODE HANDOFFS
+// ============================================
+
+model NodeHandoff {
+  id          String        @id @default(cuid())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  status      HandoffStatus @default(pending)
+  notes       String?       @db.Text
+  
+  // Checklist items completed (stored as JSON)
+  checklistCompleted Json   @default("[]")
+  
+  // Node being handed off
+  nodeId      String
+  node        Node          @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  
+  // From user
+  fromUserId  String
+  fromUser    User          @relation("HandoffFrom", fields: [fromUserId], references: [id])
+  
+  // To user
+  toUserId    String
+  toUser      User          @relation("HandoffTo", fields: [toUserId], references: [id])
+  
+  // Completion
+  completedAt DateTime?
+  
+  @@index([nodeId])
+  @@index([fromUserId])
+  @@index([toUserId])
+  @@index([status])
+}
+
+// ============================================
+// RESOURCES & ALLOCATION
+// ============================================
+
+model Resource {
+  id          String       @id @default(cuid())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  name        String
+  description String?
+  type        ResourceType @default(other)
+  
+  // Capacity (e.g., hours per day for person, quantity for equipment)
+  capacity    Float        @default(8)
+  unit        String       @default("hours")
+  
+  // Cost
+  hourlyRate  Float?
+  currency    String       @default("USD")
+  
+  // Availability
+  isAvailable Boolean      @default(true)
+  
+  // Creator
+  createdById String
+  createdBy   User         @relation("ResourceCreator", fields: [createdById], references: [id])
+  
+  // Organization
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  // Allocations
+  allocations ResourceAllocation[]
+  
+  @@index([createdById])
+  @@index([organizationId])
+  @@index([type])
+  @@index([isAvailable])
+}
+
+model ResourceAllocation {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Dates
+  startDate   DateTime
+  endDate     DateTime
+  
+  // Hours per day/period
+  hoursPerDay Float    @default(8)
+  
+  // Resource
+  resourceId  String
+  resource    Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  
+  // Allocated to user (if resource type is person, this links to the user)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  
+  // For project
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Node (optional - can be allocated to project or specific node)
+  nodeId      String?
+  
+  // Notes
+  notes       String?
+  
+  @@index([resourceId])
+  @@index([userId])
+  @@index([projectId])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+// ============================================
+// BUDGETS
+// ============================================
+
+model Budget {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  name        String
+  description String?
+  
+  // Amount
+  totalAmount Float
+  currency    String   @default("USD")
+  
+  // Period
+  startDate   DateTime?
+  endDate     DateTime?
+  
+  // Type
+  type        String   @default("project") // project, team, department
+  
+  // Creator
+  createdById String
+  createdBy   User     @relation("BudgetCreator", fields: [createdById], references: [id])
+  
+  // Project (optional)
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Organization
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  // Line items
+  lineItems   BudgetLineItem[]
+  
+  @@index([createdById])
+  @@index([projectId])
+  @@index([organizationId])
+}
+
+model BudgetLineItem {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  name        String
+  description String?
+  category    String   // Design, Development, Testing, Marketing, etc.
+  
+  // Amounts
+  plannedAmount Float
+  actualAmount  Float  @default(0)
+  
+  // Budget
+  budgetId    String
+  budget      Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  
+  @@index([budgetId])
+  @@index([category])
+}
+
+// ============================================
+// COUNTRY HOLIDAYS (different from HolidayRequest)
+// ============================================
+
+model CountryHoliday {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  name        String
+  date        DateTime
+  country     String   // ISO country code (US, PT, ES, etc.)
+  emoji       String?
+  color       String?
+  
+  // Recurring yearly
+  isRecurring Boolean  @default(true)
+  
+  // Organization (holidays can be org-specific)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  @@index([date])
+  @@index([country])
+  @@index([organizationId])
+}
+
+// ============================================
+// PROJECT TIMELINE ITEMS (for Gantt-like views)
+// ============================================
+
+model TimelineItem {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  name        String
+  description String?
+  
+  // Dates
+  startDate   DateTime
+  endDate     DateTime
+  
+  // Progress (0-100)
+  progress    Int      @default(0)
+  
+  // Color
+  color       String   @default("#6366f1")
+  
+  // Type
+  type        String   @default("task") // task, milestone, phase
+  
+  // Priority
+  priority    TaskPriority @default(medium)
+  
+  // Project
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Assignee
+  assigneeId  String?
+  
+  // Parent (for nested items)
+  parentId    String?
+  parent      TimelineItem?  @relation("TimelineHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    TimelineItem[] @relation("TimelineHierarchy")
+  
+  // Dependencies
+  dependencies TimelineDependency[] @relation("DependentItem")
+  dependents   TimelineDependency[] @relation("DependencyItem")
+  
+  @@index([projectId])
+  @@index([assigneeId])
+  @@index([parentId])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model TimelineDependency {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  // Dependency type
+  type        String   @default("finish_to_start") // finish_to_start, start_to_start, finish_to_finish, start_to_finish
+  
+  // The item that depends on another
+  dependentItemId String
+  dependentItem   TimelineItem @relation("DependentItem", fields: [dependentItemId], references: [id], onDelete: Cascade)
+  
+  // The item being depended upon
+  dependencyItemId String
+  dependencyItem   TimelineItem @relation("DependencyItem", fields: [dependencyItemId], references: [id], onDelete: Cascade)
+  
+  // Lag (days offset)
+  lagDays     Int      @default(0)
+  
+  @@unique([dependentItemId, dependencyItemId])
+  @@index([dependentItemId])
+  @@index([dependencyItemId])
 }
