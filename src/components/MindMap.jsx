@@ -2,7 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
-import { Check, LayoutTemplate, Sparkles, ZoomIn, ZoomOut, Maximize2, Brain, Target, Link2, Users, Clock, AlertTriangle } from 'lucide-react';
+import { Check, LayoutTemplate, Sparkles, ZoomIn, ZoomOut, Maximize2, Brain, Target, Link2, Users, Clock, AlertTriangle, DollarSign, Grid3X3, Receipt, UserPlus, PlayCircle, Sun, Scale, ArrowRightLeft, BookOpen, Layers, Zap } from 'lucide-react';
 import TemplateGallery from './templates/TemplateGallery';
 import { instantiateTemplate } from '../templates/templateEngine';
 import { applyLayout } from '../utils/layoutAlgorithms';
@@ -43,7 +43,18 @@ import {
   WorkloadHeatmap, 
   TimeTravel, 
   FocusMode, 
-  RiskMatrix 
+  RiskMatrix,
+  BudgetTracker,
+  ResourceMatrix,
+  ExpenseTracker,
+  SmartAssigner,
+  NextActionHighlighter,
+  DailyDigest,
+  DecisionLog,
+  HandoffChecklist,
+  KnowledgeBase,
+  CrossProjectTimeline,
+  AutomationBuilder
 } from './enhanced';
 
 import { getDescendantNodeIds, getAncestorNodeIds } from './mindmap/graphUtils';
@@ -169,9 +180,18 @@ export default function MindMap({ mapId, onBack }) {
   // ============================================
   // ENHANCED FEATURES STATE
   // ============================================
-  const [showEnhancedPanel, setShowEnhancedPanel] = useState(null); // 'ai' | 'dependencies' | 'workload' | 'timetravel' | 'focus' | 'risk'
+  const [showEnhancedPanel, setShowEnhancedPanel] = useState(null); // 'ai' | 'dependencies' | 'workload' | 'timetravel' | 'focus' | 'risk' | 'budget' | 'resources' | 'expenses'
   const [projectSnapshots, setProjectSnapshots] = useState([]);
   const [focusTaskNode, setFocusTaskNode] = useState(null);
+  
+  // Budget and Resource Management State
+  const [projectBudget, setProjectBudget] = useState(50000); // Total project budget
+  const [hourlyRates, setHourlyRates] = useState({
+    'jd': 50,
+    'ak': 60,
+    'mr': 55,
+    'ts': 45
+  });
 
   // Canvas ref
   const canvasRef = useRef(null);
@@ -2984,6 +3004,103 @@ export default function MindMap({ mapId, onBack }) {
                 onClose={() => setShowEnhancedPanel(null)}
               />
             )}
+            
+            {showEnhancedPanel === 'budget' && (
+              <BudgetTracker
+                nodes={nodes}
+                collaborators={collaborators}
+                projectBudget={projectBudget}
+                hourlyRates={hourlyRates}
+                onUpdateBudget={setProjectBudget}
+                onUpdateRates={setHourlyRates}
+                onClose={() => setShowEnhancedPanel(null)}
+              />
+            )}
+            
+            {showEnhancedPanel === 'resources' && (
+              <ResourceMatrix
+                nodes={nodes}
+                collaborators={collaborators}
+                onClose={() => setShowEnhancedPanel(null)}
+              />
+            )}
+            
+            {showEnhancedPanel === 'expenses' && (
+              <ExpenseTracker
+                collaborators={collaborators}
+                onClose={() => setShowEnhancedPanel(null)}
+              />
+            )}
+            
+            {showEnhancedPanel === 'smartassigner' && (
+              <SmartAssigner
+                nodes={nodes}
+                collaborators={collaborators}
+                onAssign={(taskId, assigneeId) => {
+                  setNodes(prev => prev.map(n => 
+                    n.id === taskId 
+                      ? { ...n, collaborators: [...(n.collaborators || []).filter(c => c !== assigneeId), assigneeId] }
+                      : n
+                  ));
+                }}
+                onClose={() => setShowEnhancedPanel(null)}
+              />
+            )}
+            
+            {showEnhancedPanel === 'nextaction' && (
+              <NextActionHighlighter
+                nodes={nodes}
+                connections={connections}
+                collaborators={collaborators}
+                onClose={() => setShowEnhancedPanel(null)}
+              />
+            )}
+            
+            {showEnhancedPanel === 'dailydigest' && (
+              <DailyDigest
+                nodes={nodes}
+                collaborators={collaborators}
+                onClose={() => setShowEnhancedPanel(null)}
+              />
+            )}
+            
+            {showEnhancedPanel === 'decisionlog' && (
+              <DecisionLog
+                nodes={nodes}
+                collaborators={collaborators}
+                onClose={() => setShowEnhancedPanel(null)}
+              />
+            )}
+            
+            {showEnhancedPanel === 'handoff' && (
+              <HandoffChecklist
+                nodes={nodes}
+                collaborators={collaborators}
+                onClose={() => setShowEnhancedPanel(null)}
+              />
+            )}
+            
+            {showEnhancedPanel === 'knowledge' && (
+              <KnowledgeBase
+                collaborators={collaborators}
+                onClose={() => setShowEnhancedPanel(null)}
+              />
+            )}
+            
+            {showEnhancedPanel === 'timeline' && (
+              <CrossProjectTimeline
+                collaborators={collaborators}
+                onClose={() => setShowEnhancedPanel(null)}
+              />
+            )}
+            
+            {showEnhancedPanel === 'automations' && (
+              <AutomationBuilder
+                nodes={nodes}
+                collaborators={collaborators}
+                onClose={() => setShowEnhancedPanel(null)}
+              />
+            )}
           </div>
         </div>
       )}
@@ -3060,6 +3177,113 @@ export default function MindMap({ mapId, onBack }) {
             >
               <AlertTriangle className="w-4 h-4" />
               <span className="text-[10px] font-medium hidden sm:block">Risks</span>
+            </button>
+            
+            <div className="w-px h-6 bg-gray-200 mx-0.5" />
+            
+            <button
+              onClick={() => setShowEnhancedPanel('budget')}
+              className="p-2 rounded-lg hover:bg-emerald-50 text-emerald-600 transition-all flex flex-col items-center gap-0.5"
+              title="Budget Tracker"
+            >
+              <DollarSign className="w-4 h-4" />
+              <span className="text-[10px] font-medium hidden sm:block">Budget</span>
+            </button>
+            
+            <button
+              onClick={() => setShowEnhancedPanel('resources')}
+              className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-all flex flex-col items-center gap-0.5"
+              title="Resource Matrix"
+            >
+              <Grid3X3 className="w-4 h-4" />
+              <span className="text-[10px] font-medium hidden sm:block">Resources</span>
+            </button>
+            
+            <button
+              onClick={() => setShowEnhancedPanel('expenses')}
+              className="p-2 rounded-lg hover:bg-pink-50 text-pink-600 transition-all flex flex-col items-center gap-0.5"
+              title="Team Expenses"
+            >
+              <Receipt className="w-4 h-4" />
+              <span className="text-[10px] font-medium hidden sm:block">Expenses</span>
+            </button>
+            
+            <div className="w-px h-6 bg-gray-200 mx-0.5" />
+            
+            {/* Clarity Features - "Everyone knows what to do" */}
+            <button
+              onClick={() => setShowEnhancedPanel('smartassigner')}
+              className="p-2 rounded-lg hover:bg-violet-50 text-violet-600 transition-all flex flex-col items-center gap-0.5"
+              title="Smart Task Assignment"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span className="text-[10px] font-medium hidden sm:block">Assign</span>
+            </button>
+            
+            <button
+              onClick={() => setShowEnhancedPanel('nextaction')}
+              className="p-2 rounded-lg hover:bg-teal-50 text-teal-600 transition-all flex flex-col items-center gap-0.5"
+              title="Task Status Overview"
+            >
+              <PlayCircle className="w-4 h-4" />
+              <span className="text-[10px] font-medium hidden sm:block">Status</span>
+            </button>
+            
+            <button
+              onClick={() => setShowEnhancedPanel('dailydigest')}
+              className="p-2 rounded-lg hover:bg-orange-50 text-orange-600 transition-all flex flex-col items-center gap-0.5"
+              title="Daily Digest"
+            >
+              <Sun className="w-4 h-4" />
+              <span className="text-[10px] font-medium hidden sm:block">Daily</span>
+            </button>
+            
+            <button
+              onClick={() => setShowEnhancedPanel('decisionlog')}
+              className="p-2 rounded-lg hover:bg-sky-50 text-sky-600 transition-all flex flex-col items-center gap-0.5"
+              title="Decision Log"
+            >
+              <Scale className="w-4 h-4" />
+              <span className="text-[10px] font-medium hidden sm:block">Decisions</span>
+            </button>
+            
+            <button
+              onClick={() => setShowEnhancedPanel('handoff')}
+              className="p-2 rounded-lg hover:bg-rose-50 text-rose-600 transition-all flex flex-col items-center gap-0.5"
+              title="Task Handoff"
+            >
+              <ArrowRightLeft className="w-4 h-4" />
+              <span className="text-[10px] font-medium hidden sm:block">Handoff</span>
+            </button>
+            
+            <button
+              onClick={() => setShowEnhancedPanel('knowledge')}
+              className="p-2 rounded-lg hover:bg-lime-50 text-lime-600 transition-all flex flex-col items-center gap-0.5"
+              title="Knowledge Base"
+            >
+              <BookOpen className="w-4 h-4" />
+              <span className="text-[10px] font-medium hidden sm:block">Docs</span>
+            </button>
+            
+            <div className="w-px h-6 bg-gray-200 mx-0.5" />
+            
+            {/* Manager Features */}
+            <button
+              onClick={() => setShowEnhancedPanel('timeline')}
+              className="p-2 rounded-lg hover:bg-indigo-50 text-indigo-600 transition-all flex flex-col items-center gap-0.5"
+              title="Cross-Project Timeline"
+            >
+              <Layers className="w-4 h-4" />
+              <span className="text-[10px] font-medium hidden sm:block">Timeline</span>
+            </button>
+            
+            <button
+              onClick={() => setShowEnhancedPanel('automations')}
+              className="p-2 rounded-lg hover:bg-amber-50 text-amber-600 transition-all flex flex-col items-center gap-0.5"
+              title="Automations"
+            >
+              <Zap className="w-4 h-4" />
+              <span className="text-[10px] font-medium hidden sm:block">Automate</span>
             </button>
           </div>
         </div>

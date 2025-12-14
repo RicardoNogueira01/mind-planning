@@ -244,7 +244,7 @@ export default function FocusMode({ selectedNode, onComplete, onClose }) {
               max="120"
               value={settings.focusTime}
               onChange={(e) => setSettings(s => ({ ...s, focusTime: parseInt(e.target.value) || 25 }))}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
@@ -258,7 +258,7 @@ export default function FocusMode({ selectedNode, onComplete, onClose }) {
               max="30"
               value={settings.shortBreak}
               onChange={(e) => setSettings(s => ({ ...s, shortBreak: parseInt(e.target.value) || 5 }))}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
@@ -272,7 +272,7 @@ export default function FocusMode({ selectedNode, onComplete, onClose }) {
               max="60"
               value={settings.longBreak}
               onChange={(e) => setSettings(s => ({ ...s, longBreak: parseInt(e.target.value) || 15 }))}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
@@ -286,7 +286,7 @@ export default function FocusMode({ selectedNode, onComplete, onClose }) {
               max="10"
               value={settings.sessionsUntilLongBreak}
               onChange={(e) => setSettings(s => ({ ...s, sessionsUntilLongBreak: parseInt(e.target.value) || 4 }))}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 

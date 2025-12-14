@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { Search, Bell, Languages, CheckCircle, AlertTriangle, Users, Calendar, FileText, X, Check, MessageCircle, Send, Maximize2, Minimize2 } from 'lucide-react';
 import PropTypes from 'prop-types';
+import { GlobalSearch, MobileSearchOverlay } from './GlobalSearch';
 
 const TopBar = ({ showSearch = true }) => {
   const { language, changeLanguage, t } = useLanguage();
@@ -12,6 +13,7 @@ const TopBar = ({ showSearch = true }) => {
   const [isChatFullscreen, setIsChatFullscreen] = useState(false);
   const [selectedContact, setSelectedContact] = useState(null);
   const [messageInput, setMessageInput] = useState('');
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   const notificationRef = useRef(null);
   const languageRef = useRef(null);
   
@@ -208,14 +210,7 @@ const TopBar = ({ showSearch = true }) => {
           {/* Search Bar */}
           {showSearch && (
             <div className="flex-1 max-w-md hidden md:block">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                <input
-                  type="text"
-                  placeholder={t('nav.search')}
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                />
-              </div>
+              <GlobalSearch placeholder={t('nav.search')} />
             </div>
           )}
 
@@ -223,7 +218,10 @@ const TopBar = ({ showSearch = true }) => {
           <div className="flex items-center gap-2 md:gap-3">
             {/* Search Icon for Mobile */}
             {showSearch && (
-              <button className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <button 
+                onClick={() => setShowMobileSearch(true)}
+                className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
                 <Search size={20} className="text-gray-600" />
               </button>
             )}
@@ -618,6 +616,12 @@ const TopBar = ({ showSearch = true }) => {
           </div>
         </div>
       )}
+      
+      {/* Mobile Search Overlay */}
+      <MobileSearchOverlay 
+        isOpen={showMobileSearch} 
+        onClose={() => setShowMobileSearch(false)} 
+      />
     </div>
   );
 };

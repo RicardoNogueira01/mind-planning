@@ -1,0 +1,862 @@
+// Prisma Schema for Mind Planning Application
+// ============================================
+// This schema defines the database structure
+// Run: npx prisma generate
+// Run: npx prisma db push (for development)
+// Run: npx prisma migrate dev (for migrations)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // Can change to mysql, sqlite, sqlserver
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  admin
+  team_manager
+  user
+  viewer
+  auditor
+}
+
+enum TaskStatus {
+  not_started
+  in_progress
+  blocked
+  waiting
+  completed
+  cancelled
+}
+
+enum TaskPriority {
+  critical
+  high
+  medium
+  low
+}
+
+enum HolidayStatus {
+  pending
+  approved
+  rejected
+  cancelled
+}
+
+enum ProjectStatus {
+  planning
+  active
+  on_hold
+  completed
+  archived
+}
+
+enum NotificationType {
+  task_assigned
+  task_completed
+  task_overdue
+  mention
+  comment
+  holiday_approved
+  holiday_rejected
+  project_update
+  deadline_reminder
+  system
+}
+
+enum ExpenseCategory {
+  software
+  hardware
+  services
+  travel
+  office
+  training
+  other
+}
+
+enum ExpenseStatus {
+  pending
+  approved
+  rejected
+  reimbursed
+}
+
+enum DecisionCategory {
+  technical
+  design
+  process
+  resource
+  timeline
+  scope
+  other
+}
+
+enum DecisionStatus {
+  final
+  pending
+  revised
+}
+
+// ============================================
+// CORE MODELS
+// ============================================
+
+model User {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Identity
+  email     String   @unique
+  password  String   // Hashed password
+  name      String
+  initials  String
+  avatar    String?
+  color     String   @default("#6366f1")
+  
+  // Role & Status
+  role      UserRole @default(user)
+  isActive  Boolean  @default(true)
+  
+  // Profile
+  phone     String?
+  location  String?
+  department String?
+  jobTitle  String?
+  bio       String?
+  
+  // Social links
+  linkedinUrl String?
+  githubUrl   String?
+  websiteUrl  String?
+  
+  // Skills (stored as JSON array)
+  skills    Json     @default("[]")
+  
+  // Settings (stored as JSON)
+  settings  Json?
+  
+  // Organization
+  organizationId String
+  organization   Organization @relation("OrganizationMembers", fields: [organizationId], references: [id])
+  
+  // Organizations owned by this user
+  ownedOrganizations Organization[] @relation("OrganizationOwner")
+  
+  // Teams
+  managedTeams   Team[]   @relation("TeamManager")
+  memberOfTeams  TeamMember[]
+  
+  // Projects
+  createdProjects   Project[]     @relation("ProjectCreator")
+  memberOfProjects  ProjectMember[]
+  
+  // MindMaps
+  createdMindMaps   MindMap[]     @relation("MindMapCreator")
+  sharedMindMaps    MindMapShare[]
+  modifiedMindMaps  MindMap[]     @relation("MindMapLastModifier")
+  mindMapSnapshots  MindMapSnapshot[]
+  
+  // Tasks
+  createdTasks      Task[]        @relation("TaskCreator")
+  assignedTasks     Task[]        @relation("TaskAssignee")
+  
+  // Holidays
+  holidayRequests   HolidayRequest[] @relation("HolidayRequestor")
+  reviewedHolidays  HolidayRequest[] @relation("HolidayReviewer")
+  
+  // Attachments
+  uploadedAttachments Attachment[]
+  
+  // Comments
+  comments          Comment[]
+  mentionedInComments CommentMention[]
+  
+  // Notifications
+  notifications     Notification[] @relation("NotificationRecipient")
+  triggeredNotifications Notification[] @relation("NotificationTrigger")
+  
+  // Activity Log
+  activityLogs      ActivityLog[]
+  
+  // Decisions
+  createdDecisions  Decision[]    @relation("DecisionCreator")
+  madeDecisions     Decision[]    @relation("DecisionMaker")
+  decisionStakeholder DecisionStakeholder[]
+  
+  // Expenses
+  createdExpenses   Expense[]     @relation("ExpenseCreator")
+  paidExpenses      Expense[]     @relation("ExpensePayer")
+  approvedExpenses  Expense[]     @relation("ExpenseApprover")
+  expenseParticipant ExpenseParticipant[]
+  
+  // Automations
+  createdAutomations AutomationRule[]
+  
+  // Sessions
+  sessions          Session[]
+  
+  @@index([email])
+  @@index([organizationId])
+  @@index([role])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+  
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  token        String   @unique
+  ipAddress    String?
+  userAgent    String?
+  
+  @@index([token])
+  @@index([userId])
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  name      String
+  slug      String   @unique
+  logo      String?
+  
+  // Settings (stored as JSON)
+  settings  Json?
+  
+  // Owner
+  ownerId   String
+  owner     User     @relation("OrganizationOwner", fields: [ownerId], references: [id])
+  
+  // Relationships
+  members   User[]   @relation("OrganizationMembers")
+  teams     Team[]
+  projects  Project[]
+  automations AutomationRule[]
+  
+  @@index([slug])
+  @@index([ownerId])
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  name        String
+  description String?
+  color       String   @default("#6366f1")
+  
+  // Organization
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  // Manager
+  managerId   String
+  manager     User     @relation("TeamManager", fields: [managerId], references: [id])
+  
+  // Members
+  members     TeamMember[]
+  
+  // Projects
+  projects    Project[]
+  
+  // Shared MindMaps
+  sharedMindMaps MindMapTeamShare[]
+  
+  @@index([organizationId])
+  @@index([managerId])
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  name        String
+  description String?
+  color       String        @default("#6366f1")
+  status      ProjectStatus @default(planning)
+  
+  // Dates
+  startDate   DateTime?
+  endDate     DateTime?
+  
+  // Budget
+  budget      Float?
+  currency    String?       @default("USD")
+  
+  // Organization
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  // Team (optional)
+  teamId      String?
+  team        Team?         @relation(fields: [teamId], references: [id])
+  
+  // Creator
+  createdById String
+  createdBy   User          @relation("ProjectCreator", fields: [createdById], references: [id])
+  
+  // Members
+  members     ProjectMember[]
+  
+  // Content
+  mindMaps    MindMap[]
+  tasks       Task[]
+  decisions   Decision[]
+  expenses    Expense[]
+  automations AutomationRule[]
+  
+  @@index([organizationId])
+  @@index([teamId])
+  @@index([createdById])
+  @@index([status])
+}
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Role within project (can be different from global role)
+  role      String   @default("member") // owner, admin, member, viewer
+  
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model MindMap {
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  title       String
+  description String?
+  color       String    @default("#6366f1")
+  isFavorite  Boolean   @default(false)
+  isTemplate  Boolean   @default(false)
+  isPublic    Boolean   @default(false)
+  
+  // Content (stored as JSON)
+  nodes       Json      @default("[]")
+  connections Json      @default("[]")
+  
+  // Project (optional)
+  projectId   String?
+  project     Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  
+  // Creator
+  createdById String
+  createdBy   User      @relation("MindMapCreator", fields: [createdById], references: [id])
+  
+  // Last modifier
+  lastModifiedById String?
+  lastModifiedBy   User?   @relation("MindMapLastModifier", fields: [lastModifiedById], references: [id])
+  
+  // Sharing
+  sharedWithUsers MindMapShare[]
+  sharedWithTeams MindMapTeamShare[]
+  
+  // Snapshots
+  snapshots   MindMapSnapshot[]
+  
+  // Tasks linked to nodes
+  tasks       Task[]
+  
+  // Attachments
+  attachments Attachment[]
+  
+  @@index([projectId])
+  @@index([createdById])
+  @@index([isTemplate])
+  @@index([isPublic])
+}
+
+model MindMapShare {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  
+  mindMapId String
+  mindMap   MindMap  @relation(fields: [mindMapId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  canEdit   Boolean  @default(false)
+  
+  @@unique([mindMapId, userId])
+  @@index([mindMapId])
+  @@index([userId])
+}
+
+model MindMapTeamShare {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  
+  mindMapId String
+  mindMap   MindMap  @relation(fields: [mindMapId], references: [id], onDelete: Cascade)
+  
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  canEdit   Boolean  @default(false)
+  
+  @@unique([mindMapId, teamId])
+  @@index([mindMapId])
+  @@index([teamId])
+}
+
+model MindMapSnapshot {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  name        String
+  description String?
+  nodes       Json
+  connections Json
+  
+  mindMapId   String
+  mindMap     MindMap  @relation(fields: [mindMapId], references: [id], onDelete: Cascade)
+  
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  
+  @@index([mindMapId])
+  @@index([createdById])
+}
+
+model Task {
+  id          String       @id @default(cuid())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  title       String
+  description String?
+  status      TaskStatus   @default(not_started)
+  priority    TaskPriority @default(medium)
+  
+  // Dates
+  startDate   DateTime?
+  dueDate     DateTime?
+  completedAt DateTime?
+  
+  // Time tracking
+  estimatedHours Float?
+  loggedHours    Float?    @default(0)
+  
+  // Creator
+  createdById String
+  createdBy   User         @relation("TaskCreator", fields: [createdById], references: [id])
+  
+  // Assignee
+  assigneeId  String?
+  assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  
+  // Project
+  projectId   String?
+  project     Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  
+  // MindMap (optional link)
+  mindMapId   String?
+  mindMap     MindMap?     @relation(fields: [mindMapId], references: [id], onDelete: SetNull)
+  nodeId      String?      // ID of the node within the mindmap
+  
+  // Parent task (for subtasks)
+  parentTaskId String?
+  parentTask   Task?       @relation("TaskHierarchy", fields: [parentTaskId], references: [id], onDelete: SetNull)
+  subtasks     Task[]      @relation("TaskHierarchy")
+  
+  // Dependencies
+  blockedByTasks  TaskDependency[] @relation("BlockedTask")
+  blockingTasks   TaskDependency[] @relation("BlockingTask")
+  
+  // Tags (stored as JSON)
+  tags        Json         @default("[]")
+  
+  // Attachments
+  attachments Attachment[]
+  
+  // Comments
+  comments    Comment[]
+  
+  // Activity
+  activityLogs ActivityLog[]
+  
+  // Notifications
+  notifications Notification[]
+  
+  // Decisions
+  decisions   TaskDecision[]
+  
+  @@index([createdById])
+  @@index([assigneeId])
+  @@index([projectId])
+  @@index([mindMapId])
+  @@index([parentTaskId])
+  @@index([status])
+  @@index([priority])
+  @@index([dueDate])
+}
+
+model TaskDependency {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  blockedTaskId  String
+  blockedTask    Task    @relation("BlockedTask", fields: [blockedTaskId], references: [id], onDelete: Cascade)
+  
+  blockingTaskId String
+  blockingTask   Task    @relation("BlockingTask", fields: [blockingTaskId], references: [id], onDelete: Cascade)
+  
+  @@unique([blockedTaskId, blockingTaskId])
+  @@index([blockedTaskId])
+  @@index([blockingTaskId])
+}
+
+model HolidayRequest {
+  id          String        @id @default(cuid())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  startDate   DateTime
+  endDate     DateTime
+  totalDays   Int
+  reason      String?
+  status      HolidayStatus @default(pending)
+  
+  // Requestor
+  userId      String
+  user        User          @relation("HolidayRequestor", fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Reviewer
+  reviewedById String?
+  reviewedBy   User?        @relation("HolidayReviewer", fields: [reviewedById], references: [id])
+  reviewedAt   DateTime?
+  reviewNotes  String?
+  
+  @@index([userId])
+  @@index([reviewedById])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  
+  name      String
+  url       String
+  mimeType  String
+  size      Int
+  
+  // Uploader
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  
+  // Can be attached to Task or MindMap
+  taskId    String?
+  task      Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  mindMapId String?
+  mindMap   MindMap? @relation(fields: [mindMapId], references: [id], onDelete: Cascade)
+  
+  nodeId    String?  // Node within mindmap
+  
+  @@index([uploadedById])
+  @@index([taskId])
+  @@index([mindMapId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  content   String
+  
+  // Author
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  // Task
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  // Reply threading
+  parentCommentId String?
+  parentComment   Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies         Comment[] @relation("CommentReplies")
+  
+  // Mentions
+  mentions  CommentMention[]
+  
+  @@index([authorId])
+  @@index([taskId])
+  @@index([parentCommentId])
+}
+
+model CommentMention {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  
+  commentId String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([commentId, userId])
+  @@index([commentId])
+  @@index([userId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  createdAt DateTime         @default(now())
+  
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  
+  // Recipient
+  userId    String
+  user      User             @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Trigger (who caused this notification)
+  triggeredById String?
+  triggeredBy   User?        @relation("NotificationTrigger", fields: [triggeredById], references: [id])
+  
+  // Related entities (optional)
+  taskId    String?
+  task      Task?            @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  // Action URL
+  actionUrl String?
+  
+  @@index([userId])
+  @@index([triggeredById])
+  @@index([taskId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  action      String
+  entityType  String   // task, project, mindmap, user, holiday, comment
+  entityId    String
+  changes     Json?    // { field: { old: value, new: value } }
+  
+  // Who did it
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Context
+  ipAddress   String?
+  userAgent   String?
+  
+  // Optional task reference for quick queries
+  taskId      String?
+  task        Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([taskId])
+  @@index([createdAt])
+}
+
+model Decision {
+  id          String           @id @default(cuid())
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  
+  title       String
+  description String
+  category    DecisionCategory
+  status      DecisionStatus   @default(pending)
+  decidedAt   DateTime?
+  
+  // Creator
+  createdById String
+  createdBy   User             @relation("DecisionCreator", fields: [createdById], references: [id])
+  
+  // Decision maker
+  decidedById String?
+  decidedBy   User?            @relation("DecisionMaker", fields: [decidedById], references: [id])
+  
+  // Project
+  projectId   String?
+  project     Project?         @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  
+  // Related tasks
+  tasks       TaskDecision[]
+  
+  // Stakeholders
+  stakeholders DecisionStakeholder[]
+  
+  @@index([createdById])
+  @@index([decidedById])
+  @@index([projectId])
+  @@index([status])
+}
+
+model TaskDecision {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  decisionId String
+  decision   Decision @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+  
+  @@unique([taskId, decisionId])
+  @@index([taskId])
+  @@index([decisionId])
+}
+
+model DecisionStakeholder {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  
+  decisionId String
+  decision   Decision @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+  
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([decisionId, userId])
+  @@index([decisionId])
+  @@index([userId])
+}
+
+model Expense {
+  id          String          @id @default(cuid())
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  
+  description String
+  amount      Float
+  currency    String          @default("USD")
+  date        DateTime
+  category    ExpenseCategory
+  status      ExpenseStatus   @default(pending)
+  
+  receiptUrl  String?
+  
+  // Creator
+  createdById String
+  createdBy   User            @relation("ExpenseCreator", fields: [createdById], references: [id])
+  
+  // Who paid
+  paidById    String
+  paidBy      User            @relation("ExpensePayer", fields: [paidById], references: [id])
+  
+  // Approval
+  approvedById String?
+  approvedBy   User?          @relation("ExpenseApprover", fields: [approvedById], references: [id])
+  approvedAt   DateTime?
+  
+  // Project
+  projectId   String?
+  project     Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  
+  // Split participants
+  participants ExpenseParticipant[]
+  
+  @@index([createdById])
+  @@index([paidById])
+  @@index([approvedById])
+  @@index([projectId])
+  @@index([status])
+  @@index([date])
+}
+
+model ExpenseParticipant {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  
+  expenseId String
+  expense   Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  share     Float?   // Optional: specific share amount
+  
+  @@unique([expenseId, userId])
+  @@index([expenseId])
+  @@index([userId])
+}
+
+model AutomationRule {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  name      String
+  isEnabled Boolean  @default(true)
+  
+  // Trigger, conditions, actions (stored as JSON)
+  trigger    Json
+  conditions Json     @default("[]")
+  actions    Json
+  
+  // Stats
+  runCount   Int      @default(0)
+  lastRunAt  DateTime?
+  
+  // Creator
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  
+  // Scope (can be project-level or org-level)
+  projectId  String?
+  project    Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  @@index([createdById])
+  @@index([projectId])
+  @@index([organizationId])
+  @@index([isEnabled])
+}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import WeeklyCalendarWidget from './WeeklyCalendarWidget';
 import TopBar from './shared/TopBar';
+import ProjectHealthCard from './dashboard/ProjectHealthCard';
 import { useLanguage } from '../context/LanguageContext';
 import { 
   CheckCircle, 
@@ -195,6 +196,58 @@ const Dashboard = () => {
     }
   ]);
   
+  // Mock projects data for ProjectHealthCard
+  const [mockProjects] = useState([
+    {
+      id: 1,
+      name: 'Q1 Marketing Strategy',
+      totalTasks: 24,
+      completedTasks: 18,
+      onTrackTasks: 20,
+      atRiskTasks: 3,
+      delayedTasks: 1,
+      blockedTasks: 0,
+      teamLoad: 'balanced', // 'balanced', 'busy', 'overloaded'
+      riskLevel: 'low' // 'low', 'medium', 'high'
+    },
+    {
+      id: 2,
+      name: 'Product Development Roadmap',
+      totalTasks: 18,
+      completedTasks: 12,
+      onTrackTasks: 14,
+      atRiskTasks: 2,
+      delayedTasks: 2,
+      blockedTasks: 1,
+      teamLoad: 'busy',
+      riskLevel: 'medium'
+    },
+    {
+      id: 3,
+      name: 'Team Brainstorming Session',
+      totalTasks: 32,
+      completedTasks: 28,
+      onTrackTasks: 30,
+      atRiskTasks: 1,
+      delayedTasks: 1,
+      blockedTasks: 0,
+      teamLoad: 'balanced',
+      riskLevel: 'low'
+    },
+    {
+      id: 4,
+      name: 'Project Alpha Planning',
+      totalTasks: 15,
+      completedTasks: 8,
+      onTrackTasks: 10,
+      atRiskTasks: 3,
+      delayedTasks: 2,
+      blockedTasks: 2,
+      teamLoad: 'overloaded',
+      riskLevel: 'high'
+    }
+  ]);
+  
   // Calculate completion percentage
   const completionPercentage = Math.round((stats.tasksCompleted / stats.totalTasks) * 100);
 
@@ -292,6 +345,9 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
+
+          {/* Project Health Card */}
+          <ProjectHealthCard projects={mockProjects} />
 
           {/* Recent Mind Maps Card */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">

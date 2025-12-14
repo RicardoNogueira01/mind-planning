@@ -356,7 +356,7 @@ export default function AITaskDecomposer({ node, onDecompose, onClose }) {
                     value={customSubtask}
                     onChange={(e) => setCustomSubtask(e.target.value)}
                     placeholder="Enter custom subtask..."
-                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     onKeyDown={(e) => e.key === 'Enter' && handleAddCustom()}
                   />
                   <button

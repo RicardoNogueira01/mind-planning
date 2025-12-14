@@ -208,7 +208,7 @@ export default function TimeTravel({
                   value={snapshotName}
                   onChange={(e) => setSnapshotName(e.target.value)}
                   placeholder="Snapshot name (e.g., 'Before redesign')"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   autoFocus
                   onKeyDown={(e) => e.key === 'Enter' && handleCreateSnapshot()}
                 />
@@ -218,7 +218,7 @@ export default function TimeTravel({
                   value={snapshotDescription}
                   onChange={(e) => setSnapshotDescription(e.target.value)}
                   placeholder="Description (optional)"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                 />
 
                 <div className="flex gap-2">

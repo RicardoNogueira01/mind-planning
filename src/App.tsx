@@ -13,6 +13,7 @@ import SettingsPage from './components/SettingsPage';
 import CalendarPage from './components/CalendarPage';
 import ScrollToTop from './components/ScrollToTop';
 import { LanguageProvider } from './context/LanguageContext';
+import { AuthProvider } from './context/AuthContext';
 
 // Wrapper components to handle navigation
 const MindMapManagerWrapper = () => {
@@ -61,25 +62,27 @@ const MindMapWrapper = () => {
 function App() {
 
   return (
-    <LanguageProvider>
-      <BrowserRouter>
-        <ScrollToTop />
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/mindmap/:mapId" element={<MindMapWrapper />} />
-          <Route path="/mindmaps" element={<MindMapManagerWrapper />} />
-          <Route path="/team-members" element={<TeamMembersManager />} />
-          <Route path="/completed-tasks" element={<RecentlyCompletedTasksManager />} />
-          <Route path="/upcoming-deadlines" element={<UpcomingDeadlinesManager />} />
-          <Route path="/team-holidays" element={<TeamHolidaysManager />} />
-          <Route path="/profile/:memberId" element={<ProfilePage />} />
-          <Route path="/profile/:memberId/edit" element={<EditProfilePage />} />
-          <Route path="/profile/:memberId/settings" element={<SettingsPage />} />
-          <Route path="/calendar" element={<CalendarPage />} />
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </BrowserRouter>
-    </LanguageProvider>
+    <AuthProvider>
+      <LanguageProvider>
+        <BrowserRouter>
+          <ScrollToTop />
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/mindmap/:mapId" element={<MindMapWrapper />} />
+            <Route path="/mindmaps" element={<MindMapManagerWrapper />} />
+            <Route path="/team-members" element={<TeamMembersManager />} />
+            <Route path="/completed-tasks" element={<RecentlyCompletedTasksManager />} />
+            <Route path="/upcoming-deadlines" element={<UpcomingDeadlinesManager />} />
+            <Route path="/team-holidays" element={<TeamHolidaysManager />} />
+            <Route path="/profile/:memberId" element={<ProfilePage />} />
+            <Route path="/profile/:memberId/edit" element={<EditProfilePage />} />
+            <Route path="/profile/:memberId/settings" element={<SettingsPage />} />
+            <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </BrowserRouter>
+      </LanguageProvider>
+    </AuthProvider>
   )
 }
 
