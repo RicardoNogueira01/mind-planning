@@ -1,6 +1,7 @@
 // Prisma Schema for Mind Planning Application
 // ============================================
-// This schema defines the database structure
+// Database: Supabase PostgreSQL
+// Auth: Clerk
 // Run: npx prisma generate
 // Run: npx prisma db push (for development)
 // Run: npx prisma migrate dev (for migrations)
@@ -10,8 +11,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql" // Can change to mysql, sqlite, sqlserver
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // For Supabase connection pooling
 }
 
 // ============================================
@@ -150,12 +152,18 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  // Identity
+  // Clerk Integration - External Auth ID
+  clerkId   String   @unique // Clerk user ID (user_xxxxx)
+  
+  // Identity (synced from Clerk)
   email     String   @unique
-  password  String   // Hashed password
   name      String
-  initials  String
-  avatar    String?
+  firstName String?
+  lastName  String?
+  avatar    String?  // imageUrl from Clerk
+  
+  // App-specific profile
+  initials  String?
   color     String   @default("#6366f1")
   
   // Role & Status
@@ -260,14 +268,13 @@ model User {
   // Node multiple assignees
   nodeAssignments    NodeAssignee[]
   
-  // Sessions
-  sessions          Session[]
-  
+  @@index([clerkId])
   @@index([email])
   @@index([organizationId])
   @@index([role])
 }
 
+// Note: Sessions are now handled by Clerk, but we keep this for API tokens
 model Session {
   id           String   @id @default(cuid())
   createdAt    DateTime @default(now())
