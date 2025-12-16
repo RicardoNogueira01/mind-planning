@@ -15,7 +15,7 @@ export function useDragging(
   getNodeGroup?: (nodeId: string) => any,
   constrainPositionToGroup?: (x: number, y: number, boundingBox: any) => { x: number; y: number },
   zoom?: number,
-  snapToNonCollidingPosition?: (nodeId: string, x: number, y: number) => Position
+  pushCollidingNodes?: (nodeId: string, x: number, y: number, allNodes: Node[]) => Node[]
 ) {
   // Dragging state
   const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
@@ -175,25 +175,25 @@ export function useDragging(
 
   /**
    * Handle mouse up - stop dragging/panning
-   * If a node was dragged and it's overlapping another node, snap it to nearest free position
+   * If a node was dragged and it's overlapping another node, push colliding nodes away
    */
   const stopPanning = useCallback(() => {
     const wasDraggingNode = draggingNodeId !== null;
     const draggedNodeId = draggingNodeId;
     
-    // Apply collision snapping if available
-    if (wasDraggingNode && draggedNodeId && snapToNonCollidingPosition) {
+    // Apply collision pushing if available - push other nodes out of the way
+    if (wasDraggingNode && draggedNodeId && pushCollidingNodes) {
       const draggedNode = nodes.find(n => n.id === draggedNodeId);
       if (draggedNode) {
-        const snappedPosition = snapToNonCollidingPosition(draggedNodeId, draggedNode.x, draggedNode.y);
+        const updatedNodes = pushCollidingNodes(draggedNodeId, draggedNode.x, draggedNode.y, nodes);
         
-        // If position changed, update the node
-        if (snappedPosition.x !== draggedNode.x || snappedPosition.y !== draggedNode.y) {
-          setNodes(prev => prev.map(n => 
-            n.id === draggedNodeId 
-              ? { ...n, x: snappedPosition.x, y: snappedPosition.y }
-              : n
-          ));
+        // Check if any positions changed
+        const hasChanges = updatedNodes.some((updated, idx) => 
+          updated.x !== nodes[idx]?.x || updated.y !== nodes[idx]?.y
+        );
+        
+        if (hasChanges) {
+          setNodes(updatedNodes);
         }
       }
     }
@@ -204,7 +204,7 @@ export function useDragging(
     
     // Return info about what was being dragged for the caller to handle
     return { wasDraggingNode, draggedNodeId };
-  }, [draggingNodeId, nodes, snapToNonCollidingPosition, setNodes]);
+  }, [draggingNodeId, nodes, pushCollidingNodes, setNodes]);
 
   return {
     // Dragging state

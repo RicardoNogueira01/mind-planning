@@ -404,6 +404,128 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
     return findNonCollidingPosition(x, y, nodeId);
   }, [isPositionAvailable, findNonCollidingPosition]);
 
+  /**
+   * Push overlapping nodes away from a source node
+   * Returns array of nodes with updated positions
+   * The source node stays in place, colliding nodes are pushed away
+   */
+  const pushCollidingNodes = useCallback((
+    sourceNodeId: string,
+    sourceX: number,
+    sourceY: number,
+    allNodes: Node[]
+  ): Node[] => {
+    const PUSH_DISTANCE = MIN_HORIZONTAL_SPACING; // How far to push colliding nodes
+    const PUSH_ITERATIONS = 5; // Max iterations to resolve all collisions
+    
+    let updatedNodes = allNodes.map(n => 
+      n.id === sourceNodeId ? { ...n, x: sourceX, y: sourceY } : { ...n }
+    );
+    
+    // Iteratively push nodes until no collisions or max iterations reached
+    for (let iteration = 0; iteration < PUSH_ITERATIONS; iteration++) {
+      let hasCollision = false;
+      const newPositions: Node[] = [];
+      
+      for (const node of updatedNodes) {
+        if (node.id === sourceNodeId) {
+          // Source node stays in place
+          newPositions.push(node);
+          continue;
+        }
+        
+        // Check collision with source node
+        const dx = node.x - sourceX;
+        const dy = node.y - sourceY;
+        const horizontalOverlap = Math.abs(dx) < MIN_HORIZONTAL_SPACING;
+        const verticalOverlap = Math.abs(dy) < MIN_VERTICAL_SPACING;
+        
+        if (horizontalOverlap && verticalOverlap) {
+          hasCollision = true;
+          
+          // Calculate push direction (away from source)
+          const distance = Math.hypot(dx, dy);
+          const pushDirX = distance > 0 ? dx / distance : 1;
+          const pushDirY = distance > 0 ? dy / distance : 0;
+          
+          // Calculate minimum push to clear the collision
+          const overlapX = MIN_HORIZONTAL_SPACING - Math.abs(dx);
+          const overlapY = MIN_VERTICAL_SPACING - Math.abs(dy);
+          
+          // Push in the direction that requires less movement
+          let pushX = 0;
+          let pushY = 0;
+          
+          if (overlapX < overlapY) {
+            // Push horizontally
+            pushX = (overlapX + 20) * Math.sign(dx || 1);
+          } else {
+            // Push vertically
+            pushY = (overlapY + 20) * Math.sign(dy || 1);
+          }
+          
+          newPositions.push({
+            ...node,
+            x: node.x + pushX,
+            y: node.y + pushY
+          });
+        } else {
+          newPositions.push(node);
+        }
+      }
+      
+      updatedNodes = newPositions;
+      
+      // If no collisions found, we're done
+      if (!hasCollision) break;
+    }
+    
+    // Second pass: check for collisions between non-source nodes and resolve them
+    for (let iteration = 0; iteration < PUSH_ITERATIONS; iteration++) {
+      let hasCollision = false;
+      
+      for (let i = 0; i < updatedNodes.length; i++) {
+        if (updatedNodes[i].id === sourceNodeId) continue;
+        
+        for (let j = i + 1; j < updatedNodes.length; j++) {
+          if (updatedNodes[j].id === sourceNodeId) continue;
+          
+          const nodeA = updatedNodes[i];
+          const nodeB = updatedNodes[j];
+          
+          const dx = nodeB.x - nodeA.x;
+          const dy = nodeB.y - nodeA.y;
+          const horizontalOverlap = Math.abs(dx) < MIN_HORIZONTAL_SPACING;
+          const verticalOverlap = Math.abs(dy) < MIN_VERTICAL_SPACING;
+          
+          if (horizontalOverlap && verticalOverlap) {
+            hasCollision = true;
+            
+            // Push nodeB away from nodeA
+            const overlapX = MIN_HORIZONTAL_SPACING - Math.abs(dx);
+            const overlapY = MIN_VERTICAL_SPACING - Math.abs(dy);
+            
+            if (overlapX < overlapY) {
+              updatedNodes[j] = {
+                ...nodeB,
+                x: nodeB.x + (overlapX + 20) * Math.sign(dx || 1)
+              };
+            } else {
+              updatedNodes[j] = {
+                ...nodeB,
+                y: nodeB.y + (overlapY + 20) * Math.sign(dy || 1)
+              };
+            }
+          }
+        }
+      }
+      
+      if (!hasCollision) break;
+    }
+    
+    return updatedNodes;
+  }, []);
+
   return {
     isPositionAvailable,
     findAvailablePosition,
@@ -413,6 +535,7 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
     positionMultipleChildren,
     resolveAllCollisions,
     snapToNonCollidingPosition,
+    pushCollidingNodes,
     // Export constants for external use
     NODE_DIMENSIONS: { width: NODE_WIDTH, height: NODE_HEIGHT, margin: MARGIN },
   };

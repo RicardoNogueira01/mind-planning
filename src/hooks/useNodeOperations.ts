@@ -14,7 +14,8 @@ export function useNodeOperations(
   setConnections: (connections: Connection[] | ((prev: Connection[]) => Connection[])) => void,
   isDarkMode: boolean,
   findStackedPosition: (baseX?: number | null, baseY?: number | null) => Position,
-  findStackedChildPosition: (parentId: string, preferredX: number, preferredY: number) => Position
+  findStackedChildPosition: (parentId: string, preferredX: number, preferredY: number) => Position,
+  pushCollidingNodes?: (nodeId: string, x: number, y: number, allNodes: Node[]) => Node[]
 ) {
   const NODE_WIDTH = 300; // Updated to match actual node width
   const NODE_HEIGHT = 56;
@@ -51,16 +52,21 @@ export function useNodeOperations(
       fontColor: isDarkMode ? '#f3f4f6' : '#2d3748'
     };
 
-    // Add new child and rebalance
-    const newNodes = nodes.concat([child]);
+    // Add new child
+    let newNodes = nodes.concat([child]);
     const newConnections = connections.concat([{ id: `conn-${Date.now()}`, from: parentId, to: id }]);
+
+    // Push any colliding nodes away from the new child
+    if (pushCollidingNodes) {
+      newNodes = pushCollidingNodes(id, x, y, newNodes);
+    }
 
     // Rebalance all children of this parent
     const rebalancedNodes = rebalanceChildren(newNodes, newConnections, parentId);
     
     setNodes(rebalancedNodes);
     setConnections(newConnections);
-  }, [connections, findStackedChildPosition, isDarkMode, NODE_WIDTH, nodes, setConnections, setNodes]);
+  }, [connections, findStackedChildPosition, isDarkMode, NODE_WIDTH, nodes, pushCollidingNodes, setConnections, setNodes]);
 
   // Improved rebalancing: maintains child order and spacing, aligns them properly
   const rebalanceChildren = useCallback((nodeList: Node[], connectionList: Connection[], parentId: string): Node[] => {
