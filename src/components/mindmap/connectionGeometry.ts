@@ -146,121 +146,62 @@ export function computeBezierPath(
   // ============================================================
   // STEP 2: Determine connection point on PARENT node
   // ============================================================
-  // Smart distribution: spread out connections for visual clarity
+  // The connection should exit the parent from the side facing the child
+  // and the exit point should be aligned with the child's Y position (for horizontal layouts)
   let start: { x: number; y: number };
   
-  // Determine which edge of the parent to use based on child position
-  // Priority: Check vertical position first (above/below), then horizontal (left/right)
-  const isChildAbove = toCenterY < fromRect.top;            // Above parent top edge
-  const isChildBelow = toCenterY > fromRect.bottom;         // Below parent bottom edge
-  const isChildToLeft = toCenterX < fromRect.left - 50;     // At least 50px to the left
-  const isChildToRight = toCenterX > fromRect.right + 50;   // At least 50px to the right
+  // Determine primary direction from parent to child
+  const dx = toCenterX - fromCenterX;
+  const dy = toCenterY - fromCenterY;
+  const absDx = Math.abs(dx);
+  const absDy = Math.abs(dy);
   
-  // Always distribute connections based on child position for clean fan-out
-  const shouldDistribute = options?.totalChildren !== undefined && 
-                           options.totalChildren > 1;
+  // Inset from parent edges
+  const parentInset = 40;
   
-  if (shouldDistribute && options?.childIndex !== undefined) {
-    // ========== DISTRIBUTE MODE ==========
-    // Spread connection points across parent's edge based on child positions
-    
-    if (isChildAbove) {
-      // Children are ABOVE → spread horizontally along parent's TOP edge
-      const connectionX = Math.max(
-        fromRect.left + 40,
-        Math.min(fromRect.right - 40, toCenterX)
-      );
-      start = { x: connectionX, y: fromRect.top + 40 };
+  // Determine which edge to use based on dominant direction
+  if (absDx >= absDy) {
+    // HORIZONTAL layout (child is more left/right than up/down)
+    if (dx > 0) {
+      // Child is to the RIGHT → exit from parent's RIGHT edge
+      // Y position follows child's Y, but clamped to parent bounds
+      const parentTop = fromRect.top + 15;
+      const parentBottom = fromRect.bottom - 15;
+      const parentCenterY = fromCenterY;
       
-    } else if (isChildBelow) {
-      // Children are BELOW → spread horizontally along parent's BOTTOM edge
-      const connectionX = Math.max(
-        fromRect.left + 40,
-        Math.min(fromRect.right - 40, toCenterX)
-      );
-      start = { x: connectionX, y: fromRect.bottom - 40 };
-    
-    } else if (isChildToRight) {
-      // Children are to the RIGHT → spread connections across FULL edge height
-      const parentTop = fromRect.top;
-      const parentBottom = fromRect.bottom;
-      const parentCenter = (parentTop + parentBottom) / 2;
-      const parentHeight = parentBottom - parentTop;
-      const usableHeight = parentHeight - 20; // 10px margin top and bottom
+      // Direct mapping: connection point Y follows child Y position
+      // but stays within parent bounds
+      const connectionY = Math.max(parentTop, Math.min(parentBottom, toCenterY));
       
-      // Define the range of children Y positions we expect
-      const spreadFactor = 2.0; // Children can spread 2x parent height
-      const minExpectedChildY = parentCenter - (parentHeight * spreadFactor / 2);
-      const maxExpectedChildY = parentCenter + (parentHeight * spreadFactor / 2);
-      
-      // Clamp child Y to expected range
-      const clampedChildY = Math.max(minExpectedChildY, Math.min(maxExpectedChildY, toCenterY));
-      
-      // Map child's Y position to connection point on parent's edge (0 to 1)
-      const ratio = (clampedChildY - minExpectedChildY) / (parentHeight * spreadFactor);
-      
-      // Apply ratio to full usable height of parent's edge
-      const connectionY = parentTop + 10 + (ratio * usableHeight);
-      
-      start = { x: fromRect.right - 40, y: connectionY };
-      
-    } else if (isChildToLeft) {
-      // Children are to the LEFT → spread connections across FULL edge height
-      const parentTop = fromRect.top;
-      const parentBottom = fromRect.bottom;
-      const parentCenter = (parentTop + parentBottom) / 2;
-      const parentHeight = parentBottom - parentTop;
-      const usableHeight = parentHeight - 20; // 10px margin top and bottom
-      
-      // Define the range of children Y positions we expect
-      const spreadFactor = 2.0; // Children can spread 2x parent height
-      const minExpectedChildY = parentCenter - (parentHeight * spreadFactor / 2);
-      const maxExpectedChildY = parentCenter + (parentHeight * spreadFactor / 2);
-      
-      // Clamp child Y to expected range
-      const clampedChildY = Math.max(minExpectedChildY, Math.min(maxExpectedChildY, toCenterY));
-      
-      // Map child's Y position to connection point on parent's edge (0 to 1)
-      const ratio = (clampedChildY - minExpectedChildY) / (parentHeight * spreadFactor);
-      
-      // Apply ratio to full usable height of parent's edge
-      const connectionY = parentTop + 10 + (ratio * usableHeight);
-      
-      start = { x: fromRect.left + 40, y: connectionY };
-      
+      start = { x: fromRect.right - parentInset, y: connectionY };
     } else {
-      // Child is in the "neutral zone" - use the edge closest to the child
-      // This handles cases where children are slightly off-center
-      const distToBottom = Math.abs(toCenterY - fromRect.bottom);
-      const distToTop = Math.abs(toCenterY - fromRect.top);
-      const distToRight = Math.abs(toCenterX - fromRect.right);
-      const distToLeft = Math.abs(toCenterX - fromRect.left);
+      // Child is to the LEFT → exit from parent's LEFT edge
+      const parentTop = fromRect.top + 15;
+      const parentBottom = fromRect.bottom - 15;
       
-      const minDist = Math.min(distToBottom, distToTop, distToRight, distToLeft);
+      const connectionY = Math.max(parentTop, Math.min(parentBottom, toCenterY));
       
-      if (minDist === distToBottom) {
-        // Use bottom edge (inset) - align with child's horizontal position
-        const connectionX = Math.max(
-          fromRect.left + 40,
-          Math.min(fromRect.right - 40, toCenterX)
-        );
-        start = { x: connectionX, y: fromRect.bottom - 40 };
-      } else if (minDist === distToTop) {
-        // Use top edge (inset) - align with child's horizontal position
-        const connectionX = Math.max(
-          fromRect.left + 40,
-          Math.min(fromRect.right - 40, toCenterX)
-        );
-        start = { x: connectionX, y: fromRect.top + 40 };
-      } else {
-        // Fallback to perimeter point
-        start = getPerimeterPoint(fromRect, toCenterX, toCenterY);
-      }
+      start = { x: fromRect.left + parentInset, y: connectionY };
     }
   } else {
-    // ========== GROUP MODE ==========
-    // All connections share a single point (>10 children or no distribution info)
-    start = getPerimeterPoint(fromRect, toCenterX, toCenterY);
+    // VERTICAL layout (child is more up/down than left/right)
+    if (dy > 0) {
+      // Child is BELOW → exit from parent's BOTTOM edge
+      const parentLeft = fromRect.left + 15;
+      const parentRight = fromRect.right - 15;
+      
+      const connectionX = Math.max(parentLeft, Math.min(parentRight, toCenterX));
+      
+      start = { x: connectionX, y: fromRect.bottom - parentInset };
+    } else {
+      // Child is ABOVE → exit from parent's TOP edge
+      const parentLeft = fromRect.left + 15;
+      const parentRight = fromRect.right - 15;
+      
+      const connectionX = Math.max(parentLeft, Math.min(parentRight, toCenterX));
+      
+      start = { x: connectionX, y: fromRect.top + parentInset };
+    }
   }
   
   // ============================================================
@@ -270,69 +211,84 @@ export function computeBezierPath(
   const end = { x: childConnectionX, y: childConnectionY };
   
   // Bezier control points create the curve's "flow"
-  // Create elegant curves with a "belly" - go straight first, then curve
+  // Create elegant curves that flow naturally from parent to child
   let c1x, c1y, c2x, c2y;
   
   const horizontalDistance = end.x - start.x; // Signed distance
   const verticalDistance = end.y - start.y;   // Signed distance
   const absHorizontal = Math.abs(horizontalDistance);
   const absVertical = Math.abs(verticalDistance);
+  const totalDistance = Math.sqrt(horizontalDistance * horizontalDistance + verticalDistance * verticalDistance);
   
-  // For right-side children (fan-out), use gentle curve with horizontal start
-  if (horizontalDistance > 10) {
-    // RIGHT SIDE: Go straight horizontally first, then curve to target
-    const straightDistance = absHorizontal * 0.5; // Go straight for 50% of distance
+  // Dynamic curve tension based on distance - closer nodes need gentler curves
+  const tension = Math.min(0.5, Math.max(0.25, totalDistance / 400));
+  
+  // For right-side children (fan-out), use elegant flowing curves
+  if (horizontalDistance > 30) {
+    // RIGHT SIDE: Smooth horizontal flow with natural curve
+    // Control points create an S-curve that feels organic
+    const curveStrength = Math.min(absHorizontal * 0.6, 150);
     
-    c1x = start.x + straightDistance;  // Move right, staying horizontal
-    c1y = start.y;                     // Stay at connection height (horizontal)
-    c2x = end.x - (absHorizontal * 0.2); // Approach from left with gentle curve
-    c2y = end.y;                       // At target height
+    c1x = start.x + curveStrength;  // Push control point right
+    c1y = start.y;                   // Keep horizontal initially
+    c2x = end.x - curveStrength * 0.3; // Gentle approach to target
+    c2y = end.y;                     // At target height
     
-  } else if (horizontalDistance < -10) {
-    // LEFT SIDE: Mirror of right side
-    const curveDistance = absHorizontal * 0.4;
+  } else if (horizontalDistance < -30) {
+    // LEFT SIDE: Mirror of right side with elegant curve
+    const curveStrength = Math.min(absHorizontal * 0.6, 150);
     
-    c1x = start.x - curveDistance;
+    c1x = start.x - curveStrength;
     c1y = start.y;
-    c2x = end.x + curveDistance;
+    c2x = end.x + curveStrength * 0.3;
     c2y = end.y;
     
-  } else if (verticalDistance < -20) {
-    // UPWARD: Smooth vertical curve
-    const curveDistance = absVertical * 0.4;
+  } else if (verticalDistance < -30) {
+    // UPWARD: Smooth vertical curve going up
+    const curveStrength = Math.min(absVertical * 0.5, 120);
     
     c1x = start.x;
-    c1y = start.y - curveDistance;
+    c1y = start.y - curveStrength;
     c2x = end.x;
-    c2y = end.y + curveDistance;
+    c2y = end.y + curveStrength * 0.4;
     
-  } else if (verticalDistance > 20) {
-    // DOWNWARD: Smooth vertical curve
-    const curveDistance = absVertical * 0.4;
+  } else if (verticalDistance > 30) {
+    // DOWNWARD: Smooth vertical curve going down
+    const curveStrength = Math.min(absVertical * 0.5, 120);
     
     c1x = start.x;
-    c1y = start.y + curveDistance;
+    c1y = start.y + curveStrength;
     c2x = end.x;
-    c2y = end.y - curveDistance;
+    c2y = end.y - curveStrength * 0.4;
     
   } else {
-    // NEARLY STRAIGHT: Nodes are very close - simple S-curve
-    const controlDistance = Math.min(Math.max(absVertical, absHorizontal) * 0.4, 60);
-    c1x = start.x;
-    c1y = start.y + Math.sign(verticalDistance) * controlDistance;
-    c2x = end.x;
-    c2y = end.y - Math.sign(verticalDistance) * controlDistance;
+    // VERY CLOSE / DIAGONAL: Use adaptive curve based on angle
+    // For nodes that are close together, use a subtle curve
+    const angle = Math.atan2(verticalDistance, horizontalDistance);
+    const curveStrength = Math.max(totalDistance * tension, 30);
+    
+    // Perpendicular offset for subtle curve
+    const perpX = -Math.sin(angle) * curveStrength * 0.3;
+    const perpY = Math.cos(angle) * curveStrength * 0.3;
+    
+    c1x = start.x + horizontalDistance * 0.3 + perpX;
+    c1y = start.y + verticalDistance * 0.3 + perpY;
+    c2x = end.x - horizontalDistance * 0.3 + perpX;
+    c2y = end.y - verticalDistance * 0.3 + perpY;
   }
   
   // Construct SVG path string
   // Format: M (move to start) C (cubic bezier with 2 control points) to end
   const d = `M ${start.x} ${start.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${end.x} ${end.y}`;
   
-  // Calculate label position at midpoint (useful for connection labels/icons)
-  const label = {
-    x: (start.x + end.x) / 2,
-    y: (start.y + end.y) / 2,
-  };
+  // Calculate label position at curve midpoint (bezier t=0.5)
+  // For cubic bezier: B(t) = (1-t)³P0 + 3(1-t)²tP1 + 3(1-t)t²P2 + t³P3
+  const t = 0.5;
+  const mt = 1 - t;
+  const labelX = mt*mt*mt*start.x + 3*mt*mt*t*c1x + 3*mt*t*t*c2x + t*t*t*end.x;
+  const labelY = mt*mt*mt*start.y + 3*mt*mt*t*c1y + 3*mt*t*t*c2y + t*t*t*end.y;
+  
+  const label = { x: labelX, y: labelY };
   
   return { d, start, end, label };
 }

@@ -1,9 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { computeBezierPath } from './connectionGeometry';
 
 /**
- * ConnectionsSvg: Pure presentational component that renders all connections as a single SVG.
+ * ConnectionsSvg: Enhanced presentational component that renders all connections as a single SVG.
+ * Features:
+ * - Smooth curved Bezier paths
+ * - Optional arrows to show direction
+ * - Hover effects with highlighting
+ * - Color inheritance from parent node
+ * - Animated connection creation preview
  */
 export default function ConnectionsSvg({
   connections,
@@ -17,8 +23,12 @@ export default function ConnectionsSvg({
   mousePosition,
   zoom,
   pan,
+  showArrows = false, // Optional: show direction arrows
+  colorMode = 'default', // 'default' | 'parent' | 'gradient'
 }) {
-  const strokeColor = isDarkMode ? '#9ca3af' : '#64748B';
+  const [hoveredConnection, setHoveredConnection] = useState(null);
+  
+  const defaultStrokeColor = isDarkMode ? '#6b7280' : '#94a3b8';
   const hasConnections = Array.isArray(connections) && connections.length > 0;
   const showPreview = connectionFrom && mousePosition;
 
@@ -26,6 +36,18 @@ export default function ConnectionsSvg({
   if (!hasConnections && !showPreview) {
     return null;
   }
+
+  // Get color for a connection based on mode
+  const getConnectionColor = (conn, fromNode) => {
+    if (colorMode === 'parent' && fromNode?.bgColor && fromNode.bgColor !== '#ffffff') {
+      // Use parent's background color with some transparency
+      return fromNode.bgColor;
+    }
+    if (colorMode === 'gradient') {
+      return `url(#gradient-${conn.id})`;
+    }
+    return conn.color || defaultStrokeColor;
+  };
 
   return (
     <svg
@@ -41,11 +63,49 @@ export default function ConnectionsSvg({
       }}
     >
       <defs>
-        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-          <polygon points="0 0, 10 3.5, 0 7" fill={strokeColor} opacity="0.6" />
+        {/* Arrow marker for direction indication */}
+        <marker 
+          id="arrowhead" 
+          markerWidth="12" 
+          markerHeight="8" 
+          refX="10" 
+          refY="4" 
+          orient="auto"
+          markerUnits="userSpaceOnUse"
+        >
+          <path 
+            d="M 0 0 L 12 4 L 0 8 L 3 4 Z" 
+            fill={defaultStrokeColor} 
+            opacity="0.7" 
+          />
         </marker>
+        
+        {/* Hover glow filter */}
+        <filter id="connection-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        
+        {/* Gradients for each connection (when using gradient mode) */}
+        {colorMode === 'gradient' && connections.map(conn => {
+          const fromNode = nodes.find(n => n.id === conn.from);
+          const toNode = nodes.find(n => n.id === conn.to);
+          const fromColor = fromNode?.bgColor || defaultStrokeColor;
+          const toColor = toNode?.bgColor || defaultStrokeColor;
+          
+          return (
+            <linearGradient key={`gradient-${conn.id}`} id={`gradient-${conn.id}`}>
+              <stop offset="0%" stopColor={fromColor === '#ffffff' ? defaultStrokeColor : fromColor} />
+              <stop offset="100%" stopColor={toColor === '#ffffff' ? defaultStrokeColor : toColor} />
+            </linearGradient>
+          );
+        })}
       </defs>
-      {connections.map((conn, index) => {
+      
+      {connections.map((conn) => {
         const fromNode = nodes.find((n) => n.id === conn.from);
         const toNode = nodes.find((n) => n.id === conn.to);
         if (!fromNode || !toNode) {
@@ -99,44 +159,123 @@ export default function ConnectionsSvg({
         const childIndex = sortedSiblings.findIndex(c => c.id === conn.id);
         const totalChildren = sortedSiblings.length;
         
-        const { d: pathData, label: labelPoint } = computeBezierPath(fromPos, toPos, {
+        const { d: pathData, label: labelPoint, start, end } = computeBezierPath(fromPos, toPos, {
           childIndex,
           totalChildren,
           parentId: conn.from
         });
+        
+        // Focus mode and related node highlighting
         const inFocusMode = !!(fxOptions?.enabled && fxOptions?.focusMode && selectedNode);
         const isRelated = !!(relatedNodeIds?.has(conn.from) || relatedNodeIds?.has(conn.to));
-        let focusOpacity = 0.8;
+        const isHovered = hoveredConnection === conn.id;
+        const isSelected = selectedNode === conn.from || selectedNode === conn.to;
+        
+        let focusOpacity = 0.6;
         if (inFocusMode) {
-          focusOpacity = isRelated ? 0.85 : 0.22;
+          focusOpacity = isRelated ? 0.8 : 0.15;
         }
+        if (isHovered || isSelected) {
+          focusOpacity = 0.95;
+        }
+        
+        const connectionColor = getConnectionColor(conn, fromNode);
+        const strokeWidth = isHovered || isSelected ? 3.5 : 2.5;
 
         return (
           <g key={conn.id}>
+            {/* Invisible wider path for easier hover detection */}
             <path
               d={pathData}
-              stroke={strokeColor}
-              strokeWidth={2.5}
+              stroke="transparent"
+              strokeWidth={20}
+              fill="none"
+              style={{ pointerEvents: 'stroke', cursor: 'pointer' }}
+              onMouseEnter={() => setHoveredConnection(conn.id)}
+              onMouseLeave={() => setHoveredConnection(null)}
+            />
+            
+            {/* Glow effect for hovered/selected connections */}
+            {(isHovered || isSelected) && (
+              <path
+                d={pathData}
+                stroke={connectionColor}
+                strokeWidth={8}
+                fill="none"
+                strokeOpacity={0.2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            )}
+            
+            {/* Main connection path */}
+            <path
+              d={pathData}
+              stroke={connectionColor}
+              strokeWidth={strokeWidth}
               fill="none"
               strokeOpacity={focusOpacity}
               strokeLinecap="round"
               strokeLinejoin="round"
-              style={{ transition: 'all 0.15s ease-out' }}
+              markerEnd={showArrows ? 'url(#arrowhead)' : undefined}
+              style={{ 
+                transition: 'all 0.2s ease-out',
+                filter: (isHovered || isSelected) ? 'url(#connection-glow)' : 'none'
+              }}
             />
-      {conn.label && labelPoint && (
-              <text
-                x={labelPoint.x}
-                y={labelPoint.y - 6}
-                textAnchor="middle"
-                fontSize={12}
-                fill={isDarkMode ? '#e5e7eb' : '#334155'}
-                opacity={(function(){
-                  if (!inFocusMode) return 0.9;
-                  return isRelated ? 0.9 : 0.35;
-                })()}
-              >
-                {conn.label}
-              </text>
+            
+            {/* Small circle at parent connection point */}
+            {(isHovered || isSelected) && start && (
+              <circle
+                cx={start.x}
+                cy={start.y}
+                r={4}
+                fill={connectionColor}
+                opacity={focusOpacity}
+                style={{ transition: 'all 0.2s ease-out' }}
+              />
+            )}
+            
+            {/* Small circle at child connection point */}
+            {(isHovered || isSelected) && end && (
+              <circle
+                cx={end.x}
+                cy={end.y}
+                r={4}
+                fill={connectionColor}
+                opacity={focusOpacity}
+                style={{ transition: 'all 0.2s ease-out' }}
+              />
+            )}
+            
+            {/* Connection label */}
+            {conn.label && labelPoint && (
+              <g>
+                {/* Label background */}
+                <rect
+                  x={labelPoint.x - 20}
+                  y={labelPoint.y - 16}
+                  width={40}
+                  height={20}
+                  rx={4}
+                  fill={isDarkMode ? '#1f2937' : '#ffffff'}
+                  opacity={0.9}
+                />
+                <text
+                  x={labelPoint.x}
+                  y={labelPoint.y - 2}
+                  textAnchor="middle"
+                  fontSize={11}
+                  fontWeight={500}
+                  fill={isDarkMode ? '#e5e7eb' : '#334155'}
+                  opacity={(function(){
+                    if (!inFocusMode) return 0.9;
+                    return isRelated ? 0.9 : 0.35;
+                  })()}
+                >
+                  {conn.label}
+                </text>
+              </g>
             )}
           </g>
         );
@@ -232,4 +371,6 @@ ConnectionsSvg.propTypes = {
     x: PropTypes.number,
     y: PropTypes.number,
   }),
+  showArrows: PropTypes.bool,
+  colorMode: PropTypes.oneOf(['default', 'parent', 'gradient']),
 };

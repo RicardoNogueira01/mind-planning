@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { userApi } from '../api/client';
 import TopBar from './shared/TopBar';
 import { 
   ArrowLeft,
@@ -16,7 +17,8 @@ import {
   Linkedin,
   Github,
   Globe,
-  Plus
+  Plus,
+  Loader2
 } from 'lucide-react';
 
 const EditProfilePage = () => {
@@ -24,23 +26,61 @@ const EditProfilePage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [feedbackMessage, setFeedbackMessage] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   
   const [formData, setFormData] = useState({
-    name: 'Alex Kim',
-    role: 'Senior Developer',
-    department: 'Engineering',
-    email: 'alex.kim@company.com',
-    phone: '+1 (555) 123-4567',
-    location: 'San Francisco, CA',
-    bio: 'Passionate full-stack developer with 8+ years of experience building scalable web applications. Love working with React, Node.js, and cloud technologies.',
-    joinDate: '2023-01-15',
-    linkedin: 'https://linkedin.com/in/alexkim',
-    github: 'https://github.com/alexkim',
-    website: 'https://alexkim.dev',
-    skills: ['React', 'Node.js', 'TypeScript', 'Python', 'AWS', 'Docker', 'GraphQL', 'MongoDB']
+    name: '',
+    jobTitle: '',
+    department: '',
+    email: '',
+    phone: '',
+    location: '',
+    bio: '',
+    linkedinUrl: '',
+    githubUrl: '',
+    websiteUrl: '',
+    skills: [],
+    color: '#6366f1',
+    initials: ''
   });
 
   const [newSkill, setNewSkill] = useState('');
+
+  // Fetch current profile data
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        const userId = memberId || 'me';
+        const data = await userApi.getById(userId);
+        
+        setFormData({
+          name: data.name || '',
+          jobTitle: data.jobTitle || '',
+          department: data.department || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          location: data.location || '',
+          bio: data.bio || '',
+          linkedinUrl: data.linkedinUrl || '',
+          githubUrl: data.githubUrl || '',
+          websiteUrl: data.websiteUrl || '',
+          skills: Array.isArray(data.skills) ? data.skills : [],
+          color: data.color || '#6366f1',
+          initials: data.initials || (data.name ? data.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U'),
+          avatar: data.avatar
+        });
+      } catch (err) {
+        console.error('Failed to fetch profile:', err);
+        setFeedbackMessage({ message: 'Failed to load profile data', type: 'error' });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [memberId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -64,18 +104,57 @@ const EditProfilePage = () => {
     }));
   };
 
-  const handleSave = () => {
-    // In real app, save to API
-    setFeedbackMessage({ message: 'Profile updated successfully!', type: 'success' });
-    setTimeout(() => {
-      setFeedbackMessage(null);
-      navigate(`/profile/${memberId}`);
-    }, 2000);
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const userId = memberId || 'me';
+      
+      await userApi.update(userId, {
+        name: formData.name,
+        jobTitle: formData.jobTitle,
+        department: formData.department,
+        phone: formData.phone,
+        location: formData.location,
+        bio: formData.bio,
+        linkedinUrl: formData.linkedinUrl,
+        githubUrl: formData.githubUrl,
+        websiteUrl: formData.websiteUrl,
+        skills: formData.skills,
+        color: formData.color,
+        initials: formData.initials
+      });
+      
+      setFeedbackMessage({ message: 'Profile updated successfully!', type: 'success' });
+      setTimeout(() => {
+        setFeedbackMessage(null);
+        navigate(`/profile/${memberId || 'me'}`);
+      }, 1500);
+    } catch (err) {
+      console.error('Failed to save profile:', err);
+      setFeedbackMessage({ message: 'Failed to save profile. Please try again.', type: 'error' });
+      setTimeout(() => setFeedbackMessage(null), 3000);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
-    navigate(`/profile/${memberId}`);
+    navigate(`/profile/${memberId || 'me'}`);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAFAFA]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+        <TopBar showSearch={false} />
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+            <p className="text-gray-500">Loading profile...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
@@ -119,11 +198,12 @@ const EditProfilePage = () => {
             </button>
             <button
               onClick={handleSave}
-              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm font-medium"
+              disabled={saving}
+              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Save size={16} />
-              <span className="hidden sm:inline">{t('editProfile.save')}</span>
-              <span className="sm:hidden">Save Changes</span>
+              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+              <span className="hidden sm:inline">{saving ? 'Saving...' : t('editProfile.save')}</span>
+              <span className="sm:hidden">{saving ? 'Saving...' : 'Save'}</span>
             </button>
           </div>
         </div>
@@ -133,20 +213,45 @@ const EditProfilePage = () => {
           <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-4 sm:p-6 mb-6">
             <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4">{t('editProfile.profilePicture')}</h2>
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
-              <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center text-white font-bold text-3xl sm:text-4xl shadow-lg flex-shrink-0">
-                AK
-              </div>
+              {formData.avatar ? (
+                <img 
+                  src={formData.avatar} 
+                  alt={formData.name}
+                  className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl object-cover shadow-lg flex-shrink-0"
+                />
+              ) : (
+                <div 
+                  className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl flex items-center justify-center text-white font-bold text-3xl sm:text-4xl shadow-lg flex-shrink-0"
+                  style={{ backgroundColor: formData.color }}
+                >
+                  {formData.initials}
+                </div>
+              )}
               <div className="flex-1 w-full text-center sm:text-left">
-                <p className="text-xs sm:text-sm text-gray-600 mb-3">Upload a new profile picture. JPG, PNG or GIF. Max size 5MB.</p>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <button className="px-3 sm:px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm font-medium">
-                    <Upload size={16} />
-                    {t('editProfile.uploadPhoto')}
-                  </button>
-                  <button className="px-3 sm:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm font-medium">
-                    <Camera size={16} />
-                    {t('editProfile.takePhoto')}
-                  </button>
+                <p className="text-xs sm:text-sm text-gray-600 mb-3">Your profile picture is managed by Clerk. You can update it in your account settings.</p>
+                <p className="text-xs text-gray-500">Profile color and initials are used when no avatar is available.</p>
+                <div className="flex flex-col sm:flex-row gap-3 mt-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Color</label>
+                    <input
+                      type="color"
+                      name="color"
+                      value={formData.color}
+                      onChange={handleInputChange}
+                      className="w-12 h-8 rounded cursor-pointer border border-gray-300"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Initials</label>
+                    <input
+                      type="text"
+                      name="initials"
+                      value={formData.initials}
+                      onChange={handleInputChange}
+                      maxLength={2}
+                      className="w-16 px-2 py-1 border border-gray-300 rounded-lg text-center uppercase text-sm"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -170,8 +275,8 @@ const EditProfilePage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Job Title</label>
                 <input
                   type="text"
-                  name="role"
-                  value={formData.role}
+                  name="jobTitle"
+                  value={formData.jobTitle}
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
@@ -184,23 +289,15 @@ const EditProfilePage = () => {
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
+                  <option value="">Select Department</option>
                   <option value="Engineering">Engineering</option>
                   <option value="Design">Design</option>
                   <option value="Marketing">Marketing</option>
                   <option value="Sales">Sales</option>
                   <option value="Product">Product</option>
                   <option value="HR">HR</option>
+                  <option value="General">General</option>
                 </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Join Date</label>
-                <input
-                  type="date"
-                  name="joinDate"
-                  value={formData.joinDate}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
               </div>
             </div>
           </div>
@@ -210,7 +307,7 @@ const EditProfilePage = () => {
             <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4">Contact Information</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                   <Mail size={16} />
                   Email Address
                 </label>
@@ -223,7 +320,7 @@ const EditProfilePage = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                   <Phone size={16} />
                   Phone Number
                 </label>
@@ -236,7 +333,7 @@ const EditProfilePage = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                   <MapPin size={16} />
                   Location
                 </label>
@@ -257,42 +354,42 @@ const EditProfilePage = () => {
             <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4">Social Links</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                   <Linkedin size={16} />
                   LinkedIn
                 </label>
                 <input
                   type="url"
-                  name="linkedin"
-                  value={formData.linkedin}
+                  name="linkedinUrl"
+                  value={formData.linkedinUrl}
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="https://linkedin.com/in/username"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                   <Github size={16} />
                   GitHub
                 </label>
                 <input
                   type="url"
-                  name="github"
-                  value={formData.github}
+                  name="githubUrl"
+                  value={formData.githubUrl}
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="https://github.com/username"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                   <Globe size={16} />
                   Website
                 </label>
                 <input
                   type="url"
-                  name="website"
-                  value={formData.website}
+                  name="websiteUrl"
+                  value={formData.websiteUrl}
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="https://yourwebsite.com"

@@ -110,9 +110,59 @@ export const api = new ApiClient();
 // API ENDPOINTS
 // ===========================================
 
+// User Profile Interface
+export interface UserProfile {
+  id: string;
+  clerkId: string;
+  email: string;
+  name: string;
+  firstName?: string;
+  lastName?: string;
+  avatar?: string;
+  initials?: string;
+  color: string;
+  role: string;
+  isActive: boolean;
+  organizationId: string;
+  organization?: { id: string; name: string; slug: string };
+  phone?: string;
+  location?: string;
+  department?: string;
+  jobTitle?: string;
+  bio?: string;
+  skills?: string[];
+  linkedinUrl?: string;
+  githubUrl?: string;
+  websiteUrl?: string;
+  memberOfTeams?: Array<{ team: { id: string; name: string; color?: string } }>;
+  stats?: {
+    completed: number;
+    inProgress: number;
+    overdue: number;
+    total: number;
+    successRate: number;
+  };
+  recentActivity?: Array<{
+    id: string;
+    type: string;
+    task: string;
+    time: string;
+    project: string;
+  }>;
+  holidayRequests?: Array<{
+    id: string;
+    startDate: string;
+    endDate: string;
+    days: number;
+    status: string;
+    reason?: string;
+  }>;
+}
+
 // User
 export const userApi = {
-  getMe: () => api.get('/me'),
+  getMe: () => api.get<UserProfile>('/me'),
+  
   updateMe: (data: Partial<{
     initials: string;
     color: string;
@@ -122,7 +172,29 @@ export const userApi = {
     jobTitle: string;
     bio: string;
     skills: string[];
-  }>) => api.patch('/me', data),
+  }>) => api.patch<UserProfile>('/me', data),
+  
+  // Get all team members
+  getAll: () => api.get<UserProfile[]>('/users'),
+  
+  // Get specific user profile
+  getById: (id: string) => api.get<UserProfile>(`/users/${id}`),
+  
+  // Update user profile
+  update: (id: string, data: Partial<{
+    name: string;
+    initials: string;
+    color: string;
+    phone: string;
+    location: string;
+    department: string;
+    jobTitle: string;
+    bio: string;
+    skills: string[];
+    linkedinUrl: string;
+    githubUrl: string;
+    websiteUrl: string;
+  }>) => api.patch<UserProfile>(`/users/${id}`, data),
 };
 
 // MindMaps

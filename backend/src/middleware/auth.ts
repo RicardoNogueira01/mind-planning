@@ -2,11 +2,11 @@
 // Verifies JWT tokens and attaches user to request
 
 import { Request, Response, NextFunction } from 'express';
-import { createClerkClient } from '@clerk/backend';
+import { createClerkClient, verifyToken } from '@clerk/backend';
 import { config } from '../config/env';
 import prisma from '../config/database';
 
-// Initialize Clerk client
+// Initialize Clerk client for user management
 const clerk = createClerkClient({
   secretKey: config.clerk.secretKey,
 });
@@ -52,7 +52,12 @@ export async function requireAuth(
     const token = authHeader.substring(7); // Remove 'Bearer '
     
     // Verify the token with Clerk
-    const { sub: clerkUserId, sid: sessionId } = await clerk.verifyToken(token);
+    const payload = await verifyToken(token, {
+      secretKey: config.clerk.secretKey,
+    });
+    
+    const clerkUserId = payload.sub;
+    const sessionId = payload.sid || '';
     
     if (!clerkUserId) {
       res.status(401).json({ error: 'Invalid token' });
@@ -153,7 +158,12 @@ export async function optionalAuth(
     
     const token = authHeader.substring(7);
     
-    const { sub: clerkUserId, sid: sessionId } = await clerk.verifyToken(token);
+    const payload = await verifyToken(token, {
+      secretKey: config.clerk.secretKey,
+    });
+    
+    const clerkUserId = payload.sub;
+    const sessionId = payload.sid || '';
     
     if (clerkUserId) {
       const user = await prisma.user.findUnique({
@@ -171,7 +181,7 @@ export async function optionalAuth(
       if (user) {
         req.auth = {
           userId: clerkUserId,
-          sessionId: sessionId || '',
+          sessionId: sessionId,
           user,
         };
       }

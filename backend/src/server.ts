@@ -95,6 +95,190 @@ app.patch('/api/me', requireAuth, async (req, res) => {
 });
 
 // ===========================================
+// USERS/MEMBERS ROUTES
+// ===========================================
+
+// Get all team members (users in same organization)
+app.get('/api/users', requireAuth, async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      where: {
+        organizationId: req.auth!.user!.organizationId,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatar: true,
+        initials: true,
+        color: true,
+        role: true,
+        department: true,
+        jobTitle: true,
+        location: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+    
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// Get specific user profile
+app.get('/api/users/:id', requireAuth, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    
+    // Handle "me" as alias for current user
+    const targetId = userId === 'me' ? req.auth!.user!.id : userId;
+    
+    const user = await prisma.user.findFirst({
+      where: {
+        id: targetId,
+        organizationId: req.auth!.user!.organizationId,
+      },
+      include: {
+        organization: { select: { id: true, name: true, slug: true } },
+        memberOfTeams: {
+          include: { team: { select: { id: true, name: true, color: true } } },
+        },
+        assignedNodes: {
+          where: {
+            status: { not: 'cancelled' },
+          },
+          select: {
+            id: true,
+            text: true,
+            status: true,
+            priority: true,
+            dueDate: true,
+            completedAt: true,
+            mindMap: { select: { id: true, title: true } },
+          },
+          orderBy: { updatedAt: 'desc' },
+          take: 20,
+        },
+        holidayRequests: {
+          orderBy: { startDate: 'desc' },
+          take: 10,
+        },
+        _count: {
+          select: {
+            assignedNodes: true,
+            createdNodes: true,
+            comments: true,
+          },
+        },
+      },
+    });
+    
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    
+    // Calculate stats
+    const completedTasks = await prisma.node.count({
+      where: { assigneeId: targetId, status: 'completed' },
+    });
+    
+    const inProgressTasks = await prisma.node.count({
+      where: { assigneeId: targetId, status: 'in_progress' },
+    });
+    
+    const overdueTasks = await prisma.node.count({
+      where: {
+        assigneeId: targetId,
+        status: { notIn: ['completed', 'cancelled'] },
+        dueDate: { lt: new Date() },
+      },
+    });
+    
+    const totalAssigned = await prisma.node.count({
+      where: { assigneeId: targetId },
+    });
+    
+    // Get recent activity (last 10 completed tasks)
+    const recentActivity = await prisma.node.findMany({
+      where: { assigneeId: targetId },
+      select: {
+        id: true,
+        text: true,
+        status: true,
+        updatedAt: true,
+        mindMap: { select: { id: true, title: true } },
+      },
+      orderBy: { updatedAt: 'desc' },
+      take: 10,
+    });
+    
+    res.json({
+      ...user,
+      stats: {
+        completed: completedTasks,
+        inProgress: inProgressTasks,
+        overdue: overdueTasks,
+        total: totalAssigned,
+        successRate: totalAssigned > 0 ? Math.round((completedTasks / totalAssigned) * 100) : 0,
+      },
+      recentActivity: recentActivity.map(activity => ({
+        id: activity.id,
+        type: activity.status,
+        task: activity.text,
+        time: activity.updatedAt,
+        project: activity.mindMap?.title || 'Unknown',
+      })),
+    });
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ error: 'Failed to fetch user profile' });
+  }
+});
+
+// Update specific user (admin only or self)
+app.patch('/api/users/:id', requireAuth, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const isAdmin = req.auth!.user!.role === 'admin';
+    const isSelf = userId === req.auth!.user!.id;
+    
+    if (!isAdmin && !isSelf) {
+      res.status(403).json({ error: 'Not authorized to update this user' });
+      return;
+    }
+    
+    const { name, initials, color, phone, location, department, jobTitle, bio, skills, linkedinUrl, githubUrl, websiteUrl } = req.body;
+    
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name,
+        initials,
+        color,
+        phone,
+        location,
+        department,
+        jobTitle,
+        bio,
+        skills,
+        linkedinUrl,
+        githubUrl,
+        websiteUrl,
+      },
+    });
+    
+    res.json(user);
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+// ===========================================
 // MINDMAPS ROUTES
 // ===========================================
 

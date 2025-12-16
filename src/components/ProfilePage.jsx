@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { userApi } from '../api/client';
 import TopBar from './shared/TopBar';
 import { 
   ArrowLeft,
@@ -13,7 +14,8 @@ import {
   BarChart2,
   Clock,
   CheckCircle,
-  TrendingUp
+  TrendingUp,
+  Loader2
 } from 'lucide-react';
 
 const ProfilePage = () => {
@@ -21,49 +23,86 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('overview');
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock data - in real app would fetch from API
-  const profile = {
-    id: memberId || 'current-user',
-    name: 'Alex Kim',
-    initials: 'AK',
-    color: '#4ADE80',
-    role: 'Senior Developer',
-    department: 'Engineering',
-    email: 'alex.kim@company.com',
-    phone: '+1(555) 123-4567',
-    location: 'San Francisco, CA',
-    bio: 'Passionate full-stack developer with 8+ years of experience building scalable web applications. Love working with React, Node.js, and cloud technologies. Always eager to learn new things and contribute to meaningful projects.',
-    skills: ['React', 'Node.js', 'TypeScript', 'Python', 'AWS', 'Docker', 'GraphQL', 'MongoDB'],
-    holidays: {
-      totalDays: 25,
-      taken: 12,
-      pending: 3,
-      rejected: 1,
-      remaining: 9,
-      requests: [
-        { id: 1, startDate: '20 Dec', endDate: '27 Dec', days: 5, status: 'taken', reason: 'Christmas vacation' },
-        { id: 2, startDate: '10 Jan', endDate: '17 Jan', days: 5, status: 'taken', reason: 'Winter break' },
-        { id: 3, startDate: '5 Feb', endDate: '7 Feb', days: 2, status: 'taken', reason: 'Personal matters' },
-        { id: 4, startDate: '15 Mar', endDate: '19 Mar', days: 3, status: 'pending', reason: 'Family trip' },
-        { id: 5, startDate: '1 Apr', endDate: '3 Apr', days: 2, status: 'rejected', reason: 'Project deadline' }
-      ]
-    },
-    stats: {
-      completed: 248,
-      inProgress: 12,
-      overdue: 2,
-      successRate: 94
-    },
-    recentActivity: [
-      { id: 1, type: 'completed', task: 'API Integration', time: '2h ago', project: 'Project Alpha', icon: '✓' },
-      { id: 2, type: 'inProgress', task: 'Database Migration', time: '5h ago', project: 'Project Beta', icon: '◐' },
-      { id: 3, type: 'overdue', task: 'UI Redesign', time: '1 day ago', project: 'Project Gamma', icon: '+' },
-      { id: 4, type: 'completed', task: 'Auth System', time: '2 days ago', project: 'Project Delta', icon: '✓' }
-    ],
-    performance: {
-      excellent: true
-    }
+  // Fetch profile from API
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        // Use 'me' for current user or the memberId
+        const userId = memberId || 'me';
+        const data = await userApi.getById(userId);
+        
+        // Transform data to match component expectations
+        setProfile({
+          id: data.id,
+          name: data.name || `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'User',
+          initials: data.initials || (data.name ? data.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U'),
+          color: data.color || '#6366f1',
+          role: data.jobTitle || data.role || 'Team Member',
+          department: data.department || 'General',
+          email: data.email,
+          phone: data.phone || 'Not provided',
+          location: data.location || 'Not provided',
+          bio: data.bio || 'No bio provided.',
+          skills: Array.isArray(data.skills) ? data.skills : [],
+          avatar: data.avatar,
+          linkedinUrl: data.linkedinUrl,
+          githubUrl: data.githubUrl,
+          websiteUrl: data.websiteUrl,
+          teams: data.memberOfTeams || [],
+          holidays: calculateHolidays(data.holidayRequests || []),
+          stats: data.stats || {
+            completed: 0,
+            inProgress: 0,
+            overdue: 0,
+            successRate: 0
+          },
+          recentActivity: (data.recentActivity || []).map(activity => ({
+            ...activity,
+            icon: activity.type === 'completed' ? '✓' : activity.type === 'in_progress' ? '◐' : '+'
+          })),
+          performance: {
+            excellent: (data.stats?.successRate || 0) >= 80
+          }
+        });
+      } catch (err) {
+        console.error('Failed to fetch profile:', err);
+        setError('Failed to load profile. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [memberId]);
+
+  // Calculate holiday stats from requests
+  const calculateHolidays = (requests) => {
+    const taken = requests.filter(r => r.status === 'approved').reduce((sum, r) => sum + (r.days || 0), 0);
+    const pending = requests.filter(r => r.status === 'pending').reduce((sum, r) => sum + (r.days || 0), 0);
+    const rejected = requests.filter(r => r.status === 'rejected').length;
+    const totalDays = 25; // Default annual allowance
+    
+    return {
+      totalDays,
+      taken,
+      pending,
+      rejected,
+      remaining: totalDays - taken,
+      requests: requests.slice(0, 5).map(r => ({
+        id: r.id,
+        startDate: new Date(r.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+        endDate: new Date(r.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+        days: r.days || 1,
+        status: r.status === 'approved' ? 'taken' : r.status,
+        reason: r.reason || ''
+      }))
+    };
   };
 
   const tabs = [
@@ -75,11 +114,61 @@ const ProfilePage = () => {
   const getActivityColor = (type) => {
     switch(type) {
       case 'completed': return 'text-green-600 bg-green-50';
+      case 'in_progress':
       case 'inProgress': return 'text-blue-600 bg-blue-50';
       case 'overdue': return 'text-red-600 bg-red-50';
       default: return 'text-gray-600 bg-gray-50';
     }
   };
+
+  const formatTimeAgo = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAFAFA]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+        <TopBar showSearch={false} />
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+            <p className="text-gray-500">Loading profile...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !profile) {
+    return (
+      <div className="min-h-screen bg-[#FAFAFA]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+        <TopBar showSearch={false} />
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">{error || 'Profile not found'}</p>
+            <button 
+              onClick={() => navigate(-1)}
+              className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
@@ -108,12 +197,20 @@ const ProfilePage = () => {
             {/* Avatar and Action Buttons */}
             <div className="flex flex-col md:flex-row md:items-end md:justify-between -mt-16 mb-6">
               <div className="flex items-end gap-4 mb-4 md:mb-0">
-                <div 
-                  className="w-28 h-28 rounded-2xl flex items-center justify-center text-white font-bold text-4xl shadow-xl ring-4 ring-white"
-                  style={{ backgroundColor: profile.color }}
-                >
-                  {profile.initials}
-                </div>
+                {profile.avatar ? (
+                  <img 
+                    src={profile.avatar} 
+                    alt={profile.name}
+                    className="w-28 h-28 rounded-2xl object-cover shadow-xl ring-4 ring-white"
+                  />
+                ) : (
+                  <div 
+                    className="w-28 h-28 rounded-2xl flex items-center justify-center text-white font-bold text-4xl shadow-xl ring-4 ring-white"
+                    style={{ backgroundColor: profile.color }}
+                  >
+                    {profile.initials}
+                  </div>
+                )}
               </div>
               
               <div className="flex gap-2">
@@ -147,7 +244,7 @@ const ProfilePage = () => {
                   profile.performance.excellent ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
                 }`}>
                   <CheckCircle size={14} />
-                  Excellent Performance
+                  {profile.performance.excellent ? 'Excellent Performance' : 'Good Performance'}
                 </span>
               </div>
             </div>
@@ -190,16 +287,18 @@ const ProfilePage = () => {
             </div>
 
             {/* Skills Section */}
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">{t('profile.skills').toUpperCase()}</h3>
-              <div className="flex flex-wrap gap-2">
-                {profile.skills.map((skill) => (
-                  <span key={skill} className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-lg font-medium hover:bg-gray-200 transition-colors">
-                    {skill}
-                  </span>
-                ))}
+            {profile.skills && profile.skills.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">{t('profile.skills').toUpperCase()}</h3>
+                <div className="flex flex-wrap gap-2">
+                  {profile.skills.map((skill) => (
+                    <span key={skill} className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-lg font-medium hover:bg-gray-200 transition-colors">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Holidays Section */}
             <div className="mt-6 pt-6 border-t border-gray-200">
@@ -240,235 +339,102 @@ const ProfilePage = () => {
               </div>
 
               {/* Recent Holiday Requests */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Recent Requests</h4>
-                {profile.holidays.requests.slice(0, 3).map((request) => (
-                  <div key={request.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                        request.status === 'taken' ? 'bg-green-500' : 
-                        request.status === 'pending' ? 'bg-amber-500' : 
-                        'bg-red-500'
-                      }`}></div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{request.startDate} - {request.endDate}</p>
-                        <p className="text-xs text-gray-500">{request.reason}</p>
+              {profile.holidays.requests.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Recent Requests</h4>
+                  {profile.holidays.requests.slice(0, 3).map((request) => (
+                    <div key={request.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                          request.status === 'taken' ? 'bg-green-500' : 
+                          request.status === 'pending' ? 'bg-amber-500' : 
+                          'bg-red-500'
+                        }`}></div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{request.startDate} - {request.endDate}</p>
+                          <p className="text-xs text-gray-500">{request.reason || 'No reason provided'}</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs font-semibold text-gray-600">{request.days} days</span>
-                      <span className={`px-2 py-1 rounded-md text-xs font-medium ${
-                        request.status === 'taken' ? 'bg-green-100 text-green-700' : 
-                        request.status === 'pending' ? 'bg-amber-100 text-amber-700' : 
+                      <span className={`px-2 py-1 text-xs font-medium rounded ${
+                        request.status === 'taken' ? 'bg-green-100 text-green-700' :
+                        request.status === 'pending' ? 'bg-amber-100 text-amber-700' :
                         'bg-red-100 text-red-700'
                       }`}>
-                        {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                        {request.days} {request.days === 1 ? 'day' : 'days'}
                       </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 overflow-x-auto">
-          <div className="flex border-b border-gray-200 min-w-max">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 sm:px-6 py-3.5 text-xs sm:text-sm font-medium transition-colors relative whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? 'text-indigo-600 border-b-2 border-indigo-600'
-                      : 'text-gray-500 hover:text-gray-900'
-                  }`}
-                >
-                  <Icon size={18} />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Tab Content */}
-        {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Side - Stats */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Statistics Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-xl border-l-4 border-green-500 p-5 shadow-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs text-gray-500 font-medium">{t('profile.completed')}</p>
-                    <CheckCircle size={16} className="text-green-600" />
-                  </div>
-                  <p className="text-3xl font-bold text-green-600">{profile.stats.completed}</p>
-                  <p className="text-xs text-gray-500 mt-1">{t('profile.totalTasks')}</p>
-                </div>
-
-                <div className="bg-white rounded-xl border-l-4 border-blue-500 p-5 shadow-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs text-gray-500 font-medium">{t('profile.inProgress')}</p>
-                    <Activity size={16} className="text-blue-600" />
-                  </div>
-                  <p className="text-3xl font-bold text-blue-600">{profile.stats.inProgress}</p>
-                  <p className="text-xs text-gray-500 mt-1">{t('profile.activeTasks')}</p>
-                </div>
-
-                <div className="bg-white rounded-xl border-l-4 border-red-500 p-5 shadow-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs text-gray-500 font-medium">{t('profile.overdue')}</p>
-                    <TrendingUp size={16} className="text-red-600" />
-                  </div>
-                  <p className="text-3xl font-bold text-red-600">{profile.stats.overdue}</p>
-                  <p className="text-xs text-gray-500 mt-1">{t('profile.needAttention')}</p>
-                </div>
-
-                <div className="bg-white rounded-xl border-l-4 border-amber-500 p-5 shadow-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs text-gray-500 font-medium">{t('profile.successRate')}</p>
-                    <BarChart2 size={16} className="text-amber-600" />
-                  </div>
-                  <p className="text-3xl font-bold text-amber-600">{profile.stats.successRate}%</p>
-                  <p className="text-xs text-gray-500 mt-1">{t('profile.completionRate')}</p>
-                </div>
-              </div>
-
-              {/* Task Completion Trend */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-                  <h3 className="text-lg font-bold text-gray-900">Task Completion Trend</h3>
-                  <div className="flex gap-2">
-                    <button className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">Week</button>
-                    <button className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg">Month</button>
-                    <button className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">Year</button>
-                  </div>
-                </div>
-                
-                {/* Placeholder for chart */}
-                <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-                  <div className="text-center">
-                    <BarChart2 size={48} className="text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm text-gray-400">Chart visualization area</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Side - Recent Activity */}
-            <div className="space-y-6">
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Recent Activity</h3>
-                <div className="space-y-3">
-                  {profile.recentActivity.map((activity) => (
-                    <div key={activity.id} className="group hover:bg-gray-50 p-3 rounded-lg transition-colors">
-                      <div className="flex gap-3">
-                        <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold ${getActivityColor(activity.type)}`}>
-                          {activity.icon}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 mb-1">{activity.task}</p>
-                          <p className="text-xs text-gray-500 mb-1">{activity.project}</p>
-                          <p className="text-xs text-gray-400">{activity.time}</p>
-                        </div>
-                      </div>
                     </div>
                   ))}
                 </div>
-              </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
 
-        {activeTab === 'activity' && (
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-6">Activity Timeline</h3>
-            <div className="space-y-4">
-              {profile.recentActivity.map((activity, index) => (
-                <div key={activity.id} className="flex gap-4 relative">
-                  {index !== profile.recentActivity.length - 1 && (
-                    <div className="absolute left-5 top-12 bottom-0 w-0.5 bg-gray-200"></div>
-                  )}
-                  <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold ${getActivityColor(activity.type)} z-10`}>
-                    {activity.icon}
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <CheckCircle size={20} className="text-green-600" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'DM Mono, monospace' }}>
+              {profile.stats.completed}
+            </p>
+            <p className="text-xs text-gray-500 font-medium">Tasks Completed</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Clock size={20} className="text-blue-600" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'DM Mono, monospace' }}>
+              {profile.stats.inProgress}
+            </p>
+            <p className="text-xs text-gray-500 font-medium">In Progress</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                <Activity size={20} className="text-red-600" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'DM Mono, monospace' }}>
+              {profile.stats.overdue}
+            </p>
+            <p className="text-xs text-gray-500 font-medium">Overdue</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <TrendingUp size={20} className="text-purple-600" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'DM Mono, monospace' }}>
+              {profile.stats.successRate}%
+            </p>
+            <p className="text-xs text-gray-500 font-medium">Success Rate</p>
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        {profile.recentActivity && profile.recentActivity.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">Recent Activity</h3>
+            <div className="space-y-3">
+              {profile.recentActivity.map((activity) => (
+                <div key={activity.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${getActivityColor(activity.type)}`}>
+                    <span className="text-sm">{activity.icon}</span>
                   </div>
-                  <div className="flex-1 pb-6">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <p className="font-semibold text-gray-900">{activity.task}</p>
-                        <p className="text-sm text-gray-500">{activity.project}</p>
-                      </div>
-                      <span className="text-xs text-gray-400 whitespace-nowrap ml-4">{activity.time}</span>
-                    </div>
-                    <span className="inline-block px-2.5 py-1 bg-gray-100 text-gray-600 text-xs rounded-md capitalize font-medium">
-                      {activity.type.replaceAll(/([A-Z])/g, ' $1').trim()}
-                    </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{activity.task}</p>
+                    <p className="text-xs text-gray-500">{activity.project}</p>
                   </div>
+                  <p className="text-xs text-gray-400">{typeof activity.time === 'string' && activity.time.includes('ago') ? activity.time : formatTimeAgo(activity.time)}</p>
                 </div>
               ))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'performance' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900 mb-6">Performance Metrics</h3>
-              <div className="space-y-5">
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">Task Completion</span>
-                    <span className="text-sm font-bold text-gray-900">{profile.stats.successRate}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div className="bg-green-500 h-2.5 rounded-full" style={{ width: `${profile.stats.successRate}%` }}></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">On-time Delivery</span>
-                    <span className="text-sm font-bold text-gray-900">89%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div className="bg-blue-500 h-2.5 rounded-full" style={{ width: '89%' }}></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">Quality Score</span>
-                    <span className="text-sm font-bold text-gray-900">96%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div className="bg-purple-500 h-2.5 rounded-full" style={{ width: '96%' }}></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900 mb-6">Monthly Comparison</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-5 bg-blue-50 rounded-xl text-center">
-                  <p className="text-xs text-blue-600 font-medium mb-2">Last Month</p>
-                  <p className="text-4xl font-bold text-blue-600">92%</p>
-                </div>
-                <div className="p-5 bg-green-50 rounded-xl text-center">
-                  <p className="text-xs text-green-600 font-medium mb-2">This Month</p>
-                  <p className="text-4xl font-bold text-green-600">{profile.stats.successRate}%</p>
-                </div>
-              </div>
-              <div className="mt-6 p-4 bg-green-50 rounded-xl">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp size={20} className="text-green-600" />
-                  <span className="text-sm font-bold text-green-900">+2% improvement</span>
-                </div>
-                <p className="text-xs text-green-700">Keep up the great work!</p>
-              </div>
             </div>
           </div>
         )}
