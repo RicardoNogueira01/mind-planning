@@ -28,7 +28,7 @@ export default function ConnectionsSvg({
   connectionStyle = 'curved', // 'curved' | 'orthogonal-h' | 'orthogonal-v'
 }) {
   const [hoveredConnection, setHoveredConnection] = useState(null);
-  
+
   const defaultStrokeColor = isDarkMode ? '#6b7280' : '#94a3b8';
   const hasConnections = Array.isArray(connections) && connections.length > 0;
   const showPreview = connectionFrom && mousePosition;
@@ -65,22 +65,22 @@ export default function ConnectionsSvg({
     >
       <defs>
         {/* Arrow marker for direction indication */}
-        <marker 
-          id="arrowhead" 
-          markerWidth="12" 
-          markerHeight="8" 
-          refX="10" 
-          refY="4" 
+        <marker
+          id="arrowhead"
+          markerWidth="12"
+          markerHeight="8"
+          refX="10"
+          refY="4"
           orient="auto"
           markerUnits="userSpaceOnUse"
         >
-          <path 
-            d="M 0 0 L 12 4 L 0 8 L 3 4 Z" 
-            fill={defaultStrokeColor} 
-            opacity="0.7" 
+          <path
+            d="M 0 0 L 12 4 L 0 8 L 3 4 Z"
+            fill={defaultStrokeColor}
+            opacity="0.7"
           />
         </marker>
-        
+
         {/* Hover glow filter */}
         <filter id="connection-glow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur stdDeviation="3" result="blur" />
@@ -89,14 +89,14 @@ export default function ConnectionsSvg({
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-        
+
         {/* Gradients for each connection (when using gradient mode) */}
         {colorMode === 'gradient' && connections.map(conn => {
           const fromNode = nodes.find(n => n.id === conn.from);
           const toNode = nodes.find(n => n.id === conn.to);
           const fromColor = fromNode?.bgColor || defaultStrokeColor;
           const toColor = toNode?.bgColor || defaultStrokeColor;
-          
+
           return (
             <linearGradient key={`gradient-${conn.id}`} id={`gradient-${conn.id}`}>
               <stop offset="0%" stopColor={fromColor === '#ffffff' ? defaultStrokeColor : fromColor} />
@@ -105,7 +105,7 @@ export default function ConnectionsSvg({
           );
         })}
       </defs>
-      
+
       {connections.map((conn) => {
         const fromNode = nodes.find((n) => n.id === conn.from);
         const toNode = nodes.find((n) => n.id === conn.to);
@@ -118,51 +118,51 @@ export default function ConnectionsSvg({
         if (!fromPos || !toPos) {
           return null;
         }
-        
+
         // Group siblings by direction for intelligent distribution
         const siblingsFromSameParent = connections.filter(c => c.from === conn.from);
-        
+
         // Determine which direction this child is relative to parent
         const toCenterX = (toPos.left + toPos.right) / 2;
         const toCenterY = (toPos.top + toPos.bottom) / 2;
-        
+
         let direction = 'right'; // default
         if (toCenterX > fromPos.right) direction = 'right';
         else if (toCenterX < fromPos.left) direction = 'left';
         else if (toCenterY > fromPos.bottom) direction = 'bottom';
         else if (toCenterY < fromPos.top) direction = 'top';
-        
+
         // Filter siblings in the same direction
         const siblingsInSameDirection = siblingsFromSameParent.filter(c => {
           const siblingToPos = nodePositions?.[c.to];
           if (!siblingToPos) return false;
-          
+
           const siblingToCenterX = (siblingToPos.left + siblingToPos.right) / 2;
           const siblingToCenterY = (siblingToPos.top + siblingToPos.bottom) / 2;
-          
+
           let sibDirection;
           if (siblingToCenterX > fromPos.right) sibDirection = 'right';
           else if (siblingToCenterX < fromPos.left) sibDirection = 'left';
           else if (siblingToCenterY > fromPos.bottom) sibDirection = 'bottom';
           else if (siblingToCenterY < fromPos.top) sibDirection = 'top';
           else sibDirection = 'right'; // default fallback
-          
+
           return sibDirection === direction;
         });
-        
+
         // Sort siblings by their Y position (top to bottom) for proper distribution
         const sortedSiblings = [...siblingsInSameDirection].sort((a, b) => {
           const aPosY = (nodePositions[a.to].top + nodePositions[a.to].bottom) / 2;
           const bPosY = (nodePositions[b.to].top + nodePositions[b.to].bottom) / 2;
           return aPosY - bPosY;
         });
-        
+
         const childIndex = sortedSiblings.findIndex(c => c.id === conn.id);
         const totalChildren = sortedSiblings.length;
-        
+
         // Choose path computation based on connection style
         let pathData, labelPoint, start, end;
-        
+
         // For orthogonal styles, auto-detect direction based on node positions
         const fromCenterX = (fromPos.left + fromPos.right) / 2;
         const fromCenterY = (fromPos.top + fromPos.bottom) / 2;
@@ -171,7 +171,7 @@ export default function ConnectionsSvg({
         // Only calculate dx and dy here
         const dx = Math.abs(((toPos.left + toPos.right) / 2) - fromCenterX);
         const dy = Math.abs(((toPos.top + toPos.bottom) / 2) - fromCenterY);
-        
+
         if (connectionStyle === 'orthogonal-h') {
           // Horizontal tree: orthogonal connections (left-to-right)
           const result = computeOrthogonalPath(fromPos, toPos, 'horizontal');
@@ -189,27 +189,33 @@ export default function ConnectionsSvg({
           start = result.start;
           end = result.end;
         } else {
-          // Default: smooth Bezier curves
+          // Default: smooth Bezier curves with collision avoidance
+          // Collect all node rectangles for collision detection
+          const allNodeRects = Object.values(nodePositions).filter(pos =>
+            pos && typeof pos.left === 'number'
+          );
+
           const result = computeBezierPath(fromPos, toPos, {
             childIndex,
             totalChildren,
-            parentId: conn.from
+            parentId: conn.from,
+            allNodeRects
           });
           pathData = result.d;
           labelPoint = result.label;
           start = result.start;
           end = result.end;
         }
-        
+
         // Related node highlighting
         const isRelated = !!(relatedNodeIds?.has(conn.from) || relatedNodeIds?.has(conn.to));
         const isHovered = hoveredConnection === conn.id;
         const isSelected = selectedNode === conn.from || selectedNode === conn.to;
-        
+
         // For orthogonal (tree) layouts, use higher opacity for cleaner look
         const isOrthogonal = connectionStyle === 'orthogonal-h' || connectionStyle === 'orthogonal-v';
         const focusOpacity = isHovered ? 0.95 : (isSelected ? 0.8 : (isOrthogonal ? 0.75 : (isRelated ? 0.6 : 0.5)));
-        
+
         // For tree layouts, inherit color from child node for visual hierarchy
         let connectionColor;
         if (isOrthogonal && toNode?.bgColor && toNode.bgColor !== '#ffffff') {
@@ -231,7 +237,7 @@ export default function ConnectionsSvg({
               onMouseEnter={() => setHoveredConnection(conn.id)}
               onMouseLeave={() => setHoveredConnection(null)}
             />
-            
+
             {/* Glow effect only for hovered connections */}
             {isHovered && (
               <path
@@ -244,7 +250,7 @@ export default function ConnectionsSvg({
                 strokeLinejoin="round"
               />
             )}
-            
+
             {/* Main connection path */}
             <path
               d={pathData}
@@ -255,12 +261,12 @@ export default function ConnectionsSvg({
               strokeLinecap="round"
               strokeLinejoin="round"
               markerEnd={showArrows ? 'url(#arrowhead)' : undefined}
-              style={{ 
+              style={{
                 transition: 'all 0.2s ease-out',
                 filter: isHovered ? 'url(#connection-glow)' : 'none'
               }}
             />
-            
+
             {/* Small circle at parent connection point - only on hover */}
             {isHovered && start && (
               <circle
@@ -272,7 +278,7 @@ export default function ConnectionsSvg({
                 style={{ transition: 'all 0.2s ease-out' }}
               />
             )}
-            
+
             {/* Small circle at child connection point - only on hover */}
             {isHovered && end && (
               <circle
@@ -284,7 +290,7 @@ export default function ConnectionsSvg({
                 style={{ transition: 'all 0.2s ease-out' }}
               />
             )}
-            
+
             {/* Connection label */}
             {conn.label && labelPoint && (
               <g>
@@ -314,22 +320,22 @@ export default function ConnectionsSvg({
           </g>
         );
       })}
-      
+
       {/* Connection Preview Line - shows when creating a new connection */}
       {connectionFrom && mousePosition && (() => {
         const fromNode = nodes.find(n => n.id === connectionFrom);
         const fromPos = nodePositions?.[connectionFrom];
-        
+
         if (!fromNode || !fromPos) return null;
-        
+
         // Convert mouse position from screen space to canvas space
         const canvasX = (mousePosition.x - pan.x) / zoom;
         const canvasY = (mousePosition.y - pan.y) / zoom;
-        
+
         // Calculate center of source node
         const fromCenterX = (fromPos.left + fromPos.right) / 2;
         const fromCenterY = (fromPos.top + fromPos.bottom) / 2;
-        
+
         // Create animated dashed line
         return (
           <g key="connection-preview">
