@@ -66,6 +66,7 @@ export default function PropertiesPanel({ show, anchorRef, nodeId, priority, sta
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer"
               value={startDate || ''}
               onChange={(e) => onStartDateChange && onStartDateChange(e.target.value)}
+              onBlur={(e) => onStartDateChange && onStartDateChange(e.target.value)}
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
               onFocus={(e) => e.stopPropagation()}
@@ -79,6 +80,7 @@ export default function PropertiesPanel({ show, anchorRef, nodeId, priority, sta
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer"
               value={dueDate || ''}
               onChange={(e) => onDueDateChange && onDueDateChange(e.target.value)}
+              onBlur={(e) => onDueDateChange && onDueDateChange(e.target.value)}
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
               onFocus={(e) => e.stopPropagation()}

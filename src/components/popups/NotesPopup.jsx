@@ -27,7 +27,7 @@ export default function NotesPopup({ show, anchorRef, notes, attachments, collab
   const rect = anchorRef?.current?.getBoundingClientRect() || 
     { left: window.innerWidth / 2, top: 80, width: 0, height: 0, bottom: 100 };
   
-  const popupWidth = 480;
+  const popupWidth = 600;
   const left = Math.max(8, Math.min(rect.left + (rect.width / 2) - (popupWidth / 2), window.innerWidth - popupWidth - 8));
   const top = Math.max(8, rect.bottom + 20);
 
@@ -208,60 +208,60 @@ export default function NotesPopup({ show, anchorRef, notes, attachments, collab
       onClose={onClose}
     >
       {/* Formatting Toolbar */}
-      <div className="flex items-center justify-center gap-1.5 mb-4 pb-3 border-b border-gray-200">
+      <div className="flex items-center justify-center gap-1 mb-4 pb-3 border-b border-gray-200">
         {/* Text Formatting */}
         <button
           onClick={() => applyFormat('bold')}
-          className="w-10 h-10 flex items-center justify-center rounded hover:bg-gray-100 transition-colors border border-gray-200"
+          className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors border border-gray-200"
           title="Bold"
           type="button"
         >
-          <span className="font-bold text-base text-black">B</span>
+          <span className="font-bold text-sm text-black">B</span>
         </button>
         <button
           onClick={() => applyFormat('italic')}
-          className="w-10 h-10 flex items-center justify-center rounded hover:bg-gray-100 transition-colors border border-gray-200"
+          className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors border border-gray-200"
           title="Italic"
           type="button"
         >
-          <span className="italic text-base text-black">i</span>
+          <span className="italic text-sm text-black">i</span>
         </button>
         <button
           onClick={() => applyFormat('strikeThrough')}
-          className="w-10 h-10 flex items-center justify-center rounded hover:bg-gray-100 transition-colors border border-gray-200"
+          className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors border border-gray-200"
           title="Strikethrough"
           type="button"
         >
-          <span className="line-through text-base text-black">S</span>
+          <span className="line-through text-sm text-black">S</span>
         </button>
 
-        <div className="w-px h-7 bg-gray-300 mx-2" />
+        <div className="w-px h-6 bg-gray-300 mx-1" />
 
         {/* Font Size Dropdown */}
         <select
           value={fontSize}
           onChange={(e) => applyFontSize(e.target.value)}
-          className="h-10 px-2 rounded border border-gray-200 hover:bg-gray-100 transition-colors text-sm text-black cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="h-8 px-2 rounded border border-gray-200 hover:bg-gray-100 transition-colors text-xs text-black cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
           title="Font Size"
           onClick={(e) => e.stopPropagation()}
         >
-          <option value="12">12px</option>
-          <option value="14">14px</option>
-          <option value="16">16px</option>
-          <option value="18">18px</option>
-          <option value="20">20px</option>
-          <option value="24">24px</option>
-          <option value="28">28px</option>
-          <option value="32">32px</option>
-          <option value="36">36px</option>
+          <option value="12">12</option>
+          <option value="14">14</option>
+          <option value="16">16</option>
+          <option value="18">18</option>
+          <option value="20">20</option>
+          <option value="24">24</option>
+          <option value="28">28</option>
+          <option value="32">32</option>
+          <option value="36">36</option>
         </select>
 
-        <div className="w-px h-7 bg-gray-300 mx-2" />
+        <div className="w-px h-6 bg-gray-300 mx-1" />
 
         {/* Headings */}
         <button
           onClick={() => insertHeading(1)}
-          className="px-3 h-10 flex items-center justify-center rounded hover:bg-gray-100 transition-colors text-sm font-semibold text-black border border-gray-200"
+          className="px-2 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors text-xs font-semibold text-black border border-gray-200"
           title="Heading 1"
           type="button"
         >
@@ -269,23 +269,23 @@ export default function NotesPopup({ show, anchorRef, notes, attachments, collab
         </button>
         <button
           onClick={() => insertHeading(2)}
-          className="px-3 h-10 flex items-center justify-center rounded hover:bg-gray-100 transition-colors text-sm font-semibold text-black border border-gray-200"
+          className="px-2 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors text-xs font-semibold text-black border border-gray-200"
           title="Heading 2"
           type="button"
         >
           H2
         </button>
 
-        <div className="w-px h-7 bg-gray-300 mx-2" />
+        <div className="w-px h-6 bg-gray-300 mx-1" />
 
         {/* Lists */}
         <button
           onClick={() => insertList(false)}
-          className="w-10 h-10 flex items-center justify-center rounded hover:bg-gray-100 transition-colors text-black border border-gray-200"
+          className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors text-black border border-gray-200"
           title="Bullet List"
           type="button"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-black">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-black">
             <line x1="8" y1="6" x2="21" y2="6"></line>
             <line x1="8" y1="12" x2="21" y2="12"></line>
             <line x1="8" y1="18" x2="21" y2="18"></line>
@@ -296,11 +296,11 @@ export default function NotesPopup({ show, anchorRef, notes, attachments, collab
         </button>
         <button
           onClick={() => insertList(true)}
-          className="w-10 h-10 flex items-center justify-center rounded hover:bg-gray-100 transition-colors text-black border border-gray-200"
+          className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors text-black border border-gray-200"
           title="Numbered List"
           type="button"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-black">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-black">
             <line x1="10" y1="6" x2="21" y2="6"></line>
             <line x1="10" y1="12" x2="21" y2="12"></line>
             <line x1="10" y1="18" x2="21" y2="18"></line>
@@ -310,16 +310,16 @@ export default function NotesPopup({ show, anchorRef, notes, attachments, collab
           </svg>
         </button>
 
-        <div className="w-px h-7 bg-gray-300 mx-2" />
+        <div className="w-px h-6 bg-gray-300 mx-1" />
 
         {/* Link */}
         <button
           onClick={insertLink}
-          className="w-10 h-10 flex items-center justify-center rounded hover:bg-gray-100 transition-colors text-black border border-gray-200"
+          className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors text-black border border-gray-200"
           title="Insert Link"
           type="button"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-black">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-black">
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
             <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
           </svg>
@@ -328,11 +328,11 @@ export default function NotesPopup({ show, anchorRef, notes, attachments, collab
         {/* Code */}
         <button
           onClick={() => applyFormat('formatBlock', '<pre>')}
-          className="w-10 h-10 flex items-center justify-center rounded hover:bg-gray-100 transition-colors text-black border border-gray-200"
+          className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors text-black border border-gray-200"
           title="Code Block"
           type="button"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-black">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-black">
             <polyline points="16 18 22 12 16 6"></polyline>
             <polyline points="8 6 2 12 8 18"></polyline>
           </svg>
