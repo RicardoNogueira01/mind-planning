@@ -61,7 +61,6 @@ import { getDescendantNodeIds, getAncestorNodeIds } from './mindmap/graphUtils';
 import ShapePalette from './mindmap/ShapePalette';
 import CollaboratorDialog from './mindmap/CollaboratorDialog';
 import { shapeBuilders } from './mindmap/builders';
-import ProgressRingChip from './mindmap/ProgressRingChip';
 
 // Hooks
 import { useNodePositioning } from '../hooks/useNodePositioning';
@@ -98,7 +97,6 @@ export default function MindMap({ mapId, onBack }) {
   const [selectedNodes, setSelectedNodes] = useState([]);
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  const [fxOptions, setFxOptions] = useState({ enabled: false });
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchList, setShowSearchList] = useState(false);
   
@@ -164,8 +162,6 @@ export default function MindMap({ mapId, onBack }) {
     { id: 2, name: 'John Doe', timestamp: new Date(Date.now() - 7200000).toISOString(), permission: 'edit' },
     { id: 3, name: 'Jane Smith', timestamp: new Date(Date.now() - 86400000).toISOString(), permission: 'view' },
   ]);
-  const [rippleNodes, setRippleNodes] = useState(new Set()); // Track nodes with active ripple effect
-  const rippleTimeouts = useRef({}); // Store timeout IDs for ripple cleanup
   
   // Group membership dialog state
   const [groupMembershipDialog, setGroupMembershipDialog] = useState({
@@ -330,13 +326,6 @@ export default function MindMap({ mapId, onBack }) {
     const onWinClick = () => setNodeLayoutMenuOpen(null);
     globalThis.addEventListener('click', onWinClick);
     return () => globalThis.removeEventListener('click', onWinClick);
-  }, []);
-
-  // Cleanup ripple timeouts on unmount
-  useEffect(() => {
-    return () => {
-      Object.values(rippleTimeouts.current).forEach(timeout => clearTimeout(timeout));
-    };
   }, []);
 
   // ============================================
@@ -507,23 +496,6 @@ export default function MindMap({ mapId, onBack }) {
   // ============================================
 
   const toggleSelectNode = (id, event) => {
-    // Trigger ripple effect if FX enabled
-    if (fxOptions?.enabled && fxOptions?.ripple) {
-      setRippleNodes(prev => new Set([...prev, id]));
-      // Clear existing timeout
-      if (rippleTimeouts.current[id]) {
-        clearTimeout(rippleTimeouts.current[id]);
-      }
-      // Remove ripple after animation
-      rippleTimeouts.current[id] = setTimeout(() => {
-        setRippleNodes(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(id);
-          return newSet;
-        });
-      }, 900);
-    }
-    
     // If in the middle of creating a connection, connect to the clicked node
     if (connectionFrom && connectionFrom !== id) {
       const exists = connections.some(c => (c.from === connectionFrom && c.to === id) || (c.from === id && c.to === connectionFrom));
@@ -1789,8 +1761,6 @@ export default function MindMap({ mapId, onBack }) {
             undo={undo}
             redo={redo}
             onBack={onBack}
-            fxOptions={fxOptions}
-            setFxOptions={setFxOptions}
             showMobileToolbar={showMobileToolbar}
             isMobile={isMobileOrTablet}
             onClose={() => setShowMobileToolbar(false)}
@@ -2189,7 +2159,6 @@ export default function MindMap({ mapId, onBack }) {
               nodes={nodes}
               nodePositions={nodePositions}
               isDarkMode={false}
-              fxOptions={fxOptions}
               selectedNode={selectedNode}
               relatedNodeIds={relatedNodeIds}
               connectionFrom={connectionFrom}
@@ -2228,8 +2197,6 @@ export default function MindMap({ mapId, onBack }) {
                 isParentOfSelected={isParentOfSelected}
                 isChildOfSelected={isChildOfSelected}
                 hasProgress={hasProgress}
-                fxOptions={fxOptions}
-                hasRipple={rippleNodes.has(node.id)}
                 className={joiningGroupNodes.has(node.id) ? 'animate-join-group' : ''}
                 onMouseDown={(e) => {
                   // allow dragging via startPanning handler; nothing here
@@ -2241,9 +2208,7 @@ export default function MindMap({ mapId, onBack }) {
                   {node.tags.map((tag) => (
                     <span 
                       key={tag} 
-                      className={`inline-block px-2.5 py-1 text-xs rounded-md bg-blue-50 border border-blue-200 text-blue-700 font-medium shadow-sm relative overflow-hidden ${
-                        fxOptions?.enabled && fxOptions?.tagShimmer ? 'animate-shimmer' : ''
-                      }`}
+                      className="inline-block px-2.5 py-1 text-xs rounded-md bg-blue-50 border border-blue-200 text-blue-700 font-medium shadow-sm relative overflow-hidden"
                     >
                       {tag}
                     </span>
@@ -2304,18 +2269,6 @@ export default function MindMap({ mapId, onBack }) {
                 </div>
               )}
 
-              {/* Progress ring (fun) */}
-              {fxOptions?.progressRing && (
-                <div className="absolute -top-3 -left-3">
-                  <ProgressRingChip 
-                    pct={getNodeProgress(node.id, connections, nodes)?.percentage ?? (node.completed ? 100 : 0)} 
-                    isDarkMode={false} 
-                    shapeType={node.shapeType} 
-                    completed={!!node.completed} 
-                  />
-                </div>
-              )}
-              
               {/* Collaborator avatars on node */}
               {(() => {
                 // Get group collaborators if node is in a group

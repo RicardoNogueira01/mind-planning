@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Plus, Trash2, MousePointer, Hand, Users, Home, Sparkles, X, Camera, SquareDashedMousePointer } from 'lucide-react';
+import { Plus, Trash2, MousePointer, Hand, Users, Home, X, Camera, SquareDashedMousePointer } from 'lucide-react';
 
 const MindMapToolbar = ({
   mode,
@@ -15,8 +15,6 @@ const MindMapToolbar = ({
   undo,
   redo,
   onBack,
-  fxOptions,
-  setFxOptions,
   showMobileToolbar = true,
   isMobile = false,
   onClose,
@@ -128,162 +126,6 @@ const MindMapToolbar = ({
             <Hand size={18} strokeWidth={2} className="mx-auto" />
           </button>
         </div>
-
-        {/* Divider */}
-        <div className={`${isMobile ? 'h-px w-full my-2' : 'w-px h-6 mx-1'} bg-gray-200`} />
-        
-        {/* Content Creation Group */}
-        <div className={`flex ${isMobile ? 'flex-col w-full' : 'items-center'} gap-0.5`}>
-          <button 
-            onClick={addStandaloneNode} 
-            className={`${isMobile ? 'w-full' : ''} p-2 rounded-lg text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-all duration-200`}
-            title="Add New Node"
-          >
-            <Plus size={18} strokeWidth={2} className="mx-auto" />
-          </button>
-          
-          <button 
-            onClick={() => selectedNodes.length > 0 && deleteNodes(selectedNodes)}
-            title="Delete Selected"
-            className={`${isMobile ? 'w-full' : ''} p-2 rounded-lg transition-all duration-200 ${
-              selectedNodes.length > 0 
-                ? 'text-gray-700 hover:bg-red-50 hover:text-red-600' 
-                : 'text-gray-300 cursor-not-allowed'
-            }`}
-            disabled={selectedNodes.length === 0}
-          >
-            <Trash2 size={18} strokeWidth={2} className="mx-auto" />
-          </button>
-        </div>
-
-        {/* Divider */}
-        <div className={`${isMobile ? 'h-px w-full my-2' : 'w-px h-6 mx-1'} bg-gray-200`} />
-
-        {/* History Controls Group */}
-        <div className={`${isMobile ? 'flex flex-col w-full' : 'flex items-center'} gap-0.5`}>
-          <button 
-            onClick={undo}
-            className={`${isMobile ? 'w-full' : ''} p-2 rounded-lg transition-all duration-200 ${
-              historyIndex <= 0 
-                ? 'text-gray-300 cursor-not-allowed' 
-                : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-            }`}
-            title="Undo"
-            disabled={historyIndex <= 0}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`${isMobile ? 'mx-auto' : ''}`}>
-              <path d="M9 17L4 12l5-5" />
-              <path d="M20 18v-1a4 4 0 0 0-4-4H4" />
-            </svg>
-          </button>
-          
-          <button 
-            onClick={redo}
-            className={`${isMobile ? 'w-full' : ''} p-2 rounded-lg transition-all duration-200 ${
-              historyIndex >= history.length - 1 
-                ? 'text-gray-300 cursor-not-allowed' 
-                : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-            }`}
-            title="Redo"
-            disabled={historyIndex >= history.length - 1}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`${isMobile ? 'mx-auto' : ''}`}>
-              <path d="M15 7l5 5-5 5" />
-              <path d="M4 6v1a4 4 0 0 0 4 4h12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Divider */}
-        <div className={`${isMobile ? 'h-px w-full my-2' : 'w-px h-6 mx-1'} bg-gray-200`} />
-
-        {/* Fun FX Options */}
-        <div className="relative">
-          <details className="group">
-            <summary className="list-none">
-              <button
-                aria-pressed={!!fxOptions?.enabled}
-                className={`p-2 rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
-                  fxOptions?.enabled
-                    ? 'bg-gradient-to-br from-pink-500 to-purple-600 text-white shadow-md'
-                    : 'text-gray-700 hover:bg-pink-50 hover:text-pink-600'
-                }`}
-                title={`Visual FX Options${fxOptions?.enabled ? ' (On)' : ' (Off)'}`}
-              >
-                <Sparkles size={18} strokeWidth={2} className={fxOptions?.enabled ? 'text-white' : 'text-pink-500'} />
-                <span className="text-[10px] font-semibold tracking-wide">FX</span>
-                {fxOptions?.enabled && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-white" />
-                )}
-              </button>
-            </summary>
-            <div className="absolute mt-2 left-0 bg-white shadow-xl border border-gray-100 rounded-xl p-3 w-56 z-50">
-              <div className="flex items-center justify-between py-1">
-                <span className="text-sm text-gray-700">Enable fun mode</span>
-                <input
-                  type="checkbox"
-                  checked={!!fxOptions?.enabled}
-                  onChange={(e) => setFxOptions({ ...fxOptions, enabled: e.target.checked })}
-                />
-              </div>
-              <div className="flex items-center justify-between py-1 opacity-100">
-                <span className="text-sm text-gray-700">Selection ripple</span>
-                <input
-                  type="checkbox"
-                  checked={!!fxOptions?.ripple}
-                  onChange={(e) => setFxOptions({ ...fxOptions, ripple: e.target.checked })}
-                  disabled={!fxOptions?.enabled}
-                />
-              </div>
-              <div className="flex items-center justify-between py-1">
-                <span className="text-sm text-gray-700">Tag shimmer</span>
-                <input
-                  type="checkbox"
-                  checked={!!fxOptions?.tagShimmer}
-                  onChange={(e) => setFxOptions({ ...fxOptions, tagShimmer: e.target.checked })}
-                  disabled={!fxOptions?.enabled}
-                />
-              </div>
-              <div className="flex items-center justify-between py-1">
-                <span className="text-sm text-gray-700">Springy motion</span>
-                <input
-                  type="checkbox"
-                  checked={!!fxOptions?.springy}
-                  onChange={(e) => setFxOptions({ ...fxOptions, springy: e.target.checked })}
-                  disabled={!fxOptions?.enabled}
-                />
-              </div>
-              <div className="h-px bg-gray-200 my-2" />
-              <div className="flex items-center justify-between py-1">
-                <span className="text-sm text-gray-700">Gradient border</span>
-                <input
-                  type="checkbox"
-                  checked={!!fxOptions?.gradientRing}
-                  onChange={(e) => setFxOptions({ ...fxOptions, gradientRing: e.target.checked })}
-                  disabled={!fxOptions?.enabled}
-                />
-              </div>
-              <div className="flex items-center justify-between py-1">
-                <span className="text-sm text-gray-700">Progress ring</span>
-                <input
-                  type="checkbox"
-                  checked={!!fxOptions?.progressRing}
-                  onChange={(e) => setFxOptions({ ...fxOptions, progressRing: e.target.checked })}
-                  disabled={!fxOptions?.enabled}
-                />
-              </div>
-              <div className="flex items-center justify-between py-1">
-                <span className="text-sm text-gray-700">Focus mode</span>
-                <input
-                  type="checkbox"
-                  checked={!!fxOptions?.focusMode}
-                  onChange={(e) => setFxOptions({ ...fxOptions, focusMode: e.target.checked })}
-                  disabled={!fxOptions?.enabled}
-                />
-              </div>
-            </div>
-          </details>
-        </div>
       </div>
     </div>
   );
@@ -302,8 +144,6 @@ MindMapToolbar.propTypes = {
   undo: PropTypes.func.isRequired,
   redo: PropTypes.func.isRequired,
   onBack: PropTypes.func,
-  fxOptions: PropTypes.object,
-  setFxOptions: PropTypes.func,
   showMobileToolbar: PropTypes.bool,
   isMobile: PropTypes.bool,
   onClose: PropTypes.func

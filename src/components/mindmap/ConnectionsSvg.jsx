@@ -16,7 +16,6 @@ export default function ConnectionsSvg({
   nodes,
   nodePositions,
   isDarkMode,
-  fxOptions,
   selectedNode,
   relatedNodeIds,
   connectionFrom,
@@ -165,19 +164,12 @@ export default function ConnectionsSvg({
           parentId: conn.from
         });
         
-        // Focus mode and related node highlighting
-        const inFocusMode = !!(fxOptions?.enabled && fxOptions?.focusMode && selectedNode);
+        // Related node highlighting
         const isRelated = !!(relatedNodeIds?.has(conn.from) || relatedNodeIds?.has(conn.to));
         const isHovered = hoveredConnection === conn.id;
         const isSelected = selectedNode === conn.from || selectedNode === conn.to;
         
-        let focusOpacity = 0.6;
-        if (inFocusMode) {
-          focusOpacity = isRelated ? 0.8 : 0.15;
-        }
-        if (isHovered || isSelected) {
-          focusOpacity = 0.95;
-        }
+        const focusOpacity = (isHovered || isSelected) ? 0.95 : (isRelated ? 0.8 : 0.6);
         
         const connectionColor = getConnectionColor(conn, fromNode);
         const strokeWidth = isHovered || isSelected ? 3.5 : 2.5;
@@ -268,10 +260,7 @@ export default function ConnectionsSvg({
                   fontSize={11}
                   fontWeight={500}
                   fill={isDarkMode ? '#e5e7eb' : '#334155'}
-                  opacity={(function(){
-                    if (!inFocusMode) return 0.9;
-                    return isRelated ? 0.9 : 0.35;
-                  })()}
+                  opacity={isRelated ? 0.9 : 0.35}
                 >
                   {conn.label}
                 </text>
@@ -358,7 +347,6 @@ ConnectionsSvg.propTypes = {
   nodes: PropTypes.array.isRequired,
   nodePositions: PropTypes.object.isRequired,
   isDarkMode: PropTypes.bool,
-  fxOptions: PropTypes.object,
   selectedNode: PropTypes.string,
   relatedNodeIds: PropTypes.instanceOf(Set),
   connectionFrom: PropTypes.string,

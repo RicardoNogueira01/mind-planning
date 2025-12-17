@@ -1,11 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatching, connectionMode, isConnectionSource, isAlreadyConnected, isParentOfSelected, isChildOfSelected, hasProgress, fxOptions, hasRipple, className, children }) => {
+const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatching, connectionMode, isConnectionSource, isAlreadyConnected, isParentOfSelected, isChildOfSelected, hasProgress, className, children }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editText, setEditText] = React.useState(node.text || '');
   const [isHovering, setIsHovering] = React.useState(false);
-  const [shouldSpring, setShouldSpring] = React.useState(false);
 
   // Calculate dynamic row count based on content
   const calculateRows = (text) => {
@@ -19,14 +18,6 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
     setEditText(node.text || '');
   };
 
-  // Trigger springy animation on selection
-  React.useEffect(() => {
-    if (selected && fxOptions?.enabled && fxOptions?.springy) {
-      setShouldSpring(true);
-      const timer = setTimeout(() => setShouldSpring(false), 600);
-      return () => clearTimeout(timer);
-    }
-  }, [selected, fxOptions]);
 
   const handleSaveText = () => {
     setIsEditing(false);
@@ -69,10 +60,6 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
         isParentOfSelected ? 'ring-2 ring-purple-400/70' : 
         isChildOfSelected ? 'ring-2 ring-amber-400/70' : ''
       } ${
-        fxOptions?.enabled && fxOptions?.gradientRing && selected ? 'animate-gradient-ring' : ''
-      } ${
-        shouldSpring ? 'animate-springy' : ''
-      } ${
         className || ''
       }`}
       style={{ 
@@ -89,22 +76,6 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
       onMouseEnter={() => connectionMode && !isAlreadyConnected && setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
-      {/* Ripple effect */}
-      {hasRipple && fxOptions?.enabled && fxOptions?.ripple && (
-        <div 
-          className="animate-ripple"
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            width: '100%',
-            height: '100%',
-            background: 'rgba(59, 130, 246, 0.4)',
-            pointerEvents: 'none',
-            zIndex: 5
-          }}
-        />
-      )}
       {/* Parent indicator badge */}
       {isParentOfSelected && (
         <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-20">
@@ -210,8 +181,6 @@ NodeCard.propTypes = {
   isParentOfSelected: PropTypes.bool,
   isChildOfSelected: PropTypes.bool,
   hasProgress: PropTypes.bool,
-  fxOptions: PropTypes.object,
-  hasRipple: PropTypes.bool,
   className: PropTypes.string,
   children: PropTypes.node
 };
