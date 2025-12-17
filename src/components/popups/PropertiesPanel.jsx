@@ -26,10 +26,11 @@ export default function PropertiesPanel({ show, anchorRef, nodeId, priority, sta
           <select
             id={`priority-${nodeId}`}
             className="w-full border border-gray-300 rounded px-3 py-2 text-sm md:text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation cursor-pointer"
-            value={priority || 'medium'}
+            value={priority || ''}
             onChange={(e) => onPriorityChange && onPriorityChange(e.target.value)}
             onClick={(e) => e.stopPropagation()}
           >
+            <option value="">Select a Priority</option>
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
@@ -40,10 +41,11 @@ export default function PropertiesPanel({ show, anchorRef, nodeId, priority, sta
           <select
             id={`status-${nodeId}`}
             className="w-full border border-gray-300 rounded px-3 py-2 text-sm md:text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation cursor-pointer"
-            value={status || 'not-started'}
+            value={status || ''}
             onChange={(e) => onStatusChange && onStatusChange(e.target.value)}
             onClick={(e) => e.stopPropagation()}
           >
+            <option value="">Select a Status</option>
             <option value="not-started">Not Started</option>
             <option value="in-progress">In Progress</option>
             <option value="review">Review</option>
