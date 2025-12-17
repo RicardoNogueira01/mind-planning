@@ -2690,7 +2690,7 @@ export default function MindMap({ mapId, onBack }) {
               className="p-2 sm:p-3 bg-white hover:bg-gray-50 text-gray-700 rounded-lg shadow-lg border border-gray-200 transition-all duration-200 hover:shadow-xl"
               title="Zoom Out"
             >
-              <ZoomOut size={18} className="sm:w-5 sm:h-5" strokeWidth={2} />
+              <ZoomOut size={14} strokeWidth={2} />
             </button>
             
             {/* Zoom Percentage */}
@@ -2704,7 +2704,7 @@ export default function MindMap({ mapId, onBack }) {
               className="p-2 sm:p-3 bg-white hover:bg-gray-50 text-gray-700 rounded-lg shadow-lg border border-gray-200 transition-all duration-200 hover:shadow-xl"
               title="Zoom In"
             >
-              <ZoomIn size={18} className="sm:w-5 sm:h-5" strokeWidth={2} />
+              <ZoomIn size={14} strokeWidth={2} />
             </button>
             
             {/* Re-center */}
@@ -2716,7 +2716,7 @@ export default function MindMap({ mapId, onBack }) {
               className="p-2 sm:p-3 bg-white hover:bg-gray-50 text-gray-700 rounded-lg shadow-lg border border-gray-200 transition-all duration-200 hover:shadow-xl"
               title="Re-center and Reset Zoom"
             >
-              <Maximize2 size={18} className="sm:w-5 sm:h-5" strokeWidth={2} />
+              <Maximize2 size={14} strokeWidth={2} />
             </button>
           </div>
         )}
