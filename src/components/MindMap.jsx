@@ -725,40 +725,54 @@ export default function MindMap({ mapId, onBack }) {
     return set;
   }, [selectedNode, connections]);
 
-  const nodePositions = React.useMemo(() => {
-    const map = {};
+  // Create a hash of node content to detect when text changes (affects height)
+  const nodeContentHash = React.useMemo(() => {
+    return nodes.map(n => `${n.id}:${n.text?.length || 0}:${n.x}:${n.y}`).join('|');
+  }, [nodes]);
 
-    for (const n of nodes) {
-      // Get actual DOM dimensions for accurate bounding box
-      const element = document.querySelector(`[data-node-id="${n.id}"]`);
+  // Use state for node positions so we can update after DOM renders
+  const [nodePositions, setNodePositions] = React.useState({});
 
-      if (element) {
-        const rect = element.getBoundingClientRect();
+  // Measure node positions after DOM updates using useLayoutEffect
+  React.useLayoutEffect(() => {
+    // Small delay to ensure DOM has fully rendered
+    const timeoutId = setTimeout(() => {
+      const map = {};
 
-        // Divide by zoom to get actual logical dimensions (getBoundingClientRect includes zoom transform)
-        const actualWidth = rect.width / zoom;
-        const actualHeight = rect.height / zoom;
+      for (const n of nodes) {
+        // Get actual DOM dimensions for accurate bounding box
+        const element = document.querySelector(`[data-node-id="${n.id}"]`);
 
-        map[n.id] = {
-          left: n.x - 150,
-          top: n.y - 42,
-          right: n.x - 150 + actualWidth,
-          bottom: n.y - 42 + actualHeight
-        };
-      } else {
-        // Fallback if element not yet rendered
-        const NODE_WIDTH = 300;
-        const NODE_HEIGHT = 84;
-        map[n.id] = {
-          left: n.x - 150,
-          top: n.y - 42,
-          right: n.x - 150 + NODE_WIDTH,
-          bottom: n.y - 42 + NODE_HEIGHT
-        };
+        if (element) {
+          const rect = element.getBoundingClientRect();
+
+          // Divide by zoom to get actual logical dimensions (getBoundingClientRect includes zoom transform)
+          const actualWidth = rect.width / zoom;
+          const actualHeight = rect.height / zoom;
+
+          map[n.id] = {
+            left: n.x - 150,
+            top: n.y - 42,
+            right: n.x - 150 + actualWidth,
+            bottom: n.y - 42 + actualHeight
+          };
+        } else {
+          // Fallback if element not yet rendered
+          const NODE_WIDTH = 300;
+          const NODE_HEIGHT = 84;
+          map[n.id] = {
+            left: n.x - 150,
+            top: n.y - 42,
+            right: n.x - 150 + NODE_WIDTH,
+            bottom: n.y - 42 + NODE_HEIGHT
+          };
+        }
       }
-    }
-    return map;
-  }, [nodes, zoom]);
+      setNodePositions(map);
+    }, 50); // Small delay to ensure DOM is updated
+
+    return () => clearTimeout(timeoutId);
+  }, [nodes, zoom, nodeContentHash]);
 
   // ============================================
   // NODE TOOLBAR ACTIONS (via hooks)

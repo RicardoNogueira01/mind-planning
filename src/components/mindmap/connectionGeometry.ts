@@ -203,57 +203,112 @@ export function computeBracketPaths(
   }
 
   const parentCenterX = (parentRect.left + parentRect.right) / 2;
+  const parentCenterY = (parentRect.top + parentRect.bottom) / 2;
   const parentBottom = parentRect.bottom;
+  const parentRight = parentRect.right;
+  const parentLeft = parentRect.left;
+  const parentTop = parentRect.top;
 
-  // Calculate the vertical midpoint between parent and children
-  const lowestChildTop = Math.min(...childRects.map(r => r.top));
-  const bracketY = parentBottom + (lowestChildTop - parentBottom) / 2;
+  // Determine if this is a horizontal or vertical layout based on child positions
+  // If most children are to the right/left of parent, it's horizontal
+  // If most children are below/above parent, it's vertical
+  const childCentersX = childRects.map(r => (r.left + r.right) / 2);
+  const childCentersY = childRects.map(r => (r.top + r.bottom) / 2);
+  const avgChildX = childCentersX.reduce((a, b) => a + b, 0) / childCentersX.length;
+  const avgChildY = childCentersY.reduce((a, b) => a + b, 0) / childCentersY.length;
 
-  // Calculate the horizontal span for the bracket
-  const childCenters = childRects.map(r => (r.left + r.right) / 2).sort((a, b) => a - b);
-  const leftmostChild = childCenters[0];
-  const rightmostChild = childCenters[childCenters.length - 1];
+  const horizontalDistance = Math.abs(avgChildX - parentCenterX);
+  const verticalDistance = Math.abs(avgChildY - parentCenterY);
 
-  // Underline for parent (colored bar below parent)
-  const underlineWidth = Math.min(parentRect.right - parentRect.left - 20, 80);
-  const underline = {
-    d: `M ${parentCenterX - underlineWidth / 2} ${parentBottom + 4} L ${parentCenterX + underlineWidth / 2} ${parentBottom + 4}`,
-    color: parentColor
-  };
+  // If horizontal distance is greater, children are to the sides (horizontal layout)
+  const isHorizontalLayout = horizontalDistance > verticalDistance;
 
-  // Create paths for each child
   const paths: Array<{ d: string; color: string }> = [];
+  let underline = { d: '', color: parentColor };
 
-  if (childRects.length === 1) {
-    // Single child: straight line down
-    const childCenterX = (childRects[0].left + childRects[0].right) / 2;
-    const childTop = childRects[0].top;
+  if (isHorizontalLayout) {
+    // HORIZONTAL LAYOUT: Children are to the right or left of parent
+    const childrenToRight = avgChildX > parentCenterX;
+    const exitX = childrenToRight ? parentRight : parentLeft;
+
+    // Calculate bracket X position (midpoint between parent edge and closest child)
+    const closestChildX = childrenToRight
+      ? Math.min(...childRects.map(r => r.left))
+      : Math.max(...childRects.map(r => r.right));
+    const bracketX = exitX + (closestChildX - exitX) / 2;
+
+    // Underline (vertical bar on the exit side of parent)
+    const underlineHeight = Math.min(parentBottom - parentTop - 20, 60);
+    underline = {
+      d: `M ${exitX + (childrenToRight ? 4 : -4)} ${parentCenterY - underlineHeight / 2} L ${exitX + (childrenToRight ? 4 : -4)} ${parentCenterY + underlineHeight / 2}`,
+      color: parentColor
+    };
+
+    // Get min and max Y of children for the vertical bracket line
+    const childTops = childRects.map(r => (r.top + r.bottom) / 2);
+    const minChildY = Math.min(...childTops);
+    const maxChildY = Math.max(...childTops);
+
+    // Main horizontal line from parent to bracket
+    const mainPath = `M ${exitX + (childrenToRight ? 8 : -8)} ${parentCenterY} L ${bracketX} ${parentCenterY}`;
+
+    // Vertical bracket spanning all children
+    const bracketPath = `M ${bracketX} ${minChildY} L ${bracketX} ${maxChildY}`;
 
     paths.push({
-      d: `M ${parentCenterX} ${parentBottom + 8} L ${parentCenterX} ${bracketY} L ${childCenterX} ${bracketY} L ${childCenterX} ${childTop}`,
-      color: parentColor
-    });
-  } else {
-    // Multiple children: create bracket
-    // Main vertical drop from parent to bracket level
-    const mainDropPath = `M ${parentCenterX} ${parentBottom + 8} L ${parentCenterX} ${bracketY}`;
-
-    // Horizontal bracket line spanning all children
-    const bracketPath = `M ${leftmostChild} ${bracketY} L ${rightmostChild} ${bracketY}`;
-
-    // Combined path for the main structure
-    paths.push({
-      d: `${mainDropPath} M ${leftmostChild} ${bracketY} L ${rightmostChild} ${bracketY}`,
+      d: `${mainPath} M ${bracketX} ${minChildY} L ${bracketX} ${maxChildY}`,
       color: parentColor
     });
 
-    // Individual vertical drops to each child
+    // Individual horizontal lines to each child
     for (const childRect of childRects) {
-      const childCenterX = (childRect.left + childRect.right) / 2;
-      const childTop = childRect.top;
+      const childCenterY = (childRect.top + childRect.bottom) / 2;
+      const childEdgeX = childrenToRight ? childRect.left : childRect.right;
 
       paths.push({
-        d: `M ${childCenterX} ${bracketY} L ${childCenterX} ${childTop}`,
+        d: `M ${bracketX} ${childCenterY} L ${childEdgeX} ${childCenterY}`,
+        color: parentColor
+      });
+    }
+  } else {
+    // VERTICAL LAYOUT: Children are below or above parent
+    const childrenBelow = avgChildY > parentCenterY;
+    const exitY = childrenBelow ? parentBottom : parentTop;
+
+    // Calculate bracket Y position (midpoint between parent edge and closest child)
+    const closestChildY = childrenBelow
+      ? Math.min(...childRects.map(r => r.top))
+      : Math.max(...childRects.map(r => r.bottom));
+    const bracketY = exitY + (closestChildY - exitY) / 2;
+
+    // Underline (horizontal bar on the exit side of parent)
+    const underlineWidth = Math.min(parentRight - parentLeft - 20, 80);
+    underline = {
+      d: `M ${parentCenterX - underlineWidth / 2} ${exitY + (childrenBelow ? 4 : -4)} L ${parentCenterX + underlineWidth / 2} ${exitY + (childrenBelow ? 4 : -4)}`,
+      color: parentColor
+    };
+
+    // Get min and max X of children for the horizontal bracket line
+    const childCenters = childRects.map(r => (r.left + r.right) / 2).sort((a, b) => a - b);
+    const leftmostChild = childCenters[0];
+    const rightmostChild = childCenters[childCenters.length - 1];
+
+    // Main vertical line from parent to bracket
+    const mainPath = `M ${parentCenterX} ${exitY + (childrenBelow ? 8 : -8)} L ${parentCenterX} ${bracketY}`;
+
+    // Horizontal bracket spanning all children
+    paths.push({
+      d: `${mainPath} M ${leftmostChild} ${bracketY} L ${rightmostChild} ${bracketY}`,
+      color: parentColor
+    });
+
+    // Individual vertical lines to each child
+    for (const childRect of childRects) {
+      const childCenterX = (childRect.left + childRect.right) / 2;
+      const childEdgeY = childrenBelow ? childRect.top : childRect.bottom;
+
+      paths.push({
+        d: `M ${childCenterX} ${bracketY} L ${childCenterX} ${childEdgeY}`,
         color: parentColor
       });
     }
