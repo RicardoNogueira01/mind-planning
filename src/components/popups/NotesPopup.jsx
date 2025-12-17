@@ -8,6 +8,7 @@ export default function NotesPopup({ show, anchorRef, notes, attachments, collab
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const [attachmentMenuPosition, setAttachmentMenuPosition] = useState({ top: 0, left: 0 });
   const [filteredItems, setFilteredItems] = useState([]);
+  const [fontSize, setFontSize] = useState('16');
 
   useEffect(() => {
     if (show && editorRef.current && notes) {
@@ -33,6 +34,21 @@ export default function NotesPopup({ show, anchorRef, notes, attachments, collab
   const applyFormat = (command, value = null) => {
     document.execCommand(command, false, value);
     editorRef.current?.focus();
+  };
+
+  const applyFontSize = (size) => {
+    setFontSize(size);
+    document.execCommand('fontSize', false, '7'); // Use size 7 as placeholder
+    // Replace all font tags with spans that have the desired size
+    const fontElements = editorRef.current?.querySelectorAll('font[size="7"]');
+    fontElements?.forEach(font => {
+      const span = document.createElement('span');
+      span.style.fontSize = `${size}px`;
+      span.innerHTML = font.innerHTML;
+      font.parentNode.replaceChild(span, font);
+    });
+    editorRef.current?.focus();
+    handleInput();
   };
 
   const handleInput = () => {
@@ -218,6 +234,27 @@ export default function NotesPopup({ show, anchorRef, notes, attachments, collab
         >
           <span className="line-through text-base text-black">S</span>
         </button>
+
+        <div className="w-px h-7 bg-gray-300 mx-2" />
+
+        {/* Font Size Dropdown */}
+        <select
+          value={fontSize}
+          onChange={(e) => applyFontSize(e.target.value)}
+          className="h-10 px-2 rounded border border-gray-200 hover:bg-gray-100 transition-colors text-sm text-black cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+          title="Font Size"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <option value="12">12px</option>
+          <option value="14">14px</option>
+          <option value="16">16px</option>
+          <option value="18">18px</option>
+          <option value="20">20px</option>
+          <option value="24">24px</option>
+          <option value="28">28px</option>
+          <option value="32">32px</option>
+          <option value="36">36px</option>
+        </select>
 
         <div className="w-px h-7 bg-gray-300 mx-2" />
 

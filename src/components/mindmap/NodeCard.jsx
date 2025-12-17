@@ -38,6 +38,42 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
     // Regular Enter key creates a new line (default textarea behavior)
   };
 
+  // Calculate days until due date
+  const calculateDaysUntilDue = () => {
+    if (!node.dueDate) return null;
+    const now = new Date();
+    const due = new Date(node.dueDate);
+    const diffTime = due - now;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const daysUntilDue = calculateDaysUntilDue();
+
+  // Get priority color and icon
+  const getPriorityDisplay = () => {
+    switch (node.priority) {
+      case 'high': return { color: 'bg-red-100 text-red-700 border-red-300', icon: '🔴', label: 'High' };
+      case 'medium': return { color: 'bg-yellow-100 text-yellow-700 border-yellow-300', icon: '🟡', label: 'Med' };
+      case 'low': return { color: 'bg-green-100 text-green-700 border-green-300', icon: '🟢', label: 'Low' };
+      default: return null;
+    }
+  };
+
+  // Get status color and icon
+  const getStatusDisplay = () => {
+    switch (node.status) {
+      case 'completed': return { color: 'bg-green-100 text-green-700 border-green-300', icon: '✓', label: 'Done' };
+      case 'in-progress': return { color: 'bg-blue-100 text-blue-700 border-blue-300', icon: '▶', label: 'Active' };
+      case 'review': return { color: 'bg-purple-100 text-purple-700 border-purple-300', icon: '👁', label: 'Review' };
+      case 'not-started': return { color: 'bg-gray-100 text-gray-600 border-gray-300', icon: '○', label: 'To Do' };
+      default: return null;
+    }
+  };
+
+  const priorityDisplay = getPriorityDisplay();
+  const statusDisplay = getStatusDisplay();
+
   // Calculate opacity and zIndex based on search and editing state
   const opacity = searchQuery ? (isMatching ? 1 : 0.3) : 1;
   let zIndex = 10;
@@ -143,7 +179,50 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
             placeholder="Type here... (Ctrl+Enter to save, Esc to cancel)"
           />
         ) : (
-          <div className="flex flex-col items-center gap-1">
+          <div className="flex flex-col items-center gap-2">
+            {/* Task info badges */}
+            {(priorityDisplay || statusDisplay || daysUntilDue !== null) && (
+              <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                {/* Priority Badge */}
+                {priorityDisplay && (
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border ${priorityDisplay.color}`}>
+                    <span>{priorityDisplay.icon}</span>
+                  </span>
+                )}
+                
+                {/* Status Badge */}
+                {statusDisplay && (
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border ${statusDisplay.color}`}>
+                    <span>{statusDisplay.icon}</span>
+                    <span>{statusDisplay.label}</span>
+                  </span>
+                )}
+                
+                {/* Days Until Due Badge */}
+                {daysUntilDue !== null && (
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border ${
+                    daysUntilDue < 0 
+                      ? 'bg-red-100 text-red-700 border-red-300' 
+                      : daysUntilDue === 0
+                      ? 'bg-orange-100 text-orange-700 border-orange-300'
+                      : daysUntilDue <= 3
+                      ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
+                      : 'bg-gray-100 text-gray-600 border-gray-300'
+                  }`}>
+                    <span>📅</span>
+                    <span>
+                      {daysUntilDue < 0 
+                        ? `${Math.abs(daysUntilDue)}d overdue` 
+                        : daysUntilDue === 0 
+                        ? 'Due today'
+                        : `${daysUntilDue}d left`
+                      }
+                    </span>
+                  </span>
+                )}
+              </div>
+            )}
+            
             {node.emoji && (
               <div className="text-3xl">
                 {node.emoji}
