@@ -156,3 +156,35 @@ body {
   font-family: 'DM Mono', monospace;
   overflow-x: auto;
 }
+
+[contenteditable] .attachment-reference {
+  background-color: #e0e7ff;
+  color: #4338ca;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin: 0 2px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-block;
+  transition: background-color 0.2s;
+}
+
+[contenteditable] .attachment-reference:hover {
+  background-color: #c7d2fe;
+}
+
+[contenteditable] .user-reference {
+  background-color: #dbeafe;
+  color: #1e40af;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin: 0 2px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-block;
+  transition: background-color 0.2s;
+}
+
+[contenteditable] .user-reference:hover {
+  background-color: #bfdbfe;
+}

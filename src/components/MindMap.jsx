@@ -2405,6 +2405,8 @@ export default function MindMap({ mapId, onBack }) {
                         show={isPopupOpen(node.id, 'notes')}
                         anchorRef={notesBtnRefs.current[node.id] ? { current: notesBtnRefs.current[node.id] } : null}
                         notes={node.notes}
+                        attachments={node.attachments}
+                        collaborators={collaborators}
                         onChange={(value) => setNodes(nodes.map(n => n.id === node.id ? { ...n, notes: value } : n))}
                         onClose={() => togglePopup(node.id, 'notes')}
                       />

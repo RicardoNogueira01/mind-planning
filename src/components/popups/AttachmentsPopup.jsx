@@ -59,17 +59,26 @@ export default function AttachmentsPopup({
         <label htmlFor={`attachment-file-${nodeId}`} className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
           Add new file
         </label>
-        <input 
-          id={`attachment-file-${nodeId}`} 
-          type="file" 
-          accept=".xlsx,.xls,.doc,.docx,.pdf" 
-          className="w-full text-sm md:text-base text-gray-600 file:mr-2 md:file:mr-4 file:py-1.5 md:file:py-2 file:px-3 md:file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-300 rounded-lg p-2 touch-manipulation"
-          onChange={(e) => onFileSelect(e)}
-          onClick={(e) => e.stopPropagation()} 
-          onMouseDown={(e) => e.stopPropagation()} 
-          onFocus={(e) => e.stopPropagation()} 
-          onKeyDown={(e) => e.stopPropagation()} 
-        />
+        <div className="relative">
+          <input 
+            id={`attachment-file-${nodeId}`} 
+            type="file" 
+            accept=".xlsx,.xls,.doc,.docx,.pdf" 
+            className="hidden"
+            onChange={(e) => onFileSelect(e)}
+            onClick={(e) => e.stopPropagation()} 
+            onMouseDown={(e) => e.stopPropagation()} 
+            onFocus={(e) => e.stopPropagation()} 
+            onKeyDown={(e) => e.stopPropagation()} 
+          />
+          <label 
+            htmlFor={`attachment-file-${nodeId}`}
+            className="flex items-center justify-center w-full px-4 py-2.5 bg-black text-white text-sm font-medium rounded-lg cursor-pointer hover:bg-gray-800 transition-colors border border-gray-300"
+          >
+            <span>Browse...</span>
+          </label>
+          <p className="mt-2 text-xs text-gray-500">No file selected.</p>
+        </div>
       </div>
       
       <div className="max-h-48 md:max-h-64 overflow-y-auto">
