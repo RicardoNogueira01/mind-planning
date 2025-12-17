@@ -30,6 +30,8 @@ import TagsPopup from './popups/TagsPopup';
 import PropertiesPanel from './popups/PropertiesPanel';
 import AttachmentsPopup from './popups/AttachmentsPopup';
 import CollaboratorPicker from './popups/CollaboratorPicker';
+import ThemePicker from './popups/ThemePicker';
+import { getTheme } from '../config/mindMapThemes';
 import ImageAnalyzerModal from './mindmap/ImageAnalyzerModal';
 import ViewSelector from './mindmap/ViewSelector';
 import GanttView from './mindmap/views/GanttView';
@@ -128,6 +130,8 @@ export default function MindMap({ mapId, onBack }) {
   const [nodeLayoutMenuOpen, setNodeLayoutMenuOpen] = useState(null); // Track which node's layout menu is open
   const [showImageAnalyzer, setShowImageAnalyzer] = useState(false); // Image upload & analysis modal
   const [viewMode, setViewMode] = useState('mindmap'); // View mode: mindmap, gantt, board, list, analytics
+  const [currentTheme, setCurrentTheme] = useState('meister'); // Mind map theme
+  const [showThemePicker, setShowThemePicker] = useState(false); // Theme picker popup
   const [showMobileActionsMenu, setShowMobileActionsMenu] = useState(false); // Mobile actions dropdown menu
   const [currentLayoutType, setCurrentLayoutType] = useState('free'); // Track current layout for connection style
 
@@ -149,6 +153,7 @@ export default function MindMap({ mapId, onBack }) {
   const [attachmentFilters, setAttachmentFilters] = useState({ search: '' }); // Attachment search/filter state
   const [collaboratorSearch, setCollaboratorSearch] = useState(''); // Collaborator search filter
   const emojiBtnRefs = useRef({}); // Emoji button refs
+  const themeBtnRef = useRef(null); // Theme picker button ref
   const [detachConfirmNodeId, setDetachConfirmNodeId] = useState(null); // Track which node has detach confirmation open
   const [parentSelectionState, setParentSelectionState] = useState(null); // { nodeId, parentConnections: [] }
   const [deleteConfirmNodeId, setDeleteConfirmNodeId] = useState(null); // Track which node has delete confirmation open
@@ -594,20 +599,47 @@ export default function MindMap({ mapId, onBack }) {
     // TODO: Save to backend/localStorage
   };
 
-  // Apply template
+  // Apply template - ADDS to existing nodes instead of replacing
   const handleApplyTemplate = (template) => {
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
+    // Find a good position for the new template nodes
+    // Place them to the right of existing content with some spacing
+    let maxX = 0;
+    let avgY = 0;
 
-    const { nodes: newNodes, connections: newConns } = instantiateTemplate(template, {
-      centerX,
-      centerY,
+    if (nodes.length > 0) {
+      maxX = Math.max(...nodes.map(n => n.x)) + 400; // Offset to the right
+      avgY = nodes.reduce((sum, n) => sum + n.y, 0) / nodes.length;
+    } else {
+      maxX = window.innerWidth / 2;
+      avgY = window.innerHeight / 2;
+    }
+
+    const { nodes: templateNodes, connections: templateConns } = instantiateTemplate(template, {
+      centerX: maxX,
+      centerY: avgY,
       scaleNodes: 1,
       preserveColors: true
     });
 
-    setNodes(newNodes);
-    setConnections(newConns);
+    // Generate new unique IDs for template nodes to avoid conflicts
+    const idMap = {};
+    const newNodes = templateNodes.map(node => {
+      const newId = `${node.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      idMap[node.id] = newId;
+      return { ...node, id: newId };
+    });
+
+    // Update connection references with new IDs
+    const newConns = templateConns.map(conn => ({
+      ...conn,
+      id: `${conn.id}_${Date.now()}`,
+      from: idMap[conn.from] || conn.from,
+      to: idMap[conn.to] || conn.to
+    }));
+
+    // ADD to existing nodes and connections
+    setNodes(prev => [...prev, ...newNodes]);
+    setConnections(prev => [...prev, ...newConns]);
     setShowTemplateGallery(false);
   };
 
@@ -1697,8 +1729,14 @@ export default function MindMap({ mapId, onBack }) {
     }
   };
 
+  // Get current theme config
+  const activeTheme = getTheme(currentTheme);
+
   return (
-    <div className="flex w-full h-screen overflow-hidden bg-gray-50">
+    <div
+      className="flex w-full h-screen overflow-hidden transition-colors duration-300"
+      style={{ backgroundColor: activeTheme.canvas.background }}
+    >
       <div
         className="flex-1 relative overflow-hidden touch-manipulation"
         ref={canvasRef}
@@ -1980,7 +2018,7 @@ export default function MindMap({ mapId, onBack }) {
                     )}
                   </div>
 
-                  {/* Shapes Palette Toggle */}
+                  {/* Shapes Palette Toggle - HIDDEN FOR NOW
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1997,6 +2035,29 @@ export default function MindMap({ mapId, onBack }) {
                       <rect x="14" y="3" width="7" height="7"></rect>
                       <rect x="14" y="14" width="7" height="7"></rect>
                       <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                  </button>
+                  */}
+
+                  {/* Theme Picker Toggle */}
+                  <button
+                    ref={themeBtnRef}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowThemePicker(!showThemePicker);
+                    }}
+                    className={`p-3 rounded-xl shadow-lg border transition-all duration-200 ${showThemePicker
+                      ? 'bg-purple-500 text-white border-purple-600'
+                      : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300'
+                      }`}
+                    title={showThemePicker ? 'Hide themes' : 'Choose theme'}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="13.5" cy="6.5" r="2.5"></circle>
+                      <circle cx="17.5" cy="10.5" r="2.5"></circle>
+                      <circle cx="8.5" cy="7.5" r="2.5"></circle>
+                      <circle cx="6.5" cy="12.5" r="2.5"></circle>
+                      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z"></path>
                     </svg>
                   </button>
                 </div>
@@ -2156,7 +2217,7 @@ export default function MindMap({ mapId, onBack }) {
                 connections={connections}
                 nodes={nodes}
                 nodePositions={nodePositions}
-                isDarkMode={false}
+                isDarkMode={activeTheme.isDark}
                 selectedNode={selectedNode}
                 relatedNodeIds={relatedNodeIds}
                 connectionFrom={connectionFrom}
@@ -2164,10 +2225,11 @@ export default function MindMap({ mapId, onBack }) {
                 zoom={zoom}
                 pan={dragging.pan}
                 connectionStyle={
-                  currentLayoutType === 'tree-horizontal' ? 'orthogonal-v' :
-                    currentLayoutType === 'tree-vertical' ? 'orthogonal-h' :
+                  currentLayoutType === 'tree-horizontal' ? 'bracket' :
+                    currentLayoutType === 'tree-vertical' ? 'bracket' :
                       'curved'
                 }
+                themeColors={activeTheme.connections}
               />
             )}
           >
@@ -2200,6 +2262,7 @@ export default function MindMap({ mapId, onBack }) {
                     isParentOfSelected={isParentOfSelected}
                     isChildOfSelected={isChildOfSelected}
                     hasProgress={hasProgress}
+                    theme={activeTheme}
                     className={joiningGroupNodes.has(node.id) ? 'animate-join-group' : ''}
                     onMouseDown={(e) => {
                       // allow dragging via startPanning handler; nothing here
@@ -2880,6 +2943,18 @@ export default function MindMap({ mapId, onBack }) {
         formatVisitorTime={formatVisitorTime}
         onGenerateLink={generateShareLink}
         onRemoveVisitor={removeVisitorAccess}
+      />
+
+      {/* Theme Picker */}
+      <ThemePicker
+        show={showThemePicker}
+        currentTheme={currentTheme}
+        onSelectTheme={(themeId) => {
+          setCurrentTheme(themeId);
+          // Theme will be applied through CSS/styling
+        }}
+        onClose={() => setShowThemePicker(false)}
+        anchorRef={themeBtnRef}
       />
 
       {/* Copied Notification */}

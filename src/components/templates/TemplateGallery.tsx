@@ -30,28 +30,28 @@ const categories = [
 export default function TemplateGallery({ show, onSelectTemplate, onClose, onStartBlank }: TemplateGalleryProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  
+
   if (!show) return null;
-  
+
   // Filter templates
   const filteredTemplates = templates.filter(t => {
     const matchesCategory = selectedCategory === 'all' || t.category === selectedCategory;
-    const matchesSearch = searchQuery === '' || 
+    const matchesSearch = searchQuery === '' ||
       t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+
     return matchesCategory && matchesSearch;
   });
-  
+
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-      
+
       {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-[95vw] max-w-6xl h-[90vh] flex flex-col animate-scale-in">
         {/* Header */}
@@ -65,7 +65,7 @@ export default function TemplateGallery({ show, onSelectTemplate, onClose, onSta
               <p className="text-sm text-gray-600">Start with a pre-built structure or create from scratch</p>
             </div>
           </div>
-          
+
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -74,7 +74,7 @@ export default function TemplateGallery({ show, onSelectTemplate, onClose, onSta
             <X size={24} className="text-gray-600" />
           </button>
         </div>
-        
+
         {/* Search and Filters */}
         <div className="p-6 border-b border-gray-200 space-y-4">
           {/* Search bar */}
@@ -88,18 +88,17 @@ export default function TemplateGallery({ show, onSelectTemplate, onClose, onSta
               className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
             />
           </div>
-          
+
           {/* Category filters */}
           <div className="flex flex-wrap gap-2">
             {categories.map(cat => (
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
-                  selectedCategory === cat.id
-                    ? 'bg-black text-white shadow-md'
-                    : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                }`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${selectedCategory === cat.id
+                  ? 'bg-black text-white shadow-md'
+                  : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                  }`}
               >
                 <span>{cat.icon}</span>
                 <span className={selectedCategory === cat.id ? 'text-white' : 'text-gray-900'}>{cat.label}</span>
@@ -107,7 +106,7 @@ export default function TemplateGallery({ show, onSelectTemplate, onClose, onSta
             ))}
           </div>
         </div>
-        
+
         {/* Template grid */}
         <div className="flex-1 overflow-y-auto p-6">
           {filteredTemplates.length === 0 ? (
@@ -131,13 +130,13 @@ export default function TemplateGallery({ show, onSelectTemplate, onClose, onSta
             </div>
           )}
         </div>
-        
+
         {/* Footer */}
         <div className="p-6 border-t border-gray-200 flex justify-between items-center bg-gray-50">
           <div className="text-sm text-gray-600">
             Showing {filteredTemplates.length} of {templates.length} templates
           </div>
-          
+
           <div className="flex gap-3">
             <button
               onClick={onClose}
@@ -151,9 +150,9 @@ export default function TemplateGallery({ show, onSelectTemplate, onClose, onSta
                   onStartBlank();
                   onClose();
                 }}
-                className="px-6 py-2.5 bg-gradient-to-r from-gray-700 to-gray-900 text-white rounded-lg font-medium hover:from-gray-800 hover:to-black transition-all shadow-lg"
+                className="px-6 py-2.5 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-all shadow-lg"
               >
-                Start from Blank
+                Add
               </button>
             )}
           </div>

@@ -1,10 +1,35 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatching, connectionMode, isConnectionSource, isAlreadyConnected, isParentOfSelected, isChildOfSelected, hasProgress, className, children }) => {
+const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatching, connectionMode, isConnectionSource, isAlreadyConnected, isParentOfSelected, isChildOfSelected, hasProgress, theme, className, children }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editText, setEditText] = React.useState(node.text || '');
   const [isHovering, setIsHovering] = React.useState(false);
+
+  // Get theme-based styling, with fallbacks
+  const themeStyles = theme ? {
+    fontFamily: theme.typography?.fontFamily || "'Inter', sans-serif",
+    fontSize: theme.typography?.fontSize || '14px',
+    fontWeight: theme.typography?.fontWeight || '500',
+    borderRadius: theme.nodes?.borderRadius || '8px',
+    borderColor: theme.nodes?.borderColor || '#E5E7EB',
+    borderWidth: theme.nodes?.borderWidth || '1px',
+    shadow: theme.nodes?.shadow || '0 1px 3px rgba(0,0,0,0.1)',
+    defaultBg: theme.nodes?.defaultBg || '#FFFFFF',
+    defaultText: theme.nodes?.defaultText || '#1F2937',
+    selectedRing: theme.nodes?.selectedRing || '#3B82F6',
+  } : {
+    fontFamily: "'Inter', sans-serif",
+    fontSize: '14px',
+    fontWeight: '500',
+    borderRadius: '8px',
+    borderColor: '#E5E7EB',
+    borderWidth: '1px',
+    shadow: '0 1px 3px rgba(0,0,0,0.1)',
+    defaultBg: '#FFFFFF',
+    defaultText: '#1F2937',
+    selectedRing: '#3B82F6',
+  };
 
   // Calculate dynamic row count based on content
   const calculateRows = (text) => {
@@ -89,24 +114,29 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
     zIndex = 30;
   }
 
+  // Dynamic ring color based on theme
+  const ringStyle = selected
+    ? `ring-2`
+    : isParentOfSelected
+      ? 'ring-2 ring-purple-400/70'
+      : isChildOfSelected
+        ? 'ring-2 ring-amber-400/70'
+        : '';
+
   return (
     <div
-      className={`absolute rounded-lg ${
-        selected ? 'ring-2 ring-blue-400/70' : 
-        isParentOfSelected ? 'ring-2 ring-purple-400/70' : 
-        isChildOfSelected ? 'ring-2 ring-amber-400/70' : ''
-      } ${
-        className || ''
-      }`}
-      style={{ 
-        left: node.x - 150, 
-        top: node.y - 42, 
+      className={`absolute ${ringStyle} ${className || ''}`}
+      style={{
+        left: node.x - 150,
+        top: node.y - 42,
         minWidth: 300,
-        maxWidth: 300, 
+        maxWidth: 300,
         position: 'absolute',
         opacity,
         zIndex,
-        transition: 'opacity 0.2s ease-out'
+        transition: 'opacity 0.2s ease-out',
+        borderRadius: themeStyles.borderRadius,
+        ...(selected && { '--tw-ring-color': themeStyles.selectedRing }),
       }}
       data-node-id={node.id}
       onMouseEnter={() => connectionMode && !isAlreadyConnected && setIsHovering(true)}
@@ -120,7 +150,7 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
           </div>
         </div>
       )}
-      
+
       {/* Child indicator badge */}
       {isChildOfSelected && (
         <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-20">
@@ -129,7 +159,7 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
           </div>
         </div>
       )}
-      
+
       {/* Connection Points - visible when in connection mode */}
       {connectionMode && !isConnectionSource && (
         <>
@@ -142,33 +172,41 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
             </div>
           ) : (
             // Green border for connectable nodes
-            <div 
-              className={`absolute inset-0 rounded-lg pointer-events-none transition-all duration-200 ${
-                isHovering 
-                  ? 'border-4 border-green-500 shadow-lg shadow-green-500/50' 
-                  : 'border-2 border-green-400/60'
-              }`}
+            <div
+              className={`absolute inset-0 rounded-lg pointer-events-none transition-all duration-200 ${isHovering
+                ? 'border-4 border-green-500 shadow-lg shadow-green-500/50'
+                : 'border-2 border-green-400/60'
+                }`}
             />
           )}
         </>
       )}
       <button
         type="button"
-        className={`w-full px-4 py-4 rounded-lg border text-left ${
-          selected ? 'bg-blue-50 border-blue-400 shadow-md' : 'bg-white border-gray-200 shadow'
-        }`}
+        className={`w-full px-4 py-4 border text-left transition-all duration-200`}
         onClick={(e) => {
           e.stopPropagation();
           onSelect?.(node.id, e);
         }}
-        style={{ backgroundColor: node.bgColor || undefined, color: node.fontColor || undefined, minHeight: '56px' }}
+        style={{
+          backgroundColor: node.bgColor || themeStyles.defaultBg,
+          color: node.fontColor || themeStyles.defaultText,
+          minHeight: '56px',
+          fontFamily: themeStyles.fontFamily,
+          fontSize: themeStyles.fontSize,
+          fontWeight: themeStyles.fontWeight,
+          borderRadius: themeStyles.borderRadius,
+          borderWidth: themeStyles.borderWidth,
+          borderColor: selected ? themeStyles.selectedRing : themeStyles.borderColor,
+          boxShadow: themeStyles.shadow,
+        }}
         onDoubleClick={handleDoubleClick}
       >
         {isEditing ? (
           <textarea
             autoFocus
-            className="w-full text-center resize-none bg-transparent outline-none font-medium text-gray-800 border-0"
-            style={{ paddingLeft: hasProgress ? '48px' : '0' }}
+            className="w-full text-center resize-none bg-transparent outline-none font-medium border-0"
+            style={{ paddingLeft: hasProgress ? '48px' : '0', color: 'inherit' }}
             value={editText}
             onChange={(e) => setEditText(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -189,7 +227,7 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
                     <span>{priorityDisplay.icon}</span>
                   </span>
                 )}
-                
+
                 {/* Status Badge */}
                 {statusDisplay && (
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border ${statusDisplay.color}`}>
@@ -197,38 +235,37 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
                     <span>{statusDisplay.label}</span>
                   </span>
                 )}
-                
+
                 {/* Days Until Due Badge */}
                 {daysUntilDue !== null && (
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border ${
-                    daysUntilDue < 0 
-                      ? 'bg-red-100 text-red-700 border-red-300' 
-                      : daysUntilDue === 0
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border ${daysUntilDue < 0
+                    ? 'bg-red-100 text-red-700 border-red-300'
+                    : daysUntilDue === 0
                       ? 'bg-orange-100 text-orange-700 border-orange-300'
                       : daysUntilDue <= 3
-                      ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
-                      : 'bg-gray-100 text-gray-600 border-gray-300'
-                  }`}>
+                        ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
+                        : 'bg-gray-100 text-gray-600 border-gray-300'
+                    }`}>
                     <span>📅</span>
                     <span>
-                      {daysUntilDue < 0 
-                        ? `${Math.abs(daysUntilDue)}d overdue` 
-                        : daysUntilDue === 0 
-                        ? 'Due today'
-                        : `${daysUntilDue}d left`
+                      {daysUntilDue < 0
+                        ? `${Math.abs(daysUntilDue)}d overdue`
+                        : daysUntilDue === 0
+                          ? 'Due today'
+                          : `${daysUntilDue}d left`
                       }
                     </span>
                   </span>
                 )}
               </div>
             )}
-            
+
             {node.emoji && (
               <div className="text-3xl">
                 {node.emoji}
               </div>
             )}
-            <div className="text-center text-gray-800 font-medium whitespace-pre-wrap break-words" style={{ paddingLeft: hasProgress ? '48px' : '0' }}>
+            <div className="text-center font-medium whitespace-pre-wrap break-words" style={{ paddingLeft: hasProgress ? '48px' : '0', color: 'inherit' }}>
               {node.text || 'New Task'}
             </div>
           </div>
@@ -260,6 +297,7 @@ NodeCard.propTypes = {
   isParentOfSelected: PropTypes.bool,
   isChildOfSelected: PropTypes.bool,
   hasProgress: PropTypes.bool,
+  theme: PropTypes.object,
   className: PropTypes.string,
   children: PropTypes.node
 };

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { computeBezierPath, computeOrthogonalPath } from './connectionGeometry';
+import { computeBezierPath, computeOrthogonalPath, computeBracketPaths } from './connectionGeometry';
 
 /**
  * ConnectionsSvg: Enhanced presentational component that renders all connections as a single SVG.
@@ -25,11 +25,13 @@ export default function ConnectionsSvg({
   pan,
   showArrows = false, // Optional: show direction arrows
   colorMode = 'default', // 'default' | 'parent' | 'gradient'
-  connectionStyle = 'curved', // 'curved' | 'orthogonal-h' | 'orthogonal-v'
+  connectionStyle = 'curved', // 'curved' | 'orthogonal-h' | 'orthogonal-v' | 'bracket'
+  themeColors = null, // Theme connection colors
 }) {
   const [hoveredConnection, setHoveredConnection] = useState(null);
 
-  const defaultStrokeColor = isDarkMode ? '#6b7280' : '#94a3b8';
+  // Use theme color if provided, otherwise fall back to defaults
+  const defaultStrokeColor = themeColors?.color || (isDarkMode ? '#6b7280' : '#94a3b8');
   const hasConnections = Array.isArray(connections) && connections.length > 0;
   const showPreview = connectionFrom && mousePosition;
 
@@ -106,7 +108,74 @@ export default function ConnectionsSvg({
         })}
       </defs>
 
-      {connections.map((conn) => {
+      {/* Bracket-style connections for tree views */}
+      {connectionStyle === 'bracket' && (() => {
+        // Group connections by parent
+        const connectionsByParent = {};
+        connections.forEach(conn => {
+          if (!connectionsByParent[conn.from]) {
+            connectionsByParent[conn.from] = [];
+          }
+          connectionsByParent[conn.from].push(conn);
+        });
+
+        return Object.entries(connectionsByParent).map(([parentId, childConns]) => {
+          const parentNode = nodes.find(n => n.id === parentId);
+          const parentPos = nodePositions?.[parentId];
+          if (!parentNode || !parentPos) return null;
+
+          // Get child positions
+          const childRects = childConns
+            .map(conn => {
+              const childPos = nodePositions?.[conn.to];
+              return childPos;
+            })
+            .filter(Boolean);
+
+          if (childRects.length === 0) return null;
+
+          // Get parent color for the bracket
+          const parentColor = parentNode.bgColor && parentNode.bgColor !== '#ffffff'
+            ? parentNode.bgColor
+            : themeColors?.color || defaultStrokeColor;
+
+          // Compute bracket paths
+          const { paths, underline } = computeBracketPaths(parentPos, childRects, parentColor);
+
+          const strokeWidth = themeColors?.strokeWidth || 2.5;
+
+          return (
+            <g key={`bracket-${parentId}`}>
+              {/* Parent underline - colored bar */}
+              {underline.d && (
+                <path
+                  d={underline.d}
+                  stroke={underline.color}
+                  strokeWidth={4}
+                  fill="none"
+                  strokeLinecap="round"
+                />
+              )}
+              {/* Bracket paths */}
+              {paths.map((pathData, idx) => (
+                <path
+                  key={`${parentId}-path-${idx}`}
+                  d={pathData.d}
+                  stroke={pathData.color}
+                  strokeWidth={strokeWidth}
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ transition: 'all 0.2s ease-out' }}
+                />
+              ))}
+            </g>
+          );
+        });
+      })()}
+
+      {/* Regular connections (non-bracket styles) */}
+      {connectionStyle !== 'bracket' && connections.map((conn) => {
         const fromNode = nodes.find((n) => n.id === conn.from);
         const toNode = nodes.find((n) => n.id === conn.to);
         if (!fromNode || !toNode) {
@@ -412,5 +481,10 @@ ConnectionsSvg.propTypes = {
   }),
   showArrows: PropTypes.bool,
   colorMode: PropTypes.oneOf(['default', 'parent', 'gradient']),
-  connectionStyle: PropTypes.oneOf(['curved', 'orthogonal-h', 'orthogonal-v']),
+  connectionStyle: PropTypes.oneOf(['curved', 'orthogonal-h', 'orthogonal-v', 'bracket']),
+  themeColors: PropTypes.shape({
+    color: PropTypes.string,
+    colorMode: PropTypes.string,
+    strokeWidth: PropTypes.number,
+  }),
 };

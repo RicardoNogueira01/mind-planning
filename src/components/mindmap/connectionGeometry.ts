@@ -181,6 +181,88 @@ export function computeOrthogonalPath(
 }
 
 /**
+ * Compute bracket-style connection for tree view
+ * Creates a shared horizontal line from parent with vertical drops to each child
+ * This creates the clean org-chart look with:
+ * - A colored underline below parent
+ * - A horizontal bracket spanning all children
+ * - Vertical drops to each child
+ * 
+ * @param parentRect - Parent node rectangle
+ * @param childRects - Array of child node rectangles
+ * @param parentColor - Color for the connection (from parent node)
+ * @returns Array of path data for all connections
+ */
+export function computeBracketPaths(
+  parentRect: Rect,
+  childRects: Rect[],
+  parentColor: string = '#94a3b8'
+): { paths: Array<{ d: string; color: string }>, underline: { d: string; color: string } } {
+  if (childRects.length === 0) {
+    return { paths: [], underline: { d: '', color: parentColor } };
+  }
+
+  const parentCenterX = (parentRect.left + parentRect.right) / 2;
+  const parentBottom = parentRect.bottom;
+
+  // Calculate the vertical midpoint between parent and children
+  const lowestChildTop = Math.min(...childRects.map(r => r.top));
+  const bracketY = parentBottom + (lowestChildTop - parentBottom) / 2;
+
+  // Calculate the horizontal span for the bracket
+  const childCenters = childRects.map(r => (r.left + r.right) / 2).sort((a, b) => a - b);
+  const leftmostChild = childCenters[0];
+  const rightmostChild = childCenters[childCenters.length - 1];
+
+  // Underline for parent (colored bar below parent)
+  const underlineWidth = Math.min(parentRect.right - parentRect.left - 20, 80);
+  const underline = {
+    d: `M ${parentCenterX - underlineWidth / 2} ${parentBottom + 4} L ${parentCenterX + underlineWidth / 2} ${parentBottom + 4}`,
+    color: parentColor
+  };
+
+  // Create paths for each child
+  const paths: Array<{ d: string; color: string }> = [];
+
+  if (childRects.length === 1) {
+    // Single child: straight line down
+    const childCenterX = (childRects[0].left + childRects[0].right) / 2;
+    const childTop = childRects[0].top;
+
+    paths.push({
+      d: `M ${parentCenterX} ${parentBottom + 8} L ${parentCenterX} ${bracketY} L ${childCenterX} ${bracketY} L ${childCenterX} ${childTop}`,
+      color: parentColor
+    });
+  } else {
+    // Multiple children: create bracket
+    // Main vertical drop from parent to bracket level
+    const mainDropPath = `M ${parentCenterX} ${parentBottom + 8} L ${parentCenterX} ${bracketY}`;
+
+    // Horizontal bracket line spanning all children
+    const bracketPath = `M ${leftmostChild} ${bracketY} L ${rightmostChild} ${bracketY}`;
+
+    // Combined path for the main structure
+    paths.push({
+      d: `${mainDropPath} M ${leftmostChild} ${bracketY} L ${rightmostChild} ${bracketY}`,
+      color: parentColor
+    });
+
+    // Individual vertical drops to each child
+    for (const childRect of childRects) {
+      const childCenterX = (childRect.left + childRect.right) / 2;
+      const childTop = childRect.top;
+
+      paths.push({
+        d: `M ${childCenterX} ${bracketY} L ${childCenterX} ${childTop}`,
+        color: parentColor
+      });
+    }
+  }
+
+  return { paths, underline };
+}
+
+/**
  * Compute the intersection point on a rectangle's perimeter for a ray from the rect center to target
  * 
  * Purpose: Connections should start/end at node edges, not centers

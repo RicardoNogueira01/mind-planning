@@ -16,7 +16,7 @@ const ImageAnalyzerModal = ({ isOpen, onClose, onAnalyze }) => {
     const file = e.target.files?.[0];
     if (file && file.type.startsWith('image/')) {
       setSelectedImage(file);
-      
+
       // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -31,22 +31,22 @@ const ImageAnalyzerModal = ({ isOpen, onClose, onAnalyze }) => {
 
     setIsAnalyzing(true);
     setError(null);
-    
+
     try {
       // Call the AI analysis service with the image
       const mindMapData = await analyzeImage(imagePreview);
-      
+
       // Call the parent's analyze function with the extracted data
       onAnalyze(mindMapData);
-      
+
       // Close modal
       handleClose();
     } catch (error) {
       console.error('Error analyzing image:', error);
-      
+
       // Provide more specific error messages
       let errorMessage = 'Failed to analyze image. ';
-      
+
       if (error.message.includes('403') || error.message.includes('API key')) {
         errorMessage += 'API key may be invalid or restricted. Please check your API key and ensure it has access to Gemini API.';
       } else if (error.message.includes('429')) {
@@ -58,7 +58,7 @@ const ImageAnalyzerModal = ({ isOpen, onClose, onAnalyze }) => {
       } else {
         errorMessage += error.message || 'Please try again or check the console for details.';
       }
-      
+
       setError(errorMessage);
     } finally {
       setIsAnalyzing(false);
@@ -79,7 +79,7 @@ const ImageAnalyzerModal = ({ isOpen, onClose, onAnalyze }) => {
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4 flex items-center justify-between">
+        <div className="bg-black px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-white/20 rounded-lg">
               <Camera size={24} className="text-white" />
@@ -105,11 +105,11 @@ const ImageAnalyzerModal = ({ isOpen, onClose, onAnalyze }) => {
             <div className="space-y-4">
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-indigo-500 hover:bg-indigo-50/50 transition-all cursor-pointer group"
+                className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-gray-900 hover:bg-gray-50 transition-all cursor-pointer group"
               >
                 <div className="flex flex-col items-center gap-4">
-                  <div className="p-4 bg-indigo-100 rounded-full group-hover:bg-indigo-200 transition-colors">
-                    <Upload size={32} className="text-indigo-600" />
+                  <div className="p-4 bg-gray-100 rounded-full group-hover:bg-gray-200 transition-colors">
+                    <Upload size={32} className="text-gray-600" />
                   </div>
                   <div>
                     <p className="text-lg font-semibold text-gray-900 mb-1">
@@ -119,7 +119,7 @@ const ImageAnalyzerModal = ({ isOpen, onClose, onAnalyze }) => {
                       PNG, JPG, or JPEG up to 10MB
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg group-hover:bg-indigo-700 transition-colors">
+                  <div className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg group-hover:bg-gray-800 transition-colors">
                     <ImageIcon size={16} />
                     <span className="text-sm font-medium">Choose File</span>
                   </div>
@@ -135,12 +135,12 @@ const ImageAnalyzerModal = ({ isOpen, onClose, onAnalyze }) => {
               />
 
               {/* Info Box */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <div className="flex gap-3">
-                  <Sparkles size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-blue-900">
+                  <Sparkles size={20} className="text-gray-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-gray-900">
                     <p className="font-semibold mb-1">How it works:</p>
-                    <ul className="list-disc list-inside space-y-1 text-blue-800">
+                    <ul className="list-disc list-inside space-y-1 text-gray-600">
                       <li>Upload a hand-drawn mind map or photo</li>
                       <li>AI analyzes the structure and text</li>
                       <li>Automatically creates an editable digital mind map</li>
@@ -196,7 +196,7 @@ const ImageAnalyzerModal = ({ isOpen, onClose, onAnalyze }) => {
                 <button
                   onClick={handleAnalyze}
                   disabled={isAnalyzing}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all font-medium shadow-lg shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-all font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   <Sparkles size={18} />
                   {isAnalyzing ? 'Analyzing...' : 'Analyze & Create'}

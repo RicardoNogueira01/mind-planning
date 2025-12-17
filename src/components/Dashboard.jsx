@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import WeeklyCalendarWidget from './WeeklyCalendarWidget';
 import TopBar from './shared/TopBar';
-import ProjectHealthCard from './dashboard/ProjectHealthCard';
 import { useLanguage } from '../context/LanguageContext';
-import { 
-  CheckCircle, 
-  Clock, 
-  AlertTriangle, 
+import {
+  CheckCircle,
+  Clock,
+  AlertTriangle,
   Users,
   ArrowRight,
   Activity,
@@ -24,16 +23,16 @@ const Dashboard = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [currentHolidayIndex, setCurrentHolidayIndex] = useState(0);
-  
+
   // Get current date info
   const getCurrentDayInfo = () => {
     const now = new Date();
     const dayIndex = now.getDay();
     const monthIndex = now.getMonth();
-    
+
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const monthNames = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
-    
+
     return {
       dayName: t(`greeting.${dayNames[dayIndex]}`),
       day: now.getDate(),
@@ -43,7 +42,7 @@ const Dashboard = () => {
   };
 
   const dateInfo = getCurrentDayInfo();
-  
+
   // Sample data - in a real app, this would come from your state or API
   const [stats] = useState({
     tasksCompleted: 32,
@@ -52,14 +51,14 @@ const Dashboard = () => {
     totalTasks: 62,
     overdueTasks: 5
   });
-  
+
   const [collaborators] = useState([
     { id: 'jd', name: 'John Doe', initials: 'JD', color: 'bg-blue-500', tasksAssigned: 14, tasksCompleted: 8, overdueTasks: 2 },
     { id: 'ak', name: 'Alex Kim', initials: 'AK', color: 'bg-green-500', tasksAssigned: 20, tasksCompleted: 15, overdueTasks: 0 },
     { id: 'mr', name: 'Maria Rodriguez', initials: 'MR', color: 'bg-yellow-500', tasksAssigned: 18, tasksCompleted: 5, overdueTasks: 3 },
     { id: 'ts', name: 'Taylor Smith', initials: 'TS', color: 'bg-purple-500', tasksAssigned: 10, tasksCompleted: 4, overdueTasks: 0 }
   ]);
-  
+
   const [recentCompletedTasks] = useState([
     { id: 1, title: 'Finalize design mockups', completedBy: 'Alex Kim', initials: 'AK', color: 'bg-green-500', completedAt: '2 hours ago' },
     { id: 2, title: 'Review sprint backlog', completedBy: 'John Doe', initials: 'JD', color: 'bg-blue-500', completedAt: '4 hours ago' },
@@ -67,7 +66,7 @@ const Dashboard = () => {
     { id: 4, title: 'Prepare presentation slides', completedBy: 'Alex Kim', initials: 'AK', color: 'bg-green-500', completedAt: 'Yesterday' },
     { id: 5, title: 'Client feedback meeting', completedBy: 'Maria Rodriguez', initials: 'MR', color: 'bg-yellow-500', completedAt: '2 days ago' }
   ]);
-  
+
   const [upcomingDeadlines] = useState([
     { id: 1, title: 'API integration testing', assignedTo: 'John Doe', initials: 'JD', color: 'bg-blue-500', dueDate: 'today', status: 'danger' },
     { id: 2, title: 'Create social media campaign', assignedTo: 'Maria Rodriguez', initials: 'MR', color: 'bg-yellow-500', dueDate: 'today', status: 'danger' },
@@ -75,14 +74,14 @@ const Dashboard = () => {
     { id: 4, title: 'Finalize Q1 budget', assignedTo: 'Alex Kim', initials: 'AK', color: 'bg-green-500', dueDate: '2', status: 'warning' },
     { id: 5, title: 'Prepare meeting agenda', assignedTo: 'Taylor Smith', initials: 'TS', color: 'bg-purple-500', dueDate: '3', status: 'warning' }
   ]);
-  
+
   // Function to format due dates with translation
   const formatDueDate = (dueDate) => {
     if (dueDate === 'today') return t('activity.today');
     if (dueDate === 'tomorrow') return t('activity.tomorrow');
     return `${t('activity.inDays')} ${dueDate} ${t('holidays.days')}`;
   };
-  
+
   const [upcomingHolidays] = useState([
     { id: 1, name: 'First Friday', date: '2025-12-05', daysUntil: 4, emoji: '🎉', color: 'bg-blue-500', type: 'country' },
     { id: 2, name: 'Christmas Day', date: '2025-12-25', daysUntil: 25, emoji: '🎄', color: 'bg-red-500', type: 'country' },
@@ -90,46 +89,46 @@ const Dashboard = () => {
     { id: 4, name: 'Valentine\'s Day', date: '2026-02-14', daysUntil: 76, emoji: '💝', color: 'bg-pink-500', type: 'country' },
     { id: 5, name: 'Easter Sunday', date: '2026-04-20', daysUntil: 141, emoji: '🐰', color: 'bg-purple-500', type: 'country' }
   ]);
-  
+
   const [recentMindMaps] = useState([
-    { 
-      id: 1, 
-      title: 'Q1 Marketing Strategy', 
-      lastModified: '2 hours ago', 
-      nodeCount: 24, 
+    {
+      id: 1,
+      title: 'Q1 Marketing Strategy',
+      lastModified: '2 hours ago',
+      nodeCount: 24,
       color: 'bg-blue-500',
       isFavorite: true,
       createdBy: 'Alex Kim',
       initials: 'AK',
       avatarColor: 'bg-green-500'
     },
-    { 
-      id: 2, 
-      title: 'Product Development Roadmap', 
-      lastModified: '5 hours ago', 
-      nodeCount: 18, 
+    {
+      id: 2,
+      title: 'Product Development Roadmap',
+      lastModified: '5 hours ago',
+      nodeCount: 18,
       color: 'bg-purple-500',
       isFavorite: false,
       createdBy: 'John Doe',
       initials: 'JD',
       avatarColor: 'bg-blue-500'
     },
-    { 
-      id: 3, 
-      title: 'Team Brainstorming Session', 
-      lastModified: 'Yesterday', 
-      nodeCount: 32, 
+    {
+      id: 3,
+      title: 'Team Brainstorming Session',
+      lastModified: 'Yesterday',
+      nodeCount: 32,
       color: 'bg-green-500',
       isFavorite: true,
       createdBy: 'Maria Rodriguez',
       initials: 'MR',
       avatarColor: 'bg-yellow-500'
     },
-    { 
-      id: 4, 
-      title: 'Project Alpha Planning', 
-      lastModified: '2 days ago', 
-      nodeCount: 15, 
+    {
+      id: 4,
+      title: 'Project Alpha Planning',
+      lastModified: '2 days ago',
+      nodeCount: 15,
       color: 'bg-orange-500',
       isFavorite: false,
       createdBy: 'Taylor Smith',
@@ -137,117 +136,66 @@ const Dashboard = () => {
       avatarColor: 'bg-purple-500'
     }
   ]);
-  
+
   const [teamHolidayRequests] = useState([
-    { 
-      id: 1, 
-      employeeName: 'Alex Kim', 
-      initials: 'AK', 
-      color: 'bg-green-500', 
-      startDate: '20 Dec', 
+    {
+      id: 1,
+      employeeName: 'Alex Kim',
+      initials: 'AK',
+      color: 'bg-green-500',
+      startDate: '20 Dec',
       endDate: '27 Dec',
       days: 5,
       status: 'approved',
       reason: 'Christmas vacation'
     },
-    { 
-      id: 2, 
-      employeeName: 'John Doe', 
-      initials: 'JD', 
-      color: 'bg-blue-500', 
-      startDate: '2 Jan', 
+    {
+      id: 2,
+      employeeName: 'John Doe',
+      initials: 'JD',
+      color: 'bg-blue-500',
+      startDate: '2 Jan',
       endDate: '5 Jan',
       days: 3,
       status: 'pending',
       reason: 'Family trip'
     },
-    { 
-      id: 3, 
-      employeeName: 'Maria Rodriguez', 
-      initials: 'MR', 
-      color: 'bg-yellow-500', 
-      startDate: '15 Dec', 
+    {
+      id: 3,
+      employeeName: 'Maria Rodriguez',
+      initials: 'MR',
+      color: 'bg-yellow-500',
+      startDate: '15 Dec',
       endDate: '18 Dec',
       days: 3,
       status: 'approved',
       reason: 'Personal matters'
     },
-    { 
-      id: 4, 
-      employeeName: 'Taylor Smith', 
-      initials: 'TS', 
-      color: 'bg-purple-500', 
-      startDate: '28 Dec', 
+    {
+      id: 4,
+      employeeName: 'Taylor Smith',
+      initials: 'TS',
+      color: 'bg-purple-500',
+      startDate: '28 Dec',
       endDate: '31 Dec',
       days: 2,
       status: 'pending',
       reason: 'Year-end break'
     },
-    { 
-      id: 5, 
-      employeeName: 'John Doe', 
-      initials: 'JD', 
-      color: 'bg-blue-500', 
-      startDate: '10 Dec', 
+    {
+      id: 5,
+      employeeName: 'John Doe',
+      initials: 'JD',
+      color: 'bg-blue-500',
+      startDate: '10 Dec',
       endDate: '12 Dec',
       days: 2,
       status: 'canceled',
       reason: 'Project deadline'
     }
   ]);
-  
-  // Mock projects data for ProjectHealthCard
-  const [mockProjects] = useState([
-    {
-      id: 1,
-      name: 'Q1 Marketing Strategy',
-      totalTasks: 24,
-      completedTasks: 18,
-      onTrackTasks: 20,
-      atRiskTasks: 3,
-      delayedTasks: 1,
-      blockedTasks: 0,
-      teamLoad: 'balanced', // 'balanced', 'busy', 'overloaded'
-      riskLevel: 'low' // 'low', 'medium', 'high'
-    },
-    {
-      id: 2,
-      name: 'Product Development Roadmap',
-      totalTasks: 18,
-      completedTasks: 12,
-      onTrackTasks: 14,
-      atRiskTasks: 2,
-      delayedTasks: 2,
-      blockedTasks: 1,
-      teamLoad: 'busy',
-      riskLevel: 'medium'
-    },
-    {
-      id: 3,
-      name: 'Team Brainstorming Session',
-      totalTasks: 32,
-      completedTasks: 28,
-      onTrackTasks: 30,
-      atRiskTasks: 1,
-      delayedTasks: 1,
-      blockedTasks: 0,
-      teamLoad: 'balanced',
-      riskLevel: 'low'
-    },
-    {
-      id: 4,
-      name: 'Project Alpha Planning',
-      totalTasks: 15,
-      completedTasks: 8,
-      onTrackTasks: 10,
-      atRiskTasks: 3,
-      delayedTasks: 2,
-      blockedTasks: 2,
-      teamLoad: 'overloaded',
-      riskLevel: 'high'
-    }
-  ]);
-  
+
+
   // Calculate completion percentage
   const completionPercentage = Math.round((stats.tasksCompleted / stats.totalTasks) * 100);
 
@@ -271,8 +219,8 @@ const Dashboard = () => {
                 {t('greeting.subtitle')}
               </p>
             </div>
-            <Link 
-              to="/mindmaps" 
+            <Link
+              to="/mindmaps"
               className="w-full md:w-auto px-4 md:px-6 py-2.5 md:py-3 bg-black hover:bg-gray-900 text-white rounded-xl font-semibold shadow-lg shadow-black/30 hover:shadow-xl hover:shadow-black/40 transition-all duration-300 flex items-center justify-center gap-2 text-sm touch-manipulation transform hover:scale-[1.02]"
             >
               <Activity size={18} />
@@ -287,7 +235,7 @@ const Dashboard = () => {
           <div className="bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] rounded-2xl p-8 shadow-xl text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -mr-20 -mt-20"></div>
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/3 rounded-full -ml-16 -mb-16"></div>
-            
+
             <div className="relative z-10">
               {/* Header */}
               <div className="mb-6">
@@ -298,8 +246,8 @@ const Dashboard = () => {
                   {completionPercentage}%
                 </h2>
                 <div className="h-3 bg-white/20 rounded-full overflow-hidden max-w-md">
-                  <div 
-                    className="h-3 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full shadow-lg transition-all duration-1000 ease-out" 
+                  <div
+                    className="h-3 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full shadow-lg transition-all duration-1000 ease-out"
                     style={{ width: `${completionPercentage}%` }}
                   ></div>
                 </div>
@@ -307,7 +255,7 @@ const Dashboard = () => {
                   {stats.tasksCompleted} of {stats.totalTasks} tasks completed
                 </p>
               </div>
-              
+
               {/* Stats Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-white/10">
@@ -346,9 +294,6 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Project Health Card */}
-          <ProjectHealthCard projects={mockProjects} />
-
           {/* Recent Mind Maps Card */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-6">
@@ -370,7 +315,7 @@ const Dashboard = () => {
                 <ArrowRight size={14} />
               </Link>
             </div>
-            
+
             <div className="space-y-3">
               {recentMindMaps.map((mindMap) => (
                 <div
@@ -385,7 +330,7 @@ const Dashboard = () => {
                       <Map size={16} className="sm:hidden" />
                       <Map size={24} className="hidden sm:block" />
                     </div>
-                    
+
                     {/* Mind Map Title (mobile) */}
                     <div className="flex-1 min-w-0 sm:hidden">
                       <div className="flex items-center gap-1.5 mb-0.5">
@@ -397,7 +342,7 @@ const Dashboard = () => {
                         )}
                       </div>
                     </div>
-                    
+
                     {/* Creator Avatar (mobile - top right) */}
                     <div className="sm:hidden flex items-center gap-1.5 flex-shrink-0">
                       <div className={`w-7 h-7 ${mindMap.avatarColor} rounded-full flex items-center justify-center text-white text-xs font-semibold`}>
@@ -406,7 +351,7 @@ const Dashboard = () => {
                       <ArrowRight size={14} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
                     </div>
                   </div>
-                  
+
                   {/* Mind Map Info (desktop layout) */}
                   <div className="flex-1 min-w-0 w-full sm:w-auto">
                     {/* Title for desktop only */}
@@ -418,7 +363,7 @@ const Dashboard = () => {
                         <Star size={14} className="text-yellow-500 fill-yellow-500 flex-shrink-0" />
                       )}
                     </div>
-                    
+
                     {/* Stats - always visible */}
                     <div className="flex items-center gap-2 sm:gap-3 text-xs text-gray-500 sm:mt-0">
                       <span className="flex items-center gap-1">
@@ -430,7 +375,7 @@ const Dashboard = () => {
                       <span className="text-xs">{mindMap.lastModified}</span>
                     </div>
                   </div>
-                  
+
                   {/* Creator Avatar (desktop only) */}
                   <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
                     <div className={`w-8 h-8 ${mindMap.avatarColor} rounded-full flex items-center justify-center text-white text-xs font-semibold`}>
@@ -466,7 +411,7 @@ const Dashboard = () => {
                   <ArrowRight size={14} />
                 </button>
               </div>
-              
+
               <div className="space-y-4 sm:space-y-5">
                 {collaborators.map(collab => (
                   <div key={collab.id} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
@@ -490,7 +435,7 @@ const Dashboard = () => {
                         {collab.overdueTasks > 0 ? `${collab.overdueTasks} overdue` : 'On track'}
                       </span>
                     </div>
-                    
+
                     {/* Desktop: Full layout */}
                     <div className="flex-1 min-w-0">
                       <div className="hidden sm:flex justify-between items-center mb-2">
@@ -510,8 +455,8 @@ const Dashboard = () => {
                         </div>
                       </div>
                       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div 
-                          className={clsx("h-2 rounded-full transition-all duration-500", collab.color)} 
+                        <div
+                          className={clsx("h-2 rounded-full transition-all duration-500", collab.color)}
                           style={{ width: `${(collab.tasksCompleted / collab.tasksAssigned) * 100}%` }}
                         ></div>
                       </div>
@@ -533,8 +478,8 @@ const Dashboard = () => {
                     <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>Holiday requests</p>
                   </div>
                 </div>
-                <Link 
-                  to="/team-holidays" 
+                <Link
+                  to="/team-holidays"
                   className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors whitespace-nowrap"
                   style={{ fontFamily: 'DM Sans, sans-serif' }}
                 >
@@ -542,7 +487,7 @@ const Dashboard = () => {
                   <ArrowRight size={14} />
                 </Link>
               </div>
-              
+
               {/* Statistics Cards */}
               <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
                 <div className="bg-gray-50 rounded-xl p-3 sm:p-4 text-center">
@@ -564,15 +509,15 @@ const Dashboard = () => {
                   <p className="text-xs text-gray-600 font-medium" style={{ fontFamily: 'DM Sans, sans-serif' }}>Canceled</p>
                 </div>
               </div>
-              
+
               {/* Holiday Requests List */}
               <div className="space-y-3">
                 {teamHolidayRequests
                   .filter(req => req.status !== 'canceled')
                   .slice(0, 3)
                   .map((request) => (
-                    <div 
-                      key={request.id} 
+                    <div
+                      key={request.id}
                       className="flex items-center gap-3 sm:gap-4 pb-3 border-b border-gray-100 last:border-0 last:pb-0"
                     >
                       <div className={clsx("w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-semibold flex-shrink-0", request.color)}>
@@ -669,8 +614,8 @@ const Dashboard = () => {
                   <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>Completed tasks</p>
                 </div>
               </div>
-              <Link 
-                to="/completed-tasks" 
+              <Link
+                to="/completed-tasks"
                 className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors whitespace-nowrap"
                 style={{ fontFamily: 'DM Sans, sans-serif' }}
               >
@@ -678,14 +623,14 @@ const Dashboard = () => {
                 <ArrowRight size={14} />
               </Link>
             </div>
-            
+
             <div className="space-y-1">
               <div className="grid grid-cols-2 gap-3 mb-3 text-xs font-semibold text-gray-500 uppercase tracking-wide px-1 sm:px-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                 <div>TODAY</div>
               </div>
               {recentCompletedTasks.slice(0, 2).map((task) => (
-                <div 
-                  key={task.id} 
+                <div
+                  key={task.id}
                   className="flex flex-col sm:flex-row sm:items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
@@ -700,13 +645,13 @@ const Dashboard = () => {
                   <span className="text-xs text-gray-400 font-medium pl-10 sm:pl-0" style={{ fontFamily: 'DM Mono, monospace' }}>{task.completedAt}</span>
                 </div>
               ))}
-              
+
               <div className="grid grid-cols-2 gap-3 mt-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wide px-1 sm:px-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                 <div>YESTERDAY</div>
               </div>
               {recentCompletedTasks.slice(2).map((task) => (
-                <div 
-                  key={task.id} 
+                <div
+                  key={task.id}
                   className="flex flex-col sm:flex-row sm:items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
@@ -723,7 +668,7 @@ const Dashboard = () => {
               ))}
             </div>
           </div>
-          
+
           {/* Deadlines */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-6">
@@ -736,8 +681,8 @@ const Dashboard = () => {
                   <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>Upcoming due dates</p>
                 </div>
               </div>
-              <Link 
-                to="/upcoming-deadlines" 
+              <Link
+                to="/upcoming-deadlines"
                 className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors whitespace-nowrap"
                 style={{ fontFamily: 'DM Sans, sans-serif' }}
               >
@@ -745,11 +690,11 @@ const Dashboard = () => {
                 <ArrowRight size={14} />
               </Link>
             </div>
-            
+
             <div className="space-y-3">
               {upcomingDeadlines.map((task) => (
-                <div 
-                  key={task.id} 
+                <div
+                  key={task.id}
                   className="flex flex-col sm:flex-row sm:items-center gap-2 p-2 sm:p-3 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
