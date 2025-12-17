@@ -5,6 +5,107 @@ export function getRectCenter(rect: Rect) {
 }
 
 /**
+ * Compute an orthogonal (org-chart style) path between two rectangles
+ * Creates bracket-style connections with smooth rounded corners
+ * 
+ * @param fromRect - Parent node rectangle
+ * @param toRect - Child node rectangle
+ * @param direction - 'horizontal' (left-to-right) or 'vertical' (top-to-bottom)
+ * @returns Object with: d (SVG path), start point, end point, label position
+ */
+export function computeOrthogonalPath(
+  fromRect: Rect,
+  toRect: Rect,
+  direction: 'horizontal' | 'vertical' = 'vertical'
+) {
+  const fromCenterX = (fromRect.left + fromRect.right) / 2;
+  const fromCenterY = (fromRect.top + fromRect.bottom) / 2;
+  const toCenterX = (toRect.left + toRect.right) / 2;
+  const toCenterY = (toRect.top + toRect.bottom) / 2;
+  
+  let start: { x: number; y: number };
+  let end: { x: number; y: number };
+  let d: string;
+  
+  // Radius for rounded corners
+  const cornerRadius = 8;
+  
+  if (direction === 'vertical') {
+    // Parent above, children below (org chart style)
+    const parentBottom = fromRect.bottom;
+    const childTop = toRect.top;
+    const midY = parentBottom + (childTop - parentBottom) / 2;
+    
+    start = { x: fromCenterX, y: parentBottom };
+    end = { x: toCenterX, y: childTop };
+    
+    const dx = end.x - start.x;
+    const r = Math.min(cornerRadius, Math.abs(dx) / 2, Math.abs(midY - start.y) / 2);
+    
+    if (Math.abs(dx) < 2) {
+      // Straight line if directly below
+      d = `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
+    } else if (dx > 0) {
+      // Child is to the right
+      d = `M ${start.x} ${start.y} 
+           L ${start.x} ${midY - r} 
+           Q ${start.x} ${midY} ${start.x + r} ${midY}
+           L ${end.x - r} ${midY}
+           Q ${end.x} ${midY} ${end.x} ${midY + r}
+           L ${end.x} ${end.y}`;
+    } else {
+      // Child is to the left
+      d = `M ${start.x} ${start.y} 
+           L ${start.x} ${midY - r} 
+           Q ${start.x} ${midY} ${start.x - r} ${midY}
+           L ${end.x + r} ${midY}
+           Q ${end.x} ${midY} ${end.x} ${midY + r}
+           L ${end.x} ${end.y}`;
+    }
+  } else {
+    // Parent on left, children on right (horizontal tree)
+    const parentRight = fromRect.right;
+    const childLeft = toRect.left;
+    const midX = parentRight + (childLeft - parentRight) / 2;
+    
+    start = { x: parentRight, y: fromCenterY };
+    end = { x: childLeft, y: toCenterY };
+    
+    const dy = end.y - start.y;
+    const r = Math.min(cornerRadius, Math.abs(dy) / 2, Math.abs(midX - start.x) / 2);
+    
+    if (Math.abs(dy) < 2) {
+      // Straight line if at same height
+      d = `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
+    } else if (dy > 0) {
+      // Child is below
+      d = `M ${start.x} ${start.y} 
+           L ${midX - r} ${start.y} 
+           Q ${midX} ${start.y} ${midX} ${start.y + r}
+           L ${midX} ${end.y - r}
+           Q ${midX} ${end.y} ${midX + r} ${end.y}
+           L ${end.x} ${end.y}`;
+    } else {
+      // Child is above
+      d = `M ${start.x} ${start.y} 
+           L ${midX - r} ${start.y} 
+           Q ${midX} ${start.y} ${midX} ${start.y - r}
+           L ${midX} ${end.y + r}
+           Q ${midX} ${end.y} ${midX + r} ${end.y}
+           L ${end.x} ${end.y}`;
+    }
+  }
+  
+  // Label position at midpoint
+  const label = { 
+    x: (start.x + end.x) / 2, 
+    y: (start.y + end.y) / 2 
+  };
+  
+  return { d, start, end, label };
+}
+
+/**
  * Compute the intersection point on a rectangle's perimeter for a ray from the rect center to target
  * 
  * Purpose: Connections should start/end at node edges, not centers

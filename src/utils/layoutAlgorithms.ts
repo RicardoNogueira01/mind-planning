@@ -198,6 +198,9 @@ function applyForceDirectedLayout(
 /**
  * Tree Layout (Hierarchical)
  * Arranges nodes in a tree structure with even spacing
+ * 
+ * 'horizontal' = org-chart style: parent on TOP, children spread HORIZONTALLY below
+ * 'vertical' = left-to-right: parent on LEFT, children spread VERTICALLY to the right
  */
 function applyTreeLayout(
   nodes: Node[],
@@ -206,11 +209,12 @@ function applyTreeLayout(
   direction: 'vertical' | 'horizontal'
 ): Node[] {
   const NODE_WIDTH = 300;
-  const NODE_HEIGHT = 70;
-  // For horizontal: levelSpacing = horizontal distance (needs NODE_WIDTH + gap)
-  // For vertical: levelSpacing = vertical distance (needs clearance for connections)
-  const levelSpacing = direction === 'horizontal' ? NODE_WIDTH + spacing : spacing * 4;
-  const siblingSpacing = direction === 'horizontal' ? NODE_HEIGHT + 15 : NODE_WIDTH + 20;
+  const NODE_HEIGHT = 84; // Account for node card height
+  
+  // For horizontal (org-chart): parent above, children spread left-right
+  // For vertical: parent left, children spread up-down
+  const levelSpacing = direction === 'horizontal' ? 100 : NODE_WIDTH + 60; // Distance parent-to-child
+  const siblingSpacing = direction === 'horizontal' ? NODE_WIDTH + 20 : NODE_HEIGHT + 15; // Distance between siblings
   
   // Build tree structure
   const nodeMap = new Map(nodes.map(n => [n.id, n]));
@@ -241,12 +245,20 @@ function applyTreeLayout(
       .map(c => c.to);
     
     if (children.length === 0) {
-      // Leaf node
-      const pos = { 
-        x: leftBound * siblingSpacing, 
-        y: depth * levelSpacing 
-      };
-      positioned.set(nodeId, pos);
+      // Leaf node - position based on direction
+      if (direction === 'horizontal') {
+        // Org-chart: x = horizontal position (sibling spread), y = depth (vertical)
+        positioned.set(nodeId, { 
+          x: leftBound * siblingSpacing, 
+          y: depth * levelSpacing 
+        });
+      } else {
+        // Left-to-right: x = depth (horizontal), y = vertical position (sibling spread)
+        positioned.set(nodeId, { 
+          x: depth * levelSpacing, 
+          y: leftBound * siblingSpacing 
+        });
+      }
       return leftBound + 1;
     }
     
@@ -263,12 +275,21 @@ function applyTreeLayout(
     // Position parent at center of children
     const firstChild = childPositions[0];
     const lastChild = childPositions[childPositions.length - 1];
-    const parentX = (firstChild + lastChild) / 2;
+    const parentPos = (firstChild + lastChild) / 2;
     
-    positioned.set(nodeId, {
-      x: parentX * siblingSpacing,
-      y: depth * levelSpacing
-    });
+    if (direction === 'horizontal') {
+      // Org-chart: parent centered above children
+      positioned.set(nodeId, {
+        x: parentPos * siblingSpacing,
+        y: depth * levelSpacing
+      });
+    } else {
+      // Left-to-right: parent centered left of children
+      positioned.set(nodeId, {
+        x: depth * levelSpacing,
+        y: parentPos * siblingSpacing
+      });
+    }
     
     return currentX;
   }
@@ -281,18 +302,10 @@ function applyTreeLayout(
     currentOffset += width + 2; // Add gap between root trees
   });
   
-  // Apply positions to nodes
+  // Apply positions to nodes (positions are already calculated correctly for each direction)
   return nodes.map(node => {
     const pos = positioned.get(node.id);
     if (!pos) return node;
-    
-    // For horizontal layout, swap coordinates:
-    // - pos.x (sibling position) becomes y (vertical arrangement of siblings)
-    // - pos.y (depth/level) becomes x (horizontal progression through tree)
-    if (direction === 'horizontal') {
-      return { ...node, x: pos.y, y: pos.x };
-    }
-    
     return { ...node, x: pos.x, y: pos.y };
   });
 }

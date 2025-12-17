@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { computeBezierPath } from './connectionGeometry';
+import { computeBezierPath, computeOrthogonalPath } from './connectionGeometry';
 
 /**
  * ConnectionsSvg: Enhanced presentational component that renders all connections as a single SVG.
  * Features:
  * - Smooth curved Bezier paths
+ * - Orthogonal (org-chart) paths for tree layouts
  * - Optional arrows to show direction
  * - Hover effects with highlighting
  * - Color inheritance from parent node
@@ -24,6 +25,7 @@ export default function ConnectionsSvg({
   pan,
   showArrows = false, // Optional: show direction arrows
   colorMode = 'default', // 'default' | 'parent' | 'gradient'
+  connectionStyle = 'curved', // 'curved' | 'orthogonal-h' | 'orthogonal-v'
 }) {
   const [hoveredConnection, setHoveredConnection] = useState(null);
   
@@ -158,22 +160,53 @@ export default function ConnectionsSvg({
         const childIndex = sortedSiblings.findIndex(c => c.id === conn.id);
         const totalChildren = sortedSiblings.length;
         
-        const { d: pathData, label: labelPoint, start, end } = computeBezierPath(fromPos, toPos, {
-          childIndex,
-          totalChildren,
-          parentId: conn.from
-        });
+        // Choose path computation based on connection style
+        let pathData, labelPoint, start, end;
+        
+        if (connectionStyle === 'orthogonal-h') {
+          // Horizontal tree: orthogonal connections (left-to-right)
+          const result = computeOrthogonalPath(fromPos, toPos, 'horizontal');
+          pathData = result.d;
+          labelPoint = result.label;
+          start = result.start;
+          end = result.end;
+        } else if (connectionStyle === 'orthogonal-v') {
+          // Vertical tree: orthogonal connections (top-to-bottom)
+          const result = computeOrthogonalPath(fromPos, toPos, 'vertical');
+          pathData = result.d;
+          labelPoint = result.label;
+          start = result.start;
+          end = result.end;
+        } else {
+          // Default: smooth Bezier curves
+          const result = computeBezierPath(fromPos, toPos, {
+            childIndex,
+            totalChildren,
+            parentId: conn.from
+          });
+          pathData = result.d;
+          labelPoint = result.label;
+          start = result.start;
+          end = result.end;
+        }
         
         // Related node highlighting
         const isRelated = !!(relatedNodeIds?.has(conn.from) || relatedNodeIds?.has(conn.to));
         const isHovered = hoveredConnection === conn.id;
         const isSelected = selectedNode === conn.from || selectedNode === conn.to;
         
-        // More subtle opacity for selected parent's children
-        const focusOpacity = isHovered ? 0.95 : (isSelected ? 0.7 : (isRelated ? 0.6 : 0.5));
+        // For orthogonal (tree) layouts, use higher opacity for cleaner look
+        const isOrthogonal = connectionStyle === 'orthogonal-h' || connectionStyle === 'orthogonal-v';
+        const focusOpacity = isHovered ? 0.95 : (isSelected ? 0.8 : (isOrthogonal ? 0.75 : (isRelated ? 0.6 : 0.5)));
         
-        const connectionColor = getConnectionColor(conn, fromNode);
-        const strokeWidth = isHovered ? 3 : 2;
+        // For tree layouts, inherit color from child node for visual hierarchy
+        let connectionColor;
+        if (isOrthogonal && toNode?.bgColor && toNode.bgColor !== '#ffffff') {
+          connectionColor = toNode.bgColor;
+        } else {
+          connectionColor = getConnectionColor(conn, fromNode);
+        }
+        const strokeWidth = isHovered ? 2.5 : 2;
 
         return (
           <g key={conn.id}>
@@ -362,4 +395,5 @@ ConnectionsSvg.propTypes = {
   }),
   showArrows: PropTypes.bool,
   colorMode: PropTypes.oneOf(['default', 'parent', 'gradient']),
+  connectionStyle: PropTypes.oneOf(['curved', 'orthogonal-h', 'orthogonal-v']),
 };

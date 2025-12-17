@@ -127,6 +127,7 @@ export default function MindMap({ mapId, onBack }) {
   const [showImageAnalyzer, setShowImageAnalyzer] = useState(false); // Image upload & analysis modal
   const [viewMode, setViewMode] = useState('mindmap'); // View mode: mindmap, gantt, board, list, analytics
   const [showMobileActionsMenu, setShowMobileActionsMenu] = useState(false); // Mobile actions dropdown menu
+  const [currentLayoutType, setCurrentLayoutType] = useState('free'); // Track current layout for connection style
 
   // Per-node button anchor refs for popovers
   const detailsBtnRefs = useRef({});
@@ -619,6 +620,7 @@ export default function MindMap({ mapId, onBack }) {
     );
     
     setNodes(result.nodes);
+    setCurrentLayoutType(layoutType); // Track the layout for connection style
     setShowLayoutMenu(false);
   };
 
@@ -2163,6 +2165,11 @@ export default function MindMap({ mapId, onBack }) {
               mousePosition={mousePosition}
               zoom={zoom}
               pan={dragging.pan}
+              connectionStyle={
+                currentLayoutType === 'tree-horizontal' ? 'orthogonal-v' :
+                currentLayoutType === 'tree-vertical' ? 'orthogonal-h' :
+                'curved'
+              }
             />
           )}
         >
