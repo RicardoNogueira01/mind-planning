@@ -53,13 +53,13 @@ const NodePopup = ({
     >
       {/* Header - Clean style matching GridColorPicker */}
       {title && (
-        <div className="px-3 py-2 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+        <div className="px-3 py-1.5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
           <h4 className="text-xs font-semibold text-gray-700">{title}</h4>
         </div>
       )}
 
       {/* Content with padding */}
-      <div className="p-3" style={{ overflowY: 'auto', maxHeight: responsiveMaxHeight !== 'none' ? `calc(${responsiveMaxHeight} - 40px)` : 'none' }}>
+      <div className="px-3 pt-2 pb-3" style={{ overflowY: 'auto', maxHeight: responsiveMaxHeight !== 'none' ? `calc(${responsiveMaxHeight} - 40px)` : 'none' }}>
         {children}
       </div>
     </div>
