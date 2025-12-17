@@ -24,10 +24,10 @@ export default function NotesPopup({ show, anchorRef, notes, attachments, collab
 
   if (!show) return null;
 
-  const rect = anchorRef?.current?.getBoundingClientRect() || 
+  const rect = anchorRef?.current?.getBoundingClientRect() ||
     { left: window.innerWidth / 2, top: 80, width: 0, height: 0, bottom: 100 };
-  
-  const popupWidth = 600;
+
+  const popupWidth = 520;
   const left = Math.max(8, Math.min(rect.left + (rect.width / 2) - (popupWidth / 2), window.innerWidth - popupWidth - 8));
   const top = Math.max(8, rect.bottom + 20);
 
@@ -79,47 +79,47 @@ export default function NotesPopup({ show, anchorRef, notes, attachments, collab
     }
 
     const textBeforeCursor = range.startContainer.textContent?.substring(0, range.startOffset) || '';
-    
+
     // Check if there's an "@" before the cursor
     const atIndex = textBeforeCursor.lastIndexOf('@');
-    
+
     if (atIndex !== -1) {
       const textAfterAt = textBeforeCursor.substring(atIndex + 1);
-      
+
       // Don't show menu if there's a space after @ (completed mention)
       if (textAfterAt.includes(' ')) {
         setShowAttachmentMenu(false);
         return;
       }
-      
+
       // Calculate position at the "@" character
       const atRange = document.createRange();
       atRange.setStart(range.startContainer, atIndex);
       atRange.setEnd(range.startContainer, atIndex + 1);
       const atRect = atRange.getBoundingClientRect();
       const editorRect = editorRef.current.getBoundingClientRect();
-      
+
       setAttachmentMenuPosition({
         top: atRect.bottom - editorRect.top + 5,
         left: atRect.left - editorRect.left
       });
-      
+
       // Filter attachments based on text after "@"
       const searchText = textAfterAt.toLowerCase();
       const allAttachments = attachments || [];
       const allCollaborators = collaborators || [];
-      
+
       // Combine attachments and collaborators
       const filteredAttachments = allAttachments
         .filter(att => att.name.toLowerCase().includes(searchText))
         .map(att => ({ ...att, type: 'attachment', displayType: att.type }));
-      
+
       const filteredCollaborators = allCollaborators
         .filter(collab => collab.name.toLowerCase().includes(searchText))
         .map(collab => ({ ...collab, type: 'collaborator', displayType: 'USER' }));
-      
+
       const combined = [...filteredCollaborators, ...filteredAttachments];
-      
+
       setFilteredItems(combined);
       // Show menu even if there are no items (to show "no items" message)
       setShowAttachmentMenu(true);
@@ -136,19 +136,19 @@ export default function NotesPopup({ show, anchorRef, notes, attachments, collab
     const textNode = range.startContainer;
     const textBeforeCursor = textNode.textContent?.substring(0, range.startOffset) || '';
     const atIndex = textBeforeCursor.lastIndexOf('@');
-    
+
     if (atIndex !== -1) {
       // Remove "@" and any text after it up to cursor
       const newRange = document.createRange();
       newRange.setStart(textNode, atIndex);
       newRange.setEnd(textNode, range.startOffset);
       newRange.deleteContents();
-      
+
       // Insert reference as a styled span
       const referenceSpan = document.createElement('span');
       referenceSpan.className = item.type === 'collaborator' ? 'user-reference' : 'attachment-reference';
       referenceSpan.contentEditable = 'false';
-      
+
       if (item.type === 'collaborator') {
         referenceSpan.style.cssText = 'background-color: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; margin: 0 2px; font-weight: 500; cursor: pointer;';
         referenceSpan.textContent = `@${item.name}`;
@@ -158,13 +158,13 @@ export default function NotesPopup({ show, anchorRef, notes, attachments, collab
         referenceSpan.textContent = `@${item.name}`;
         referenceSpan.dataset.attachmentId = item.id;
       }
-      
+
       newRange.insertNode(referenceSpan);
-      
+
       // Add space after the reference
       const space = document.createTextNode(' ');
       referenceSpan.parentNode.insertBefore(space, referenceSpan.nextSibling);
-      
+
       // Move cursor after the space
       const newSelection = window.getSelection();
       const newSelectionRange = document.createRange();
@@ -172,7 +172,7 @@ export default function NotesPopup({ show, anchorRef, notes, attachments, collab
       newSelectionRange.collapse(true);
       newSelection.removeAllRanges();
       newSelection.addRange(newSelectionRange);
-      
+
       setShowAttachmentMenu(false);
       handleInput();
       editorRef.current?.focus();
@@ -182,7 +182,7 @@ export default function NotesPopup({ show, anchorRef, notes, attachments, collab
   const insertHeading = (level) => {
     const selection = window.getSelection();
     if (!selection.rangeCount) return;
-    
+
     document.execCommand('formatBlock', false, `h${level}`);
     editorRef.current?.focus();
   };
@@ -201,14 +201,14 @@ export default function NotesPopup({ show, anchorRef, notes, attachments, collab
   };
 
   return createPortal(
-    <NodePopup 
+    <NodePopup
       position={{ left, top }}
       width={popupWidth}
       title="Notes"
       onClose={onClose}
     >
       {/* Formatting Toolbar */}
-      <div className="flex items-center justify-center gap-1 mb-4 pb-3 border-b border-gray-200">
+      <div className="flex items-center justify-center gap-1 mb-4 pb-3 border-b border-gray-200 flex-wrap">
         {/* Text Formatting */}
         <button
           onClick={() => applyFormat('bold')}
@@ -350,9 +350,9 @@ export default function NotesPopup({ show, anchorRef, notes, attachments, collab
           style={{
             lineHeight: '1.6'
           }}
-          onClick={(e) => e.stopPropagation()} 
-          onMouseDown={(e) => e.stopPropagation()} 
-          onFocus={(e) => e.stopPropagation()} 
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onFocus={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
           suppressContentEditableWarning
         />
@@ -379,7 +379,7 @@ export default function NotesPopup({ show, anchorRef, notes, attachments, collab
                 >
                   {item.type === 'collaborator' ? (
                     <>
-                      <div 
+                      <div
                         className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0"
                         style={{ backgroundColor: item.color }}
                       >

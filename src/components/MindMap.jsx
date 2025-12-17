@@ -1794,8 +1794,8 @@ export default function MindMap({ mapId, onBack }) {
             <button
               onClick={() => setShowMobileToolbar(!showMobileToolbar)}
               className={`lg:hidden p-2.5 rounded-xl shadow-lg border transition-all duration-200 touch-manipulation ${showMobileToolbar
-                  ? 'bg-blue-500 text-white border-blue-600'
-                  : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300'
+                ? 'bg-blue-500 text-white border-blue-600'
+                : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300'
                 }`}
               title={showMobileToolbar ? 'Hide toolbar' : 'Show toolbar'}
             >
@@ -1942,8 +1942,8 @@ export default function MindMap({ mapId, onBack }) {
                         setShowShapesPalette(false);
                       }}
                       className={`p-3 rounded-xl shadow-lg border transition-all duration-200 ${showLayoutMenu
-                          ? 'bg-indigo-500 text-white border-indigo-600'
-                          : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300'
+                        ? 'bg-indigo-500 text-white border-indigo-600'
+                        : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300'
                         }`}
                       title="Auto Layout"
                     >
@@ -1987,8 +1987,8 @@ export default function MindMap({ mapId, onBack }) {
                       setShowShapesPalette(!showShapesPalette);
                     }}
                     className={`p-3 rounded-xl shadow-lg border transition-all duration-200 ${showShapesPalette
-                        ? 'bg-indigo-500 text-white border-indigo-600'
-                        : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300'
+                      ? 'bg-indigo-500 text-white border-indigo-600'
+                      : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300'
                       }`}
                     title={showShapesPalette ? 'Hide shapes' : 'Show shapes'}
                   >
@@ -2027,8 +2027,8 @@ export default function MindMap({ mapId, onBack }) {
             <button
               onClick={toggleBookmark}
               className={`p-2.5 md:p-3 rounded-xl shadow-lg border transition-all duration-200 ${isBookmarked
-                  ? 'bg-yellow-500 text-white border-yellow-600 hover:bg-yellow-600'
-                  : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-yellow-50 hover:text-yellow-600 hover:border-yellow-300'
+                ? 'bg-yellow-500 text-white border-yellow-600 hover:bg-yellow-600'
+                : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-yellow-50 hover:text-yellow-600 hover:border-yellow-300'
                 }`}
               title={isBookmarked ? 'Remove from favorites' : 'Add to favorites'}
             >
@@ -2420,7 +2420,12 @@ export default function MindMap({ mapId, onBack }) {
                                 onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'emoji'); }}
                                 title="Choose emoji icon"
                               >
-                                {node.emoji || '😊'}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <circle cx="12" cy="12" r="10"></circle>
+                                  <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                                  <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                                  <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                                </svg>
                               </button>
                               <EmojiPicker
                                 show={isPopupOpen(node.id, 'emoji')}
@@ -2750,8 +2755,8 @@ export default function MindMap({ mapId, onBack }) {
               <button
                 onClick={() => selectedNodes.length > 0 && nodeOps.deleteNodes(selectedNodes)}
                 className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${selectedNodes.length > 0
-                    ? 'text-gray-700 hover:bg-red-50 hover:text-red-600'
-                    : 'text-gray-300 cursor-not-allowed'
+                  ? 'text-gray-700 hover:bg-red-50 hover:text-red-600'
+                  : 'text-gray-300 cursor-not-allowed'
                   }`}
                 title="Delete Selected"
                 disabled={selectedNodes.length === 0}
@@ -2769,8 +2774,8 @@ export default function MindMap({ mapId, onBack }) {
               <button
                 onClick={undo}
                 className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${historyIndex <= 0
-                    ? 'text-gray-300 cursor-not-allowed'
-                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
                   }`}
                 title="Undo"
                 disabled={historyIndex <= 0}
@@ -2785,8 +2790,8 @@ export default function MindMap({ mapId, onBack }) {
               <button
                 onClick={redo}
                 className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${historyIndex >= history.length - 1
-                    ? 'text-gray-300 cursor-not-allowed'
-                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
                   }`}
                 title="Redo"
                 disabled={historyIndex >= history.length - 1}
@@ -3155,8 +3160,8 @@ export default function MindMap({ mapId, onBack }) {
               }}
               disabled={selectedNodes.length === 0}
               className={`p-2 rounded-lg transition-all flex flex-col items-center gap-0.5 ${selectedNodes.length > 0
-                  ? 'hover:bg-purple-50 text-purple-600'
-                  : 'text-gray-300 cursor-not-allowed'
+                ? 'hover:bg-purple-50 text-purple-600'
+                : 'text-gray-300 cursor-not-allowed'
                 }`}
               title="AI Task Breakdown"
             >
