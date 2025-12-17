@@ -1,13 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import NodePopup from '../mindmap/NodePopup';
 
 export default function NotesPopup({ show, anchorRef, notes, onChange, onClose }) {
-  const [isBold, setIsBold] = useState(false);
-  const [isItalic, setIsItalic] = useState(false);
-  const [isStrikethrough, setIsStrikethrough] = useState(false);
-  const textareaRef = useRef(null);
+  const editorRef = useRef(null);
+
+  useEffect(() => {
+    if (show && editorRef.current && notes) {
+      editorRef.current.innerHTML = notes;
+    }
+  }, [show]);
 
   if (!show) return null;
 
@@ -18,41 +21,36 @@ export default function NotesPopup({ show, anchorRef, notes, onChange, onClose }
   const left = Math.max(8, Math.min(rect.left + (rect.width / 2) - (popupWidth / 2), window.innerWidth - popupWidth - 8));
   const top = Math.max(8, rect.bottom + 20);
 
-  const applyFormat = (prefix, suffix = prefix) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = (notes || '').substring(start, end);
-    const beforeText = (notes || '').substring(0, start);
-    const afterText = (notes || '').substring(end);
-
-    const newText = beforeText + prefix + selectedText + suffix + afterText;
-    onChange(newText);
-
-    // Restore cursor position after state update
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + prefix.length, end + prefix.length);
-    }, 0);
+  const applyFormat = (command, value = null) => {
+    document.execCommand(command, false, value);
+    editorRef.current?.focus();
   };
 
-  const insertText = (text) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
+  const handleInput = () => {
+    if (editorRef.current) {
+      onChange(editorRef.current.innerHTML);
+    }
+  };
 
-    const start = textarea.selectionStart;
-    const beforeText = (notes || '').substring(0, start);
-    const afterText = (notes || '').substring(start);
+  const insertHeading = (level) => {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+    
+    document.execCommand('formatBlock', false, `h${level}`);
+    editorRef.current?.focus();
+  };
 
-    const newText = beforeText + text + afterText;
-    onChange(newText);
+  const insertList = (ordered = false) => {
+    document.execCommand(ordered ? 'insertOrderedList' : 'insertUnorderedList', false, null);
+    editorRef.current?.focus();
+  };
 
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + text.length, start + text.length);
-    }, 0);
+  const insertLink = () => {
+    const url = prompt('Enter URL:');
+    if (url) {
+      document.execCommand('createLink', false, url);
+      editorRef.current?.focus();
+    }
   };
 
   return createPortal(
@@ -66,23 +64,26 @@ export default function NotesPopup({ show, anchorRef, notes, onChange, onClose }
       <div className="flex items-center gap-1 mb-3 pb-3 border-b border-gray-200 flex-wrap">
         {/* Text Formatting */}
         <button
-          onClick={() => { applyFormat('**'); setIsBold(!isBold); }}
-          className={`p-1.5 rounded hover:bg-gray-100 transition-colors ${isBold ? 'bg-gray-100' : ''}`}
+          onClick={() => applyFormat('bold')}
+          className="p-1.5 rounded hover:bg-gray-100 transition-colors"
           title="Bold"
+          type="button"
         >
           <span className="font-bold text-xs text-black">B</span>
         </button>
         <button
-          onClick={() => { applyFormat('*'); setIsItalic(!isItalic); }}
-          className={`p-1.5 rounded hover:bg-gray-100 transition-colors ${isItalic ? 'bg-gray-100' : ''}`}
+          onClick={() => applyFormat('italic')}
+          className="p-1.5 rounded hover:bg-gray-100 transition-colors"
           title="Italic"
+          type="button"
         >
           <span className="italic text-xs text-black">i</span>
         </button>
         <button
-          onClick={() => { applyFormat('~~'); setIsStrikethrough(!isStrikethrough); }}
-          className={`p-1.5 rounded hover:bg-gray-100 transition-colors ${isStrikethrough ? 'bg-gray-100' : ''}`}
+          onClick={() => applyFormat('strikeThrough')}
+          className="p-1.5 rounded hover:bg-gray-100 transition-colors"
           title="Strikethrough"
+          type="button"
         >
           <span className="line-through text-xs text-black">S</span>
         </button>
@@ -91,16 +92,18 @@ export default function NotesPopup({ show, anchorRef, notes, onChange, onClose }
 
         {/* Headings */}
         <button
-          onClick={() => insertText('# ')}
+          onClick={() => insertHeading(1)}
           className="px-1.5 py-1 rounded hover:bg-gray-100 transition-colors text-xs font-semibold text-black"
           title="Heading 1"
+          type="button"
         >
           H1
         </button>
         <button
-          onClick={() => insertText('## ')}
+          onClick={() => insertHeading(2)}
           className="px-1.5 py-1 rounded hover:bg-gray-100 transition-colors text-xs font-semibold text-black"
           title="Heading 2"
+          type="button"
         >
           H2
         </button>
@@ -109,9 +112,10 @@ export default function NotesPopup({ show, anchorRef, notes, onChange, onClose }
 
         {/* Lists */}
         <button
-          onClick={() => insertText('- ')}
+          onClick={() => insertList(false)}
           className="p-1.5 rounded hover:bg-gray-100 transition-colors text-black"
           title="Bullet List"
+          type="button"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-black">
             <line x1="8" y1="6" x2="21" y2="6"></line>
@@ -123,9 +127,10 @@ export default function NotesPopup({ show, anchorRef, notes, onChange, onClose }
           </svg>
         </button>
         <button
-          onClick={() => insertText('1. ')}
+          onClick={() => insertList(true)}
           className="p-1.5 rounded hover:bg-gray-100 transition-colors text-black"
           title="Numbered List"
+          type="button"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-black">
             <line x1="10" y1="6" x2="21" y2="6"></line>
@@ -141,9 +146,10 @@ export default function NotesPopup({ show, anchorRef, notes, onChange, onClose }
 
         {/* Link */}
         <button
-          onClick={() => applyFormat('[', '](url)')}
+          onClick={insertLink}
           className="p-1.5 rounded hover:bg-gray-100 transition-colors text-black"
           title="Insert Link"
+          type="button"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-black">
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
@@ -153,9 +159,10 @@ export default function NotesPopup({ show, anchorRef, notes, onChange, onClose }
 
         {/* Code */}
         <button
-          onClick={() => applyFormat('`')}
+          onClick={() => applyFormat('formatBlock', '<pre>')}
           className="p-1.5 rounded hover:bg-gray-100 transition-colors text-black"
-          title="Inline Code"
+          title="Code Block"
+          type="button"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-black">
             <polyline points="16 18 22 12 16 6"></polyline>
@@ -164,31 +171,21 @@ export default function NotesPopup({ show, anchorRef, notes, onChange, onClose }
         </button>
       </div>
 
-      {/* Textarea */}
-      <textarea 
-        ref={textareaRef}
-        className="w-full p-3 text-sm border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[160px] font-mono"  
-        placeholder="Add your notes here..." 
-        value={notes || ''}
-        onChange={(e) => onChange(e.target.value)}
+      {/* Rich Text Editor */}
+      <div
+        ref={editorRef}
+        contentEditable
+        onInput={handleInput}
+        className="w-full p-3 text-sm border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[160px]"
+        style={{
+          lineHeight: '1.6'
+        }}
         onClick={(e) => e.stopPropagation()} 
         onMouseDown={(e) => e.stopPropagation()} 
         onFocus={(e) => e.stopPropagation()} 
         onKeyDown={(e) => e.stopPropagation()}
+        suppressContentEditableWarning
       />
-
-      {/* Footer */}
-      <div className="mt-3 flex justify-end">
-        <button 
-          className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors" 
-          onClick={(e) => { 
-            e.stopPropagation(); 
-            onClose();
-          }}
-        >
-          Done
-        </button>
-      </div>
     </NodePopup>,
     document.body
   );
