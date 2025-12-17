@@ -13,6 +13,20 @@ export default function PropertiesPanel({ show, anchorRef, nodeId, priority, sta
   const left = Math.max(8, Math.min(rect.left + (rect.width / 2) - (popupWidth / 2), window.innerWidth - popupWidth - 8));
   const top = Math.max(8, rect.bottom + 20);
 
+  const handleStartDateChange = (value) => {
+    console.log('Start Date changing to:', value);
+    if (onStartDateChange) {
+      onStartDateChange(value);
+    }
+  };
+
+  const handleDueDateChange = (value) => {
+    console.log('Due Date changing to:', value);
+    if (onDueDateChange) {
+      onDueDateChange(value);
+    }
+  };
+
   return createPortal(
     <NodePopup
       position={{ left, top }}
@@ -65,22 +79,22 @@ export default function PropertiesPanel({ show, anchorRef, nodeId, priority, sta
               type="datetime-local"
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer"
               value={startDate || ''}
-              onChange={(e) => onStartDateChange && onStartDateChange(e.target.value)}
-              onBlur={(e) => onStartDateChange && onStartDateChange(e.target.value)}
+              onChange={(e) => handleStartDateChange(e.target.value)}
+              onInput={(e) => handleStartDateChange(e.target.value)}
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
               onFocus={(e) => e.stopPropagation()}
             />
           </div>
           <div>
-            <label htmlFor={`dueDate-${nodeId}`} className="text-sm font-medium text-gray-700 block mb-1.5">Due Date</label>
+            <label htmlFor={`dueDate-${nodeId}`} className="text-sm font-medium text-gray-700 block mb-1.5">End Date</label>
             <input
               id={`dueDate-${nodeId}`}
               type="datetime-local"
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer"
               value={dueDate || ''}
-              onChange={(e) => onDueDateChange && onDueDateChange(e.target.value)}
-              onBlur={(e) => onDueDateChange && onDueDateChange(e.target.value)}
+              onChange={(e) => handleDueDateChange(e.target.value)}
+              onInput={(e) => handleDueDateChange(e.target.value)}
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
               onFocus={(e) => e.stopPropagation()}
