@@ -15,7 +15,7 @@ export function useNodeOperations(
   isDarkMode: boolean,
   findStackedPosition: (baseX?: number | null, baseY?: number | null) => Position,
   findStackedChildPosition: (parentId: string, preferredX: number, preferredY: number) => Position,
-  pushCollidingNodes?: (nodeId: string, x: number, y: number, allNodes: Node[]) => Node[]
+  pushCollidingNodes?: (nodeId: string, x: number, y: number, allNodes: Node[], excludeIds?: string[]) => Node[]
 ) {
   const NODE_WIDTH = 300; // Updated to match actual node width
   const NODE_HEIGHT = 56;
@@ -56,13 +56,28 @@ export function useNodeOperations(
     let newNodes = nodes.concat([child]);
     const newConnections = connections.concat([{ id: `conn-${Date.now()}`, from: parentId, to: id }]);
 
-    // Push any colliding nodes away from the new child
+    // Rebalance all children of this parent first
+    let rebalancedNodes = rebalanceChildren(newNodes, newConnections, parentId);
+    
+    // After rebalancing, push any colliding nodes away
+    // This handles non-sibling nodes that might be in the way
     if (pushCollidingNodes) {
-      newNodes = pushCollidingNodes(id, x, y, newNodes);
+      // Get all children IDs (siblings) - these should NOT be pushed, only external nodes
+      const siblingIds = newConnections
+        .filter(conn => conn.from === parentId)
+        .map(conn => conn.to);
+      
+      // Also include the parent as protected
+      const protectedIds = [parentId, ...siblingIds];
+      
+      // Push collisions for each child (only affects non-family nodes)
+      for (const childId of siblingIds) {
+        const childNode = rebalancedNodes.find(n => n.id === childId);
+        if (childNode) {
+          rebalancedNodes = pushCollidingNodes(childId, childNode.x, childNode.y, rebalancedNodes, protectedIds);
+        }
+      }
     }
-
-    // Rebalance all children of this parent
-    const rebalancedNodes = rebalanceChildren(newNodes, newConnections, parentId);
     
     setNodes(rebalancedNodes);
     setConnections(newConnections);

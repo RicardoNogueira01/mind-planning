@@ -15,7 +15,7 @@ export function useDragging(
   getNodeGroup?: (nodeId: string) => any,
   constrainPositionToGroup?: (x: number, y: number, boundingBox: any) => { x: number; y: number },
   zoom?: number,
-  pushCollidingNodes?: (nodeId: string, x: number, y: number, allNodes: Node[]) => Node[]
+  pushCollidingNodes?: (nodeId: string, x: number, y: number, allNodes: Node[], excludeIds?: string[]) => Node[]
 ) {
   // Dragging state
   const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
