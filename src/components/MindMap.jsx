@@ -1735,7 +1735,7 @@ export default function MindMap({ mapId, onBack }) {
   return (
     <div
       className="flex w-full h-screen overflow-hidden transition-colors duration-300"
-      style={{ backgroundColor: activeTheme.canvas.background }}
+      style={{ background: activeTheme.canvas.background }}
     >
       <div
         className="flex-1 relative overflow-hidden touch-manipulation"
@@ -3245,15 +3245,6 @@ export default function MindMap({ mapId, onBack }) {
             </button>
 
             <button
-              onClick={() => setShowEnhancedPanel('dependencies')}
-              className="p-2 rounded-lg hover:bg-amber-50 text-amber-600 transition-all flex flex-col items-center gap-0.5"
-              title="Smart Dependencies"
-            >
-              <Link2 className="w-4 h-4" />
-              <span className="text-[10px] font-medium hidden sm:block">Dependencies</span>
-            </button>
-
-            <button
               onClick={() => setShowEnhancedPanel('workload')}
               className="p-2 rounded-lg hover:bg-indigo-50 text-indigo-600 transition-all flex flex-col items-center gap-0.5"
               title="Team Workload"
@@ -3271,58 +3262,6 @@ export default function MindMap({ mapId, onBack }) {
             >
               <Clock className="w-4 h-4" />
               <span className="text-[10px] font-medium hidden sm:block">Snapshots</span>
-            </button>
-
-            <button
-              onClick={() => {
-                if (selectedNodes.length > 0) {
-                  setFocusTaskNode(nodes.find(n => n.id === selectedNodes[0]));
-                }
-                setShowEnhancedPanel('focus');
-              }}
-              className="p-2 rounded-lg hover:bg-green-50 text-green-600 transition-all flex flex-col items-center gap-0.5"
-              title="Focus Mode"
-            >
-              <Target className="w-4 h-4" />
-              <span className="text-[10px] font-medium hidden sm:block">Focus</span>
-            </button>
-
-            <button
-              onClick={() => setShowEnhancedPanel('risk')}
-              className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-all flex flex-col items-center gap-0.5"
-              title="Risk Assessment"
-            >
-              <AlertTriangle className="w-4 h-4" />
-              <span className="text-[10px] font-medium hidden sm:block">Risks</span>
-            </button>
-
-            <div className="w-px h-6 bg-gray-200 mx-0.5" />
-
-            <button
-              onClick={() => setShowEnhancedPanel('budget')}
-              className="p-2 rounded-lg hover:bg-emerald-50 text-emerald-600 transition-all flex flex-col items-center gap-0.5"
-              title="Budget Tracker"
-            >
-              <DollarSign className="w-4 h-4" />
-              <span className="text-[10px] font-medium hidden sm:block">Budget</span>
-            </button>
-
-            <button
-              onClick={() => setShowEnhancedPanel('resources')}
-              className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-all flex flex-col items-center gap-0.5"
-              title="Resource Matrix"
-            >
-              <Grid3X3 className="w-4 h-4" />
-              <span className="text-[10px] font-medium hidden sm:block">Resources</span>
-            </button>
-
-            <button
-              onClick={() => setShowEnhancedPanel('expenses')}
-              className="p-2 rounded-lg hover:bg-pink-50 text-pink-600 transition-all flex flex-col items-center gap-0.5"
-              title="Team Expenses"
-            >
-              <Receipt className="w-4 h-4" />
-              <span className="text-[10px] font-medium hidden sm:block">Expenses</span>
             </button>
 
             <div className="w-px h-6 bg-gray-200 mx-0.5" />
@@ -3362,15 +3301,6 @@ export default function MindMap({ mapId, onBack }) {
             >
               <Scale className="w-4 h-4" />
               <span className="text-[10px] font-medium hidden sm:block">Decisions</span>
-            </button>
-
-            <button
-              onClick={() => setShowEnhancedPanel('handoff')}
-              className="p-2 rounded-lg hover:bg-rose-50 text-rose-600 transition-all flex flex-col items-center gap-0.5"
-              title="Task Handoff"
-            >
-              <ArrowRightLeft className="w-4 h-4" />
-              <span className="text-[10px] font-medium hidden sm:block">Handoff</span>
             </button>
 
             <button

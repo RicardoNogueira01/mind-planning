@@ -6,12 +6,26 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
   const [editText, setEditText] = React.useState(node.text || '');
   const [isHovering, setIsHovering] = React.useState(false);
 
+  // Convert shape name to border-radius
+  const getShapeBorderRadius = (shape, fallbackRadius) => {
+    switch (shape) {
+      case 'pill': return '999px';
+      case 'square': return '4px';
+      case 'notch': return '0px';
+      case 'wave': return '24px 4px 24px 4px';
+      case 'rounded':
+      default:
+        return fallbackRadius;
+    }
+  };
+
   // Get theme-based styling, with fallbacks
+  const nodeShape = theme?.nodes?.shape || 'rounded';
   const themeStyles = theme ? {
     fontFamily: theme.typography?.fontFamily || "'Inter', sans-serif",
     fontSize: theme.typography?.fontSize || '14px',
     fontWeight: theme.typography?.fontWeight || '500',
-    borderRadius: theme.nodes?.borderRadius || '8px',
+    borderRadius: getShapeBorderRadius(nodeShape, theme.nodes?.borderRadius || '8px'),
     borderColor: theme.nodes?.borderColor || '#E5E7EB',
     borderWidth: theme.nodes?.borderWidth || '1px',
     shadow: theme.nodes?.shadow || '0 1px 3px rgba(0,0,0,0.1)',

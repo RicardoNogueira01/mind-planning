@@ -37,7 +37,7 @@ export default function ThemePicker({
         return (
             <div
                 className="w-full h-full rounded-lg overflow-hidden relative"
-                style={{ backgroundColor: canvas.background }}
+                style={{ background: canvas.background }}
             >
                 {/* Color swatches in a pleasing arrangement */}
                 <div className="absolute inset-0 flex items-center justify-center p-2">

@@ -20,17 +20,17 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
    */
   const isPositionAvailable = useCallback((x: number, y: number, excludeId: string | null = null, excludeIds: string[] = []): boolean => {
     const allExcluded = excludeId ? [excludeId, ...excludeIds] : excludeIds;
-    
+
     return !nodes.some(n => {
       if (allExcluded.includes(n.id)) return false;
-      
+
       // Rectangular collision check (more accurate for nodes)
       const horizontalOverlap = Math.abs(n.x - x) < MIN_HORIZONTAL_SPACING;
       const verticalOverlap = Math.abs(n.y - y) < MIN_VERTICAL_SPACING;
-      
+
       // Also check distance for diagonal cases
       const distance = Math.hypot(n.x - x, n.y - y);
-      
+
       return (horizontalOverlap && verticalOverlap) || distance < COLLISION_DISTANCE;
     });
   }, [nodes]);
@@ -39,18 +39,18 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
    * Check if position is valid against a specific set of nodes (for batch positioning)
    */
   const isPositionAvailableAgainst = useCallback((
-    x: number, 
-    y: number, 
+    x: number,
+    y: number,
     existingNodes: Array<{ x: number; y: number; id?: string }>,
     excludeId: string | null = null
   ): boolean => {
     return !existingNodes.some(n => {
       if (excludeId && n.id === excludeId) return false;
-      
+
       const horizontalOverlap = Math.abs(n.x - x) < MIN_HORIZONTAL_SPACING;
       const verticalOverlap = Math.abs(n.y - y) < MIN_VERTICAL_SPACING;
       const distance = Math.hypot(n.x - x, n.y - y);
-      
+
       return (horizontalOverlap && verticalOverlap) || distance < COLLISION_DISTANCE;
     });
   }, []);
@@ -62,19 +62,19 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
   const findAvailablePosition = useCallback((centerX: number, centerY: number, radius: number = 300): Position => {
     const angles = [0, 45, 90, 135, 180, 225, 270, 315]; // 8 directions
     const radii = [radius, radius * 1.5, radius * 2, radius * 2.5];
-    
+
     for (const r of radii) {
       for (const angle of angles) {
         const rad = (angle * Math.PI) / 180;
         const x = centerX + Math.cos(rad) * r;
         const y = centerY + Math.sin(rad) * r;
-        
+
         if (isPositionAvailable(x, y)) {
           return { x, y };
         }
       }
     }
-    
+
     // Fallback: return a position anyway
     return { x: centerX + radius, y: centerY };
   }, [isPositionAvailable]);
@@ -84,15 +84,15 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
    */
   const findStackedPosition = useCallback((baseX: number | null = null, baseY: number | null = null): Position => {
     if (nodes.length === 0) {
-      return { 
-        x: baseX ?? Math.round(window.innerWidth / 2), 
-        y: baseY ?? Math.round(window.innerHeight / 2) 
+      return {
+        x: baseX ?? Math.round(window.innerWidth / 2),
+        y: baseY ?? Math.round(window.innerHeight / 2)
       };
     }
 
     // Find the lowest Y position among all nodes
     const lowestY = Math.max(...nodes.map(n => n.y));
-    
+
     // Stack the new node below the lowest one
     return {
       x: baseX ?? Math.round(window.innerWidth / 2),
@@ -135,11 +135,11 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
       const directionScores = directions.map(dir => {
         const obstacles = nodes.filter(n => {
           if (n.id === parentId) return false;
-          
+
           const dx = n.x - dir.x;
           const dy = n.y - dir.y;
           const distance = Math.hypot(dx, dy);
-          
+
           return distance < DETECTION_RADIUS;
         });
 
@@ -151,7 +151,7 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
       });
 
       // Choose direction with fewest obstacles (highest score)
-      const bestDirection = directionScores.reduce((best, current) => 
+      const bestDirection = directionScores.reduce((best, current) =>
         current.score > best.score ? current : best,
         directionScores[0]
       );
@@ -166,21 +166,26 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
 
     // Determine the primary direction of existing children
     const isHorizontal = Math.abs(dx) > Math.abs(dy);
-    
+
     if (isHorizontal) {
       // Children are positioned horizontally (left or right)
       const isRight = dx > 0;
-      const targetX = isRight ? parent.x + OFFSET_DISTANCE : parent.x - OFFSET_DISTANCE;
-      
+
+      // Use the X position of existing children (average) instead of fixed offset from parent
+      // This keeps new children aligned with siblings
+      const childrenXPositions = childNodes.map(c => c.x);
+      const avgChildX = childrenXPositions.reduce((a, b) => a + b, 0) / childrenXPositions.length;
+      const targetX = avgChildX; // Align with existing siblings
+
       // Stack vertically: find the highest or lowest child and add below/above
       const childrenYPositions = childNodes.map(c => c.y);
       const maxY = Math.max(...childrenYPositions);
       const minY = Math.min(...childrenYPositions);
-      
+
       // Determine if children are stacking upward or downward
       const lastChildY = childNodes[childNodes.length - 1].y;
       const stackingDown = lastChildY >= parent.y;
-      
+
       if (stackingDown) {
         // Add below the lowest child
         return {
@@ -197,17 +202,21 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
     } else {
       // Children are positioned vertically (up or down)
       const isDown = dy > 0;
-      const targetY = isDown ? parent.y + OFFSET_DISTANCE : parent.y - OFFSET_DISTANCE;
-      
+
+      // Use the Y position of existing children (average) instead of fixed offset from parent
+      const childrenYPositions = childNodes.map(c => c.y);
+      const avgChildY = childrenYPositions.reduce((a, b) => a + b, 0) / childrenYPositions.length;
+      const targetY = avgChildY; // Align with existing siblings
+
       // Stack horizontally: find rightmost or leftmost child and add next to it
       const childrenXPositions = childNodes.map(c => c.x);
       const maxX = Math.max(...childrenXPositions);
       const minX = Math.min(...childrenXPositions);
-      
+
       // Determine stacking direction
       const lastChildX = childNodes[childNodes.length - 1].x;
       const stackingRight = lastChildX >= parent.x;
-      
+
       if (stackingRight) {
         return {
           x: maxX + NODE_WIDTH + MARGIN,
@@ -227,8 +236,8 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
    * More aggressive than findAvailablePosition - checks many more positions
    */
   const findNonCollidingPosition = useCallback((
-    preferredX: number, 
-    preferredY: number, 
+    preferredX: number,
+    preferredY: number,
     excludeId: string | null = null,
     additionalNodes: Array<{ x: number; y: number; id?: string }> = []
   ): Position => {
@@ -266,9 +275,9 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
     }
 
     // Fallback: return position far to the right
-    return { 
-      x: preferredX + MIN_HORIZONTAL_SPACING * 3, 
-      y: preferredY 
+    return {
+      x: preferredX + MIN_HORIZONTAL_SPACING * 3,
+      y: preferredY
     };
   }, [nodes, isPositionAvailableAgainst]);
 
@@ -348,9 +357,9 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
 
       // Find non-colliding position considering both existing nodes and already placed positions
       const position = findNonCollidingPosition(
-        preferredX, 
-        preferredY, 
-        null, 
+        preferredX,
+        preferredY,
+        null,
         placedPositions
       );
 
@@ -367,14 +376,14 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
    */
   const resolveAllCollisions = useCallback((nodeList: Node[]): Node[] => {
     const resolvedNodes: Node[] = [];
-    
+
     for (const node of nodeList) {
       // Check if this node collides with any already-resolved nodes
       const hasCollision = resolvedNodes.some(resolved => {
         const horizontalOverlap = Math.abs(resolved.x - node.x) < MIN_HORIZONTAL_SPACING;
         const verticalOverlap = Math.abs(resolved.y - node.y) < MIN_VERTICAL_SPACING;
         const distance = Math.hypot(resolved.x - node.x, resolved.y - node.y);
-        
+
         return (horizontalOverlap && verticalOverlap) || distance < COLLISION_DISTANCE;
       });
 
@@ -394,8 +403,8 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
    * Check and fix position after drag - ensures node doesn't overlap with others
    */
   const snapToNonCollidingPosition = useCallback((
-    nodeId: string, 
-    x: number, 
+    nodeId: string,
+    x: number,
     y: number
   ): Position => {
     if (isPositionAvailable(x, y, nodeId)) {
@@ -422,43 +431,43 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
     excludeIds: string[] = []
   ): Node[] => {
     const PUSH_ITERATIONS = 5; // Max iterations to resolve all collisions
-    
+
     // IDs that should not be pushed (source + excludes)
     const protectedIds = new Set([sourceNodeId, ...excludeIds]);
-    
-    let updatedNodes = allNodes.map(n => 
+
+    let updatedNodes = allNodes.map(n =>
       n.id === sourceNodeId ? { ...n, x: sourceX, y: sourceY } : { ...n }
     );
-    
+
     // Iteratively push nodes until no collisions or max iterations reached
     for (let iteration = 0; iteration < PUSH_ITERATIONS; iteration++) {
       let hasCollision = false;
       const newPositions: Node[] = [];
-      
+
       for (const node of updatedNodes) {
         if (protectedIds.has(node.id)) {
           // Protected nodes stay in place
           newPositions.push(node);
           continue;
         }
-        
+
         // Check collision with source node
         const dx = node.x - sourceX;
         const dy = node.y - sourceY;
         const horizontalOverlap = Math.abs(dx) < MIN_HORIZONTAL_SPACING;
         const verticalOverlap = Math.abs(dy) < MIN_VERTICAL_SPACING;
-        
+
         if (horizontalOverlap && verticalOverlap) {
           hasCollision = true;
-          
+
           // Calculate minimum push to clear the collision
           const overlapX = MIN_HORIZONTAL_SPACING - Math.abs(dx);
           const overlapY = MIN_VERTICAL_SPACING - Math.abs(dy);
-          
+
           // Push in the direction that requires less movement
           let pushX = 0;
           let pushY = 0;
-          
+
           if (overlapX < overlapY) {
             // Push horizontally
             pushX = (overlapX + 20) * Math.sign(dx || 1);
@@ -466,7 +475,7 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
             // Push vertically
             pushY = (overlapY + 20) * Math.sign(dy || 1);
           }
-          
+
           newPositions.push({
             ...node,
             x: node.x + pushX,
@@ -476,38 +485,38 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
           newPositions.push(node);
         }
       }
-      
+
       updatedNodes = newPositions;
-      
+
       // If no collisions found, we're done
       if (!hasCollision) break;
     }
-    
+
     // Second pass: check for collisions between pushed nodes and resolve them
     for (let iteration = 0; iteration < PUSH_ITERATIONS; iteration++) {
       let hasCollision = false;
-      
+
       for (let i = 0; i < updatedNodes.length; i++) {
         if (protectedIds.has(updatedNodes[i].id)) continue;
-        
+
         for (let j = i + 1; j < updatedNodes.length; j++) {
           if (protectedIds.has(updatedNodes[j].id)) continue;
-          
+
           const nodeA = updatedNodes[i];
           const nodeB = updatedNodes[j];
-          
+
           const dx = nodeB.x - nodeA.x;
           const dy = nodeB.y - nodeA.y;
           const horizontalOverlap = Math.abs(dx) < MIN_HORIZONTAL_SPACING;
           const verticalOverlap = Math.abs(dy) < MIN_VERTICAL_SPACING;
-          
+
           if (horizontalOverlap && verticalOverlap) {
             hasCollision = true;
-            
+
             // Push nodeB away from nodeA
             const overlapX = MIN_HORIZONTAL_SPACING - Math.abs(dx);
             const overlapY = MIN_VERTICAL_SPACING - Math.abs(dy);
-            
+
             if (overlapX < overlapY) {
               updatedNodes[j] = {
                 ...nodeB,
@@ -522,10 +531,10 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
           }
         }
       }
-      
+
       if (!hasCollision) break;
     }
-    
+
     return updatedNodes;
   }, []);
 

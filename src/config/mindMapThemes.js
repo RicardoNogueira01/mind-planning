@@ -1,12 +1,12 @@
 /**
  * Mind Map Theme Configurations
- * Each theme defines colors, fonts, and styling for the entire mind map experience
- * Themes range from Professional to Fun/Kid-friendly
+ * Each theme defines colors, fonts, styling, node shapes, and canvas backgrounds
+ * Themes range from Professional to Playful with unique visual identities
  */
 
 export const mindMapThemes = {
     // ============================================
-    // PROFESSIONAL THEMES
+    // PROFESSIONAL THEMES (Clean & Business-like)
     // ============================================
 
     meister: {
@@ -15,21 +15,23 @@ export const mindMapThemes = {
         isDark: false,
         vibe: 'professional',
         canvas: {
-            background: '#FAFAFA',
+            background: 'linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%)',
             gridColor: '#E5E7EB',
+            pattern: 'dots', // dots, grid, none
         },
         nodes: {
             palette: ['#F43F5E', '#F97316', '#FACC15', '#22C55E', '#06B6D4', '#8B5CF6', '#EC4899'],
             defaultBg: '#FFFFFF',
             defaultText: '#1F2937',
             borderColor: '#E5E7EB',
-            borderRadius: '8px',
+            borderRadius: '10px',
             borderWidth: '1px',
             selectedRing: '#3B82F6',
-            shadow: '0 1px 3px rgba(0,0,0,0.1)',
+            shadow: '0 2px 8px rgba(0,0,0,0.08)',
+            shape: 'rounded', // rounded, pill, square, notch, wave
         },
         typography: {
-            fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
+            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
             fontSize: '14px',
             fontWeight: '500',
             headingSize: '16px',
@@ -42,7 +44,6 @@ export const mindMapThemes = {
         },
         decorations: {
             emoji: null,
-            nodeShape: 'rounded',
         },
     },
 
@@ -54,19 +55,21 @@ export const mindMapThemes = {
         canvas: {
             background: '#F8FAFC',
             gridColor: '#E2E8F0',
+            pattern: 'grid',
         },
         nodes: {
-            palette: ['#1E40AF', '#0369A1', '#0F766E', '#4338CA', '#6D28D9', '#BE185D', '#047857'],
+            palette: ['#1E40AF', '#0369A1', '#0F766E', '#4338CA', '#7C3AED', '#BE185D', '#047857'],
             defaultBg: '#FFFFFF',
             defaultText: '#0F172A',
             borderColor: '#CBD5E1',
-            borderRadius: '6px',
+            borderRadius: '4px',
             borderWidth: '2px',
             selectedRing: '#1E40AF',
-            shadow: '0 1px 2px rgba(0,0,0,0.05)',
+            shadow: '0 1px 3px rgba(0,0,0,0.06)',
+            shape: 'square',
         },
         typography: {
-            fontFamily: "'IBM Plex Sans', 'Segoe UI', sans-serif",
+            fontFamily: "'IBM Plex Sans', 'Segoe UI', Roboto, sans-serif",
             fontSize: '13px',
             fontWeight: '600',
             headingSize: '15px',
@@ -79,7 +82,82 @@ export const mindMapThemes = {
         },
         decorations: {
             emoji: null,
-            nodeShape: 'square',
+        },
+    },
+
+    executive: {
+        id: 'executive',
+        name: 'Executive',
+        isDark: false,
+        vibe: 'professional',
+        canvas: {
+            background: 'linear-gradient(180deg, #FFFBF5 0%, #FEF7EC 100%)',
+            gridColor: '#E8E0D5',
+            pattern: 'none',
+        },
+        nodes: {
+            palette: ['#78350F', '#92400E', '#854D0E', '#3F6212', '#065F46', '#1E3A5F', '#5B21B6'],
+            defaultBg: '#FFFDF8',
+            defaultText: '#44403C',
+            borderColor: '#D6CFC4',
+            borderRadius: '2px',
+            borderWidth: '1px',
+            selectedRing: '#78350F',
+            shadow: '0 1px 2px rgba(0,0,0,0.04)',
+            shape: 'square',
+        },
+        typography: {
+            fontFamily: "'Literata', 'Georgia', 'Times New Roman', serif",
+            fontSize: '14px',
+            fontWeight: '500',
+            headingSize: '16px',
+            lineHeight: '1.6',
+        },
+        connections: {
+            color: '#A8A29E',
+            colorMode: 'default',
+            strokeWidth: 1.5,
+        },
+        decorations: {
+            emoji: null,
+        },
+    },
+
+    minimal: {
+        id: 'minimal',
+        name: 'Minimal',
+        isDark: false,
+        vibe: 'professional',
+        canvas: {
+            background: '#FFFFFF',
+            gridColor: '#F3F4F6',
+            pattern: 'none',
+        },
+        nodes: {
+            palette: ['#374151', '#6B7280', '#9CA3AF', '#4B5563', '#1F2937', '#111827', '#374151'],
+            defaultBg: '#FFFFFF',
+            defaultText: '#111827',
+            borderColor: '#E5E7EB',
+            borderRadius: '8px',
+            borderWidth: '1px',
+            selectedRing: '#111827',
+            shadow: 'none',
+            shape: 'rounded',
+        },
+        typography: {
+            fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
+            fontSize: '14px',
+            fontWeight: '500',
+            headingSize: '16px',
+            lineHeight: '1.5',
+        },
+        connections: {
+            color: '#D1D5DB',
+            colorMode: 'default',
+            strokeWidth: 1.5,
+        },
+        decorations: {
+            emoji: null,
         },
     },
 
@@ -89,21 +167,23 @@ export const mindMapThemes = {
         isDark: false,
         vibe: 'professional',
         canvas: {
-            background: '#F1F5F9',
+            background: 'linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%)',
             gridColor: '#CBD5E1',
+            pattern: 'dots',
         },
         nodes: {
             palette: ['#475569', '#64748B', '#94A3B8', '#334155', '#1E293B', '#0F172A', '#475569'],
             defaultBg: '#FFFFFF',
             defaultText: '#1E293B',
             borderColor: '#94A3B8',
-            borderRadius: '4px',
+            borderRadius: '6px',
             borderWidth: '1px',
             selectedRing: '#475569',
-            shadow: '0 1px 2px rgba(0,0,0,0.06)',
+            shadow: '0 2px 4px rgba(0,0,0,0.06)',
+            shape: 'rounded',
         },
         typography: {
-            fontFamily: "'Inter', 'Roboto', sans-serif",
+            fontFamily: "'Space Grotesk', 'Inter', sans-serif",
             fontSize: '14px',
             fontWeight: '500',
             headingSize: '16px',
@@ -112,16 +192,15 @@ export const mindMapThemes = {
         connections: {
             color: '#94A3B8',
             colorMode: 'default',
-            strokeWidth: 1.5,
+            strokeWidth: 2,
         },
         decorations: {
             emoji: null,
-            nodeShape: 'square',
         },
     },
 
     // ============================================
-    // CREATIVE THEMES
+    // CREATIVE THEMES (Colorful but still professional)
     // ============================================
 
     prism: {
@@ -130,34 +209,35 @@ export const mindMapThemes = {
         isDark: false,
         vibe: 'creative',
         canvas: {
-            background: '#FFFFFF',
-            gridColor: '#F3F4F6',
+            background: 'linear-gradient(135deg, #FFFFFF 0%, #F8FAFF 50%, #FFF5F5 100%)',
+            gridColor: '#F0F0F0',
+            pattern: 'dots',
         },
         nodes: {
             palette: ['#EF4444', '#F97316', '#EAB308', '#22C55E', '#0EA5E9', '#6366F1', '#A855F7'],
             defaultBg: '#FFFFFF',
             defaultText: '#374151',
-            borderColor: '#D1D5DB',
+            borderColor: '#E5E7EB',
             borderRadius: '12px',
             borderWidth: '2px',
             selectedRing: '#6366F1',
-            shadow: '0 4px 6px rgba(0,0,0,0.05)',
+            shadow: '0 4px 12px rgba(99,102,241,0.12)',
+            shape: 'rounded',
         },
         typography: {
-            fontFamily: "'Poppins', 'Helvetica Neue', sans-serif",
+            fontFamily: "'Outfit', 'Poppins', sans-serif",
             fontSize: '14px',
             fontWeight: '500',
             headingSize: '16px',
             lineHeight: '1.5',
         },
         connections: {
-            color: '#9CA3AF',
-            colorMode: 'gradient',
+            color: '#C7D2FE',
+            colorMode: 'parent',
             strokeWidth: 2.5,
         },
         decorations: {
             emoji: '✨',
-            nodeShape: 'rounded',
         },
     },
 
@@ -167,18 +247,20 @@ export const mindMapThemes = {
         isDark: false,
         vibe: 'creative',
         canvas: {
-            background: '#F0FDFA',
-            gridColor: '#CCFBF1',
+            background: 'linear-gradient(180deg, #ECFEFF 0%, #E0F2FE 50%, #F0FDFA 100%)',
+            gridColor: '#A5F3FC',
+            pattern: 'none',
         },
         nodes: {
-            palette: ['#0D9488', '#14B8A6', '#2DD4BF', '#5EEAD4', '#0EA5E9', '#38BDF8', '#06B6D4'],
+            palette: ['#0D9488', '#14B8A6', '#2DD4BF', '#06B6D4', '#0EA5E9', '#38BDF8', '#22D3EE'],
             defaultBg: '#FFFFFF',
             defaultText: '#134E4A',
             borderColor: '#99F6E4',
-            borderRadius: '16px',
+            borderRadius: '20px',
             borderWidth: '2px',
             selectedRing: '#0D9488',
-            shadow: '0 4px 12px rgba(13,148,136,0.15)',
+            shadow: '0 4px 16px rgba(13,148,136,0.12)',
+            shape: 'pill',
         },
         typography: {
             fontFamily: "'Nunito', 'Quicksand', sans-serif",
@@ -194,7 +276,6 @@ export const mindMapThemes = {
         },
         decorations: {
             emoji: '🌊',
-            nodeShape: 'pill',
         },
     },
 
@@ -204,18 +285,20 @@ export const mindMapThemes = {
         isDark: false,
         vibe: 'creative',
         canvas: {
-            background: '#FFFBEB',
-            gridColor: '#FEF3C7',
+            background: 'linear-gradient(180deg, #FFFBEB 0%, #FEF3C7 50%, #FFEDD5 100%)',
+            gridColor: '#FDE68A',
+            pattern: 'none',
         },
         nodes: {
-            palette: ['#DC2626', '#EA580C', '#D97706', '#F59E0B', '#FBBF24', '#FCD34D', '#FDE68A'],
+            palette: ['#DC2626', '#EA580C', '#D97706', '#F59E0B', '#FBBF24', '#FCD34D', '#F97316'],
             defaultBg: '#FFFFFF',
             defaultText: '#78350F',
             borderColor: '#FDE68A',
             borderRadius: '14px',
             borderWidth: '2px',
             selectedRing: '#F59E0B',
-            shadow: '0 4px 8px rgba(245,158,11,0.15)',
+            shadow: '0 4px 12px rgba(245,158,11,0.15)',
+            shape: 'rounded',
         },
         typography: {
             fontFamily: "'DM Sans', 'Outfit', sans-serif",
@@ -227,11 +310,10 @@ export const mindMapThemes = {
         connections: {
             color: '#FBBF24',
             colorMode: 'parent',
-            strokeWidth: 2,
+            strokeWidth: 2.5,
         },
         decorations: {
             emoji: '🌅',
-            nodeShape: 'rounded',
         },
     },
 
@@ -241,18 +323,20 @@ export const mindMapThemes = {
         isDark: false,
         vibe: 'creative',
         canvas: {
-            background: '#FAF5FF',
-            gridColor: '#F3E8FF',
+            background: 'linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 50%, #FDF4FF 100%)',
+            gridColor: '#E9D5FF',
+            pattern: 'none',
         },
         nodes: {
             palette: ['#A855F7', '#8B5CF6', '#7C3AED', '#C084FC', '#D8B4FE', '#E879F9', '#F0ABFC'],
             defaultBg: '#FFFFFF',
             defaultText: '#581C87',
             borderColor: '#E9D5FF',
-            borderRadius: '12px',
+            borderRadius: '16px',
             borderWidth: '2px',
             selectedRing: '#A855F7',
-            shadow: '0 4px 8px rgba(168,85,247,0.12)',
+            shadow: '0 4px 12px rgba(168,85,247,0.12)',
+            shape: 'rounded',
         },
         typography: {
             fontFamily: "'Outfit', 'Nunito', sans-serif",
@@ -268,7 +352,6 @@ export const mindMapThemes = {
         },
         decorations: {
             emoji: '💜',
-            nodeShape: 'rounded',
         },
     },
 
@@ -278,8 +361,9 @@ export const mindMapThemes = {
         isDark: false,
         vibe: 'creative',
         canvas: {
-            background: '#F0FDF4',
-            gridColor: '#DCFCE7',
+            background: 'linear-gradient(180deg, #F0FDF4 0%, #DCFCE7 50%, #D1FAE5 100%)',
+            gridColor: '#BBF7D0',
+            pattern: 'none',
         },
         nodes: {
             palette: ['#166534', '#15803D', '#22C55E', '#4ADE80', '#86EFAC', '#047857', '#10B981'],
@@ -289,10 +373,11 @@ export const mindMapThemes = {
             borderRadius: '10px',
             borderWidth: '2px',
             selectedRing: '#22C55E',
-            shadow: '0 4px 8px rgba(34,197,94,0.12)',
+            shadow: '0 4px 12px rgba(34,197,94,0.12)',
+            shape: 'rounded',
         },
         typography: {
-            fontFamily: "'DM Sans', 'Inter', sans-serif",
+            fontFamily: "'Source Sans 3', 'DM Sans', sans-serif",
             fontSize: '14px',
             fontWeight: '500',
             headingSize: '16px',
@@ -305,12 +390,49 @@ export const mindMapThemes = {
         },
         decorations: {
             emoji: '🌿',
-            nodeShape: 'rounded',
+        },
+    },
+
+    rose: {
+        id: 'rose',
+        name: 'Rose',
+        isDark: false,
+        vibe: 'creative',
+        canvas: {
+            background: 'linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 50%, #FECDD3 100%)',
+            gridColor: '#FECDD3',
+            pattern: 'none',
+        },
+        nodes: {
+            palette: ['#E11D48', '#F43F5E', '#FB7185', '#FDA4AF', '#BE123C', '#9F1239', '#881337'],
+            defaultBg: '#FFFFFF',
+            defaultText: '#881337',
+            borderColor: '#FECDD3',
+            borderRadius: '18px',
+            borderWidth: '2px',
+            selectedRing: '#E11D48',
+            shadow: '0 4px 12px rgba(225,29,72,0.1)',
+            shape: 'pill',
+        },
+        typography: {
+            fontFamily: "'Quicksand', 'Nunito', sans-serif",
+            fontSize: '14px',
+            fontWeight: '600',
+            headingSize: '16px',
+            lineHeight: '1.5',
+        },
+        connections: {
+            color: '#FDA4AF',
+            colorMode: 'parent',
+            strokeWidth: 2,
+        },
+        decorations: {
+            emoji: '🌹',
         },
     },
 
     // ============================================
-    // PLAYFUL / FUN THEMES
+    // PLAYFUL THEMES (Fun & Expressive)
     // ============================================
 
     pastel: {
@@ -319,108 +441,35 @@ export const mindMapThemes = {
         isDark: false,
         vibe: 'playful',
         canvas: {
-            background: '#FFF5F7',
+            background: 'linear-gradient(135deg, #FFF5F7 0%, #F0F9FF 50%, #F5F3FF 100%)',
             gridColor: '#FFE4E6',
+            pattern: 'none',
         },
         nodes: {
             palette: ['#FDA4AF', '#FDBA74', '#FDE047', '#86EFAC', '#7DD3FC', '#C4B5FD', '#F0ABFC'],
             defaultBg: '#FFFFFF',
             defaultText: '#525252',
             borderColor: '#E5E7EB',
-            borderRadius: '20px',
+            borderRadius: '24px',
             borderWidth: '3px',
             selectedRing: '#A78BFA',
-            shadow: '0 6px 12px rgba(168,85,247,0.1)',
+            shadow: '0 6px 16px rgba(168,85,247,0.1)',
+            shape: 'pill',
         },
         typography: {
-            fontFamily: "'Quicksand', 'Comfortaa', cursive",
+            fontFamily: "'Quicksand', 'Comfortaa', sans-serif",
             fontSize: '15px',
             fontWeight: '600',
             headingSize: '17px',
             lineHeight: '1.6',
         },
         connections: {
-            color: '#D1D5DB',
+            color: '#E9D5FF',
             colorMode: 'parent',
             strokeWidth: 3,
         },
         decorations: {
             emoji: '🦋',
-            nodeShape: 'pill',
-        },
-    },
-
-    spring: {
-        id: 'spring',
-        name: 'Spring',
-        isDark: false,
-        vibe: 'playful',
-        canvas: {
-            background: '#F7FEE7',
-            gridColor: '#ECFCCB',
-        },
-        nodes: {
-            palette: ['#84CC16', '#A3E635', '#FDE047', '#FACC15', '#FB923C', '#22C55E', '#4ADE80'],
-            defaultBg: '#FFFFFF',
-            defaultText: '#365314',
-            borderColor: '#D9F99D',
-            borderRadius: '18px',
-            borderWidth: '2px',
-            selectedRing: '#84CC16',
-            shadow: '0 4px 10px rgba(132,204,22,0.15)',
-        },
-        typography: {
-            fontFamily: "'Nunito', 'Varela Round', sans-serif",
-            fontSize: '15px',
-            fontWeight: '700',
-            headingSize: '17px',
-            lineHeight: '1.6',
-        },
-        connections: {
-            color: '#BEF264',
-            colorMode: 'parent',
-            strokeWidth: 2.5,
-        },
-        decorations: {
-            emoji: '🌸',
-            nodeShape: 'rounded',
-        },
-    },
-
-    bubbles: {
-        id: 'bubbles',
-        name: 'Bubbles',
-        isDark: false,
-        vibe: 'playful',
-        canvas: {
-            background: '#EFF6FF',
-            gridColor: '#DBEAFE',
-        },
-        nodes: {
-            palette: ['#F472B6', '#FB923C', '#FACC15', '#4ADE80', '#22D3EE', '#818CF8', '#E879F9'],
-            defaultBg: '#FFFFFF',
-            defaultText: '#1E3A5F',
-            borderColor: '#BFDBFE',
-            borderRadius: '999px',
-            borderWidth: '3px',
-            selectedRing: '#60A5FA',
-            shadow: '0 8px 20px rgba(96,165,250,0.2)',
-        },
-        typography: {
-            fontFamily: "'Baloo 2', 'Comic Neue', cursive",
-            fontSize: '16px',
-            fontWeight: '600',
-            headingSize: '18px',
-            lineHeight: '1.5',
-        },
-        connections: {
-            color: '#93C5FD',
-            colorMode: 'parent',
-            strokeWidth: 3,
-        },
-        decorations: {
-            emoji: '🫧',
-            nodeShape: 'pill',
         },
     },
 
@@ -430,21 +479,23 @@ export const mindMapThemes = {
         isDark: false,
         vibe: 'playful',
         canvas: {
-            background: '#FDF2F8',
-            gridColor: '#FCE7F3',
+            background: 'linear-gradient(135deg, #FDF2F8 0%, #FCE7F3 50%, #FDF4FF 100%)',
+            gridColor: '#FBCFE8',
+            pattern: 'none',
         },
         nodes: {
             palette: ['#EC4899', '#F472B6', '#A855F7', '#8B5CF6', '#06B6D4', '#10B981', '#F59E0B'],
             defaultBg: '#FFFFFF',
             defaultText: '#831843',
-            borderColor: '#FBCFE8',
-            borderRadius: '24px',
+            borderColor: '#F9A8D4',
+            borderRadius: '999px',
             borderWidth: '3px',
             selectedRing: '#EC4899',
-            shadow: '0 6px 16px rgba(236,72,153,0.15)',
+            shadow: '0 6px 20px rgba(236,72,153,0.15)',
+            shape: 'pill',
         },
         typography: {
-            fontFamily: "'Fredoka One', 'Bubblegum Sans', cursive",
+            fontFamily: "'Fredoka', 'Nunito', sans-serif",
             fontSize: '16px',
             fontWeight: '500',
             headingSize: '18px',
@@ -457,237 +508,162 @@ export const mindMapThemes = {
         },
         decorations: {
             emoji: '🍭',
-            nodeShape: 'pill',
         },
     },
 
-    rainbow: {
-        id: 'rainbow',
-        name: 'Rainbow',
+    bubbles: {
+        id: 'bubbles',
+        name: 'Bubbles',
         isDark: false,
         vibe: 'playful',
         canvas: {
-            background: '#FFFBEB',
-            gridColor: '#FEF3C7',
+            background: 'radial-gradient(circle at 20% 20%, #DBEAFE 0%, #EFF6FF 50%, #E0F2FE 100%)',
+            gridColor: '#BFDBFE',
+            pattern: 'none',
         },
         nodes: {
-            palette: ['#EF4444', '#F97316', '#FACC15', '#22C55E', '#3B82F6', '#8B5CF6', '#EC4899'],
+            palette: ['#F472B6', '#FB923C', '#FACC15', '#4ADE80', '#22D3EE', '#818CF8', '#E879F9'],
             defaultBg: '#FFFFFF',
-            defaultText: '#374151',
-            borderColor: '#FDE68A',
-            borderRadius: '16px',
+            defaultText: '#1E3A5F',
+            borderColor: '#93C5FD',
+            borderRadius: '999px',
             borderWidth: '3px',
-            selectedRing: '#F59E0B',
-            shadow: '0 6px 12px rgba(251,191,36,0.15)',
+            selectedRing: '#60A5FA',
+            shadow: '0 8px 24px rgba(96,165,250,0.2)',
+            shape: 'pill',
         },
         typography: {
-            fontFamily: "'Nunito', 'Poppins', sans-serif",
-            fontSize: '15px',
+            fontFamily: "'Baloo 2', 'Comic Neue', sans-serif",
+            fontSize: '16px',
             fontWeight: '600',
-            headingSize: '17px',
+            headingSize: '18px',
             lineHeight: '1.5',
         },
         connections: {
-            color: '#FCD34D',
+            color: '#93C5FD',
             colorMode: 'parent',
             strokeWidth: 3,
         },
         decorations: {
-            emoji: '🌈',
-            nodeShape: 'rounded',
+            emoji: '🫧',
         },
     },
 
-    // ============================================
-    // MINIMAL THEMES
-    // ============================================
-
-    vintage: {
-        id: 'vintage',
-        name: 'Vintage',
+    sketchy: {
+        id: 'sketchy',
+        name: 'Sketchy',
         isDark: false,
-        vibe: 'minimal',
-        canvas: {
-            background: '#FAF5EF',
-            gridColor: '#E8E0D5',
-        },
-        nodes: {
-            palette: ['#B45309', '#CA8A04', '#65A30D', '#0891B2', '#7C3AED', '#BE185D', '#DC2626'],
-            defaultBg: '#FFFBF5',
-            defaultText: '#44403C',
-            borderColor: '#D6D3D1',
-            borderRadius: '4px',
-            borderWidth: '1px',
-            selectedRing: '#B45309',
-            shadow: '0 1px 2px rgba(0,0,0,0.05)',
-        },
-        typography: {
-            fontFamily: "'Merriweather', 'Georgia', serif",
-            fontSize: '14px',
-            fontWeight: '400',
-            headingSize: '15px',
-            lineHeight: '1.6',
-        },
-        connections: {
-            color: '#A8A29E',
-            colorMode: 'parent',
-            strokeWidth: 1.5,
-        },
-        decorations: {
-            emoji: null,
-            nodeShape: 'square',
-        },
-    },
-
-    paper: {
-        id: 'paper',
-        name: 'Paper',
-        isDark: false,
-        vibe: 'minimal',
+        vibe: 'playful',
         canvas: {
             background: '#FFFEF7',
-            gridColor: '#F5F5DC',
+            gridColor: '#E5E5DC',
+            pattern: 'grid',
         },
         nodes: {
-            palette: ['#374151', '#6B7280', '#9CA3AF', '#4B5563', '#374151', '#1F2937', '#111827'],
-            defaultBg: '#FFFFFF',
+            palette: ['#2563EB', '#DC2626', '#16A34A', '#F59E0B', '#7C3AED', '#0891B2', '#DB2777'],
+            defaultBg: '#FFFDF5',
             defaultText: '#1F2937',
-            borderColor: '#E5E7EB',
-            borderRadius: '2px',
-            borderWidth: '1px',
-            selectedRing: '#374151',
-            shadow: 'none',
+            borderColor: '#374151',
+            borderRadius: '4px',
+            borderWidth: '2px',
+            selectedRing: '#2563EB',
+            shadow: '3px 3px 0px #374151',
+            shape: 'notch',
         },
         typography: {
-            fontFamily: "'Libre Baskerville', 'Georgia', serif",
-            fontSize: '14px',
-            fontWeight: '400',
-            headingSize: '16px',
-            lineHeight: '1.6',
+            fontFamily: "'Caveat', 'Patrick Hand', cursive",
+            fontSize: '18px',
+            fontWeight: '600',
+            headingSize: '22px',
+            lineHeight: '1.3',
         },
         connections: {
-            color: '#9CA3AF',
+            color: '#6B7280',
             colorMode: 'default',
-            strokeWidth: 1,
+            strokeWidth: 2,
         },
         decorations: {
-            emoji: null,
-            nodeShape: 'square',
+            emoji: '✏️',
+        },
+    },
+
+    retro: {
+        id: 'retro',
+        name: 'Retro',
+        isDark: false,
+        vibe: 'playful',
+        canvas: {
+            background: 'linear-gradient(180deg, #FEF9C3 0%, #FDE68A 100%)',
+            gridColor: '#FCD34D',
+            pattern: 'none',
+        },
+        nodes: {
+            palette: ['#B91C1C', '#C2410C', '#A16207', '#4D7C0F', '#0E7490', '#6D28D9', '#BE185D'],
+            defaultBg: '#FFFBEB',
+            defaultText: '#78350F',
+            borderColor: '#92400E',
+            borderRadius: '0px',
+            borderWidth: '3px',
+            selectedRing: '#B91C1C',
+            shadow: '4px 4px 0px #78350F',
+            shape: 'square',
+        },
+        typography: {
+            fontFamily: "'Rubik', 'Archivo', sans-serif",
+            fontSize: '15px',
+            fontWeight: '700',
+            headingSize: '17px',
+            lineHeight: '1.4',
+        },
+        connections: {
+            color: '#92400E',
+            colorMode: 'default',
+            strokeWidth: 3,
+        },
+        decorations: {
+            emoji: '📺',
         },
     },
 
     // ============================================
-    // DARK THEMES
+    // DARK PROFESSIONAL THEMES
     // ============================================
 
     midnite: {
         id: 'midnite',
         name: 'Midnight',
         isDark: true,
-        vibe: 'creative',
+        vibe: 'professional',
         canvas: {
-            background: '#1E293B',
+            background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
             gridColor: '#334155',
+            pattern: 'dots',
         },
         nodes: {
             palette: ['#F43F5E', '#FB923C', '#FBBF24', '#4ADE80', '#22D3EE', '#A78BFA', '#F472B6'],
-            defaultBg: '#334155',
+            defaultBg: '#1E293B',
             defaultText: '#F1F5F9',
             borderColor: '#475569',
-            borderRadius: '12px',
-            borderWidth: '2px',
+            borderRadius: '10px',
+            borderWidth: '1px',
             selectedRing: '#38BDF8',
-            shadow: '0 4px 12px rgba(0,0,0,0.3)',
+            shadow: '0 4px 16px rgba(0,0,0,0.4)',
+            shape: 'rounded',
         },
         typography: {
-            fontFamily: "'Space Grotesk', 'Outfit', sans-serif",
+            fontFamily: "'Inter', 'SF Pro Display', sans-serif",
             fontSize: '14px',
             fontWeight: '500',
             headingSize: '16px',
             lineHeight: '1.5',
         },
         connections: {
-            color: '#64748B',
+            color: '#475569',
             colorMode: 'parent',
             strokeWidth: 2,
         },
         decorations: {
-            emoji: '🌙',
-            nodeShape: 'rounded',
-        },
-    },
-
-    fireworks: {
-        id: 'fireworks',
-        name: 'Fireworks',
-        isDark: true,
-        vibe: 'playful',
-        canvas: {
-            background: '#18181B',
-            gridColor: '#27272A',
-        },
-        nodes: {
-            palette: ['#EF4444', '#22C55E', '#3B82F6', '#EAB308', '#A855F7', '#EC4899', '#06B6D4'],
-            defaultBg: '#27272A',
-            defaultText: '#FAFAFA',
-            borderColor: '#3F3F46',
-            borderRadius: '16px',
-            borderWidth: '2px',
-            selectedRing: '#FBBF24',
-            shadow: '0 6px 20px rgba(0,0,0,0.4)',
-        },
-        typography: {
-            fontFamily: "'Outfit', 'Poppins', sans-serif",
-            fontSize: '15px',
-            fontWeight: '600',
-            headingSize: '17px',
-            lineHeight: '1.5',
-        },
-        connections: {
-            color: '#52525B',
-            colorMode: 'parent',
-            strokeWidth: 2.5,
-        },
-        decorations: {
-            emoji: '🎆',
-            nodeShape: 'rounded',
-        },
-    },
-
-    blackboard: {
-        id: 'blackboard',
-        name: 'Blackboard',
-        isDark: true,
-        vibe: 'minimal',
-        canvas: {
-            background: '#1C1917',
-            gridColor: '#292524',
-        },
-        nodes: {
-            palette: ['#FAFAF9', '#E7E5E4', '#D6D3D1', '#A8A29E', '#FAFAF9', '#E7E5E4', '#D6D3D1'],
-            defaultBg: '#292524',
-            defaultText: '#FAFAF9',
-            borderColor: '#44403C',
-            borderRadius: '6px',
-            borderWidth: '1px',
-            selectedRing: '#F5F5F4',
-            shadow: 'none',
-        },
-        typography: {
-            fontFamily: "'Caveat', 'Kalam', cursive",
-            fontSize: '18px',
-            fontWeight: '500',
-            headingSize: '20px',
-            lineHeight: '1.4',
-        },
-        connections: {
-            color: '#57534E',
-            colorMode: 'default',
-            strokeWidth: 2,
-        },
-        decorations: {
-            emoji: '✏️',
-            nodeShape: 'square',
+            emoji: null,
         },
     },
 
@@ -699,9 +675,10 @@ export const mindMapThemes = {
         canvas: {
             background: '#111827',
             gridColor: '#1F2937',
+            pattern: 'dots',
         },
         nodes: {
-            palette: ['#14B8A6', '#06B6D4', '#0EA5E9', '#6366F1', '#8B5CF6', '#14B8A6', '#22D3EE'],
+            palette: ['#14B8A6', '#06B6D4', '#0EA5E9', '#3B82F6', '#8B5CF6', '#EC4899', '#F43F5E'],
             defaultBg: '#1F2937',
             defaultText: '#F3F4F6',
             borderColor: '#374151',
@@ -709,9 +686,10 @@ export const mindMapThemes = {
             borderWidth: '1px',
             selectedRing: '#14B8A6',
             shadow: '0 2px 8px rgba(0,0,0,0.3)',
+            shape: 'rounded',
         },
         typography: {
-            fontFamily: "'Inter', 'SF Pro Display', sans-serif",
+            fontFamily: "'Inter', -apple-system, sans-serif",
             fontSize: '14px',
             fontWeight: '500',
             headingSize: '16px',
@@ -724,44 +702,44 @@ export const mindMapThemes = {
         },
         decorations: {
             emoji: null,
-            nodeShape: 'rounded',
         },
     },
 
-    cubicle: {
-        id: 'cubicle',
-        name: 'Cubicle',
+    obsidian: {
+        id: 'obsidian',
+        name: 'Obsidian',
         isDark: true,
         vibe: 'professional',
         canvas: {
-            background: '#1E3A5F',
-            gridColor: '#234E77',
+            background: '#18181B',
+            gridColor: '#27272A',
+            pattern: 'none',
         },
         nodes: {
-            palette: ['#3B82F6', '#60A5FA', '#93C5FD', '#2563EB', '#1D4ED8', '#3B82F6', '#60A5FA'],
-            defaultBg: '#234E77',
-            defaultText: '#E0F2FE',
-            borderColor: '#1E40AF',
-            borderRadius: '4px',
-            borderWidth: '2px',
-            selectedRing: '#60A5FA',
-            shadow: '0 2px 4px rgba(0,0,0,0.2)',
+            palette: ['#A78BFA', '#818CF8', '#6366F1', '#4F46E5', '#C084FC', '#E879F9', '#F472B6'],
+            defaultBg: '#27272A',
+            defaultText: '#FAFAFA',
+            borderColor: '#3F3F46',
+            borderRadius: '6px',
+            borderWidth: '1px',
+            selectedRing: '#A78BFA',
+            shadow: '0 2px 8px rgba(0,0,0,0.4)',
+            shape: 'rounded',
         },
         typography: {
             fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
             fontSize: '13px',
             fontWeight: '500',
-            headingSize: '14px',
+            headingSize: '15px',
             lineHeight: '1.5',
         },
         connections: {
-            color: '#3B82F6',
-            colorMode: 'default',
-            strokeWidth: 2,
+            color: '#52525B',
+            colorMode: 'parent',
+            strokeWidth: 1.5,
         },
         decorations: {
             emoji: null,
-            nodeShape: 'square',
         },
     },
 
@@ -771,18 +749,20 @@ export const mindMapThemes = {
         isDark: true,
         vibe: 'creative',
         canvas: {
-            background: '#0F172A',
-            gridColor: '#1E293B',
+            background: 'linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #0F172A 100%)',
+            gridColor: '#312E81',
+            pattern: 'none',
         },
         nodes: {
             palette: ['#22D3EE', '#A78BFA', '#34D399', '#FB7185', '#FBBF24', '#60A5FA', '#E879F9'],
             defaultBg: '#1E293B',
             defaultText: '#E2E8F0',
-            borderColor: '#334155',
+            borderColor: '#4338CA',
             borderRadius: '14px',
             borderWidth: '2px',
             selectedRing: '#22D3EE',
-            shadow: '0 6px 16px rgba(34,211,238,0.15)',
+            shadow: '0 0 24px rgba(34,211,238,0.2)',
+            shape: 'rounded',
         },
         typography: {
             fontFamily: "'Space Grotesk', 'Inter', sans-serif",
@@ -792,50 +772,12 @@ export const mindMapThemes = {
             lineHeight: '1.5',
         },
         connections: {
-            color: '#475569',
+            color: '#6366F1',
             colorMode: 'parent',
             strokeWidth: 2.5,
         },
         decorations: {
             emoji: '✨',
-            nodeShape: 'rounded',
-        },
-    },
-
-    neon: {
-        id: 'neon',
-        name: 'Neon',
-        isDark: true,
-        vibe: 'playful',
-        canvas: {
-            background: '#0A0A0A',
-            gridColor: '#171717',
-        },
-        nodes: {
-            palette: ['#FF0080', '#00FF88', '#00D4FF', '#FFE600', '#FF6600', '#AA00FF', '#00FFFF'],
-            defaultBg: '#171717',
-            defaultText: '#FFFFFF',
-            borderColor: '#333333',
-            borderRadius: '12px',
-            borderWidth: '2px',
-            selectedRing: '#00D4FF',
-            shadow: '0 0 20px rgba(0,212,255,0.3)',
-        },
-        typography: {
-            fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
-            fontSize: '14px',
-            fontWeight: '600',
-            headingSize: '16px',
-            lineHeight: '1.4',
-        },
-        connections: {
-            color: '#333333',
-            colorMode: 'parent',
-            strokeWidth: 2,
-        },
-        decorations: {
-            emoji: '⚡',
-            nodeShape: 'rounded',
         },
     },
 
@@ -847,6 +789,7 @@ export const mindMapThemes = {
         canvas: {
             background: '#282A36',
             gridColor: '#44475A',
+            pattern: 'none',
         },
         nodes: {
             palette: ['#FF79C6', '#8BE9FD', '#50FA7B', '#F1FA8C', '#FFB86C', '#BD93F9', '#FF5555'],
@@ -856,7 +799,8 @@ export const mindMapThemes = {
             borderRadius: '8px',
             borderWidth: '2px',
             selectedRing: '#BD93F9',
-            shadow: '0 4px 12px rgba(0,0,0,0.3)',
+            shadow: '0 4px 16px rgba(0,0,0,0.4)',
+            shape: 'rounded',
         },
         typography: {
             fontFamily: "'Fira Code', 'JetBrains Mono', monospace",
@@ -872,7 +816,124 @@ export const mindMapThemes = {
         },
         decorations: {
             emoji: '🧛',
-            nodeShape: 'rounded',
+        },
+    },
+
+    // ============================================
+    // DARK PLAYFUL THEMES
+    // ============================================
+
+    neon: {
+        id: 'neon',
+        name: 'Neon',
+        isDark: true,
+        vibe: 'playful',
+        canvas: {
+            background: 'linear-gradient(180deg, #0A0A0A 0%, #171717 100%)',
+            gridColor: '#262626',
+            pattern: 'grid',
+        },
+        nodes: {
+            palette: ['#FF0080', '#00FF88', '#00D4FF', '#FFE600', '#FF6600', '#AA00FF', '#00FFFF'],
+            defaultBg: '#1A1A1A',
+            defaultText: '#FFFFFF',
+            borderColor: '#404040',
+            borderRadius: '8px',
+            borderWidth: '2px',
+            selectedRing: '#00D4FF',
+            shadow: '0 0 20px currentColor',
+            shape: 'rounded',
+        },
+        typography: {
+            fontFamily: "'Orbitron', 'Rajdhani', sans-serif",
+            fontSize: '14px',
+            fontWeight: '600',
+            headingSize: '16px',
+            lineHeight: '1.4',
+        },
+        connections: {
+            color: '#404040',
+            colorMode: 'parent',
+            strokeWidth: 2,
+        },
+        decorations: {
+            emoji: '⚡',
+        },
+    },
+
+    fireworks: {
+        id: 'fireworks',
+        name: 'Fireworks',
+        isDark: true,
+        vibe: 'playful',
+        canvas: {
+            background: 'radial-gradient(circle at 30% 30%, #1F1F3D 0%, #0F0F1A 100%)',
+            gridColor: '#2D2D5A',
+            pattern: 'none',
+        },
+        nodes: {
+            palette: ['#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3', '#F38181', '#AA96DA', '#A8D8EA'],
+            defaultBg: '#1F1F3D',
+            defaultText: '#FFFFFF',
+            borderColor: '#3D3D7A',
+            borderRadius: '16px',
+            borderWidth: '2px',
+            selectedRing: '#FFE66D',
+            shadow: '0 0 30px rgba(255,230,109,0.3)',
+            shape: 'rounded',
+        },
+        typography: {
+            fontFamily: "'Outfit', 'Poppins', sans-serif",
+            fontSize: '15px',
+            fontWeight: '600',
+            headingSize: '17px',
+            lineHeight: '1.5',
+        },
+        connections: {
+            color: '#4D4D8A',
+            colorMode: 'parent',
+            strokeWidth: 2.5,
+        },
+        decorations: {
+            emoji: '🎆',
+        },
+    },
+
+    blackboard: {
+        id: 'blackboard',
+        name: 'Blackboard',
+        isDark: true,
+        vibe: 'playful',
+        canvas: {
+            background: '#1C1917',
+            gridColor: '#292524',
+            pattern: 'none',
+        },
+        nodes: {
+            palette: ['#FAFAF9', '#E7E5E4', '#D6D3D1', '#A8A29E', '#78716C', '#FAFAF9', '#E7E5E4'],
+            defaultBg: '#292524',
+            defaultText: '#FAFAF9',
+            borderColor: '#44403C',
+            borderRadius: '4px',
+            borderWidth: '2px',
+            selectedRing: '#F5F5F4',
+            shadow: 'none',
+            shape: 'square',
+        },
+        typography: {
+            fontFamily: "'Caveat', 'Kalam', cursive",
+            fontSize: '20px',
+            fontWeight: '500',
+            headingSize: '24px',
+            lineHeight: '1.3',
+        },
+        connections: {
+            color: '#57534E',
+            colorMode: 'default',
+            strokeWidth: 2,
+        },
+        decorations: {
+            emoji: '📝',
         },
     },
 };
@@ -888,16 +949,6 @@ export const getTheme = (themeId) => {
 // Get all themes as array
 export const getAllThemes = () => {
     return Object.values(mindMapThemes);
-};
-
-// Get light themes only
-export const getLightThemes = () => {
-    return Object.values(mindMapThemes).filter(t => !t.isDark);
-};
-
-// Get dark themes only
-export const getDarkThemes = () => {
-    return Object.values(mindMapThemes).filter(t => t.isDark);
 };
 
 // Get themes by vibe
