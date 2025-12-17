@@ -735,9 +735,9 @@ export default function MindMap({ mapId, onBack }) {
       if (element) {
         const rect = element.getBoundingClientRect();
 
-        // For now, use actual DOM width/height
-        const actualWidth = rect.width;
-        const actualHeight = rect.height;
+        // Divide by zoom to get actual logical dimensions (getBoundingClientRect includes zoom transform)
+        const actualWidth = rect.width / zoom;
+        const actualHeight = rect.height / zoom;
 
         map[n.id] = {
           left: n.x - 150,
@@ -758,7 +758,7 @@ export default function MindMap({ mapId, onBack }) {
       }
     }
     return map;
-  }, [nodes]);
+  }, [nodes, zoom]);
 
   // ============================================
   // NODE TOOLBAR ACTIONS (via hooks)
@@ -768,6 +768,44 @@ export default function MindMap({ mapId, onBack }) {
   const onAddChild = nodeOps.addChildNode;
   const onRequestDelete = (nodeId) => setDeleteConfirmNodeId(nodeId);
   const addStandaloneNode = nodeOps.addStandaloneNode;
+
+  // Auto-arrange children in a neat vertical column
+  const onAutoArrangeChildren = (parentNodeId) => {
+    const parentNode = nodes.find(n => n.id === parentNodeId);
+    if (!parentNode) return;
+
+    // Find all direct children
+    const childNodeIds = connections
+      .filter(conn => conn.from === parentNodeId)
+      .map(conn => conn.to);
+
+    if (childNodeIds.length === 0) return;
+
+    const childNodes = nodes.filter(n => childNodeIds.includes(n.id));
+
+    // Constants for layout
+    const NODE_HEIGHT = 70;
+    const NODE_SPACING = 15;
+    const HORIZONTAL_OFFSET = 380; // Distance to the right of parent
+
+    // Calculate starting Y position to center children relative to parent
+    const totalHeight = childNodes.length * NODE_HEIGHT + (childNodes.length - 1) * NODE_SPACING;
+    const startY = parentNode.y - totalHeight / 2 + NODE_HEIGHT / 2;
+
+    // Position each child
+    const updatedNodes = nodes.map(node => {
+      const childIndex = childNodeIds.indexOf(node.id);
+      if (childIndex === -1) return node;
+
+      return {
+        ...node,
+        x: parentNode.x + HORIZONTAL_OFFSET,
+        y: startY + childIndex * (NODE_HEIGHT + NODE_SPACING)
+      };
+    });
+
+    setNodes(updatedNodes);
+  };
 
   // Handle analyzed image data and create mind map
   const handleImageAnalyze = (data) => {
@@ -831,7 +869,6 @@ export default function MindMap({ mapId, onBack }) {
 
     // Close modal
     setShowImageAnalyzer(false);
-    setAnalyzedImagePreview(null);
   };
 
   // Track mouse position for connection preview line
@@ -2410,7 +2447,9 @@ export default function MindMap({ mapId, onBack }) {
                               onAddChild={onAddChild}
                               onRequestDelete={onRequestDelete}
                               onRequestDetach={(nodeId) => setDetachConfirmNodeId(nodeId)}
+                              onAutoArrangeChildren={onAutoArrangeChildren}
                               hasParent={connections.some(conn => conn.to === node.id)}
+                              hasChildren={connections.some(conn => conn.from === node.id)}
                             />
 
                             {/* Connection button for connectors */}

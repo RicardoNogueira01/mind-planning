@@ -13,8 +13,7 @@ const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemi
  */
 export const analyzeImage = async (imageDataUrl) => {
   if (!GEMINI_API_KEY) {
-    console.warn('No Gemini API key found. Using mock data.');
-    return generateMockMindMapData();
+    throw new Error('No Gemini API key configured. Please add VITE_GEMINI_API_KEY to your .env file. Get a free API key at https://makersuite.google.com/app/apikey');
   }
 
   console.log('Starting image analysis with Gemini API...');
@@ -97,10 +96,10 @@ Guidelines:
     }
 
     const data = await response.json();
-    
+
     // Extract the text response from Gemini
     const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    
+
     if (!textResponse) {
       throw new Error('No response from Gemini API');
     }
@@ -108,9 +107,9 @@ Guidelines:
     // Parse the JSON response (remove markdown code blocks if present)
     let jsonText = textResponse.trim();
     jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    
+
     const mindMapData = JSON.parse(jsonText);
-    
+
     // Validate the structure
     if (!mindMapData.centralNode || !mindMapData.nodes || !Array.isArray(mindMapData.nodes)) {
       throw new Error('Invalid mind map structure returned from AI');
@@ -120,7 +119,7 @@ Guidelines:
 
   } catch (error) {
     console.error('Error analyzing image:', error);
-    
+
     // If API fails, return mock data as fallback
     console.warn('Falling back to mock data due to error:', error.message);
     return generateMockMindMapData();
