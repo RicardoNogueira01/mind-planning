@@ -7,6 +7,7 @@ export function getRectCenter(rect: Rect) {
 /**
  * Compute an orthogonal (org-chart style) path between two rectangles
  * Creates bracket-style connections with smooth rounded corners
+ * Corner radius adapts to distance - straighter lines when nodes are closer
  * 
  * @param fromRect - Parent node rectangle
  * @param toRect - Child node rectangle
@@ -27,9 +28,6 @@ export function computeOrthogonalPath(
   let end: { x: number; y: number };
   let d: string;
   
-  // Radius for rounded corners
-  const cornerRadius = 8;
-  
   if (direction === 'vertical') {
     // Parent above, children below (org chart style)
     const parentBottom = fromRect.bottom;
@@ -40,13 +38,20 @@ export function computeOrthogonalPath(
     end = { x: toCenterX, y: childTop };
     
     const dx = end.x - start.x;
-    const r = Math.min(cornerRadius, Math.abs(dx) / 2, Math.abs(midY - start.y) / 2);
+    const verticalGap = childTop - parentBottom;
     
-    if (Math.abs(dx) < 2) {
+    // Adaptive corner radius: smaller when nodes are closer, max 8px
+    const maxRadius = 8;
+    const r = Math.min(maxRadius, Math.abs(dx) / 3, verticalGap / 4);
+    
+    if (Math.abs(dx) < 3) {
       // Straight line if directly below
       d = `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
+    } else if (r < 2) {
+      // Very close - use sharp corners (straight lines)
+      d = `M ${start.x} ${start.y} L ${start.x} ${midY} L ${end.x} ${midY} L ${end.x} ${end.y}`;
     } else if (dx > 0) {
-      // Child is to the right
+      // Child is to the right with rounded corners
       d = `M ${start.x} ${start.y} 
            L ${start.x} ${midY - r} 
            Q ${start.x} ${midY} ${start.x + r} ${midY}
@@ -54,7 +59,7 @@ export function computeOrthogonalPath(
            Q ${end.x} ${midY} ${end.x} ${midY + r}
            L ${end.x} ${end.y}`;
     } else {
-      // Child is to the left
+      // Child is to the left with rounded corners
       d = `M ${start.x} ${start.y} 
            L ${start.x} ${midY - r} 
            Q ${start.x} ${midY} ${start.x - r} ${midY}
@@ -72,13 +77,20 @@ export function computeOrthogonalPath(
     end = { x: childLeft, y: toCenterY };
     
     const dy = end.y - start.y;
-    const r = Math.min(cornerRadius, Math.abs(dy) / 2, Math.abs(midX - start.x) / 2);
+    const horizontalGap = childLeft - parentRight;
     
-    if (Math.abs(dy) < 2) {
+    // Adaptive corner radius: smaller when nodes are closer, max 8px
+    const maxRadius = 8;
+    const r = Math.min(maxRadius, Math.abs(dy) / 3, horizontalGap / 4);
+    
+    if (Math.abs(dy) < 3) {
       // Straight line if at same height
       d = `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
+    } else if (r < 2) {
+      // Very close - use sharp corners (straight lines)
+      d = `M ${start.x} ${start.y} L ${midX} ${start.y} L ${midX} ${end.y} L ${end.x} ${end.y}`;
     } else if (dy > 0) {
-      // Child is below
+      // Child is below with rounded corners
       d = `M ${start.x} ${start.y} 
            L ${midX - r} ${start.y} 
            Q ${midX} ${start.y} ${midX} ${start.y + r}
@@ -86,7 +98,7 @@ export function computeOrthogonalPath(
            Q ${midX} ${end.y} ${midX + r} ${end.y}
            L ${end.x} ${end.y}`;
     } else {
-      // Child is above
+      // Child is above with rounded corners
       d = `M ${start.x} ${start.y} 
            L ${midX - r} ${start.y} 
            Q ${midX} ${start.y} ${midX} ${start.y - r}
