@@ -14,7 +14,7 @@ export default function NodeToolbarPrimary({
     <div className="flex items-center gap-0.5">
       {/* Complete Task Button - Always visible */}
       <button
-        className={`p-2 rounded-lg transition-colors duration-200 ${node.completed ? 'text-green-600 bg-green-50 hover:bg-green-100' : 'text-gray-700 hover:bg-gray-100'}`}
+        className={`p-2 rounded-lg transition-colors duration-200 ${node.completed ? 'text-black bg-gray-100 hover:bg-gray-200' : 'text-black hover:bg-gray-100'}`}
         onClick={(e) => { e.stopPropagation(); onToggleComplete?.(node.id); }}
         title={node.completed ? 'Mark as incomplete' : 'Mark as completed'}
       >
@@ -25,7 +25,7 @@ export default function NodeToolbarPrimary({
 
       {/* Add Node Button - Always visible */}
       <button
-        className="p-2 rounded-lg text-green-600 hover:bg-green-50 transition-colors duration-200"
+        className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200"
         onClick={(e) => { e.stopPropagation(); onAddChild?.(node.id); }}
         title="Add connected child node (Shift+N)"
       >
@@ -37,7 +37,7 @@ export default function NodeToolbarPrimary({
 
       {/* Delete Node Button - Always visible */}
       <button
-        className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors duration-200"
+        className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200"
         onClick={(e) => { e.stopPropagation(); onRequestDelete?.(node.id); }}
         title="Delete node (Delete/Backspace)"
       >
@@ -51,7 +51,7 @@ export default function NodeToolbarPrimary({
       {/* Detach Node Button - Always visible if node has a parent connection */}
       {hasParent && (
         <button
-          className="p-2 rounded-lg text-orange-600 hover:bg-orange-50 transition-colors duration-200"
+          className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200"
           onClick={(e) => { e.stopPropagation(); onRequestDetach?.(node.id); }}
           title="Detach from parent node (Shift+D)"
         >

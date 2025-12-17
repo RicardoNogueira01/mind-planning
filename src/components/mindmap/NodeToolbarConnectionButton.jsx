@@ -11,8 +11,8 @@ const NodeToolbarConnectionButton = ({
     <button
       className={`p-2 rounded-lg transition-all duration-200 ${
         isActive
-          ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30 ring-2 ring-blue-300 animate-pulse'
-          : 'text-blue-600 hover:bg-blue-50'
+          ? 'bg-gray-800 text-white shadow-lg ring-2 ring-gray-400 animate-pulse'
+          : 'text-black hover:bg-gray-100'
       }`}
       onClick={(e) => {
         e.stopPropagation();

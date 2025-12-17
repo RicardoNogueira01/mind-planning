@@ -2366,7 +2366,7 @@ export default function MindMap({ mapId, onBack }) {
                     <>
                       <button
                         ref={(el) => { attachBtnRefs.current[node.id] = el; }}
-                        className="p-2 rounded-lg text-purple-600 hover:bg-purple-50 transition-colors duration-200 col-span-1"
+                        className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'attach'); }}
                         title="Manage file attachments"
                       >
@@ -2389,7 +2389,7 @@ export default function MindMap({ mapId, onBack }) {
                       
                       <button
                         ref={(el) => { notesBtnRefs.current[node.id] = el; }}
-                        className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors duration-200 col-span-1"
+                        className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'notes'); }}
                         title="Add or edit notes"
                       >
@@ -2411,7 +2411,7 @@ export default function MindMap({ mapId, onBack }) {
 
                       <button
                         ref={(el) => { emojiBtnRefs.current[node.id] = el; }}
-                        className="p-2 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors duration-200 col-span-1"
+                        className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'emoji'); }}
                         title="Choose emoji icon"
                       >
@@ -2429,7 +2429,7 @@ export default function MindMap({ mapId, onBack }) {
 
                       <button
                         ref={(el) => { tagBtnRefs.current[node.id] = el; }}
-                        className="p-2 rounded-lg text-teal-600 hover:bg-teal-50 transition-colors duration-200 col-span-1"
+                        className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'tags'); }}
                         title="Add or manage tags"
                       >
@@ -2461,7 +2461,7 @@ export default function MindMap({ mapId, onBack }) {
                     <>
                       <button
                         ref={(el) => { detailsBtnRefs.current[node.id] = el; }}
-                        className="p-2 rounded-lg text-indigo-600 hover:bg-indigo-50 transition-colors duration-200 col-span-1"
+                        className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'details'); }}
                         title="Edit priority, status, and description"
                       >
@@ -2506,7 +2506,7 @@ export default function MindMap({ mapId, onBack }) {
 
                       <button
                         ref={(el) => { dateBtnRefs.current[node.id] = el; }}
-                        className="p-2 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors duration-200 col-span-1"
+                        className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'date'); }}
                         title="Set due date"
                       >
@@ -2528,7 +2528,7 @@ export default function MindMap({ mapId, onBack }) {
 
                       <button
                         ref={(el) => { collaboratorBtnRefs.current[node.id] = el; }}
-                        className="p-2 rounded-lg text-cyan-600 hover:bg-cyan-50 transition-colors duration-200 col-span-1"
+                        className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
                         onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'collaborator'); }}
                         title="Assign team member"
                       >
@@ -2566,7 +2566,7 @@ export default function MindMap({ mapId, onBack }) {
                         <div className="relative">
                           <button
                             ref={(el) => { layoutBtnRefs.current[node.id] = el; }}
-                            className="p-2 rounded-lg text-purple-600 hover:bg-purple-50 transition-colors duration-200"
+                            className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200"
                             onClick={(e) => {
                               e.stopPropagation();
                               setNodeLayoutMenuOpen(nodeLayoutMenuOpen === node.id ? null : node.id);
@@ -2641,7 +2641,7 @@ export default function MindMap({ mapId, onBack }) {
                     {/* Delete button at the end - Always visible for non-root nodes */}
                     {node.id !== 'root' && (
                       <button
-                        className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors duration-200"
+                        className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200"
                         onClick={(e) => { e.stopPropagation(); setDeleteConfirmNodeId(node.id); }}
                         title="Delete node"
                       >

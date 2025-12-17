@@ -49,7 +49,7 @@ const MindMapToolbar = ({
         <div className={`flex ${isMobile ? 'flex-col w-full' : 'items-center'} gap-0.5`}>
           <button 
             onClick={onBack}
-            className={`${isMobile ? 'w-full' : ''} p-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group`}
+            className={`${isMobile ? 'w-full' : ''} p-2 rounded-lg text-black hover:bg-gray-100 transition-all duration-200 group`}
             title="Back to Dashboard"
           >
             <Home size={18} strokeWidth={2} className="mx-auto" />
@@ -57,7 +57,7 @@ const MindMapToolbar = ({
           
           <button 
             onClick={onImageAnalyze}
-            className={`${isMobile ? 'w-full' : ''} p-2 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 group`}
+            className={`${isMobile ? 'w-full' : ''} p-2 rounded-lg text-black hover:bg-gray-100 transition-all duration-200 group`}
             title="Analyze Image"
           >
             <Camera size={18} strokeWidth={2} className="mx-auto" />
@@ -76,8 +76,8 @@ const MindMapToolbar = ({
             }}
             className={`${isMobile ? 'w-full' : ''} p-2 rounded-lg transition-all duration-200 ${
               mode === 'cursor' && selectionType === 'simple' 
-                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25' 
-                : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                ? 'bg-gray-800 text-white shadow-lg' 
+                : 'text-black hover:bg-gray-100'
             }`}
             title="Selection Mode"
           >
@@ -91,8 +91,8 @@ const MindMapToolbar = ({
             }}
             className={`${isMobile ? 'w-full' : ''} p-2 rounded-lg transition-all duration-200 ${
               mode === 'cursor' && selectionType === 'multi' 
-                ? 'bg-green-500 text-white shadow-lg shadow-green-500/25' 
-                : 'text-gray-700 hover:bg-green-50 hover:text-green-600'
+                ? 'bg-gray-800 text-white shadow-lg' 
+                : 'text-black hover:bg-gray-100'
             }`}
             title="Multi-Select Mode"
           >
@@ -106,8 +106,8 @@ const MindMapToolbar = ({
             }}
             className={`${isMobile ? 'w-full' : ''} p-2 rounded-lg transition-all duration-200 ${
               mode === 'cursor' && selectionType === 'collaborator' 
-                ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/25' 
-                : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600'
+                ? 'bg-gray-800 text-white shadow-lg' 
+                : 'text-black hover:bg-gray-100'
             }`}
             title="Collaborator Mode"
           >
@@ -118,8 +118,8 @@ const MindMapToolbar = ({
             onClick={() => setMode('pan')}
             className={`${isMobile ? 'w-full' : ''} p-2 rounded-lg transition-all duration-200 ${
               mode === 'pan' 
-                ? 'bg-green-500 text-white shadow-lg shadow-green-500/25' 
-                : 'text-gray-700 hover:bg-green-50 hover:text-green-600'
+                ? 'bg-gray-800 text-white shadow-lg' 
+                : 'text-black hover:bg-gray-100'
             }`}
             title="Pan Mode"
           >
