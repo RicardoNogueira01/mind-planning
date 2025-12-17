@@ -163,6 +163,15 @@ export default function ConnectionsSvg({
         // Choose path computation based on connection style
         let pathData, labelPoint, start, end;
         
+        // For orthogonal styles, auto-detect direction based on node positions
+        const fromCenterX = (fromPos.left + fromPos.right) / 2;
+        const fromCenterY = (fromPos.top + fromPos.bottom) / 2;
+        // Use existing toCenterX and toCenterY if already declared above, otherwise declare here
+        // (If already declared in a higher scope, do not redeclare)
+        // Only calculate dx and dy here
+        const dx = Math.abs(((toPos.left + toPos.right) / 2) - fromCenterX);
+        const dy = Math.abs(((toPos.top + toPos.bottom) / 2) - fromCenterY);
+        
         if (connectionStyle === 'orthogonal-h') {
           // Horizontal tree: orthogonal connections (left-to-right)
           const result = computeOrthogonalPath(fromPos, toPos, 'horizontal');
@@ -171,8 +180,10 @@ export default function ConnectionsSvg({
           start = result.start;
           end = result.end;
         } else if (connectionStyle === 'orthogonal-v') {
-          // Vertical tree: orthogonal connections (top-to-bottom)
-          const result = computeOrthogonalPath(fromPos, toPos, 'vertical');
+          // Auto-detect: use vertical brackets if child is mostly below/above
+          // use horizontal brackets if child is mostly left/right
+          const autoDirection = dy >= dx * 0.3 ? 'vertical' : 'horizontal';
+          const result = computeOrthogonalPath(fromPos, toPos, autoDirection);
           pathData = result.d;
           labelPoint = result.label;
           start = result.start;

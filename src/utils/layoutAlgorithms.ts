@@ -213,8 +213,8 @@ function applyTreeLayout(
   
   // For horizontal (org-chart): parent above, children spread left-right
   // For vertical: parent left, children spread up-down
-  const levelSpacing = direction === 'horizontal' ? 100 : NODE_WIDTH + 60; // Distance parent-to-child
-  const siblingSpacing = direction === 'horizontal' ? NODE_WIDTH + 20 : NODE_HEIGHT + 15; // Distance between siblings
+  const levelSpacing = direction === 'horizontal' ? 120 : NODE_WIDTH + 80; // Distance parent-to-child
+  const siblingSpacing = direction === 'horizontal' ? NODE_WIDTH + 40 : NODE_HEIGHT + 25; // Distance between siblings
   
   // Build tree structure
   const nodeMap = new Map(nodes.map(n => [n.id, n]));
