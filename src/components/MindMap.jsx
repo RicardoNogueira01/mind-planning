@@ -26,7 +26,6 @@ import EmojiPicker from './popups/EmojiPicker';
 import NotesPopup from './popups/NotesPopup';
 import TagsPopup from './popups/TagsPopup';
 import PropertiesPanel from './popups/PropertiesPanel';
-import DueDatePicker from './popups/DueDatePicker';
 import AttachmentsPopup from './popups/AttachmentsPopup';
 import CollaboratorPicker from './popups/CollaboratorPicker';
 import ImageAnalyzerModal from './mindmap/ImageAnalyzerModal';
@@ -131,7 +130,6 @@ export default function MindMap({ mapId, onBack }) {
 
   // Per-node button anchor refs for popovers
   const detailsBtnRefs = useRef({});
-  const dateBtnRefs = useRef({});
   const attachBtnRefs = useRef({});
   const notesBtnRefs = useRef({});
   const tagBtnRefs = useRef({});
@@ -2481,6 +2479,7 @@ export default function MindMap({ mapId, onBack }) {
                         status={node.status}
                         description={node.description}
                         startDate={node.startDate}
+                        dueDate={node.dueDate}
                         onPriorityChange={(priority) => setNodes(prevNodes => prevNodes.map(n => n.id === node.id ? { ...n, priority } : n))}
                         onStatusChange={(status) => {
                           setNodes(prevNodes => prevNodes.map(n => {
@@ -2503,29 +2502,8 @@ export default function MindMap({ mapId, onBack }) {
                         }}
                         onDescriptionChange={(description) => setNodes(prevNodes => prevNodes.map(n => n.id === node.id ? { ...n, description } : n))}
                         onStartDateChange={(startDate) => setNodes(prevNodes => prevNodes.map(n => n.id === node.id ? { ...n, startDate } : n))}
+                        onDueDateChange={(dueDate) => setNodes(prevNodes => prevNodes.map(n => n.id === node.id ? { ...n, dueDate } : n))}
                         onClose={() => togglePopup(node.id, 'details')}
-                      />
-
-                      <button
-                        ref={(el) => { dateBtnRefs.current[node.id] = el; }}
-                        className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
-                        onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'date'); }}
-                        title="Set due date"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
-                          <line x1="16" y1="2" x2="16" y2="6"></line>
-                          <line x1="8" y1="2" x2="8" y2="6"></line>
-                          <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                      </button>
-                      <DueDatePicker
-                        show={isPopupOpen(node.id, 'date')}
-                        anchorRef={dateBtnRefs.current[node.id] ? { current: dateBtnRefs.current[node.id] } : null}
-                        dueDate={node.dueDate}
-                        onDueDateChange={(dueDate) => setNodes(nodes.map(n => n.id === node.id ? { ...n, dueDate } : n))}
-                        onClearDate={() => setNodes(nodes.map(n => n.id === node.id ? { ...n, dueDate: '' } : n))}
-                        onClose={() => togglePopup(node.id, 'date')}
                       />
 
                       <button

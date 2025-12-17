@@ -23,6 +23,15 @@ export function useNodeOperations(
   const addStandaloneNode = useCallback(() => {
     const { x, y } = findStackedPosition();
     
+    // Generate default startDate
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const defaultStartDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+    
     const id = `node-${Date.now()}`;
     const newNode: Node = { 
       id, 
@@ -30,7 +39,8 @@ export function useNodeOperations(
       x, 
       y,
       bgColor: isDarkMode ? '#374151' : '#ffffff',
-      fontColor: isDarkMode ? '#f3f4f6' : '#2d3748'
+      fontColor: isDarkMode ? '#f3f4f6' : '#2d3748',
+      startDate: defaultStartDate
     };
     setNodes([...nodes, newNode]);
   }, [findStackedPosition, isDarkMode, nodes, setNodes]);
@@ -42,6 +52,15 @@ export function useNodeOperations(
     // Get position for new child
     const { x, y } = findStackedChildPosition(parentId, parent.x + NODE_WIDTH + 40, parent.y);
 
+    // Generate default startDate
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const defaultStartDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+
     const id = `node-${Date.now()}`;
     const child: Node = { 
       id, 
@@ -49,7 +68,8 @@ export function useNodeOperations(
       x, 
       y,
       bgColor: isDarkMode ? '#374151' : '#ffffff',
-      fontColor: isDarkMode ? '#f3f4f6' : '#2d3748'
+      fontColor: isDarkMode ? '#f3f4f6' : '#2d3748',
+      startDate: defaultStartDate
     };
 
     // Add new child
