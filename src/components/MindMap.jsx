@@ -22,6 +22,8 @@ import CopiedNotification from './mindmap/CopiedNotification';
 import NodeToolbarPrimary from './mindmap/NodeToolbarPrimary';
 import NodeToolbarConnectionButton from './mindmap/NodeToolbarConnectionButton';
 import NodeToolbarSettingsToggle from './mindmap/NodeToolbarSettingsToggle';
+import NodeToolbarBackgroundColor from './mindmap/NodeToolbarBackgroundColor';
+import NodeToolbarFontColor from './mindmap/NodeToolbarFontColor';
 import EmojiPicker from './popups/EmojiPicker';
 import NotesPopup from './popups/NotesPopup';
 import TagsPopup from './popups/TagsPopup';
@@ -36,12 +38,12 @@ import ListView from './mindmap/views/ListView';
 import AnalyticsView from './mindmap/views/AnalyticsView';
 
 // Enhanced Features
-import { 
-  AITaskDecomposer, 
-  DependencyAnalyzer, 
-  WorkloadHeatmap, 
-  TimeTravel, 
-  FocusMode, 
+import {
+  AITaskDecomposer,
+  DependencyAnalyzer,
+  WorkloadHeatmap,
+  TimeTravel,
+  FocusMode,
   RiskMatrix,
   BudgetTracker,
   ResourceMatrix,
@@ -77,13 +79,13 @@ export default function MindMap({ mapId, onBack }) {
   // Detect if mobile/tablet
   const isMobileOrTablet = window.innerWidth < 1024; // lg breakpoint
   const initialZoom = isMobileOrTablet ? 0.7 : 1;
-  
+
   // Minimal, compiling scaffold to restore the app while we refactor
   const [nodes, setNodes] = useState([
-    { 
-      id: 'root', 
-      text: 'Central Task', 
-      x: Math.round(window.innerWidth / 2), 
+    {
+      id: 'root',
+      text: 'Central Task',
+      x: Math.round(window.innerWidth / 2),
       y: Math.round(window.innerHeight / 2),
       bgColor: '#ffffff',
       fontColor: '#2d3748'
@@ -98,25 +100,25 @@ export default function MindMap({ mapId, onBack }) {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchList, setShowSearchList] = useState(false);
-  
+
   // Touch/mobile state
   const [lastTouchDistance, setLastTouchDistance] = useState(null);
   const [touchStartPos, setTouchStartPos] = useState(null);
   const [isTouchDraggingNode, setIsTouchDraggingNode] = useState(false);
-  
+
   // Collaborator selection mode state
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionRect, setSelectionRect] = useState(null);
   const [selectionStart, setSelectionStart] = useState({ x: 0, y: 0 });
   const [nodeGroups, setNodeGroups] = useState([]); // Groups of nodes assigned to collaborators with visual shapes
-  
+
   // Group management UI states
   const [openGroupMenuId, setOpenGroupMenuId] = useState(null); // Popup menu for group
   const [hudGroupId, setHudGroupId] = useState(null); // Shows the small quick-actions HUD near a group
   const [movingGroupId, setMovingGroupId] = useState(null); // When set, group box becomes draggable
   const [isDraggingGroup, setIsDraggingGroup] = useState(false);
   const [resizingGroupId, setResizingGroupId] = useState(null); // When set, group box shows resize handles
-  
+
   const [expandedNodeToolbars, setExpandedNodeToolbars] = useState({}); // { [nodeId]: bool } - Per-node toolbar expansion
   const [popupOpenFor, setPopupOpenFor] = useState({}); // { [nodeId]: { [popupName]: bool } }
   const [showShapesPalette, setShowShapesPalette] = useState(false); // Mobile shapes palette toggle
@@ -161,7 +163,7 @@ export default function MindMap({ mapId, onBack }) {
     { id: 2, name: 'John Doe', timestamp: new Date(Date.now() - 7200000).toISOString(), permission: 'edit' },
     { id: 3, name: 'Jane Smith', timestamp: new Date(Date.now() - 86400000).toISOString(), permission: 'view' },
   ]);
-  
+
   // Group membership dialog state
   const [groupMembershipDialog, setGroupMembershipDialog] = useState({
     show: false,
@@ -178,7 +180,7 @@ export default function MindMap({ mapId, onBack }) {
   const [showEnhancedPanel, setShowEnhancedPanel] = useState(null); // 'ai' | 'dependencies' | 'workload' | 'timetravel' | 'focus' | 'risk' | 'budget' | 'resources' | 'expenses'
   const [projectSnapshots, setProjectSnapshots] = useState([]);
   const [focusTaskNode, setFocusTaskNode] = useState(null);
-  
+
   // Budget and Resource Management State
   const [projectBudget, setProjectBudget] = useState(50000); // Total project budget
   const [hourlyRates, setHourlyRates] = useState({
@@ -195,16 +197,16 @@ export default function MindMap({ mapId, onBack }) {
   // HELPER FUNCTIONS (must be before hooks that use them)
   // ============================================
   const getNodeGroup = (nodeId) => {
-    return nodeGroups.find(group => 
+    return nodeGroups.find(group =>
       group.nodeIds && group.nodeIds.includes(nodeId)
     );
   };
-  
+
   const constrainPositionToGroup = (x, y, groupBoundingBox) => {
     const nodeWidth = 300;
     const nodeHeight = 56;
     const padding = 10; // Espaço mínimo das bordas
-    
+
     // IMPORTANTE: x,y representa o CENTRO do node
     // NodeCard renderiza em: left: node.x - 150, top: node.y - 42
     // Então as bordas reais do node são:
@@ -212,17 +214,17 @@ export default function MindMap({ mapId, onBack }) {
     // right: x + 150
     // top: y - 42  
     // bottom: y + 14 (y - 42 + 56)
-    
+
     const nodeLeft = x - 150;
     const nodeRight = x + 150;
     const nodeTop = y - 42;
     const nodeBottom = y + 14;
-    
+
     const groupLeft = groupBoundingBox.x;
     const groupRight = groupBoundingBox.x + groupBoundingBox.width;
     const groupTop = groupBoundingBox.y;
     const groupBottom = groupBoundingBox.y + groupBoundingBox.height;
-    
+
     // Calcular novo x (centro) garantindo que as bordas fiquem dentro
     let constrainedX = x;
     if (nodeLeft < groupLeft + padding) {
@@ -230,7 +232,7 @@ export default function MindMap({ mapId, onBack }) {
     } else if (nodeRight > groupRight - padding) {
       constrainedX = groupRight - padding - 150; // Ajustar para o centro
     }
-    
+
     // Calcular novo y (centro vertical) garantindo que as bordas fiquem dentro  
     let constrainedY = y;
     if (nodeTop < groupTop + padding) {
@@ -238,7 +240,7 @@ export default function MindMap({ mapId, onBack }) {
     } else if (nodeBottom > groupBottom - padding) {
       constrainedY = groupBottom - padding - 14; // Ajustar para o centro (y - 42 + 56 = y + 14)
     }
-    
+
     return {
       x: constrainedX,
       y: constrainedY
@@ -249,7 +251,7 @@ export default function MindMap({ mapId, onBack }) {
   // HOOKS: Extract business logic
   // ============================================
   const positioning = useNodePositioning(nodes, connections);
-  
+
   const nodeOps = useNodeOperations(
     nodes,
     connections,
@@ -396,7 +398,7 @@ export default function MindMap({ mapId, onBack }) {
       if (!canvasRef.current) return;
       // Only zoom if the mouse is over the canvas
       if (!canvasRef.current.contains(e.target)) return;
-      
+
       e.preventDefault();
       const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
       setZoom(prevZoom => {
@@ -472,7 +474,7 @@ export default function MindMap({ mapId, onBack }) {
       // Update selected nodes based on mode
       if (selectedIds.length > 0) {
         selection.selectNodesByIds(selectedIds);
-        
+
         // Show collaborator dialog only in collaborator mode
         if (selectionType === 'collaborator') {
           setShowCollaboratorDialog(true);
@@ -505,10 +507,10 @@ export default function MindMap({ mapId, onBack }) {
       // If connection already exists, do nothing (keep connection mode active)
       return;
     }
-    
+
     // Check if Ctrl (Windows/Linux) or Cmd (Mac) key is pressed
     const isMultiSelect = event && (event.ctrlKey || event.metaKey);
-    
+
     if (isMultiSelect) {
       // Multi-select mode: use hook's toggle
       selection.toggleSelectNode(id);
@@ -531,12 +533,12 @@ export default function MindMap({ mapId, onBack }) {
   const detachNodeFromParent = (nodeId) => {
     // Find all parent connections for this node
     const parentConnections = connections.filter(conn => conn.to === nodeId);
-    
+
     if (parentConnections.length === 0) {
       setDetachConfirmNodeId(null);
       return;
     }
-    
+
     // If node has multiple parents, show selection popup
     if (parentConnections.length > 1) {
       setParentSelectionState({
@@ -554,13 +556,13 @@ export default function MindMap({ mapId, onBack }) {
       setDetachConfirmNodeId(null);
     }
   };
-  
+
   // Remove specific parent connection
   const removeParentConnection = (nodeId, parentId) => {
     setConnections(prev => prev.filter(conn => !(conn.from === parentId && conn.to === nodeId)));
     setParentSelectionState(null);
   };
-  
+
   // Generate share link
   const generateShareLink = () => {
     const baseUrl = globalThis.location.origin;
@@ -568,13 +570,13 @@ export default function MindMap({ mapId, onBack }) {
     const link = `${baseUrl}/shared/${shareId}?permission=${sharePermission}`;
     setShareLink(link);
   };
-  
+
   // Remove visitor access
   const removeVisitorAccess = (visitorId) => {
     setShareVisitors(prev => prev.filter(visitor => visitor.id !== visitorId));
     // TODO: Add API call to revoke access on backend
   };
-  
+
   // Copy share link to clipboard
   const copyShareLink = async () => {
     try {
@@ -585,30 +587,30 @@ export default function MindMap({ mapId, onBack }) {
       console.error('Failed to copy:', err);
     }
   };
-  
+
   // Toggle bookmark
   const toggleBookmark = () => {
     setIsBookmarked(!isBookmarked);
     // TODO: Save to backend/localStorage
   };
-  
+
   // Apply template
   const handleApplyTemplate = (template) => {
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
-    
+
     const { nodes: newNodes, connections: newConns } = instantiateTemplate(template, {
       centerX,
       centerY,
       scaleNodes: 1,
       preserveColors: true
     });
-    
+
     setNodes(newNodes);
     setConnections(newConns);
     setShowTemplateGallery(false);
   };
-  
+
   // Apply auto-layout
   const handleApplyLayout = (layoutType) => {
     const result = applyLayout(
@@ -618,7 +620,7 @@ export default function MindMap({ mapId, onBack }) {
       window.innerWidth,
       window.innerHeight
     );
-    
+
     setNodes(result.nodes);
     setCurrentLayoutType(layoutType); // Track the layout for connection style
     setShowLayoutMenu(false);
@@ -629,7 +631,7 @@ export default function MindMap({ mapId, onBack }) {
     // Find all direct children of this node
     const childConnections = connections.filter(conn => conn.from === parentNodeId);
     const childNodeIds = childConnections.map(conn => conn.to);
-    
+
     if (childNodeIds.length === 0) {
       setNodeLayoutMenuOpen(null);
       return; // No children to layout
@@ -656,7 +658,7 @@ export default function MindMap({ mapId, onBack }) {
     // Calculate offset to position children relative to parent, not centered in canvas
     const layoutParent = result.nodes.find(n => n.id === parentNodeId);
     if (!layoutParent) return;
-    
+
     const offsetX = parentNode.x - layoutParent.x;
     const offsetY = parentNode.y - layoutParent.y;
 
@@ -678,7 +680,7 @@ export default function MindMap({ mapId, onBack }) {
     setNodes(updatedNodes);
     setNodeLayoutMenuOpen(null);
   };
-  
+
 
 
   // Derived selections for focus mode
@@ -693,18 +695,18 @@ export default function MindMap({ mapId, onBack }) {
 
   const nodePositions = React.useMemo(() => {
     const map = {};
-    
-    for (const n of nodes) { 
+
+    for (const n of nodes) {
       // Get actual DOM dimensions for accurate bounding box
       const element = document.querySelector(`[data-node-id="${n.id}"]`);
-      
+
       if (element) {
         const rect = element.getBoundingClientRect();
-        
+
         // For now, use actual DOM width/height
         const actualWidth = rect.width;
         const actualHeight = rect.height;
-        
+
         map[n.id] = {
           left: n.x - 150,
           top: n.y - 42,
@@ -738,12 +740,12 @@ export default function MindMap({ mapId, onBack }) {
   // Handle analyzed image data and create mind map
   const handleImageAnalyze = (data) => {
     const { centralNode, nodes: branchNodes } = data;
-    
+
     // Get canvas center
     const canvasRect = canvasRef.current?.getBoundingClientRect();
     const centerX = canvasRect ? (canvasRect.width / 2) : 500;
     const centerY = canvasRect ? (canvasRect.height / 2) : 400;
-    
+
     // Create central node
     const centralNodeId = `node-${Date.now()}`;
     const centralNodeObj = {
@@ -757,19 +759,19 @@ export default function MindMap({ mapId, onBack }) {
       fontColor: centralNode.fontColor,
       shape: 'rectangle'
     };
-    
+
     // Create branch nodes and connections
     const newNodes = [centralNodeObj];
     const newConnections = [];
-    
+
     branchNodes.forEach((branchNode, index) => {
       const { angle, distance } = branchNode.relativePosition;
       const angleRad = (angle * Math.PI) / 180;
-      
+
       // Calculate position using polar coordinates
       const x = centerX + distance * Math.cos(angleRad);
       const y = centerY + distance * Math.sin(angleRad);
-      
+
       const nodeId = `node-${Date.now()}-${index}`;
       newNodes.push({
         id: nodeId,
@@ -782,7 +784,7 @@ export default function MindMap({ mapId, onBack }) {
         fontColor: branchNode.fontColor,
         shape: 'rectangle'
       });
-      
+
       // Create connection from central node to branch node
       newConnections.push({
         id: `conn-${Date.now()}-${index}`,
@@ -790,11 +792,11 @@ export default function MindMap({ mapId, onBack }) {
         to: nodeId
       });
     });
-    
+
     // Add all nodes and connections to state
     setNodes(prev => [...prev, ...newNodes]);
     setConnections(prev => [...prev, ...newConnections]);
-    
+
     // Close modal
     setShowImageAnalyzer(false);
     setAnalyzedImagePreview(null);
@@ -840,7 +842,7 @@ export default function MindMap({ mapId, onBack }) {
   const isPopupOpen = (nodeId, popupName) => popupOpenFor[nodeId]?.[popupName] === true;
   const togglePopup = (nodeId, popupName) => {
     const isCurrentlyOpen = isPopupOpen(nodeId, popupName);
-    
+
     // Close all popups for this node, then open the requested one (if it was closed)
     setPopupOpenFor(prev => ({
       ...prev,
@@ -859,23 +861,23 @@ export default function MindMap({ mapId, onBack }) {
       }
     }));
   };
-  
+
   // Group membership helpers
   const isNodeInGroupSpace = (nodeX, nodeY, group) => {
     const { boundingBox } = group;
-    
+
     // nodeX, nodeY representa o CENTRO do node
     // NodeCard renderiza em: left: node.x - 150, top: node.y - 42
     const nodeLeft = nodeX - 150;
     const nodeRight = nodeX + 150;
     const nodeTop = nodeY - 42;
     const nodeBottom = nodeY + 14; // nodeY - 42 + 56
-    
+
     const groupLeft = boundingBox.x;
     const groupRight = boundingBox.x + boundingBox.width;
     const groupTop = boundingBox.y;
     const groupBottom = boundingBox.y + boundingBox.height;
-    
+
     // Para detectar quando arrastar para dentro, verificar se o centro está dentro
     // Isso torna mais intuitivo - não precisa arrastar todo o node
     const centerIsInside = (
@@ -884,18 +886,18 @@ export default function MindMap({ mapId, onBack }) {
       nodeY >= groupTop &&
       nodeY <= groupBottom
     );
-    
+
     return centerIsInside; // Usa o centro para detectar entrada no grupo
   };
   const checkNodeGroupMembership = (nodeId) => {
     const node = nodes.find(n => n.id === nodeId);
     if (!node) return;
-    
+
     // Check each group to see if the node is now in its space
     for (const group of nodeGroups) {
       // Skip if node is already in this group
       if (group.nodeIds && group.nodeIds.includes(nodeId)) continue;
-      
+
       if (isNodeInGroupSpace(node.x, node.y, group)) {
         // Node is in group space but not a member - show dialog
         setGroupMembershipDialog({
@@ -908,14 +910,14 @@ export default function MindMap({ mapId, onBack }) {
       }
     }
   };
-  
+
   const addNodeToGroup = (nodeId, group) => {
     // Add animation class to node
     setJoiningGroupNodes(prev => new Set(prev).add(nodeId));
-    
+
     // Add pulse animation to group
     setPulsingGroups(prev => new Set(prev).add(group.id));
-    
+
     // Update group to include the node
     setNodeGroups(prev => prev.map(g => {
       if (g.id === group.id) {
@@ -926,15 +928,15 @@ export default function MindMap({ mapId, onBack }) {
       }
       return g;
     }));
-    
+
     // Collect all collaborator IDs from the group
     const collaboratorIds = [];
-    
+
     // Add primary collaborator ID
     if (group.collaborator && group.collaborator.id) {
       collaboratorIds.push(group.collaborator.id);
     }
-    
+
     // Add extra collaborators IDs
     if (group.extraCollaborators && Array.isArray(group.extraCollaborators)) {
       group.extraCollaborators.forEach(collab => {
@@ -943,21 +945,21 @@ export default function MindMap({ mapId, onBack }) {
         }
       });
     }
-    
+
     // Update node to add all collaborator IDs
     if (collaboratorIds.length > 0) {
       setNodes(prev => prev.map(n => {
         if (n.id === nodeId) {
           const existingCollabs = Array.isArray(n.collaborators) ? n.collaborators : [];
           const newCollabs = [...existingCollabs];
-          
+
           // Add each collaborator ID if not already present
           collaboratorIds.forEach(collabId => {
             if (!newCollabs.includes(collabId)) {
               newCollabs.push(collabId);
             }
           });
-          
+
           return {
             ...n,
             collaborators: newCollabs
@@ -966,7 +968,7 @@ export default function MindMap({ mapId, onBack }) {
         return n;
       }));
     }
-    
+
     // Remove animations after delay
     setTimeout(() => {
       setJoiningGroupNodes(prev => {
@@ -981,12 +983,12 @@ export default function MindMap({ mapId, onBack }) {
       });
     }, 600);
   };
-  
+
   const removeNodeFromGroup = (nodeId) => {
     // Find the group containing this node
     const group = getNodeGroup(nodeId);
     if (!group) return;
-    
+
     // Remove node from group's nodeIds
     setNodeGroups(prev => prev.map(g => {
       if (g.id === group.id) {
@@ -997,7 +999,7 @@ export default function MindMap({ mapId, onBack }) {
       }
       return g;
     }));
-    
+
     // Remove all collaborators from the group from this node
     const groupCollabIds = [];
     if (group.collaborator?.id) {
@@ -1008,7 +1010,7 @@ export default function MindMap({ mapId, onBack }) {
         if (collab?.id) groupCollabIds.push(collab.id);
       });
     }
-    
+
     if (groupCollabIds.length > 0) {
       setNodes(prev => prev.map(n => {
         if (n.id === nodeId) {
@@ -1055,7 +1057,7 @@ export default function MindMap({ mapId, onBack }) {
       return (
         <React.Fragment key={group.id}>
           {/* Group dashed area; gets highlighted when moving */}
-          <div 
+          <div
             className={isPulsing ? 'animate-pulse-ring' : ''}
             style={{
               position: 'absolute',
@@ -1077,7 +1079,7 @@ export default function MindMap({ mapId, onBack }) {
                   ? `0 0 0 4px ${collaborator.color}40, 0 0 20px ${collaborator.color}50`
                   : `0 0 0 1px ${collaborator.color}20`,
               transition: 'box-shadow 120ms ease-out, border 120ms ease-out, background 120ms ease-out'
-            }} 
+            }}
           />
 
           {/* If movingGroupId matches, render a draggable overlay for the group box */}
@@ -1095,28 +1097,28 @@ export default function MindMap({ mapId, onBack }) {
                     initialNodePositions[nodeId] = { x: node.x, y: node.y };
                   }
                 }
-                
+
                 const onMove = (ev) => {
                   const dx = (ev.clientX - start.x) / zoom;
                   const dy = (ev.clientY - start.y) / zoom;
                   setIsDraggingGroup(true);
-                  
+
                   // Update group bounding box
                   setNodeGroups(prev => prev.map(g => g.id === group.id ? { ...g, boundingBox: { ...startBB, x: startBB.x + dx, y: startBB.y + dy } } : g));
-                  
+
                   // Move all nodes in the group
                   setNodes(prev => prev.map(n => {
                     if (initialNodePositions[n.id]) {
-                      return { 
-                        ...n, 
-                        x: initialNodePositions[n.id].x + dx, 
-                        y: initialNodePositions[n.id].y + dy 
+                      return {
+                        ...n,
+                        x: initialNodePositions[n.id].x + dx,
+                        y: initialNodePositions[n.id].y + dy
                       };
                     }
                     return n;
                   }));
                 };
-                
+
                 const onUp = () => {
                   globalThis.removeEventListener('pointermove', onMove);
                   globalThis.removeEventListener('pointerup', onUp);
@@ -1200,7 +1202,7 @@ export default function MindMap({ mapId, onBack }) {
                   type="corner"
                 />
               ))}
-              
+
               {/* Edge handles */}
               {['n', 'e', 's', 'w'].map(edge => (
                 <ResizeHandle
@@ -1363,8 +1365,8 @@ export default function MindMap({ mapId, onBack }) {
 
               {/* Close */}
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <button 
-                  onClick={() => setOpenGroupMenuId(null)} 
+                <button
+                  onClick={() => setOpenGroupMenuId(null)}
                   style={{ fontSize: 12, color: '#6B7280', cursor: 'pointer', background: 'none', border: 'none', padding: '4px 8px' }}
                 >
                   Close
@@ -1390,15 +1392,15 @@ export default function MindMap({ mapId, onBack }) {
   const handleShapeDrop = (e, shapeType) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const getColor = (type) => (type === 'node' ? '#F3F4F6' : '#E5E7EB');
-    
+
     // Calculate canvas coordinates from viewport coordinates
     if (canvasRef.current) {
       const rect = canvasRef.current.getBoundingClientRect();
       const canvasX = e.clientX - rect.left - pan.x;
       const canvasY = e.clientY - rect.top - pan.y;
-      
+
       const builder = shapeBuilders[shapeType] || shapeBuilders.connector;
       const { nodes: newNodes, connections: newConns, mainId } = builder(canvasX, canvasY, getColor);
       setNodes(prev => prev.concat(newNodes));
@@ -1434,10 +1436,10 @@ export default function MindMap({ mapId, onBack }) {
         if (Array.isArray(data.nodes)) setNodes(data.nodes);
         if (Array.isArray(data.connections)) setConnections(data.connections);
       }
-    } catch {}
+    } catch { }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapId]);
-  
+
   React.useEffect(() => {
     if (!mapId) return;
     const payload = JSON.stringify({ nodes, connections });
@@ -1475,26 +1477,26 @@ export default function MindMap({ mapId, onBack }) {
       // Single touch - could be pan or node drag
       const touch = e.touches[0];
       setTouchStartPos({ x: touch.clientX, y: touch.clientY });
-      
+
       // Check if touching a node
       const target = document.elementFromPoint(touch.clientX, touch.clientY);
       const nodeElement = target?.closest('[data-node-id]');
-      
+
       if (nodeElement) {
         const nodeId = nodeElement.dataset.nodeId;
         const node = nodes.find(n => n.id === nodeId);
-        
+
         if (node && canvasRef.current) {
           const rect = canvasRef.current.getBoundingClientRect();
           setIsTouchDraggingNode(true);
           setTouchDragNodeId(nodeId);
-          
+
           // Calculate offset between touch point and node position (considering zoom)
           setTouchDragOffset({
             x: (touch.clientX - rect.left - dragging.pan.x) / zoom - node.x,
             y: (touch.clientY - rect.top - dragging.pan.y) / zoom - node.y,
           });
-          
+
           // Store initial positions for multi-select drag
           if (selectedNodes.includes(nodeId) && selectedNodes.length > 1) {
             const positions = {};
@@ -1530,27 +1532,27 @@ export default function MindMap({ mapId, onBack }) {
   const handleTouchMove = (e) => {
     if (e.touches.length === 1) {
       const touch = e.touches[0];
-      
+
       if (isTouchDraggingNode && touchDragNodeId && canvasRef.current) {
         // Drag the node - use RAF for smooth 60fps updates
         e.preventDefault();
-        
+
         // Store the latest touch position
         lastTouchPositionRef.current = { x: touch.clientX, y: touch.clientY };
-        
+
         // Cancel any pending animation frame
         if (touchAnimationFrameRef.current) {
           cancelAnimationFrame(touchAnimationFrameRef.current);
         }
-        
+
         // Schedule update on next frame
         touchAnimationFrameRef.current = requestAnimationFrame(() => {
           if (!canvasRef.current) return;
-          
+
           const rect = canvasRef.current.getBoundingClientRect();
           let newX = (lastTouchPositionRef.current.x - rect.left - dragging.pan.x) / zoom - touchDragOffset.x;
           let newY = (lastTouchPositionRef.current.y - rect.top - dragging.pan.y) / zoom - touchDragOffset.y;
-          
+
           // Check if node is in a group and constrain movement
           const group = getNodeGroup(touchDragNodeId);
           if (group && group.boundingBox) {
@@ -1558,18 +1560,18 @@ export default function MindMap({ mapId, onBack }) {
             newX = constrained.x;
             newY = constrained.y;
           }
-          
+
           // If multiple nodes are selected, move them all together
           if (selectedNodes.includes(touchDragNodeId) && selectedNodes.length > 1 && Object.keys(touchInitialPositions).length > 0) {
             const deltaX = newX - touchInitialPositions[touchDragNodeId].x;
             const deltaY = newY - touchInitialPositions[touchDragNodeId].y;
-            
+
             setNodes(prev =>
               prev.map(n => {
                 if (selectedNodes.includes(n.id) && touchInitialPositions[n.id]) {
                   let finalX = touchInitialPositions[n.id].x + deltaX;
                   let finalY = touchInitialPositions[n.id].y + deltaY;
-                  
+
                   // Apply group constraints to each selected node if applicable
                   const nodeGroup = getNodeGroup(n.id);
                   if (nodeGroup && nodeGroup.boundingBox) {
@@ -1577,7 +1579,7 @@ export default function MindMap({ mapId, onBack }) {
                     finalX = constrained.x;
                     finalY = constrained.y;
                   }
-                  
+
                   return {
                     ...n,
                     x: finalX,
@@ -1595,7 +1597,7 @@ export default function MindMap({ mapId, onBack }) {
               )
             );
           }
-          
+
           touchAnimationFrameRef.current = null;
         });
       } else if (isTouchPanning) {
@@ -1603,9 +1605,9 @@ export default function MindMap({ mapId, onBack }) {
         if (touchAnimationFrameRef.current) {
           cancelAnimationFrame(touchAnimationFrameRef.current);
         }
-        
+
         lastTouchPositionRef.current = { x: touch.clientX, y: touch.clientY };
-        
+
         touchAnimationFrameRef.current = requestAnimationFrame(() => {
           dragging.setPan({
             x: lastTouchPositionRef.current.x - touchPanRef.current.startX,
@@ -1623,14 +1625,14 @@ export default function MindMap({ mapId, onBack }) {
         touch2.clientX - touch1.clientX,
         touch2.clientY - touch1.clientY
       );
-      
+
       if (lastTouchDistance) {
         const delta = distance - lastTouchDistance;
         const zoomSpeed = 0.005;
         const newZoom = Math.max(0.1, Math.min(3, zoom + delta * zoomSpeed));
         setZoom(newZoom);
       }
-      
+
       setLastTouchDistance(distance);
     }
   };
@@ -1641,10 +1643,10 @@ export default function MindMap({ mapId, onBack }) {
       cancelAnimationFrame(touchAnimationFrameRef.current);
       touchAnimationFrameRef.current = null;
     }
-    
+
     const wasDraggingNode = touchDragNodeId !== null;
     const draggedNodeId = touchDragNodeId;
-    
+
     if (e.touches.length === 0) {
       setLastTouchDistance(null);
       setTouchStartPos(null);
@@ -1652,7 +1654,7 @@ export default function MindMap({ mapId, onBack }) {
       setTouchDragNodeId(null);
       setTouchInitialPositions({});
       setIsTouchPanning(false);
-      
+
       // Check if node was dragged and should join a group
       if (wasDraggingNode && draggedNodeId) {
         checkNodeGroupMembership(draggedNodeId);
@@ -1687,8 +1689,8 @@ export default function MindMap({ mapId, onBack }) {
       setNodes(prevNodes => [...prevNodes, updates]);
     } else {
       // Handle existing task update
-      setNodes(prevNodes => 
-        prevNodes.map(node => 
+      setNodes(prevNodes =>
+        prevNodes.map(node =>
           node.id === nodeId ? { ...node, ...updates } : node
         )
       );
@@ -1704,12 +1706,12 @@ export default function MindMap({ mapId, onBack }) {
         onMouseDown={(e) => {
           // Only deselect if clicking on canvas background AND not starting a node drag
           const clickedNode = e.target instanceof HTMLElement ? e.target.closest('[data-node-id]') : null;
-          
+
           if (!clickedNode && (e.target === e.currentTarget || e.target.closest('.mindmap-canvas-inner'))) {
             selection.clearSelection();
             setPopupOpenFor({});
           }
-          
+
           // Check if in collaborator or multi-select mode
           if (mode === 'cursor' && (selectionType === 'collaborator' || selectionType === 'multi')) {
             startSelection(e);
@@ -1727,7 +1729,7 @@ export default function MindMap({ mapId, onBack }) {
         onMouseUp={() => {
           stopSelection();
           const dragInfo = dragging.stopPanning();
-          
+
           // Check if node was dragged and should join a group
           if (dragInfo && dragInfo.wasDraggingNode && dragInfo.draggedNodeId) {
             checkNodeGroupMembership(dragInfo.draggedNodeId);
@@ -1771,63 +1773,62 @@ export default function MindMap({ mapId, onBack }) {
 
         {/* Back Button - Top Left for non-mindmap views */}
         {viewMode !== 'mindmap' && (
-        <div className="absolute top-2 md:top-4 left-2 md:left-4 z-30">
-          <button
-            onClick={onBack}
-            className="p-2.5 md:p-3 rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all duration-200 touch-manipulation"
-            title="Back to Dashboard"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-              <polyline points="9 22 9 12 15 12 15 22"></polyline>
-            </svg>
-          </button>
-        </div>
+          <div className="absolute top-2 md:top-4 left-2 md:left-4 z-30">
+            <button
+              onClick={onBack}
+              className="p-2.5 md:p-3 rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all duration-200 touch-manipulation"
+              title="Back to Dashboard"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+            </button>
+          </div>
         )}
 
         {/* Hamburger Menu - Top left for mindmap view */}
         {viewMode === 'mindmap' && (
-        <div className="absolute top-2 md:top-4 left-2 md:left-4 z-40">
-          {/* Hamburger Menu Button - Mobile/Tablet Only, mindmap view only */}
-          <button
-            onClick={() => setShowMobileToolbar(!showMobileToolbar)}
-            className={`lg:hidden p-2.5 rounded-xl shadow-lg border transition-all duration-200 touch-manipulation ${
-              showMobileToolbar
-                ? 'bg-blue-500 text-white border-blue-600'
-                : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300'
-            }`}
-            title={showMobileToolbar ? 'Hide toolbar' : 'Show toolbar'}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="12" x2="21" y2="12"></line>
-              <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-          </button>
-        </div>
+          <div className="absolute top-2 md:top-4 left-2 md:left-4 z-40">
+            {/* Hamburger Menu Button - Mobile/Tablet Only, mindmap view only */}
+            <button
+              onClick={() => setShowMobileToolbar(!showMobileToolbar)}
+              className={`lg:hidden p-2.5 rounded-xl shadow-lg border transition-all duration-200 touch-manipulation ${showMobileToolbar
+                  ? 'bg-blue-500 text-white border-blue-600'
+                  : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300'
+                }`}
+              title={showMobileToolbar ? 'Hide toolbar' : 'Show toolbar'}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+          </div>
         )}
 
         {/* Search Bar - Below toolbar for mindmap view */}
         {viewMode === 'mindmap' && (
-        <div className="absolute top-16 md:top-20 left-2 md:left-4 z-30">
-          <MindMapSearchBar
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            showSearchList={showSearchList}
-            setShowSearchList={setShowSearchList}
-            nodes={nodes}
-            setSelectedNode={(id) => id ? selection.selectSingleNode(id) : selection.clearSelection()}
-            setPan={setPan}
-            deleteNode={deleteNode}
-            deleteNodeCascade={deleteNodeCascade}
-          />
-        </div>
+          <div className="absolute top-16 md:top-20 left-2 md:left-4 z-30">
+            <MindMapSearchBar
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              showSearchList={showSearchList}
+              setShowSearchList={setShowSearchList}
+              nodes={nodes}
+              setSelectedNode={(id) => id ? selection.selectSingleNode(id) : selection.clearSelection()}
+              setPan={setPan}
+              deleteNode={deleteNode}
+              deleteNodeCascade={deleteNodeCascade}
+            />
+          </div>
         )}
 
         {/* View Selector - Top Center on desktop, Top Right below buttons on mobile */}
         <div className="absolute top-2 md:top-4 left-1/2 md:left-1/2 right-2 md:right-auto transform md:-translate-x-1/2 z-20 hidden md:block">
-          <ViewSelector 
-            currentView={viewMode} 
+          <ViewSelector
+            currentView={viewMode}
             onViewChange={setViewMode}
           />
         </div>
@@ -1837,171 +1838,169 @@ export default function MindMap({ mapId, onBack }) {
           <div className="flex flex-col md:flex-row items-end md:items-center gap-2">
             {/* View Selector - Mobile Only (below action buttons) */}
             <div className="md:hidden w-full flex justify-end">
-              <ViewSelector 
-                currentView={viewMode} 
+              <ViewSelector
+                currentView={viewMode}
                 onViewChange={setViewMode}
               />
             </div>
-            
+
             {/* Mindmap-only buttons */}
             {viewMode === 'mindmap' && (
-            <>
-              {/* Mobile: Single menu button */}
-              <div className="md:hidden relative">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowMobileActionsMenu(!showMobileActionsMenu);
-                  }}
-                  className="p-2.5 rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-gray-100 transition-all duration-200 touch-manipulation"
-                  title="Actions"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="1"></circle>
-                    <circle cx="12" cy="5" r="1"></circle>
-                    <circle cx="12" cy="19" r="1"></circle>
-                  </svg>
-                </button>
-
-                {/* Mobile Actions Dropdown */}
-                {showMobileActionsMenu && (
-                  <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-[70]">
-                    <button
-                      onClick={() => {
-                        setShowTemplateGallery(true);
-                        setShowMobileActionsMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-purple-50 transition-colors"
-                    >
-                      <LayoutTemplate className="w-5 h-5 text-purple-600" />
-                      <div className="flex-1 text-left">
-                        <div className="text-sm font-medium text-gray-900">Use Template</div>
-                        <div className="text-xs text-gray-500">Apply layout template</div>
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setShowLayoutMenu(true);
-                        setShowMobileActionsMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 transition-colors"
-                    >
-                      <Sparkles className="w-5 h-5 text-indigo-600" />
-                      <div className="flex-1 text-left">
-                        <div className="text-sm font-medium text-gray-900">Auto Layout</div>
-                        <div className="text-xs text-gray-500">Organize nodes</div>
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setShowShapesPalette(true);
-                        setShowMobileActionsMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 transition-colors"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="3" width="7" height="7"></rect>
-                        <rect x="14" y="3" width="7" height="7"></rect>
-                        <rect x="14" y="14" width="7" height="7"></rect>
-                        <rect x="3" y="14" width="7" height="7"></rect>
-                      </svg>
-                      <div className="flex-1 text-left">
-                        <div className="text-sm font-medium text-gray-900">Shapes</div>
-                        <div className="text-xs text-gray-500">Node shapes</div>
-                      </div>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Desktop: Individual buttons */}
-              <div className="hidden md:flex items-center gap-2">
-                {/* Template Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    setShowTemplateGallery(true);
-                    setShowShapesPalette(false);
-                  }}
-                  className="p-3 rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-all duration-200"
-                  title="Use Template"
-                >
-                  <LayoutTemplate className="w-5 h-5" />
-                </button>
-                
-                {/* Auto-Layout Button */}
-                <div className="relative">
+              <>
+                {/* Mobile: Single menu button */}
+                <div className="md:hidden relative">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setShowLayoutMenu(!showLayoutMenu);
-                      setShowShapesPalette(false);
+                      setShowMobileActionsMenu(!showMobileActionsMenu);
                     }}
-                    className={`p-3 rounded-xl shadow-lg border transition-all duration-200 ${
-                      showLayoutMenu
-                        ? 'bg-indigo-500 text-white border-indigo-600'
-                        : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300'
-                    }`}
-                    title="Auto Layout"
+                    className="p-2.5 rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-gray-100 transition-all duration-200 touch-manipulation"
+                    title="Actions"
                   >
-                    <Sparkles className="w-5 h-5" />
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="1"></circle>
+                      <circle cx="12" cy="5" r="1"></circle>
+                      <circle cx="12" cy="19" r="1"></circle>
+                    </svg>
                   </button>
-                  
-                  {/* Layout dropdown */}
-                  {showLayoutMenu && (
-                    <div className="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 p-2 z-[70] w-56">
-                      <h3 className="font-semibold text-sm text-gray-900 px-3 py-2 border-b">Choose Layout</h3>
-                      <div className="flex flex-col gap-1 pt-2">
-                        {[
-                          { type: 'force-directed', label: 'Force Directed', icon: '⚡', desc: 'Physics-based' },
-                          { type: 'tree-vertical', label: 'Tree (Vertical)', icon: '🌲', desc: 'Top to bottom' },
-                          { type: 'tree-horizontal', label: 'Tree (Horizontal)', icon: '🌳', desc: 'Left to right' },
-                          { type: 'radial', label: 'Radial', icon: '🎯', desc: 'Circular layers' },
-                          { type: 'circular', label: 'Circular', icon: '⭕', desc: 'Perfect circle' },
-                          { type: 'grid', label: 'Grid Snap', icon: '⚙️', desc: 'Align to grid' }
-                        ].map(layout => (
-                          <button
-                            key={layout.type}
-                            onClick={() => handleApplyLayout(layout.type)}
-                            className="flex items-center gap-3 px-3 py-2 text-left hover:bg-indigo-50 rounded-lg transition-colors group"
-                          >
-                            <span className="text-xl">{layout.icon}</span>
-                            <div className="flex-1">
-                              <div className="text-sm font-medium text-gray-900 group-hover:text-indigo-600">{layout.label}</div>
-                              <div className="text-xs text-gray-500">{layout.desc}</div>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
+
+                  {/* Mobile Actions Dropdown */}
+                  {showMobileActionsMenu && (
+                    <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-[70]">
+                      <button
+                        onClick={() => {
+                          setShowTemplateGallery(true);
+                          setShowMobileActionsMenu(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-purple-50 transition-colors"
+                      >
+                        <LayoutTemplate className="w-5 h-5 text-purple-600" />
+                        <div className="flex-1 text-left">
+                          <div className="text-sm font-medium text-gray-900">Use Template</div>
+                          <div className="text-xs text-gray-500">Apply layout template</div>
+                        </div>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowLayoutMenu(true);
+                          setShowMobileActionsMenu(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 transition-colors"
+                      >
+                        <Sparkles className="w-5 h-5 text-indigo-600" />
+                        <div className="flex-1 text-left">
+                          <div className="text-sm font-medium text-gray-900">Auto Layout</div>
+                          <div className="text-xs text-gray-500">Organize nodes</div>
+                        </div>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowShapesPalette(true);
+                          setShowMobileActionsMenu(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 transition-colors"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="7" height="7"></rect>
+                          <rect x="14" y="3" width="7" height="7"></rect>
+                          <rect x="14" y="14" width="7" height="7"></rect>
+                          <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        <div className="flex-1 text-left">
+                          <div className="text-sm font-medium text-gray-900">Shapes</div>
+                          <div className="text-xs text-gray-500">Node shapes</div>
+                        </div>
+                      </button>
                     </div>
                   )}
                 </div>
 
-                {/* Shapes Palette Toggle */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowShapesPalette(!showShapesPalette);
-                  }}
-                  className={`p-3 rounded-xl shadow-lg border transition-all duration-200 ${
-                    showShapesPalette
-                      ? 'bg-indigo-500 text-white border-indigo-600'
-                      : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300'
-                  }`}
-                  title={showShapesPalette ? 'Hide shapes' : 'Show shapes'}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="14" width="7" height="7"></rect>
-                    <rect x="3" y="14" width="7" height="7"></rect>
-                  </svg>
-                </button>
-              </div>
-            </>
+                {/* Desktop: Individual buttons */}
+                <div className="hidden md:flex items-center gap-2">
+                  {/* Template Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setShowTemplateGallery(true);
+                      setShowShapesPalette(false);
+                    }}
+                    className="p-3 rounded-xl bg-white/95 text-gray-700 shadow-lg border border-gray-200/50 hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-all duration-200"
+                    title="Use Template"
+                  >
+                    <LayoutTemplate className="w-5 h-5" />
+                  </button>
+
+                  {/* Auto-Layout Button */}
+                  <div className="relative">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowLayoutMenu(!showLayoutMenu);
+                        setShowShapesPalette(false);
+                      }}
+                      className={`p-3 rounded-xl shadow-lg border transition-all duration-200 ${showLayoutMenu
+                          ? 'bg-indigo-500 text-white border-indigo-600'
+                          : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300'
+                        }`}
+                      title="Auto Layout"
+                    >
+                      <Sparkles className="w-5 h-5" />
+                    </button>
+
+                    {/* Layout dropdown */}
+                    {showLayoutMenu && (
+                      <div className="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 p-2 z-[70] w-56">
+                        <h3 className="font-semibold text-sm text-gray-900 px-3 py-2 border-b">Choose Layout</h3>
+                        <div className="flex flex-col gap-1 pt-2">
+                          {[
+                            { type: 'force-directed', label: 'Force Directed', icon: '⚡', desc: 'Physics-based' },
+                            { type: 'tree-vertical', label: 'Tree (Vertical)', icon: '🌲', desc: 'Top to bottom' },
+                            { type: 'tree-horizontal', label: 'Tree (Horizontal)', icon: '🌳', desc: 'Left to right' },
+                            { type: 'radial', label: 'Radial', icon: '🎯', desc: 'Circular layers' },
+                            { type: 'circular', label: 'Circular', icon: '⭕', desc: 'Perfect circle' },
+                            { type: 'grid', label: 'Grid Snap', icon: '⚙️', desc: 'Align to grid' }
+                          ].map(layout => (
+                            <button
+                              key={layout.type}
+                              onClick={() => handleApplyLayout(layout.type)}
+                              className="flex items-center gap-3 px-3 py-2 text-left hover:bg-indigo-50 rounded-lg transition-colors group"
+                            >
+                              <span className="text-xl">{layout.icon}</span>
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900 group-hover:text-indigo-600">{layout.label}</div>
+                                <div className="text-xs text-gray-500">{layout.desc}</div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Shapes Palette Toggle */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowShapesPalette(!showShapesPalette);
+                    }}
+                    className={`p-3 rounded-xl shadow-lg border transition-all duration-200 ${showShapesPalette
+                        ? 'bg-indigo-500 text-white border-indigo-600'
+                        : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300'
+                      }`}
+                    title={showShapesPalette ? 'Hide shapes' : 'Show shapes'}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="7" height="7"></rect>
+                      <rect x="14" y="3" width="7" height="7"></rect>
+                      <rect x="14" y="14" width="7" height="7"></rect>
+                      <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                  </button>
+                </div>
+              </>
             )}
 
             {/* Share Button - Always visible */}
@@ -2023,15 +2022,14 @@ export default function MindMap({ mapId, onBack }) {
                 <line x1="15.41" x2="8.59" y1="6.51" y2="10.49"></line>
               </svg>
             </button>
-            
+
             {/* Bookmark Button - Always visible */}
             <button
               onClick={toggleBookmark}
-              className={`p-2.5 md:p-3 rounded-xl shadow-lg border transition-all duration-200 ${
-                isBookmarked 
-                  ? 'bg-yellow-500 text-white border-yellow-600 hover:bg-yellow-600' 
+              className={`p-2.5 md:p-3 rounded-xl shadow-lg border transition-all duration-200 ${isBookmarked
+                  ? 'bg-yellow-500 text-white border-yellow-600 hover:bg-yellow-600'
                   : 'bg-white/95 text-gray-700 border-gray-200/50 hover:bg-yellow-50 hover:text-yellow-600 hover:border-yellow-300'
-              }`}
+                }`}
               title={isBookmarked ? 'Remove from favorites' : 'Add to favorites'}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -2043,7 +2041,7 @@ export default function MindMap({ mapId, onBack }) {
 
         {/* Connection Mode Banner */}
         {connectionFrom && (
-          <div 
+          <div
             className="fixed top-16 md:top-20 left-1/2 transform -translate-x-1/2 z-50 px-3 md:px-6 py-2 md:py-3 bg-blue-500 text-white rounded-full shadow-xl shadow-blue-500/40 flex items-center gap-2 md:gap-3 max-w-[90vw] md:max-w-none"
             style={{ animation: 'slideDown 0.3s ease-out' }}
           >
@@ -2052,7 +2050,7 @@ export default function MindMap({ mapId, onBack }) {
               <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
             </svg>
             <span className="font-medium text-xs md:text-sm">Tap another node to connect</span>
-            <button 
+            <button
               onClick={cancelConnection}
               className="ml-1 md:ml-2 p-1 hover:bg-blue-600 rounded-full transition-colors touch-manipulation flex-shrink-0"
               title="Cancel (Esc)"
@@ -2067,7 +2065,7 @@ export default function MindMap({ mapId, onBack }) {
 
         {/* Collaborator Mode Banner */}
         {mode === 'cursor' && selectionType === 'collaborator' && (
-          <div 
+          <div
             className="fixed top-16 md:top-20 left-1/2 transform -translate-x-1/2 z-50 px-3 md:px-6 py-2 md:py-3 bg-cyan-600 text-white rounded-lg shadow-xl shadow-cyan-600/40 flex items-center gap-2 md:gap-3 mx-2"
             style={{ animation: 'slideDown 0.3s ease-out', maxWidth: '90vw' }}
           >
@@ -2086,7 +2084,7 @@ export default function MindMap({ mapId, onBack }) {
 
         {/* Multi-Select Mode Banner */}
         {mode === 'cursor' && selectionType === 'multi' && (
-          <div 
+          <div
             className="fixed top-16 md:top-20 left-1/2 transform -translate-x-1/2 z-50 px-3 md:px-6 py-2 md:py-3 bg-green-600 text-white rounded-lg shadow-xl shadow-green-600/40 flex items-center gap-2 md:gap-3 mx-2"
             style={{ animation: 'slideDown 0.3s ease-out', maxWidth: '90vw' }}
           >
@@ -2098,7 +2096,7 @@ export default function MindMap({ mapId, onBack }) {
               <span className="font-semibold text-xs md:text-sm">Multi-Select Mode</span>
               <span className="text-[10px] md:text-xs text-green-100 hidden sm:block">Drag to select multiple nodes for bulk operations</span>
             </div>
-            <button 
+            <button
               onClick={() => setSelectionType('simple')}
               className="ml-auto p-1 hover:bg-green-700 rounded-full transition-colors"
               title="Exit Multi-Select Mode"
@@ -2114,17 +2112,17 @@ export default function MindMap({ mapId, onBack }) {
         {/* Different View Modes */}
         {viewMode === 'gantt' && (
           <div className="absolute inset-0 top-16 md:top-20 overflow-hidden">
-            <GanttView 
-              nodes={nodes} 
-              connections={connections} 
+            <GanttView
+              nodes={nodes}
+              connections={connections}
             />
           </div>
         )}
 
         {viewMode === 'board' && (
           <div className="absolute inset-0 top-16 md:top-20 overflow-auto">
-            <BoardView 
-              nodes={nodes} 
+            <BoardView
+              nodes={nodes}
               onNodeUpdate={handleNodeUpdate}
             />
           </div>
@@ -2132,7 +2130,7 @@ export default function MindMap({ mapId, onBack }) {
 
         {viewMode === 'list' && (
           <div className="absolute inset-0 top-16 md:top-20 overflow-hidden">
-            <ListView 
+            <ListView
               nodes={nodes}
             />
           </div>
@@ -2140,8 +2138,8 @@ export default function MindMap({ mapId, onBack }) {
 
         {viewMode === 'analytics' && (
           <div className="absolute inset-0 top-16 md:top-20 overflow-auto">
-            <AnalyticsView 
-              nodes={nodes} 
+            <AnalyticsView
+              nodes={nodes}
               connections={connections}
             />
           </div>
@@ -2154,506 +2152,530 @@ export default function MindMap({ mapId, onBack }) {
             zoom={zoom}
             renderNodeGroups={renderNodeGroups}
             renderConnections={(
-            <ConnectionsSvg
-              connections={connections}
-              nodes={nodes}
-              nodePositions={nodePositions}
-              isDarkMode={false}
-              selectedNode={selectedNode}
-              relatedNodeIds={relatedNodeIds}
-              connectionFrom={connectionFrom}
-              mousePosition={mousePosition}
-              zoom={zoom}
-              pan={dragging.pan}
-              connectionStyle={
-                currentLayoutType === 'tree-horizontal' ? 'orthogonal-v' :
-                currentLayoutType === 'tree-vertical' ? 'orthogonal-h' :
-                'curved'
-              }
-            />
-          )}
-        >
-          {/* Nodes */}
-          {nodes.map((node) => {
-            const isNodeMatching = searchQuery 
-              ? node.text.toLowerCase().includes(searchQuery.toLowerCase()) 
-              : true;
-            
-            // Determine if this node is a parent or child of selected node(s)
-            const isParentOfSelected = selectedNodes.length === 1 && connections.some(c => c.from === node.id && c.to === selectedNodes[0]);
-            const isChildOfSelected = selectedNodes.length === 1 && connections.some(c => c.from === selectedNodes[0] && c.to === node.id);
-            
-            // Check if this node has progress indicator
-            const progress = getNodeProgress(node.id, connections, nodes);
-            const hasProgress = progress && !node.completed;
-            
-            return (
-              <React.Fragment key={node.id}>
-                <NodeCard
-                  node={node}
-                  selected={selectedNodes.includes(node.id)}
-                  onSelect={toggleSelectNode}
-                onUpdateText={updateNodeText}
-                searchQuery={searchQuery}
-                isMatching={isNodeMatching}
-                connectionMode={!!connectionFrom}
-                isConnectionSource={connectionFrom === node.id}
-                isAlreadyConnected={connectionFrom && connectionFrom !== node.id && connections.some(c => (c.from === connectionFrom && c.to === node.id) || (c.from === node.id && c.to === connectionFrom))}
-                isParentOfSelected={isParentOfSelected}
-                isChildOfSelected={isChildOfSelected}
-                hasProgress={hasProgress}
-                className={joiningGroupNodes.has(node.id) ? 'animate-join-group' : ''}
-                onMouseDown={(e) => {
-                  // allow dragging via startPanning handler; nothing here
-                }}
-              >
-              {/* Tags below node */}
-              {node.showTags !== false && node.tags && node.tags.length > 0 && (
-                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 flex gap-1.5 flex-wrap justify-center max-w-xs z-10">
-                  {node.tags.map((tag) => (
-                    <span 
-                      key={tag} 
-                      className="inline-block px-2.5 py-1 text-xs rounded-md bg-blue-50 border border-blue-200 text-blue-700 font-medium shadow-sm relative overflow-hidden"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
+              <ConnectionsSvg
+                connections={connections}
+                nodes={nodes}
+                nodePositions={nodePositions}
+                isDarkMode={false}
+                selectedNode={selectedNode}
+                relatedNodeIds={relatedNodeIds}
+                connectionFrom={connectionFrom}
+                mousePosition={mousePosition}
+                zoom={zoom}
+                pan={dragging.pan}
+                connectionStyle={
+                  currentLayoutType === 'tree-horizontal' ? 'orthogonal-v' :
+                    currentLayoutType === 'tree-vertical' ? 'orthogonal-h' :
+                      'curved'
+                }
+              />
+            )}
+          >
+            {/* Nodes */}
+            {nodes.map((node) => {
+              const isNodeMatching = searchQuery
+                ? node.text.toLowerCase().includes(searchQuery.toLowerCase())
+                : true;
 
-              {/* Progress Indicator (top-left) - Shows completion count for parent nodes */}
-              {(() => {
-                const progress = getNodeProgress(node.id, connections, nodes);
-                const hasProgress = progress && !node.completed;
-                if (!hasProgress) return null;
-                
-                return (
-                  <div 
-                    className="absolute top-3 left-3 flex items-center gap-1 z-20"
-                    title={`Total Progress: ${progress.completed}/${progress.total} tasks completed (${progress.percentage}%) - ${progress.depth + 1} levels deep`}
-                  >
-                    <div className="relative w-10 h-10">
-                      <svg className="w-10 h-10 transform -rotate-90" viewBox="0 0 40 40">
-                        {/* Background circle */}
-                        <circle 
-                          cx="20" 
-                          cy="20" 
-                          r="16" 
-                          stroke="#d1d5db" 
-                          strokeWidth="3" 
-                          fill="white" 
-                        />
-                        {/* Progress arc */}
-                        <circle 
-                          cx="20" 
-                          cy="20" 
-                          r="16"
-                          stroke={progress.percentage === 100 ? '#10b981' : '#3b82f6'}
-                          strokeWidth="3" 
-                          fill="transparent"
-                          strokeDasharray={`${2 * Math.PI * 16}`}
-                          strokeDashoffset={`${2 * Math.PI * 16 * (1 - progress.percentage / 100)}`}
-                          className="transition-all duration-300"
-                        />
-                      </svg>
-                      {/* Centered count text */}
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-xs font-bold text-gray-700">
-                          {progress.completed}/{progress.total}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
+              // Determine if this node is a parent or child of selected node(s)
+              const isParentOfSelected = selectedNodes.length === 1 && connections.some(c => c.from === node.id && c.to === selectedNodes[0]);
+              const isChildOfSelected = selectedNodes.length === 1 && connections.some(c => c.from === selectedNodes[0] && c.to === node.id);
 
-              {/* Completion Checkmark (top-right) - Shows when task is marked complete */}
-              {node.completed && (
-                <div className="absolute top-3 right-3 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center z-20 shadow-sm">
-                  <Check size={14} className="text-white" />
-                </div>
-              )}
+              // Check if this node has progress indicator
+              const progress = getNodeProgress(node.id, connections, nodes);
+              const hasProgress = progress && !node.completed;
 
-              {/* Collaborator avatars on node */}
-              {(() => {
-                // Get group collaborators if node is in a group
-                const nodeGroup = getNodeGroup(node.id);
-                const groupCollaborators = nodeGroup?.collaborator?.id ? [nodeGroup.collaborator.id] : [];
-                const extraGroupCollabs = nodeGroup?.extraCollaborators?.map(c => c.id) || [];
-                const allGroupCollabs = [...groupCollaborators, ...extraGroupCollabs];
-                
-                // Combine node collaborators with group collaborators
-                const nodeCollabs = Array.isArray(node.collaborators) ? node.collaborators : [];
-                const allCollabs = [...new Set([...nodeCollabs, ...allGroupCollabs])]; // Remove duplicates
-                
-                return allCollabs.length > 0 && (
-                  <div
-                    className="flex gap-1 z-30"
-                    style={{
-                      position: 'absolute',
-                      top: '-18px',
-                      left: '8px'
+              return (
+                <React.Fragment key={node.id}>
+                  <NodeCard
+                    node={node}
+                    selected={selectedNodes.includes(node.id)}
+                    onSelect={toggleSelectNode}
+                    onUpdateText={updateNodeText}
+                    searchQuery={searchQuery}
+                    isMatching={isNodeMatching}
+                    connectionMode={!!connectionFrom}
+                    isConnectionSource={connectionFrom === node.id}
+                    isAlreadyConnected={connectionFrom && connectionFrom !== node.id && connections.some(c => (c.from === connectionFrom && c.to === node.id) || (c.from === node.id && c.to === connectionFrom))}
+                    isParentOfSelected={isParentOfSelected}
+                    isChildOfSelected={isChildOfSelected}
+                    hasProgress={hasProgress}
+                    className={joiningGroupNodes.has(node.id) ? 'animate-join-group' : ''}
+                    onMouseDown={(e) => {
+                      // allow dragging via startPanning handler; nothing here
                     }}
                   >
-                    {allCollabs.map(collabId => {
-                      const collab = collaborators.find(c => c.id === collabId);
-                      if (!collab) return null;
+                    {/* Tags below node */}
+                    {node.showTags !== false && node.tags && node.tags.length > 0 && (
+                      <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 flex gap-1.5 flex-wrap justify-center max-w-xs z-10">
+                        {node.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="inline-block px-2.5 py-1 text-xs rounded-md bg-blue-50 border border-blue-200 text-blue-700 font-medium shadow-sm relative overflow-hidden"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Progress Indicator (top-left) - Shows completion count for parent nodes */}
+                    {(() => {
+                      const progress = getNodeProgress(node.id, connections, nodes);
+                      const hasProgress = progress && !node.completed;
+                      if (!hasProgress) return null;
+
                       return (
                         <div
-                          key={collabId}
-                          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-sm"
-                          style={{ backgroundColor: collab.color, color: 'white' }}
-                          title={collab.name}
+                          className="absolute top-3 left-3 flex items-center gap-1 z-20"
+                          title={`Total Progress: ${progress.completed}/${progress.total} tasks completed (${progress.percentage}%) - ${progress.depth + 1} levels deep`}
                         >
-                          {collab.initials}
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
-              
-              {/* Remove from group button - Shows when node is selected AND in a group */}
-              {selectedNodes.includes(node.id) && (() => {
-                const nodeGroup = getNodeGroup(node.id);
-                if (!nodeGroup) return null;
-                return (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeNodeFromGroup(node.id);
-                    }}
-                    className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center bg-red-500 hover:bg-red-600 text-white shadow-md transition-all duration-200 z-40 hover:scale-110"
-                    title={`Remove from ${nodeGroup.collaborator?.name || 'group'}'s group`}
-                    style={{
-                      boxShadow: `0 2px 8px ${nodeGroup.collaborator?.color || '#ef4444'}40`
-                    }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 6L6 18M6 6l12 12"></path>
-                    </svg>
-                  </button>
-                );
-              })()}
-              
-              {/* Per-node toolbar overlay - Only visible when exactly ONE node is selected */}
-              {selectedNodes.length === 1 && selectedNodes.includes(node.id) && (
-              <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-full z-20" style={{ top: '-16px' }}>
-                <div className="enhanced-node-toolbar bg-white shadow-lg border border-gray-100 rounded-2xl p-2 lg:flex lg:items-center lg:gap-0.5 grid grid-cols-4 gap-1 max-w-[90vw] lg:max-w-none">
-                  {/* PRIMARY GROUP - always visible */}
-                  <div className="col-span-4 lg:col-span-auto flex items-center gap-0.5 justify-center lg:justify-start">
-                    <NodeToolbarPrimary
-                      node={node}
-                      isToolbarExpanded={isNodeToolbarExpanded(node.id)}
-                      onToggleComplete={onToggleComplete}
-                      onAddChild={onAddChild}
-                      onRequestDelete={onRequestDelete}
-                      onRequestDetach={(nodeId) => setDetachConfirmNodeId(nodeId)}
-                      hasParent={connections.some(conn => conn.to === node.id)}
-                    />
-                  
-                    {/* Connection button for connectors */}
-                    <NodeToolbarConnectionButton
-                      nodeId={node.id}
-                      isActive={connectionFrom === node.id}
-                      onStart={startConnection}
-                      onCancel={cancelConnection}
-                    />
-                  </div>
-
-                  {/* Visual group when expanded - Desktop only */}
-                  {isNodeToolbarExpanded(node.id) && (
-                    <div className="hidden lg:block w-px h-6 mx-1 bg-gray-200"></div>
-                  )}
-
-                  {/* Content group when expanded */}
-                  {isNodeToolbarExpanded(node.id) && (
-                    <>
-                      <button
-                        ref={(el) => { attachBtnRefs.current[node.id] = el; }}
-                        className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
-                        onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'attach'); }}
-                        title="Manage file attachments"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
-                        </svg>
-                      </button>
-                      <AttachmentsPopup
-                        show={isPopupOpen(node.id, 'attach')}
-                        anchorRef={attachBtnRefs.current[node.id] ? { current: attachBtnRefs.current[node.id] } : null}
-                        nodeId={node.id}
-                        attachments={node.attachments}
-                        searchFilter={attachmentFilters.search}
-                        onSearchChange={(value) => setAttachmentFilters({ ...attachmentFilters, search: value })}
-                        onFileSelect={(e) => handleAttachment(e, node.id)}
-                        onDownload={downloadAttachment}
-                        onRemove={(attachmentId) => removeAttachment(node.id, attachmentId)}
-                        onClose={() => togglePopup(node.id, 'attach')}
-                      />
-                      
-                      <button
-                        ref={(el) => { notesBtnRefs.current[node.id] = el; }}
-                        className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
-                        onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'notes'); }}
-                        title="Add or edit notes"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-                          <polyline points="14 2 14 8 20 8"></polyline>
-                          <line x1="16" y1="13" x2="8" y2="13"></line>
-                          <line x1="16" y1="17" x2="8" y2="17"></line>
-                          <line x1="10" y1="9" x2="8" y2="9"></line>
-                        </svg>
-                      </button>
-                      <NotesPopup
-                        show={isPopupOpen(node.id, 'notes')}
-                        anchorRef={notesBtnRefs.current[node.id] ? { current: notesBtnRefs.current[node.id] } : null}
-                        notes={node.notes}
-                        attachments={node.attachments}
-                        collaborators={collaborators}
-                        onChange={(value) => setNodes(nodes.map(n => n.id === node.id ? { ...n, notes: value } : n))}
-                        onClose={() => togglePopup(node.id, 'notes')}
-                      />
-
-                      <button
-                        ref={(el) => { emojiBtnRefs.current[node.id] = el; }}
-                        className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
-                        onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'emoji'); }}
-                        title="Choose emoji icon"
-                      >
-                        {node.emoji || '😊'}
-                      </button>
-                      <EmojiPicker
-                        show={isPopupOpen(node.id, 'emoji')}
-                        anchorRef={emojiBtnRefs.current[node.id] ? { current: emojiBtnRefs.current[node.id] } : null}
-                        onSelect={(emoji) => {
-                          setNodeEmoji(node.id, emoji);
-                          togglePopup(node.id, 'emoji');
-                        }}
-                        onClose={() => togglePopup(node.id, 'emoji')}
-                      />
-
-                      <button
-                        ref={(el) => { tagBtnRefs.current[node.id] = el; }}
-                        className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
-                        onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'tags'); }}
-                        title="Add or manage tags"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-                          <line x1="7" y1="7" x2="7.01" y2="7"></line>
-                        </svg>
-                      </button>
-                      <TagsPopup
-                        show={isPopupOpen(node.id, 'tags')}
-                        anchorRef={tagBtnRefs.current[node.id] ? { current: tagBtnRefs.current[node.id] } : null}
-                        tags={node.tags}
-                        showTags={node.showTags}
-                        onToggleShowTags={(checked) => setNodes(nodes.map(n => n.id === node.id ? { ...n, showTags: checked } : n))}
-                        onAddTag={(tag) => setNodes(nodes.map(n => n.id === node.id ? { ...n, tags: [...(n.tags || []), tag] } : n))}
-                        onRemoveTag={(tag) => setNodes(nodes.map(n => n.id === node.id ? { ...n, tags: (n.tags || []).filter(t => t !== tag) } : n))}
-                        onClose={() => togglePopup(node.id, 'tags')}
-                      />
-                    </>
-                  )}
-
-                  {/* Divider - Desktop only */}
-                  {isNodeToolbarExpanded(node.id) && (
-                    <div className="hidden lg:block w-px h-6 mx-1 bg-gray-200"></div>
-                  )}
-
-                  {/* Meta group when expanded */}
-                  {isNodeToolbarExpanded(node.id) && (
-                    <>
-                      <button
-                        ref={(el) => { detailsBtnRefs.current[node.id] = el; }}
-                        className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
-                        onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'details'); }}
-                        title="Edit priority, status, and description"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <line x1="12" y1="16" x2="12" y2="12"></line>
-                          <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                        </svg>
-                      </button>
-                      <PropertiesPanel
-                        show={isPopupOpen(node.id, 'details')}
-                        anchorRef={detailsBtnRefs.current[node.id] ? { current: detailsBtnRefs.current[node.id] } : null}
-                        nodeId={node.id}
-                        priority={node.priority}
-                        status={node.status}
-                        description={node.description}
-                        startDate={node.startDate}
-                        dueDate={node.dueDate}
-                        onPriorityChange={(priority) => setNodes(prevNodes => prevNodes.map(n => n.id === node.id ? { ...n, priority } : n))}
-                        onStatusChange={(status) => {
-                          setNodes(prevNodes => prevNodes.map(n => {
-                            if (n.id === node.id) {
-                              const updates = { ...n, status };
-                              // Auto-fill startDate when status changes to 'in-progress' for the first time
-                              if (status === 'in-progress' && !n.startDate) {
-                                const now = new Date();
-                                const year = now.getFullYear();
-                                const month = String(now.getMonth() + 1).padStart(2, '0');
-                                const day = String(now.getDate()).padStart(2, '0');
-                                const hours = String(now.getHours()).padStart(2, '0');
-                                const minutes = String(now.getMinutes()).padStart(2, '0');
-                                updates.startDate = `${year}-${month}-${day}T${hours}:${minutes}`;
-                              }
-                              return updates;
-                            }
-                            return n;
-                          }));
-                        }}
-                        onDescriptionChange={(description) => setNodes(prevNodes => prevNodes.map(n => n.id === node.id ? { ...n, description } : n))}
-                        onStartDateChange={(startDate) => setNodes(prevNodes => prevNodes.map(n => n.id === node.id ? { ...n, startDate } : n))}
-                        onDueDateChange={(dueDate) => setNodes(prevNodes => prevNodes.map(n => n.id === node.id ? { ...n, dueDate } : n))}
-                        onClose={() => togglePopup(node.id, 'details')}
-                      />
-
-                      <button
-                        ref={(el) => { collaboratorBtnRefs.current[node.id] = el; }}
-                        className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
-                        onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'collaborator'); }}
-                        title="Assign team member"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                          <circle cx="9" cy="7" r="4"></circle>
-                          <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
-                      </button>
-                      <CollaboratorPicker
-                        show={isPopupOpen(node.id, 'collaborator')}
-                        anchorRef={collaboratorBtnRefs.current[node.id] ? { current: collaboratorBtnRefs.current[node.id] } : null}
-                        collaborators={collaborators}
-                        selectedCollaboratorIds={node.collaborators || []}
-                        searchQuery={collaboratorSearch}
-                        onSearchChange={setCollaboratorSearch}
-                        onToggleCollaborator={(collabId) => assignCollaborator(node.id, collabId)}
-                        onClose={() => togglePopup(node.id, 'collaborator')}
-                      />
-                    </>
-                  )}
-
-                  {/* Divider - Desktop only */}
-                  {isNodeToolbarExpanded(node.id) && (
-                    <div className="hidden lg:block w-px h-6 mx-1 bg-gray-200"></div>
-                  )}
-
-                  {/* Final controls group */}
-                  <div className="col-span-4 lg:col-span-auto flex items-center gap-0.5 justify-center lg:justify-start">
-                    {/* Auto-layout button - show for any node with children */}
-                    {(() => {
-                      const hasChildren = connections.some(conn => conn.from === node.id);
-                      return hasChildren && isNodeToolbarExpanded(node.id) && (
-                        <div className="relative">
-                          <button
-                            ref={(el) => { layoutBtnRefs.current[node.id] = el; }}
-                            className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setNodeLayoutMenuOpen(nodeLayoutMenuOpen === node.id ? null : node.id);
-                            }}
-                            title="Auto-arrange children"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+                          <div className="relative w-10 h-10">
+                            <svg className="w-10 h-10 transform -rotate-90" viewBox="0 0 40 40">
+                              {/* Background circle */}
+                              <circle
+                                cx="20"
+                                cy="20"
+                                r="16"
+                                stroke="#d1d5db"
+                                strokeWidth="3"
+                                fill="white"
+                              />
+                              {/* Progress arc */}
+                              <circle
+                                cx="20"
+                                cy="20"
+                                r="16"
+                                stroke={progress.percentage === 100 ? '#10b981' : '#3b82f6'}
+                                strokeWidth="3"
+                                fill="transparent"
+                                strokeDasharray={`${2 * Math.PI * 16}`}
+                                strokeDashoffset={`${2 * Math.PI * 16 * (1 - progress.percentage / 100)}`}
+                                className="transition-all duration-300"
+                              />
                             </svg>
-                          </button>
-                          
-                          {/* Layout dropdown menu */}
-                          {nodeLayoutMenuOpen === node.id && createPortal(
-                            (() => {
-                              const buttonRect = layoutBtnRefs.current[node.id]?.getBoundingClientRect() || { left: 0, bottom: 0 };
-                              const popupWidth = 240;
-                              const left = Math.max(8, Math.min(buttonRect.left - popupWidth + 40, window.innerWidth - popupWidth - 8));
-                              const top = buttonRect.bottom + 8;
-                              
-                              return (
-                                <div 
-                                  className="fixed bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-[100]"
-                                  style={{
-                                    left: `${left}px`,
-                                    top: `${top}px`,
-                                    width: `${popupWidth}px`
-                                  }}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <div className="px-3 py-2 border-b border-gray-100">
-                                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Auto-arrange Children</div>
-                                  </div>
-                                  
-                                  {[
-                                    { type: 'force-directed', emoji: '⚡', name: 'Force Directed', desc: 'Physics-based automatic spacing' },
-                                    { type: 'tree-vertical', emoji: '🌲', name: 'Tree (Vertical)', desc: 'Top to bottom hierarchy' },
-                                    { type: 'tree-horizontal', emoji: '🌳', name: 'Tree (Horizontal)', desc: 'Left to right hierarchy' },
-                                    { type: 'radial', emoji: '🎯', name: 'Radial', desc: 'Concentric circles' },
-                                    { type: 'circular', emoji: '⭕', name: 'Circular', desc: 'Arrange in circle' },
-                                    { type: 'grid', emoji: '⚙️', name: 'Grid', desc: 'Snap to grid' },
-                                  ].map((layout) => (
-                                    <button
-                                      key={layout.type}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleApplyNodeLayout(node.id, layout.type);
-                                      }}
-                                      className="w-full px-4 py-3 hover:bg-purple-50 transition-colors text-left flex items-start gap-3 group"
-                                    >
-                                      <span className="text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">{layout.emoji}</span>
-                                      <div className="flex-1 min-w-0">
-                                        <div className="font-medium text-gray-900 text-sm">{layout.name}</div>
-                                        <div className="text-xs text-gray-500 mt-0.5">{layout.desc}</div>
-                                      </div>
-                                    </button>
-                                  ))}
-                                </div>
-                              );
-                            })(),
-                            document.body
-                          )}
+                            {/* Centered count text */}
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-xs font-bold text-gray-700">
+                                {progress.completed}/{progress.total}
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       );
                     })()}
 
-                    {/* Settings toggle - Always at the end before delete */}
-                    <NodeToolbarSettingsToggle
-                      isToolbarExpanded={isNodeToolbarExpanded(node.id)}
-                      onToggle={() => toggleNodeToolbar(node.id)}
-                    />
-
-                    {/* Delete button at the end - Always visible for non-root nodes */}
-                    {node.id !== 'root' && (
-                      <button
-                        className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200"
-                        onClick={(e) => { e.stopPropagation(); setDeleteConfirmNodeId(node.id); }}
-                        title="Delete node"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="3 6 5 6 21 6"></polyline>
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                          <line x1="10" y1="11" x2="10" y2="17"></line>
-                          <line x1="14" y1="11" x2="14" y2="17"></line>
-                        </svg>
-                      </button>
+                    {/* Completion Checkmark (top-right) - Shows when task is marked complete */}
+                    {node.completed && (
+                      <div className="absolute top-3 right-3 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center z-20 shadow-sm">
+                        <Check size={14} className="text-white" />
+                      </div>
                     )}
-                  </div>
-                </div>
-              </div>
-              )}
-            </NodeCard>
-          </React.Fragment>
-            );
-          })}
-        </MindMapCanvas>
+
+                    {/* Collaborator avatars on node */}
+                    {(() => {
+                      // Get group collaborators if node is in a group
+                      const nodeGroup = getNodeGroup(node.id);
+                      const groupCollaborators = nodeGroup?.collaborator?.id ? [nodeGroup.collaborator.id] : [];
+                      const extraGroupCollabs = nodeGroup?.extraCollaborators?.map(c => c.id) || [];
+                      const allGroupCollabs = [...groupCollaborators, ...extraGroupCollabs];
+
+                      // Combine node collaborators with group collaborators
+                      const nodeCollabs = Array.isArray(node.collaborators) ? node.collaborators : [];
+                      const allCollabs = [...new Set([...nodeCollabs, ...allGroupCollabs])]; // Remove duplicates
+
+                      return allCollabs.length > 0 && (
+                        <div
+                          className="flex gap-1 z-30"
+                          style={{
+                            position: 'absolute',
+                            top: '-18px',
+                            left: '8px'
+                          }}
+                        >
+                          {allCollabs.map(collabId => {
+                            const collab = collaborators.find(c => c.id === collabId);
+                            if (!collab) return null;
+                            return (
+                              <div
+                                key={collabId}
+                                className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-sm"
+                                style={{ backgroundColor: collab.color, color: 'white' }}
+                                title={collab.name}
+                              >
+                                {collab.initials}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Remove from group button - Shows when node is selected AND in a group */}
+                    {selectedNodes.includes(node.id) && (() => {
+                      const nodeGroup = getNodeGroup(node.id);
+                      if (!nodeGroup) return null;
+                      return (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeNodeFromGroup(node.id);
+                          }}
+                          className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center bg-red-500 hover:bg-red-600 text-white shadow-md transition-all duration-200 z-40 hover:scale-110"
+                          title={`Remove from ${nodeGroup.collaborator?.name || 'group'}'s group`}
+                          style={{
+                            boxShadow: `0 2px 8px ${nodeGroup.collaborator?.color || '#ef4444'}40`
+                          }}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M18 6L6 18M6 6l12 12"></path>
+                          </svg>
+                        </button>
+                      );
+                    })()}
+
+                    {/* Per-node toolbar overlay - Only visible when exactly ONE node is selected */}
+                    {selectedNodes.length === 1 && selectedNodes.includes(node.id) && (
+                      <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-full z-20" style={{ top: '-16px' }}>
+                        <div className="enhanced-node-toolbar bg-white shadow-lg border border-gray-100 rounded-2xl p-2 lg:flex lg:items-center lg:gap-0.5 grid grid-cols-4 gap-1 max-w-[90vw] lg:max-w-none">
+                          {/* PRIMARY GROUP - always visible */}
+                          <div className="col-span-4 lg:col-span-auto flex items-center gap-0.5 justify-center lg:justify-start">
+                            <NodeToolbarPrimary
+                              node={node}
+                              isToolbarExpanded={isNodeToolbarExpanded(node.id)}
+                              onToggleComplete={onToggleComplete}
+                              onAddChild={onAddChild}
+                              onRequestDelete={onRequestDelete}
+                              onRequestDetach={(nodeId) => setDetachConfirmNodeId(nodeId)}
+                              hasParent={connections.some(conn => conn.to === node.id)}
+                            />
+
+                            {/* Connection button for connectors */}
+                            <NodeToolbarConnectionButton
+                              nodeId={node.id}
+                              isActive={connectionFrom === node.id}
+                              onStart={startConnection}
+                              onCancel={cancelConnection}
+                            />
+                          </div>
+
+                          {/* Visual group when expanded - Desktop only */}
+                          {isNodeToolbarExpanded(node.id) && (
+                            <div className="hidden lg:block w-px h-6 mx-1 bg-gray-200"></div>
+                          )}
+
+                          {/* Content group when expanded */}
+                          {isNodeToolbarExpanded(node.id) && (
+                            <>
+                              <button
+                                ref={(el) => { attachBtnRefs.current[node.id] = el; }}
+                                className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
+                                onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'attach'); }}
+                                title="Manage file attachments"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                                </svg>
+                              </button>
+                              <AttachmentsPopup
+                                show={isPopupOpen(node.id, 'attach')}
+                                anchorRef={attachBtnRefs.current[node.id] ? { current: attachBtnRefs.current[node.id] } : null}
+                                nodeId={node.id}
+                                attachments={node.attachments}
+                                searchFilter={attachmentFilters.search}
+                                onSearchChange={(value) => setAttachmentFilters({ ...attachmentFilters, search: value })}
+                                onFileSelect={(e) => handleAttachment(e, node.id)}
+                                onDownload={downloadAttachment}
+                                onRemove={(attachmentId) => removeAttachment(node.id, attachmentId)}
+                                onClose={() => togglePopup(node.id, 'attach')}
+                              />
+
+                              <button
+                                ref={(el) => { notesBtnRefs.current[node.id] = el; }}
+                                className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
+                                onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'notes'); }}
+                                title="Add or edit notes"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                                  <polyline points="14 2 14 8 20 8"></polyline>
+                                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                                  <line x1="10" y1="9" x2="8" y2="9"></line>
+                                </svg>
+                              </button>
+                              <NotesPopup
+                                show={isPopupOpen(node.id, 'notes')}
+                                anchorRef={notesBtnRefs.current[node.id] ? { current: notesBtnRefs.current[node.id] } : null}
+                                notes={node.notes}
+                                attachments={node.attachments}
+                                collaborators={collaborators}
+                                onChange={(value) => setNodes(nodes.map(n => n.id === node.id ? { ...n, notes: value } : n))}
+                                onClose={() => togglePopup(node.id, 'notes')}
+                              />
+
+                              <button
+                                ref={(el) => { emojiBtnRefs.current[node.id] = el; }}
+                                className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
+                                onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'emoji'); }}
+                                title="Choose emoji icon"
+                              >
+                                {node.emoji || '😊'}
+                              </button>
+                              <EmojiPicker
+                                show={isPopupOpen(node.id, 'emoji')}
+                                anchorRef={emojiBtnRefs.current[node.id] ? { current: emojiBtnRefs.current[node.id] } : null}
+                                onSelect={(emoji) => {
+                                  setNodeEmoji(node.id, emoji);
+                                  togglePopup(node.id, 'emoji');
+                                }}
+                                onClose={() => togglePopup(node.id, 'emoji')}
+                              />
+
+                              <button
+                                ref={(el) => { tagBtnRefs.current[node.id] = el; }}
+                                className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
+                                onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'tags'); }}
+                                title="Add or manage tags"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                                  <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                                </svg>
+                              </button>
+                              <TagsPopup
+                                show={isPopupOpen(node.id, 'tags')}
+                                anchorRef={tagBtnRefs.current[node.id] ? { current: tagBtnRefs.current[node.id] } : null}
+                                tags={node.tags}
+                                showTags={node.showTags}
+                                onToggleShowTags={(checked) => setNodes(nodes.map(n => n.id === node.id ? { ...n, showTags: checked } : n))}
+                                onAddTag={(tag) => setNodes(nodes.map(n => n.id === node.id ? { ...n, tags: [...(n.tags || []), tag] } : n))}
+                                onRemoveTag={(tag) => setNodes(nodes.map(n => n.id === node.id ? { ...n, tags: (n.tags || []).filter(t => t !== tag) } : n))}
+                                onClose={() => togglePopup(node.id, 'tags')}
+                              />
+
+                              {/* Background Color Picker */}
+                              <NodeToolbarBackgroundColor
+                                isOpen={isPopupOpen(node.id, 'bgColor')}
+                                currentColor={node.bgColor}
+                                onToggle={() => togglePopup(node.id, 'bgColor')}
+                                onSelect={(color) => {
+                                  setNodes(nodes.map(n => n.id === node.id ? { ...n, bgColor: color } : n));
+                                  togglePopup(node.id, 'bgColor');
+                                }}
+                                onClose={() => togglePopup(node.id, 'bgColor')}
+                              />
+
+                              {/* Font Color Picker */}
+                              <NodeToolbarFontColor
+                                isOpen={isPopupOpen(node.id, 'fontColor')}
+                                currentColor={node.fontColor}
+                                onToggle={() => togglePopup(node.id, 'fontColor')}
+                                onSelect={(color) => {
+                                  setNodes(nodes.map(n => n.id === node.id ? { ...n, fontColor: color } : n));
+                                  togglePopup(node.id, 'fontColor');
+                                }}
+                                onClose={() => togglePopup(node.id, 'fontColor')}
+                              />
+                            </>
+                          )}
+
+                          {/* Divider - Desktop only */}
+                          {isNodeToolbarExpanded(node.id) && (
+                            <div className="hidden lg:block w-px h-6 mx-1 bg-gray-200"></div>
+                          )}
+
+                          {/* Meta group when expanded */}
+                          {isNodeToolbarExpanded(node.id) && (
+                            <>
+                              <button
+                                ref={(el) => { detailsBtnRefs.current[node.id] = el; }}
+                                className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
+                                onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'details'); }}
+                                title="Edit priority, status, and description"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <circle cx="12" cy="12" r="10"></circle>
+                                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
+                              </button>
+                              <PropertiesPanel
+                                show={isPopupOpen(node.id, 'details')}
+                                anchorRef={detailsBtnRefs.current[node.id] ? { current: detailsBtnRefs.current[node.id] } : null}
+                                nodeId={node.id}
+                                priority={node.priority}
+                                status={node.status}
+                                description={node.description}
+                                startDate={node.startDate}
+                                dueDate={node.dueDate}
+                                onPriorityChange={(priority) => setNodes(prevNodes => prevNodes.map(n => n.id === node.id ? { ...n, priority } : n))}
+                                onStatusChange={(status) => {
+                                  setNodes(prevNodes => prevNodes.map(n => {
+                                    if (n.id === node.id) {
+                                      const updates = { ...n, status };
+                                      // Auto-fill startDate when status changes to 'in-progress' for the first time
+                                      if (status === 'in-progress' && !n.startDate) {
+                                        const now = new Date();
+                                        const year = now.getFullYear();
+                                        const month = String(now.getMonth() + 1).padStart(2, '0');
+                                        const day = String(now.getDate()).padStart(2, '0');
+                                        const hours = String(now.getHours()).padStart(2, '0');
+                                        const minutes = String(now.getMinutes()).padStart(2, '0');
+                                        updates.startDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+                                      }
+                                      return updates;
+                                    }
+                                    return n;
+                                  }));
+                                }}
+                                onDescriptionChange={(description) => setNodes(prevNodes => prevNodes.map(n => n.id === node.id ? { ...n, description } : n))}
+                                onStartDateChange={(startDate) => setNodes(prevNodes => prevNodes.map(n => n.id === node.id ? { ...n, startDate } : n))}
+                                onDueDateChange={(dueDate) => setNodes(prevNodes => prevNodes.map(n => n.id === node.id ? { ...n, dueDate } : n))}
+                                onClose={() => togglePopup(node.id, 'details')}
+                              />
+
+                              <button
+                                ref={(el) => { collaboratorBtnRefs.current[node.id] = el; }}
+                                className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200 col-span-1"
+                                onClick={(e) => { e.stopPropagation(); togglePopup(node.id, 'collaborator'); }}
+                                title="Assign team member"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                  <circle cx="9" cy="7" r="4"></circle>
+                                  <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                              </button>
+                              <CollaboratorPicker
+                                show={isPopupOpen(node.id, 'collaborator')}
+                                anchorRef={collaboratorBtnRefs.current[node.id] ? { current: collaboratorBtnRefs.current[node.id] } : null}
+                                collaborators={collaborators}
+                                selectedCollaboratorIds={node.collaborators || []}
+                                searchQuery={collaboratorSearch}
+                                onSearchChange={setCollaboratorSearch}
+                                onToggleCollaborator={(collabId) => assignCollaborator(node.id, collabId)}
+                                onClose={() => togglePopup(node.id, 'collaborator')}
+                              />
+                            </>
+                          )}
+
+                          {/* Divider - Desktop only */}
+                          {isNodeToolbarExpanded(node.id) && (
+                            <div className="hidden lg:block w-px h-6 mx-1 bg-gray-200"></div>
+                          )}
+
+                          {/* Final controls group */}
+                          <div className="col-span-4 lg:col-span-auto flex items-center gap-0.5 justify-center lg:justify-start">
+                            {/* Auto-layout button - show for any node with children */}
+                            {(() => {
+                              const hasChildren = connections.some(conn => conn.from === node.id);
+                              return hasChildren && isNodeToolbarExpanded(node.id) && (
+                                <div className="relative">
+                                  <button
+                                    ref={(el) => { layoutBtnRefs.current[node.id] = el; }}
+                                    className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setNodeLayoutMenuOpen(nodeLayoutMenuOpen === node.id ? null : node.id);
+                                    }}
+                                    title="Auto-arrange children"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+                                    </svg>
+                                  </button>
+
+                                  {/* Layout dropdown menu */}
+                                  {nodeLayoutMenuOpen === node.id && createPortal(
+                                    (() => {
+                                      const buttonRect = layoutBtnRefs.current[node.id]?.getBoundingClientRect() || { left: 0, bottom: 0 };
+                                      const popupWidth = 240;
+                                      const left = Math.max(8, Math.min(buttonRect.left - popupWidth + 40, window.innerWidth - popupWidth - 8));
+                                      const top = buttonRect.bottom + 8;
+
+                                      return (
+                                        <div
+                                          className="fixed bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-[100]"
+                                          style={{
+                                            left: `${left}px`,
+                                            top: `${top}px`,
+                                            width: `${popupWidth}px`
+                                          }}
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <div className="px-3 py-2 border-b border-gray-100">
+                                            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Auto-arrange Children</div>
+                                          </div>
+
+                                          {[
+                                            { type: 'force-directed', emoji: '⚡', name: 'Force Directed', desc: 'Physics-based automatic spacing' },
+                                            { type: 'tree-vertical', emoji: '🌲', name: 'Tree (Vertical)', desc: 'Top to bottom hierarchy' },
+                                            { type: 'tree-horizontal', emoji: '🌳', name: 'Tree (Horizontal)', desc: 'Left to right hierarchy' },
+                                            { type: 'radial', emoji: '🎯', name: 'Radial', desc: 'Concentric circles' },
+                                            { type: 'circular', emoji: '⭕', name: 'Circular', desc: 'Arrange in circle' },
+                                            { type: 'grid', emoji: '⚙️', name: 'Grid', desc: 'Snap to grid' },
+                                          ].map((layout) => (
+                                            <button
+                                              key={layout.type}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleApplyNodeLayout(node.id, layout.type);
+                                              }}
+                                              className="w-full px-4 py-3 hover:bg-purple-50 transition-colors text-left flex items-start gap-3 group"
+                                            >
+                                              <span className="text-2xl flex-shrink-0 group-hover:scale-110 transition-transform">{layout.emoji}</span>
+                                              <div className="flex-1 min-w-0">
+                                                <div className="font-medium text-gray-900 text-sm">{layout.name}</div>
+                                                <div className="text-xs text-gray-500 mt-0.5">{layout.desc}</div>
+                                              </div>
+                                            </button>
+                                          ))}
+                                        </div>
+                                      );
+                                    })(),
+                                    document.body
+                                  )}
+                                </div>
+                              );
+                            })()}
+
+                            {/* Settings toggle - Always at the end before delete */}
+                            <NodeToolbarSettingsToggle
+                              isToolbarExpanded={isNodeToolbarExpanded(node.id)}
+                              onToggle={() => toggleNodeToolbar(node.id)}
+                            />
+
+                            {/* Delete button at the end - Always visible for non-root nodes */}
+                            {node.id !== 'root' && (
+                              <button
+                                className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200"
+                                onClick={(e) => { e.stopPropagation(); setDeleteConfirmNodeId(node.id); }}
+                                title="Delete node"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="3 6 5 6 21 6"></polyline>
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </NodeCard>
+                </React.Fragment>
+              );
+            })}
+          </MindMapCanvas>
         )}
 
         {/* Selection Rectangle for Collaborator Mode */}
         {isSelecting && selectionRect && (
-          <div 
+          <div
             style={{
               position: 'absolute',
               left: `${selectionRect.x * zoom + dragging.pan.x}px`,
@@ -2679,12 +2701,12 @@ export default function MindMap({ mapId, onBack }) {
             >
               <ZoomOut size={14} strokeWidth={2} />
             </button>
-            
+
             {/* Zoom Percentage */}
             <div className="px-3 py-2 sm:py-2.5 bg-white text-gray-700 rounded-lg shadow-lg border border-gray-200 font-medium text-sm min-w-[60px] text-center">
               {Math.round(zoom * 100)}%
             </div>
-            
+
             {/* Zoom In */}
             <button
               onClick={() => setZoom(prev => Math.min(prev * 1.2, 3))}
@@ -2693,7 +2715,7 @@ export default function MindMap({ mapId, onBack }) {
             >
               <ZoomIn size={14} strokeWidth={2} />
             </button>
-            
+
             {/* Re-center */}
             <button
               onClick={() => {
@@ -2723,15 +2745,14 @@ export default function MindMap({ mapId, onBack }) {
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
               </button>
-              
+
               {/* Delete Selected */}
               <button
                 onClick={() => selectedNodes.length > 0 && nodeOps.deleteNodes(selectedNodes)}
-                className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${
-                  selectedNodes.length > 0 
-                    ? 'text-gray-700 hover:bg-red-50 hover:text-red-600' 
+                className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${selectedNodes.length > 0
+                    ? 'text-gray-700 hover:bg-red-50 hover:text-red-600'
                     : 'text-gray-300 cursor-not-allowed'
-                }`}
+                  }`}
                 title="Delete Selected"
                 disabled={selectedNodes.length === 0}
               >
@@ -2743,15 +2764,14 @@ export default function MindMap({ mapId, onBack }) {
 
               {/* Divider */}
               <div className="w-full h-px bg-gray-200 my-0.5" />
-              
+
               {/* Undo */}
               <button
                 onClick={undo}
-                className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${
-                  historyIndex <= 0 
-                    ? 'text-gray-300 cursor-not-allowed' 
+                className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${historyIndex <= 0
+                    ? 'text-gray-300 cursor-not-allowed'
                     : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-                }`}
+                  }`}
                 title="Undo"
                 disabled={historyIndex <= 0}
               >
@@ -2760,15 +2780,14 @@ export default function MindMap({ mapId, onBack }) {
                   <path d="M20 18v-1a4 4 0 0 0-4-4H4" />
                 </svg>
               </button>
-              
+
               {/* Redo */}
               <button
                 onClick={redo}
-                className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${
-                  historyIndex >= history.length - 1 
-                    ? 'text-gray-300 cursor-not-allowed' 
+                className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${historyIndex >= history.length - 1
+                    ? 'text-gray-300 cursor-not-allowed'
                     : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-                }`}
+                  }`}
                 title="Redo"
                 disabled={historyIndex >= history.length - 1}
               >
@@ -2781,10 +2800,10 @@ export default function MindMap({ mapId, onBack }) {
           </div>
         )}
       </div>
-      
+
       {/* Backdrop Overlay for Shapes Palette */}
       {showShapesPalette && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-20"
           onClick={() => setShowShapesPalette(false)}
           onKeyDown={(e) => e.key === 'Escape' && setShowShapesPalette(false)}
@@ -2793,10 +2812,10 @@ export default function MindMap({ mapId, onBack }) {
           aria-label="Close shapes palette"
         />
       )}
-      
+
       {/* Mobile Backdrop Overlay for Toolbar */}
       {showMobileToolbar && isMobileOrTablet && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-[60]"
           onClick={() => setShowMobileToolbar(false)}
           onKeyDown={(e) => e.key === 'Escape' && setShowMobileToolbar(false)}
@@ -2805,16 +2824,16 @@ export default function MindMap({ mapId, onBack }) {
           aria-label="Close toolbar"
         />
       )}
-      
+
       {/* Shapes Palette Sidebar - Only render when shown */}
       {showShapesPalette && (
         <div className="w-fit border-l bg-white transition-transform duration-300 ease-in-out translate-x-0 absolute right-0 top-0 bottom-0 z-30 shadow-2xl">
           <ShapePalette
             shapeDefinitions={React.useMemo(() => ([
-              { type: 'circle',    name: 'Circle',    color: '#3B82F6', icon: '●' },
-              { type: 'rhombus',   name: 'Rhombus',   color: '#F59E0B', icon: '◆' },
-              { type: 'pentagon',  name: 'Pentagon',  color: '#EF4444', icon: '⬟' },
-              { type: 'ellipse',   name: 'Ellipse',   color: '#8B5CF6', icon: '◐' },
+              { type: 'circle', name: 'Circle', color: '#3B82F6', icon: '●' },
+              { type: 'rhombus', name: 'Rhombus', color: '#F59E0B', icon: '◆' },
+              { type: 'pentagon', name: 'Pentagon', color: '#EF4444', icon: '⬟' },
+              { type: 'ellipse', name: 'Ellipse', color: '#8B5CF6', icon: '◐' },
             ]), [])}
             onShapeDragStart={handleShapeDragStart}
           />
@@ -2901,7 +2920,7 @@ export default function MindMap({ mapId, onBack }) {
           setDeleteConfirmNodeId(null);
         }}
       />
-      
+
       {/* Group Membership Confirmation Dialog */}
       <GroupMembershipDialog
         show={groupMembershipDialog.show}
@@ -2928,7 +2947,7 @@ export default function MindMap({ mapId, onBack }) {
                 onDecompose={(subtasks) => {
                   const parentNode = nodes.find(n => n.id === selectedNodes[0]);
                   if (!parentNode) return;
-                  
+
                   const newNodes = subtasks.map((subtask, index) => ({
                     id: `${parentNode.id}-subtask-${Date.now()}-${index}`,
                     text: subtask.text,
@@ -2939,12 +2958,12 @@ export default function MindMap({ mapId, onBack }) {
                     priority: subtask.priority,
                     estimatedHours: subtask.estimatedHours
                   }));
-                  
+
                   const newConnections = newNodes.map(node => ({
                     from: parentNode.id,
                     to: node.id
                   }));
-                  
+
                   setNodes(prev => [...prev, ...newNodes]);
                   setConnections(prev => [...prev, ...newConnections]);
                   setShowEnhancedPanel(null);
@@ -2952,7 +2971,7 @@ export default function MindMap({ mapId, onBack }) {
                 onClose={() => setShowEnhancedPanel(null)}
               />
             )}
-            
+
             {showEnhancedPanel === 'dependencies' && (
               <DependencyAnalyzer
                 nodes={nodes}
@@ -2963,20 +2982,20 @@ export default function MindMap({ mapId, onBack }) {
                 onClose={() => setShowEnhancedPanel(null)}
               />
             )}
-            
+
             {showEnhancedPanel === 'workload' && (
               <WorkloadHeatmap
                 nodes={nodes}
                 collaborators={collaborators}
                 onReassignTask={(taskId, newAssignee) => {
-                  setNodes(prev => prev.map(n => 
+                  setNodes(prev => prev.map(n =>
                     n.id === taskId ? { ...n, collaborators: [newAssignee] } : n
                   ));
                 }}
                 onClose={() => setShowEnhancedPanel(null)}
               />
             )}
-            
+
             {showEnhancedPanel === 'timetravel' && (
               <TimeTravel
                 snapshots={projectSnapshots}
@@ -2999,12 +3018,12 @@ export default function MindMap({ mapId, onBack }) {
                 onClose={() => setShowEnhancedPanel(null)}
               />
             )}
-            
+
             {showEnhancedPanel === 'focus' && (
               <FocusMode
                 selectedNode={focusTaskNode || (selectedNodes.length > 0 ? nodes.find(n => n.id === selectedNodes[0]) : null)}
                 onComplete={(nodeId) => {
-                  setNodes(prev => prev.map(n => 
+                  setNodes(prev => prev.map(n =>
                     n.id === nodeId ? { ...n, completed: true } : n
                   ));
                 }}
@@ -3014,7 +3033,7 @@ export default function MindMap({ mapId, onBack }) {
                 }}
               />
             )}
-            
+
             {showEnhancedPanel === 'risk' && (
               <RiskMatrix
                 nodes={nodes}
@@ -3023,7 +3042,7 @@ export default function MindMap({ mapId, onBack }) {
                 onClose={() => setShowEnhancedPanel(null)}
               />
             )}
-            
+
             {showEnhancedPanel === 'budget' && (
               <BudgetTracker
                 nodes={nodes}
@@ -3035,7 +3054,7 @@ export default function MindMap({ mapId, onBack }) {
                 onClose={() => setShowEnhancedPanel(null)}
               />
             )}
-            
+
             {showEnhancedPanel === 'resources' && (
               <ResourceMatrix
                 nodes={nodes}
@@ -3043,21 +3062,21 @@ export default function MindMap({ mapId, onBack }) {
                 onClose={() => setShowEnhancedPanel(null)}
               />
             )}
-            
+
             {showEnhancedPanel === 'expenses' && (
               <ExpenseTracker
                 collaborators={collaborators}
                 onClose={() => setShowEnhancedPanel(null)}
               />
             )}
-            
+
             {showEnhancedPanel === 'smartassigner' && (
               <SmartAssigner
                 nodes={nodes}
                 collaborators={collaborators}
                 onAssign={(taskId, assigneeId) => {
-                  setNodes(prev => prev.map(n => 
-                    n.id === taskId 
+                  setNodes(prev => prev.map(n =>
+                    n.id === taskId
                       ? { ...n, collaborators: [...(n.collaborators || []).filter(c => c !== assigneeId), assigneeId] }
                       : n
                   ));
@@ -3065,7 +3084,7 @@ export default function MindMap({ mapId, onBack }) {
                 onClose={() => setShowEnhancedPanel(null)}
               />
             )}
-            
+
             {showEnhancedPanel === 'nextaction' && (
               <NextActionHighlighter
                 nodes={nodes}
@@ -3074,7 +3093,7 @@ export default function MindMap({ mapId, onBack }) {
                 onClose={() => setShowEnhancedPanel(null)}
               />
             )}
-            
+
             {showEnhancedPanel === 'dailydigest' && (
               <DailyDigest
                 nodes={nodes}
@@ -3082,7 +3101,7 @@ export default function MindMap({ mapId, onBack }) {
                 onClose={() => setShowEnhancedPanel(null)}
               />
             )}
-            
+
             {showEnhancedPanel === 'decisionlog' && (
               <DecisionLog
                 nodes={nodes}
@@ -3090,7 +3109,7 @@ export default function MindMap({ mapId, onBack }) {
                 onClose={() => setShowEnhancedPanel(null)}
               />
             )}
-            
+
             {showEnhancedPanel === 'handoff' && (
               <HandoffChecklist
                 nodes={nodes}
@@ -3098,21 +3117,21 @@ export default function MindMap({ mapId, onBack }) {
                 onClose={() => setShowEnhancedPanel(null)}
               />
             )}
-            
+
             {showEnhancedPanel === 'knowledge' && (
               <KnowledgeBase
                 collaborators={collaborators}
                 onClose={() => setShowEnhancedPanel(null)}
               />
             )}
-            
+
             {showEnhancedPanel === 'timeline' && (
               <CrossProjectTimeline
                 collaborators={collaborators}
                 onClose={() => setShowEnhancedPanel(null)}
               />
             )}
-            
+
             {showEnhancedPanel === 'automations' && (
               <AutomationBuilder
                 nodes={nodes}
@@ -3135,17 +3154,16 @@ export default function MindMap({ mapId, onBack }) {
                 }
               }}
               disabled={selectedNodes.length === 0}
-              className={`p-2 rounded-lg transition-all flex flex-col items-center gap-0.5 ${
-                selectedNodes.length > 0 
-                  ? 'hover:bg-purple-50 text-purple-600' 
+              className={`p-2 rounded-lg transition-all flex flex-col items-center gap-0.5 ${selectedNodes.length > 0
+                  ? 'hover:bg-purple-50 text-purple-600'
                   : 'text-gray-300 cursor-not-allowed'
-              }`}
+                }`}
               title="AI Task Breakdown"
             >
               <Sparkles className="w-4 h-4" />
               <span className="text-[10px] font-medium hidden sm:block">AI Breakdown</span>
             </button>
-            
+
             <button
               onClick={() => setShowEnhancedPanel('dependencies')}
               className="p-2 rounded-lg hover:bg-amber-50 text-amber-600 transition-all flex flex-col items-center gap-0.5"
@@ -3154,7 +3172,7 @@ export default function MindMap({ mapId, onBack }) {
               <Link2 className="w-4 h-4" />
               <span className="text-[10px] font-medium hidden sm:block">Dependencies</span>
             </button>
-            
+
             <button
               onClick={() => setShowEnhancedPanel('workload')}
               className="p-2 rounded-lg hover:bg-indigo-50 text-indigo-600 transition-all flex flex-col items-center gap-0.5"
@@ -3163,9 +3181,9 @@ export default function MindMap({ mapId, onBack }) {
               <Users className="w-4 h-4" />
               <span className="text-[10px] font-medium hidden sm:block">Workload</span>
             </button>
-            
+
             <div className="w-px h-6 bg-gray-200 mx-0.5" />
-            
+
             <button
               onClick={() => setShowEnhancedPanel('timetravel')}
               className="p-2 rounded-lg hover:bg-cyan-50 text-cyan-600 transition-all flex flex-col items-center gap-0.5"
@@ -3174,7 +3192,7 @@ export default function MindMap({ mapId, onBack }) {
               <Clock className="w-4 h-4" />
               <span className="text-[10px] font-medium hidden sm:block">Snapshots</span>
             </button>
-            
+
             <button
               onClick={() => {
                 if (selectedNodes.length > 0) {
@@ -3188,7 +3206,7 @@ export default function MindMap({ mapId, onBack }) {
               <Target className="w-4 h-4" />
               <span className="text-[10px] font-medium hidden sm:block">Focus</span>
             </button>
-            
+
             <button
               onClick={() => setShowEnhancedPanel('risk')}
               className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-all flex flex-col items-center gap-0.5"
@@ -3197,9 +3215,9 @@ export default function MindMap({ mapId, onBack }) {
               <AlertTriangle className="w-4 h-4" />
               <span className="text-[10px] font-medium hidden sm:block">Risks</span>
             </button>
-            
+
             <div className="w-px h-6 bg-gray-200 mx-0.5" />
-            
+
             <button
               onClick={() => setShowEnhancedPanel('budget')}
               className="p-2 rounded-lg hover:bg-emerald-50 text-emerald-600 transition-all flex flex-col items-center gap-0.5"
@@ -3208,7 +3226,7 @@ export default function MindMap({ mapId, onBack }) {
               <DollarSign className="w-4 h-4" />
               <span className="text-[10px] font-medium hidden sm:block">Budget</span>
             </button>
-            
+
             <button
               onClick={() => setShowEnhancedPanel('resources')}
               className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-all flex flex-col items-center gap-0.5"
@@ -3217,7 +3235,7 @@ export default function MindMap({ mapId, onBack }) {
               <Grid3X3 className="w-4 h-4" />
               <span className="text-[10px] font-medium hidden sm:block">Resources</span>
             </button>
-            
+
             <button
               onClick={() => setShowEnhancedPanel('expenses')}
               className="p-2 rounded-lg hover:bg-pink-50 text-pink-600 transition-all flex flex-col items-center gap-0.5"
@@ -3226,9 +3244,9 @@ export default function MindMap({ mapId, onBack }) {
               <Receipt className="w-4 h-4" />
               <span className="text-[10px] font-medium hidden sm:block">Expenses</span>
             </button>
-            
+
             <div className="w-px h-6 bg-gray-200 mx-0.5" />
-            
+
             {/* Clarity Features - "Everyone knows what to do" */}
             <button
               onClick={() => setShowEnhancedPanel('smartassigner')}
@@ -3238,7 +3256,7 @@ export default function MindMap({ mapId, onBack }) {
               <UserPlus className="w-4 h-4" />
               <span className="text-[10px] font-medium hidden sm:block">Assign</span>
             </button>
-            
+
             <button
               onClick={() => setShowEnhancedPanel('nextaction')}
               className="p-2 rounded-lg hover:bg-teal-50 text-teal-600 transition-all flex flex-col items-center gap-0.5"
@@ -3247,7 +3265,7 @@ export default function MindMap({ mapId, onBack }) {
               <PlayCircle className="w-4 h-4" />
               <span className="text-[10px] font-medium hidden sm:block">Status</span>
             </button>
-            
+
             <button
               onClick={() => setShowEnhancedPanel('dailydigest')}
               className="p-2 rounded-lg hover:bg-orange-50 text-orange-600 transition-all flex flex-col items-center gap-0.5"
@@ -3256,7 +3274,7 @@ export default function MindMap({ mapId, onBack }) {
               <Sun className="w-4 h-4" />
               <span className="text-[10px] font-medium hidden sm:block">Daily</span>
             </button>
-            
+
             <button
               onClick={() => setShowEnhancedPanel('decisionlog')}
               className="p-2 rounded-lg hover:bg-sky-50 text-sky-600 transition-all flex flex-col items-center gap-0.5"
@@ -3265,7 +3283,7 @@ export default function MindMap({ mapId, onBack }) {
               <Scale className="w-4 h-4" />
               <span className="text-[10px] font-medium hidden sm:block">Decisions</span>
             </button>
-            
+
             <button
               onClick={() => setShowEnhancedPanel('handoff')}
               className="p-2 rounded-lg hover:bg-rose-50 text-rose-600 transition-all flex flex-col items-center gap-0.5"
@@ -3274,7 +3292,7 @@ export default function MindMap({ mapId, onBack }) {
               <ArrowRightLeft className="w-4 h-4" />
               <span className="text-[10px] font-medium hidden sm:block">Handoff</span>
             </button>
-            
+
             <button
               onClick={() => setShowEnhancedPanel('knowledge')}
               className="p-2 rounded-lg hover:bg-lime-50 text-lime-600 transition-all flex flex-col items-center gap-0.5"
@@ -3283,9 +3301,9 @@ export default function MindMap({ mapId, onBack }) {
               <BookOpen className="w-4 h-4" />
               <span className="text-[10px] font-medium hidden sm:block">Docs</span>
             </button>
-            
+
             <div className="w-px h-6 bg-gray-200 mx-0.5" />
-            
+
             {/* Manager Features */}
             <button
               onClick={() => setShowEnhancedPanel('timeline')}
@@ -3295,7 +3313,7 @@ export default function MindMap({ mapId, onBack }) {
               <Layers className="w-4 h-4" />
               <span className="text-[10px] font-medium hidden sm:block">Timeline</span>
             </button>
-            
+
             <button
               onClick={() => setShowEnhancedPanel('automations')}
               className="p-2 rounded-lg hover:bg-amber-50 text-amber-600 transition-all flex flex-col items-center gap-0.5"
@@ -3307,17 +3325,17 @@ export default function MindMap({ mapId, onBack }) {
           </div>
         </div>
       )}
-      
+
       {/* Template Gallery */}
       <TemplateGallery
         show={showTemplateGallery}
         onSelectTemplate={handleApplyTemplate}
         onClose={() => setShowTemplateGallery(false)}
         onStartBlank={() => {
-          setNodes([{ 
-            id: 'root', 
-            text: 'Central Task', 
-            x: Math.round(window.innerWidth / 2), 
+          setNodes([{
+            id: 'root',
+            text: 'Central Task',
+            x: Math.round(window.innerWidth / 2),
             y: Math.round(window.innerHeight / 2),
             bgColor: '#ffffff',
             fontColor: '#2d3748'

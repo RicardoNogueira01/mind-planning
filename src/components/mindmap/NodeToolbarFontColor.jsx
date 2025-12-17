@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
-import RoundColorPicker from '../RoundColorPicker';
+import GridColorPicker from '../GridColorPicker';
 
 const NodeToolbarFontColor = ({
   isOpen,
@@ -25,14 +25,14 @@ const NodeToolbarFontColor = ({
     <div className="relative">
       <button
         ref={btnRef}
-        className="node-toolbar-btn p-2 rounded-xl hover:bg-emerald-50 text-emerald-600 transition-colors duration-200 border border-emerald-200 hover:border-emerald-300"
+        className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200"
         onClick={(e) => {
           e.stopPropagation();
           onToggle(e);
         }}
         title={title}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{shapeRendering: 'crispEdges'}}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ shapeRendering: 'crispEdges' }}>
           <polyline points="4 7 4 4 20 4 20 7"></polyline>
           <line x1="9" y1="20" x2="15" y2="20"></line>
           <line x1="12" y1="4" x2="12" y2="20"></line>
@@ -40,11 +40,12 @@ const NodeToolbarFontColor = ({
       </button>
 
       {isOpen && createPortal(
-        <RoundColorPicker
+        <GridColorPicker
           currentColor={currentColor || '#111827'}
           onColorSelect={(color) => onSelect(color)}
           onClose={onClose}
           anchorRect={getAnchorRect()}
+          title="Font Color"
         />,
         document.body
       )}
