@@ -169,10 +169,11 @@ export default function ConnectionsSvg({
         const isHovered = hoveredConnection === conn.id;
         const isSelected = selectedNode === conn.from || selectedNode === conn.to;
         
-        const focusOpacity = (isHovered || isSelected) ? 0.95 : (isRelated ? 0.8 : 0.6);
+        // More subtle opacity for selected parent's children
+        const focusOpacity = isHovered ? 0.95 : (isSelected ? 0.7 : (isRelated ? 0.6 : 0.5));
         
         const connectionColor = getConnectionColor(conn, fromNode);
-        const strokeWidth = isHovered || isSelected ? 3.5 : 2.5;
+        const strokeWidth = isHovered ? 3 : 2;
 
         return (
           <g key={conn.id}>
@@ -187,14 +188,14 @@ export default function ConnectionsSvg({
               onMouseLeave={() => setHoveredConnection(null)}
             />
             
-            {/* Glow effect for hovered/selected connections */}
-            {(isHovered || isSelected) && (
+            {/* Glow effect only for hovered connections */}
+            {isHovered && (
               <path
                 d={pathData}
                 stroke={connectionColor}
-                strokeWidth={8}
+                strokeWidth={6}
                 fill="none"
-                strokeOpacity={0.2}
+                strokeOpacity={0.15}
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
@@ -212,30 +213,30 @@ export default function ConnectionsSvg({
               markerEnd={showArrows ? 'url(#arrowhead)' : undefined}
               style={{ 
                 transition: 'all 0.2s ease-out',
-                filter: (isHovered || isSelected) ? 'url(#connection-glow)' : 'none'
+                filter: isHovered ? 'url(#connection-glow)' : 'none'
               }}
             />
             
-            {/* Small circle at parent connection point */}
-            {(isHovered || isSelected) && start && (
+            {/* Small circle at parent connection point - only on hover */}
+            {isHovered && start && (
               <circle
                 cx={start.x}
                 cy={start.y}
-                r={4}
+                r={3.5}
                 fill={connectionColor}
-                opacity={focusOpacity}
+                opacity={0.9}
                 style={{ transition: 'all 0.2s ease-out' }}
               />
             )}
             
-            {/* Small circle at child connection point */}
-            {(isHovered || isSelected) && end && (
+            {/* Small circle at child connection point - only on hover */}
+            {isHovered && end && (
               <circle
                 cx={end.x}
                 cy={end.y}
-                r={4}
+                r={3.5}
                 fill={connectionColor}
-                opacity={focusOpacity}
+                opacity={0.9}
                 style={{ transition: 'all 0.2s ease-out' }}
               />
             )}
