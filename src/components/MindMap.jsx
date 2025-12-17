@@ -2728,18 +2728,9 @@ export default function MindMap({ mapId, onBack }) {
           />
         )}
 
-        {/* Zoom Controls - Bottom Right */}
+        {/* Zoom Controls - Bottom Left */}
         {viewMode === 'mindmap' && (
-          <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 flex flex-col gap-1.5 sm:gap-2 z-30">
-            {/* Zoom In */}
-            <button
-              onClick={() => setZoom(prev => Math.min(prev * 1.2, 3))}
-              className="p-2 sm:p-3 bg-white hover:bg-gray-50 text-gray-700 rounded-lg shadow-lg border border-gray-200 transition-all duration-200 hover:shadow-xl"
-              title="Zoom In"
-            >
-              <ZoomIn size={18} className="sm:w-5 sm:h-5" strokeWidth={2} />
-            </button>
-            
+          <div className="fixed bottom-20 sm:bottom-6 left-4 sm:left-6 flex flex-row items-center gap-1.5 sm:gap-2 z-30">
             {/* Zoom Out */}
             <button
               onClick={() => setZoom(prev => Math.max(prev / 1.2, 0.2))}
@@ -2747,6 +2738,20 @@ export default function MindMap({ mapId, onBack }) {
               title="Zoom Out"
             >
               <ZoomOut size={18} className="sm:w-5 sm:h-5" strokeWidth={2} />
+            </button>
+            
+            {/* Zoom Percentage */}
+            <div className="px-3 py-2 sm:py-2.5 bg-white text-gray-700 rounded-lg shadow-lg border border-gray-200 font-medium text-sm min-w-[60px] text-center">
+              {Math.round(zoom * 100)}%
+            </div>
+            
+            {/* Zoom In */}
+            <button
+              onClick={() => setZoom(prev => Math.min(prev * 1.2, 3))}
+              className="p-2 sm:p-3 bg-white hover:bg-gray-50 text-gray-700 rounded-lg shadow-lg border border-gray-200 transition-all duration-200 hover:shadow-xl"
+              title="Zoom In"
+            >
+              <ZoomIn size={18} className="sm:w-5 sm:h-5" strokeWidth={2} />
             </button>
             
             {/* Re-center */}
@@ -2760,6 +2765,79 @@ export default function MindMap({ mapId, onBack }) {
             >
               <Maximize2 size={18} className="sm:w-5 sm:h-5" strokeWidth={2} />
             </button>
+          </div>
+        )}
+
+        {/* Action Controls - Middle Right (Column) */}
+        {viewMode === 'mindmap' && (
+          <div className="fixed top-1/2 -translate-y-1/2 right-4 sm:right-6 bg-white rounded-lg shadow-lg border border-gray-200 p-1.5 sm:p-2 z-30">
+            <div className="flex flex-col gap-1 sm:gap-1.5">
+              {/* Add Node */}
+              <button
+                onClick={addStandaloneNode}
+                className="p-1.5 sm:p-2 hover:bg-emerald-50 text-gray-700 hover:text-emerald-600 rounded-lg transition-all duration-200"
+                title="Add New Node"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+              
+              {/* Delete Selected */}
+              <button
+                onClick={() => selectedNodes.length > 0 && nodeOps.deleteNodes(selectedNodes)}
+                className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${
+                  selectedNodes.length > 0 
+                    ? 'text-gray-700 hover:bg-red-50 hover:text-red-600' 
+                    : 'text-gray-300 cursor-not-allowed'
+                }`}
+                title="Delete Selected"
+                disabled={selectedNodes.length === 0}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+
+              {/* Divider */}
+              <div className="w-full h-px bg-gray-200 my-0.5" />
+              
+              {/* Undo */}
+              <button
+                onClick={undo}
+                className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${
+                  historyIndex <= 0 
+                    ? 'text-gray-300 cursor-not-allowed' 
+                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                }`}
+                title="Undo"
+                disabled={historyIndex <= 0}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 17L4 12l5-5" />
+                  <path d="M20 18v-1a4 4 0 0 0-4-4H4" />
+                </svg>
+              </button>
+              
+              {/* Redo */}
+              <button
+                onClick={redo}
+                className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${
+                  historyIndex >= history.length - 1 
+                    ? 'text-gray-300 cursor-not-allowed' 
+                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                }`}
+                title="Redo"
+                disabled={historyIndex >= history.length - 1}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 7l5 5-5 5" />
+                  <path d="M4 6v1a4 4 0 0 0 4 4h12" />
+                </svg>
+              </button>
+            </div>
           </div>
         )}
       </div>
