@@ -7,23 +7,56 @@ import { Table2, Download, Upload, Copy, Clipboard, Search, Filter, Plus, Trash2
  * Emulates a Google Sheets-like interface with editable cells,
  * formula support, and import/export capabilities
  */
-const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange }) => {
+const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange, collaborators = [] }) => {
+    // Use collaborators from props, or fall back to extracting from nodes
+    const assigneeOptions = useMemo(() => {
+        // First priority: use collaborators passed from MindMap
+        if (collaborators && collaborators.length > 0) {
+            return collaborators.map(c => ({
+                value: c.name || c.id,
+                label: c.name || c.id,
+                initials: c.initials,
+                color: c.color
+            }));
+        }
+        // Fallback: extract from existing node assignees
+        const assignees = new Set();
+        nodes.forEach(node => {
+            if (node.assignee) {
+                const name = typeof node.assignee === 'string' ? node.assignee : node.assignee?.name;
+                if (name) assignees.add(name);
+            }
+        });
+        return Array.from(assignees).map(a => ({ value: a, label: a }));
+    }, [nodes, collaborators]);
+
     // Column definitions with Google Sheets-like structure
-    const defaultColumns = [
+    const columns = useMemo(() => [
         { id: 'id', label: 'ID', width: 80, type: 'text', editable: false },
         { id: 'text', label: 'Task Name', width: 200, type: 'text', editable: true },
-        { id: 'status', label: 'Status', width: 120, type: 'select', editable: true, options: ['not-started', 'in-progress', 'review', 'completed'] },
-        { id: 'priority', label: 'Priority', width: 100, type: 'select', editable: true, options: ['low', 'medium', 'high'] },
+        {
+            id: 'status', label: 'Status', width: 140, type: 'select', editable: true, options: [
+                { value: 'not-started', label: 'Not Started' },
+                { value: 'in-progress', label: 'In Progress' },
+                { value: 'review', label: 'Review' },
+                { value: 'completed', label: '✓ Completed' }
+            ]
+        },
+        {
+            id: 'priority', label: 'Priority', width: 120, type: 'select', editable: true, options: [
+                { value: 'low', label: '🟢 Low' },
+                { value: 'medium', label: '🟡 Medium' },
+                { value: 'high', label: '🔴 High' }
+            ]
+        },
         { id: 'startDate', label: 'Start Date', width: 140, type: 'date', editable: true },
         { id: 'dueDate', label: 'Due Date', width: 140, type: 'date', editable: true },
         { id: 'progress', label: 'Progress', width: 100, type: 'number', editable: true },
         { id: 'sprint', label: 'Sprint', width: 100, type: 'text', editable: true },
         { id: 'tags', label: 'Tags', width: 150, type: 'tags', editable: true },
         { id: 'notes', label: 'Notes', width: 250, type: 'text', editable: true },
-        { id: 'assignee', label: 'Assignee', width: 120, type: 'text', editable: true },
-    ];
-
-    const [columns] = useState(defaultColumns);
+        { id: 'assignee', label: 'Assignee', width: 140, type: 'select', editable: true, options: assigneeOptions },
+    ], [assigneeOptions]);
     const [selectedCell, setSelectedCell] = useState(null); // { rowId, colId }
     const [editingCell, setEditingCell] = useState(null); // { rowId, colId, value }
     const [selectedRows, setSelectedRows] = useState(new Set());
@@ -35,6 +68,198 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange }) => {
 
     const tableRef = useRef(null);
     const inputRef = useRef(null);
+
+    // ========== FORMULA SUPPORT ==========
+    // Parse cell reference like "A1", "B2", etc. to get column index and row index
+    const parseCellReference = useCallback((ref) => {
+        const match = ref.match(/^([A-Z]+)(\d+)$/i);
+        if (!match) return null;
+
+        // Convert column letters to index (A=0, B=1, ..., Z=25, AA=26, etc.)
+        const colLetters = match[1].toUpperCase();
+        let colIndex = 0;
+        for (let i = 0; i < colLetters.length; i++) {
+            colIndex = colIndex * 26 + (colLetters.charCodeAt(i) - 64);
+        }
+        colIndex--; // Make it 0-indexed
+
+        const rowIndex = parseInt(match[2], 10) - 1; // Make it 0-indexed
+        return { colIndex, rowIndex };
+    }, []);
+
+    // Get cell value by reference (e.g., "A1")
+    const getCellValue = useCallback((ref, rows) => {
+        const parsed = parseCellReference(ref);
+        if (!parsed) return null;
+
+        const { colIndex, rowIndex } = parsed;
+        if (rowIndex < 0 || rowIndex >= rows.length) return null;
+        if (colIndex < 0 || colIndex >= columns.length) return null;
+
+        const node = rows[rowIndex];
+        const column = columns[colIndex];
+        const value = node[column.id];
+
+        // Try to parse as number
+        const numValue = parseFloat(value);
+        return isNaN(numValue) ? value : numValue;
+    }, [columns, parseCellReference]);
+
+    // Parse range like "A1:A5" and return array of values
+    const parseRange = useCallback((range, rows) => {
+        const parts = range.split(':');
+        if (parts.length !== 2) return [getCellValue(range, rows)];
+
+        const start = parseCellReference(parts[0]);
+        const end = parseCellReference(parts[1]);
+        if (!start || !end) return [];
+
+        const values = [];
+        for (let row = start.rowIndex; row <= end.rowIndex; row++) {
+            for (let col = start.colIndex; col <= end.colIndex; col++) {
+                if (row >= 0 && row < rows.length && col >= 0 && col < columns.length) {
+                    const node = rows[row];
+                    const column = columns[col];
+                    const value = node[column.id];
+                    const numValue = parseFloat(value);
+                    values.push(isNaN(numValue) ? value : numValue);
+                }
+            }
+        }
+        return values;
+    }, [columns, parseCellReference, getCellValue]);
+
+    // Formula functions
+    const formulaFunctions = useMemo(() => ({
+        // Math functions
+        SUM: (args) => args.flat().filter(v => typeof v === 'number').reduce((a, b) => a + b, 0),
+        AVERAGE: (args) => {
+            const nums = args.flat().filter(v => typeof v === 'number');
+            return nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
+        },
+        COUNT: (args) => args.flat().filter(v => typeof v === 'number').length,
+        COUNTA: (args) => args.flat().filter(v => v !== null && v !== undefined && v !== '').length,
+        MIN: (args) => Math.min(...args.flat().filter(v => typeof v === 'number')),
+        MAX: (args) => Math.max(...args.flat().filter(v => typeof v === 'number')),
+        ROUND: (args) => {
+            const [num, decimals = 0] = args.flat();
+            return Math.round(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
+        },
+        ABS: (args) => Math.abs(args.flat()[0] || 0),
+        SQRT: (args) => Math.sqrt(args.flat()[0] || 0),
+        POWER: (args) => {
+            const [base, exp] = args.flat();
+            return Math.pow(base || 0, exp || 1);
+        },
+
+        // Text functions
+        UPPER: (args) => String(args.flat()[0] || '').toUpperCase(),
+        LOWER: (args) => String(args.flat()[0] || '').toLowerCase(),
+        LEN: (args) => String(args.flat()[0] || '').length,
+        CONCAT: (args) => args.flat().map(v => String(v || '')).join(''),
+        CONCATENATE: (args) => args.flat().map(v => String(v || '')).join(''),
+        LEFT: (args) => {
+            const [text, num = 1] = args.flat();
+            return String(text || '').substring(0, num);
+        },
+        RIGHT: (args) => {
+            const [text, num = 1] = args.flat();
+            const str = String(text || '');
+            return str.substring(str.length - num);
+        },
+        TRIM: (args) => String(args.flat()[0] || '').trim(),
+
+        // Logical functions
+        IF: (args) => {
+            const [condition, trueVal, falseVal] = args.flat();
+            return condition ? trueVal : falseVal;
+        },
+        AND: (args) => args.flat().every(v => Boolean(v)),
+        OR: (args) => args.flat().some(v => Boolean(v)),
+        NOT: (args) => !args.flat()[0],
+
+        // Date functions
+        TODAY: () => new Date().toISOString().split('T')[0],
+        NOW: () => new Date().toISOString(),
+        YEAR: (args) => new Date(args.flat()[0]).getFullYear(),
+        MONTH: (args) => new Date(args.flat()[0]).getMonth() + 1,
+        DAY: (args) => new Date(args.flat()[0]).getDate(),
+    }), []);
+
+    // Evaluate a formula string
+    const evaluateFormula = useCallback((formula, rows) => {
+        if (!formula || typeof formula !== 'string' || !formula.startsWith('=')) {
+            return formula;
+        }
+
+        try {
+            const expr = formula.substring(1).trim();
+
+            // Match function calls like SUM(A1:A5) or IF(A1>5, "yes", "no")
+            const funcMatch = expr.match(/^([A-Z]+)\((.*)\)$/i);
+            if (funcMatch) {
+                const funcName = funcMatch[1].toUpperCase();
+                const argsStr = funcMatch[2];
+
+                if (formulaFunctions[funcName]) {
+                    // Parse arguments (handle nested functions, ranges, and values)
+                    const args = [];
+                    let depth = 0;
+                    let current = '';
+
+                    for (let i = 0; i < argsStr.length; i++) {
+                        const char = argsStr[i];
+                        if (char === '(') depth++;
+                        else if (char === ')') depth--;
+                        else if (char === ',' && depth === 0) {
+                            args.push(current.trim());
+                            current = '';
+                            continue;
+                        }
+                        current += char;
+                    }
+                    if (current.trim()) args.push(current.trim());
+
+                    // Evaluate each argument
+                    const evaluatedArgs = args.map(arg => {
+                        // Check if it's a range (e.g., A1:A5)
+                        if (arg.includes(':')) {
+                            return parseRange(arg, rows);
+                        }
+                        // Check if it's a cell reference
+                        if (/^[A-Z]+\d+$/i.test(arg)) {
+                            return getCellValue(arg, rows);
+                        }
+                        // Check if it's a nested function
+                        if (/^[A-Z]+\(/.test(arg)) {
+                            return evaluateFormula('=' + arg, rows);
+                        }
+                        // Check if it's a quoted string
+                        if (/^["'].*["']$/.test(arg)) {
+                            return arg.slice(1, -1);
+                        }
+                        // Try to parse as number
+                        const num = parseFloat(arg);
+                        return isNaN(num) ? arg : num;
+                    });
+
+                    return formulaFunctions[funcName](evaluatedArgs);
+                }
+            }
+
+            // Simple cell reference
+            if (/^[A-Z]+\d+$/i.test(expr)) {
+                return getCellValue(expr, rows);
+            }
+
+            // Simple arithmetic (only for basic expressions)
+            // This is a simplified evaluator
+            return formula; // Return as-is if can't parse
+        } catch (error) {
+            console.error('Formula error:', error);
+            return '#ERROR!';
+        }
+    }, [formulaFunctions, getCellValue, parseRange]);
 
     // Helper function to get column letter (A, B, C, ..., Z, AA, AB, etc.)
     const getColumnLetter = (index) => {
@@ -201,7 +426,10 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange }) => {
     useEffect(() => {
         if (editingCell && inputRef.current) {
             inputRef.current.focus();
-            inputRef.current.select();
+            // Only call select() for text inputs, not for select elements
+            if (typeof inputRef.current.select === 'function') {
+                inputRef.current.select();
+            }
         }
     }, [editingCell]);
 
@@ -303,10 +531,21 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange }) => {
     };
 
     // Format cell value for display
-    const formatCellValue = (node, column) => {
+    const formatCellValue = useCallback((node, column) => {
         const value = node[column.id];
 
         if (value === undefined || value === null) return '';
+
+        // Check if value is a formula
+        if (typeof value === 'string' && value.startsWith('=')) {
+            // In showFormulas mode, display the formula itself
+            if (showFormulas) {
+                return value;
+            }
+            // Otherwise, evaluate the formula
+            const result = evaluateFormula(value, processedRows);
+            return result;
+        }
 
         switch (column.type) {
             case 'date':
@@ -320,12 +559,22 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange }) => {
                 return Array.isArray(value) ? value.join(', ') : value;
             case 'number':
                 return typeof value === 'number' ? value.toString() : value;
-            case 'select':
+            case 'select': {
+                // Look up the label from options if available
+                if (column.options && value) {
+                    const option = column.options.find(opt =>
+                        (typeof opt === 'object' ? opt.value : opt) === value
+                    );
+                    if (option) {
+                        return typeof option === 'object' ? option.label : option;
+                    }
+                }
                 return value || '';
+            }
             default:
                 return String(value);
         }
-    };
+    }, [showFormulas, evaluateFormula, processedRows]);
 
     // Get status color
     const getStatusColor = (status) => {
@@ -367,12 +616,17 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange }) => {
                         }}
                         onKeyDown={(e) => e.stopPropagation()}
                         onBlur={() => setEditingCell(null)}
-                        className="w-full h-full px-2 py-1 text-sm border-2 border-blue-500 outline-none bg-white"
+                        className="w-full h-full px-2 py-1 text-sm text-gray-900 border-2 border-blue-500 outline-none bg-white"
                     >
-                        <option value="">-</option>
-                        {column.options?.map(opt => (
-                            <option key={opt} value={opt}>{opt}</option>
-                        ))}
+                        <option value="">Select {column.label}</option>
+                        {column.options?.map(opt => {
+                            // Handle both string options and {value, label} objects
+                            const value = typeof opt === 'object' ? opt.value : opt;
+                            const label = typeof opt === 'object' ? opt.label : opt;
+                            return (
+                                <option key={value} value={value}>{label}</option>
+                            );
+                        })}
                     </select>
                 );
             }
@@ -398,25 +652,26 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange }) => {
                         handleCellChange(node.id, column.id, e.target.value);
                         setEditingCell(null);
                     }}
-                    className="w-full h-full px-2 py-1 text-sm border-2 border-blue-500 outline-none bg-white"
+                    className="w-full h-full px-2 py-1 text-sm text-gray-900 border-2 border-blue-500 outline-none bg-white"
                 />
             );
         }
 
         const value = formatCellValue(node, column);
+        const rawValue = node[column.id]; // Raw value for color lookup
 
         // Special rendering for status and priority
-        if (column.id === 'status' && value) {
+        if (column.id === 'status' && rawValue) {
             return (
-                <span className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(value)}`}>
+                <span className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(rawValue)}`}>
                     {value}
                 </span>
             );
         }
 
-        if (column.id === 'priority' && value) {
+        if (column.id === 'priority' && rawValue) {
             return (
-                <span className={`px-2 py-0.5 rounded text-xs font-medium ${getPriorityColor(value)}`}>
+                <span className={`px-2 py-0.5 rounded text-xs font-medium ${getPriorityColor(rawValue)}`}>
                     {value}
                 </span>
             );
@@ -461,7 +716,8 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange }) => {
                                 placeholder="Search..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent w-48"
+                                onKeyDown={(e) => e.stopPropagation()}
+                                className="pl-8 pr-3 py-1.5 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent w-48 bg-white"
                             />
                         </div>
 
@@ -520,12 +776,13 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange }) => {
                             value={formulaBarValue}
                             onChange={(e) => setFormulaBarValue(e.target.value)}
                             onKeyDown={(e) => {
+                                e.stopPropagation();
                                 if (e.key === 'Enter' && selectedCell) {
                                     handleCellChange(selectedCell.rowId, selectedCell.colId, formulaBarValue);
                                 }
                             }}
                             placeholder="Enter value or formula..."
-                            className="flex-1 text-sm border-none outline-none bg-transparent"
+                            className="flex-1 text-sm text-gray-900 border-none outline-none bg-transparent placeholder-gray-400"
                             disabled={!selectedCell}
                         />
                     </div>
@@ -657,6 +914,7 @@ ExcelView.propTypes = {
     connections: PropTypes.array,
     onNodeUpdate: PropTypes.func,
     onNodesChange: PropTypes.func,
+    collaborators: PropTypes.array,
 };
 
 export default ExcelView;

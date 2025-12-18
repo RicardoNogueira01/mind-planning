@@ -2294,6 +2294,7 @@ export default function MindMap({ mapId, onBack }) {
               nodes={nodes}
               connections={connections}
               onNodesChange={setNodes}
+              collaborators={collaborators}
             />
           </div>
         )}
