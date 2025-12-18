@@ -1,10 +1,18 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatching, connectionMode, isConnectionSource, isAlreadyConnected, isParentOfSelected, isChildOfSelected, hasProgress, theme, className, children }) => {
+const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatching, connectionMode, isConnectionSource, isAlreadyConnected, isParentOfSelected, isChildOfSelected, hasProgress, theme, className, children, collaborators = [] }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editText, setEditText] = React.useState(node.text || '');
   const [isHovering, setIsHovering] = React.useState(false);
+
+  // Get collaborator info by ID
+  const getCollaboratorInfo = (collabId) => {
+    return collaborators.find(c => c.id === collabId);
+  };
+
+  // Check if node has collaborators assigned
+  const nodeCollaborators = Array.isArray(node.collaborators) ? node.collaborators : [];
 
   // Convert shape name to border-radius
   const getShapeBorderRadius = (shape, fallbackRadius) => {
@@ -45,11 +53,14 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
     selectedRing: '#3B82F6',
   };
 
-  // Calculate dynamic row count based on content
+  // Calculate dynamic row count based on content - start small and grow
   const calculateRows = (text) => {
-    if (!text) return 4; // Start with 4 rows when empty
+    if (!text) return 1; // Start with 1 row when empty
     const lineCount = text.split('\n').length;
-    return Math.max(4, Math.min(lineCount, 10)); // Min 4, max 10 rows
+    // Also account for wrapped lines (rough estimate: every 30 chars is a line)
+    const charLineCount = Math.ceil(text.length / 30);
+    const estimatedRows = Math.max(lineCount, charLineCount);
+    return Math.max(1, Math.min(estimatedRows, 10)); // Min 1, max 10 rows
   };
 
   const handleDoubleClick = () => {
@@ -219,16 +230,33 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
         {isEditing ? (
           <textarea
             autoFocus
-            className="w-full text-center resize-none bg-transparent outline-none font-medium border-0"
-            style={{ paddingLeft: hasProgress ? '48px' : '0', color: 'inherit' }}
+            className="w-full text-center resize-none bg-transparent outline-none font-medium border-0 overflow-hidden"
+            style={{
+              paddingLeft: hasProgress ? '48px' : '0',
+              color: 'inherit',
+              minHeight: '24px',
+              lineHeight: '1.5'
+            }}
             value={editText}
-            onChange={(e) => setEditText(e.target.value)}
+            onChange={(e) => {
+              setEditText(e.target.value);
+              // Auto-resize textarea
+              e.target.style.height = 'auto';
+              e.target.style.height = e.target.scrollHeight + 'px';
+            }}
             onKeyDown={handleKeyDown}
             onBlur={handleSaveText}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
-            rows={calculateRows(editText)}
-            placeholder="Type here... (Ctrl+Enter to save, Esc to cancel)"
+            rows={1}
+            placeholder="Type here..."
+            ref={(el) => {
+              if (el) {
+                // Auto-resize on mount
+                el.style.height = 'auto';
+                el.style.height = el.scrollHeight + 'px';
+              }
+            }}
           />
         ) : (
           <div className="flex flex-col items-center gap-2">
@@ -298,7 +326,8 @@ NodeCard.propTypes = {
     y: PropTypes.number.isRequired,
     bgColor: PropTypes.string,
     fontColor: PropTypes.string,
-    emoji: PropTypes.string
+    emoji: PropTypes.string,
+    collaborators: PropTypes.arrayOf(PropTypes.string)
   }).isRequired,
   selected: PropTypes.bool,
   onSelect: PropTypes.func,
@@ -313,7 +342,13 @@ NodeCard.propTypes = {
   hasProgress: PropTypes.bool,
   theme: PropTypes.object,
   className: PropTypes.string,
-  children: PropTypes.node
+  children: PropTypes.node,
+  collaborators: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+    initials: PropTypes.string,
+    color: PropTypes.string
+  }))
 };
 
 export default NodeCard;

@@ -2322,6 +2322,7 @@ export default function MindMap({ mapId, onBack }) {
             <ExcelView
               nodes={nodes}
               connections={connections}
+              onNodeUpdate={handleNodeUpdate}
               onNodesChange={setNodes}
               collaborators={collaborators}
             />
@@ -2395,6 +2396,7 @@ export default function MindMap({ mapId, onBack }) {
                     hasProgress={hasProgress}
                     theme={activeTheme}
                     className={joiningGroupNodes.has(node.id) ? 'animate-join-group' : ''}
+                    collaborators={collaborators}
                     onMouseDown={(e) => {
                       // allow dragging via startPanning handler; nothing here
                     }}

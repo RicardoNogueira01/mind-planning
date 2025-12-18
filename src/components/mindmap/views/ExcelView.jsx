@@ -9,26 +9,27 @@ import { Table2, Download, Upload, Copy, Clipboard, Search, Filter, Plus, Trash2
  */
 const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange, collaborators = [] }) => {
     // Use collaborators from props, or fall back to extracting from nodes
+    // Build assignee options using collaborator IDs as values for proper sync
     const assigneeOptions = useMemo(() => {
-        // First priority: use collaborators passed from MindMap
+        // Use collaborators passed from MindMap - store ID as value for sync with CollaboratorPicker
         if (collaborators && collaborators.length > 0) {
             return collaborators.map(c => ({
-                value: c.name || c.id,
+                value: c.id,          // Use ID so it syncs with node.collaborators
                 label: c.name || c.id,
                 initials: c.initials,
                 color: c.color
             }));
         }
-        // Fallback: extract from existing node assignees
-        const assignees = new Set();
-        nodes.forEach(node => {
-            if (node.assignee) {
-                const name = typeof node.assignee === 'string' ? node.assignee : node.assignee?.name;
-                if (name) assignees.add(name);
-            }
-        });
-        return Array.from(assignees).map(a => ({ value: a, label: a }));
-    }, [nodes, collaborators]);
+        return [];
+    }, [collaborators]);
+
+    // Helper to get the first collaborator ID from a node (for display)
+    const getNodeAssigneeId = useCallback((node) => {
+        if (Array.isArray(node.collaborators) && node.collaborators.length > 0) {
+            return node.collaborators[0]; // Return first collaborator ID
+        }
+        return null;
+    }, []);
 
     // Column definitions with Google Sheets-like structure
     const columns = useMemo(() => [
@@ -640,13 +641,44 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange, collaborat
         if (!column?.editable) return;
 
         const node = nodes.find(n => n.id === rowId);
-        const value = node ? (node[colId] ?? '') : '';
+
+        // Special handling for assignee - read from node.collaborators
+        let value;
+        if (colId === 'assignee') {
+            const collabIds = Array.isArray(node?.collaborators) ? node.collaborators : [];
+            value = collabIds.length > 0 ? collabIds[0] : ''; // Use the first collaborator ID
+        } else {
+            value = node ? (node[colId] ?? '') : '';
+        }
+
         setEditingCell({ rowId, colId, value: Array.isArray(value) ? value.join(', ') : value });
     };
 
     // Handle cell value change
     const handleCellChange = useCallback((rowId, colId, value) => {
         const column = columns.find(c => c.id === colId);
+
+        // Special handling for assignee - update node.collaborators array instead
+        if (colId === 'assignee') {
+            const collaboratorId = value; // value is now the collaborator ID
+            if (onNodesChange) {
+                onNodesChange(prev => prev.map(n => {
+                    if (n.id !== rowId) return n;
+                    const existingCollabs = Array.isArray(n.collaborators) ? n.collaborators : [];
+                    if (!collaboratorId) {
+                        // If empty value, clear all collaborators
+                        return { ...n, collaborators: [] };
+                    }
+                    if (existingCollabs.includes(collaboratorId)) {
+                        // Already assigned, do nothing
+                        return n;
+                    }
+                    // Add new collaborator (replace the primary assignee)
+                    return { ...n, collaborators: [collaboratorId, ...existingCollabs.filter(id => id !== collaboratorId)] };
+                }));
+            }
+            return;
+        }
 
         // Parse value based on column type
         let parsedValue = value;
@@ -750,8 +782,9 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange, collaborat
     useEffect(() => {
         if (editingCell && inputRef.current) {
             inputRef.current.focus();
-            // Only call select() for text inputs, not for select elements
-            if (typeof inputRef.current.select === 'function') {
+            // Only call select() for text inputs and textareas, not for select elements
+            const tagName = inputRef.current.tagName?.toUpperCase();
+            if ((tagName === 'INPUT' || tagName === 'TEXTAREA') && typeof inputRef.current.select === 'function') {
                 inputRef.current.select();
             }
         }
@@ -856,6 +889,16 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange, collaborat
 
     // Format cell value for display
     const formatCellValue = useCallback((node, column) => {
+        // Special handling for assignee - read from node.collaborators
+        if (column.id === 'assignee') {
+            const collabIds = Array.isArray(node.collaborators) ? node.collaborators : [];
+            if (collabIds.length === 0) return '';
+            // Look up the first collaborator's name
+            const primaryCollabId = collabIds[0];
+            const collab = collaborators.find(c => c.id === primaryCollabId);
+            return collab ? collab.name : primaryCollabId;
+        }
+
         const value = node[column.id];
 
         if (value === undefined || value === null) return '';
