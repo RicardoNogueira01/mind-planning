@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Table2, Download, Upload, Copy, Clipboard, Search, Filter, Plus, Trash2, ChevronDown } from 'lucide-react';
+import { Table2, Download, Upload, Copy, Clipboard, Search, Filter, Plus, Trash2, ChevronDown, HelpCircle, X } from 'lucide-react';
 
 /**
  * Excel View for Mind Map Tasks
@@ -65,6 +65,7 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange, collaborat
     const [showFormulas, setShowFormulas] = useState(false);
     const [formulaBarValue, setFormulaBarValue] = useState('');
     const [copiedCells, setCopiedCells] = useState(null);
+    const [showHelpModal, setShowHelpModal] = useState(false);
 
     const tableRef = useRef(null);
     const inputRef = useRef(null);
@@ -168,6 +169,52 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange, collaborat
             return str.substring(str.length - num);
         },
         TRIM: (args) => String(args.flat()[0] || '').trim(),
+        MID: (args) => {
+            const [text, start, length] = args.flat();
+            return String(text || '').substring(start - 1, start - 1 + length);
+        },
+        REPLACE: (args) => {
+            const [text, start, length, newText] = args.flat();
+            const str = String(text || '');
+            return str.substring(0, start - 1) + newText + str.substring(start - 1 + length);
+        },
+        SUBSTITUTE: (args) => {
+            const [text, oldText, newText, instance] = args.flat();
+            const str = String(text || '');
+            if (instance) {
+                let count = 0;
+                return str.replace(new RegExp(oldText, 'g'), (match) => {
+                    count++;
+                    return count === instance ? newText : match;
+                });
+            }
+            return str.split(oldText).join(newText);
+        },
+        FIND: (args) => {
+            const [findText, withinText, startNum = 1] = args.flat();
+            const index = String(withinText || '').indexOf(findText, startNum - 1);
+            return index === -1 ? '#VALUE!' : index + 1;
+        },
+        SEARCH: (args) => {
+            const [findText, withinText, startNum = 1] = args.flat();
+            const index = String(withinText || '').toLowerCase().indexOf(String(findText).toLowerCase(), startNum - 1);
+            return index === -1 ? '#VALUE!' : index + 1;
+        },
+        REPT: (args) => {
+            const [text, times] = args.flat();
+            return String(text || '').repeat(Math.max(0, Math.floor(times || 0)));
+        },
+        PROPER: (args) => {
+            return String(args.flat()[0] || '').replace(/\w\S*/g, txt =>
+                txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+            );
+        },
+        TEXT: (args) => String(args.flat()[0] || ''),
+        VALUE: (args) => parseFloat(args.flat()[0]) || 0,
+        EXACT: (args) => {
+            const [text1, text2] = args.flat();
+            return String(text1) === String(text2);
+        },
 
         // Logical functions
         IF: (args) => {
@@ -177,6 +224,218 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange, collaborat
         AND: (args) => args.flat().every(v => Boolean(v)),
         OR: (args) => args.flat().some(v => Boolean(v)),
         NOT: (args) => !args.flat()[0],
+        XOR: (args) => args.flat().filter(v => Boolean(v)).length % 2 === 1,
+        IFS: (args) => {
+            const flat = args.flat();
+            for (let i = 0; i < flat.length; i += 2) {
+                if (flat[i]) return flat[i + 1];
+            }
+            return '#N/A';
+        },
+        SWITCH: (args) => {
+            const flat = args.flat();
+            const expr = flat[0];
+            for (let i = 1; i < flat.length - 1; i += 2) {
+                if (flat[i] === expr) return flat[i + 1];
+            }
+            return flat.length % 2 === 0 ? flat[flat.length - 1] : '#N/A';
+        },
+        CHOOSE: (args) => {
+            const flat = args.flat();
+            const index = Math.floor(flat[0]);
+            return index >= 1 && index < flat.length ? flat[index] : '#VALUE!';
+        },
+        IFERROR: (args) => {
+            const [value, errorValue] = args.flat();
+            return (value === '#ERROR!' || value === '#VALUE!' || value === '#N/A' || value === '#REF!')
+                ? errorValue : value;
+        },
+        IFNA: (args) => {
+            const [value, naValue] = args.flat();
+            return value === '#N/A' ? naValue : value;
+        },
+
+        // More Math functions
+        PRODUCT: (args) => args.flat().filter(v => typeof v === 'number').reduce((a, b) => a * b, 1),
+        MOD: (args) => {
+            const [num, divisor] = args.flat();
+            return num % divisor;
+        },
+        FLOOR: (args) => {
+            const [num, significance = 1] = args.flat();
+            return Math.floor(num / significance) * significance;
+        },
+        CEILING: (args) => {
+            const [num, significance = 1] = args.flat();
+            return Math.ceil(num / significance) * significance;
+        },
+        INT: (args) => Math.floor(args.flat()[0] || 0),
+        SIGN: (args) => Math.sign(args.flat()[0] || 0),
+        LOG: (args) => {
+            const [num, base = Math.E] = args.flat();
+            return Math.log(num) / Math.log(base);
+        },
+        LOG10: (args) => Math.log10(args.flat()[0] || 1),
+        LN: (args) => Math.log(args.flat()[0] || 1),
+        EXP: (args) => Math.exp(args.flat()[0] || 0),
+        SIN: (args) => Math.sin(args.flat()[0] || 0),
+        COS: (args) => Math.cos(args.flat()[0] || 0),
+        TAN: (args) => Math.tan(args.flat()[0] || 0),
+        ASIN: (args) => Math.asin(args.flat()[0] || 0),
+        ACOS: (args) => Math.acos(args.flat()[0] || 0),
+        ATAN: (args) => Math.atan(args.flat()[0] || 0),
+        ATAN2: (args) => {
+            const [y, x] = args.flat();
+            return Math.atan2(y, x);
+        },
+        DEGREES: (args) => args.flat()[0] * (180 / Math.PI),
+        RADIANS: (args) => args.flat()[0] * (Math.PI / 180),
+        PI: () => Math.PI,
+        RAND: () => Math.random(),
+        RANDBETWEEN: (args) => {
+            const [min, max] = args.flat();
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        },
+        TRUNC: (args) => {
+            const [num, decimals = 0] = args.flat();
+            const factor = Math.pow(10, decimals);
+            return Math.trunc(num * factor) / factor;
+        },
+        GCD: (args) => {
+            const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+            return args.flat().filter(v => typeof v === 'number').reduce((a, b) => gcd(a, Math.abs(b)));
+        },
+        LCM: (args) => {
+            const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+            const lcm = (a, b) => Math.abs(a * b) / gcd(a, b);
+            return args.flat().filter(v => typeof v === 'number').reduce((a, b) => lcm(a, b));
+        },
+        FACT: (args) => {
+            let n = Math.floor(args.flat()[0] || 0);
+            if (n < 0) return '#NUM!';
+            let result = 1;
+            for (let i = 2; i <= n; i++) result *= i;
+            return result;
+        },
+
+        // Statistical functions
+        MEDIAN: (args) => {
+            const nums = args.flat().filter(v => typeof v === 'number').sort((a, b) => a - b);
+            const mid = Math.floor(nums.length / 2);
+            return nums.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
+        },
+        MODE: (args) => {
+            const nums = args.flat().filter(v => typeof v === 'number');
+            const freq = {};
+            nums.forEach(n => freq[n] = (freq[n] || 0) + 1);
+            let maxFreq = 0, mode = nums[0];
+            Object.entries(freq).forEach(([val, count]) => {
+                if (count > maxFreq) { maxFreq = count; mode = parseFloat(val); }
+            });
+            return mode;
+        },
+        STDEV: (args) => {
+            const nums = args.flat().filter(v => typeof v === 'number');
+            if (nums.length < 2) return '#DIV/0!';
+            const mean = nums.reduce((a, b) => a + b, 0) / nums.length;
+            const variance = nums.reduce((sum, n) => sum + Math.pow(n - mean, 2), 0) / (nums.length - 1);
+            return Math.sqrt(variance);
+        },
+        VAR: (args) => {
+            const nums = args.flat().filter(v => typeof v === 'number');
+            if (nums.length < 2) return '#DIV/0!';
+            const mean = nums.reduce((a, b) => a + b, 0) / nums.length;
+            return nums.reduce((sum, n) => sum + Math.pow(n - mean, 2), 0) / (nums.length - 1);
+        },
+        LARGE: (args) => {
+            const [range, k] = [args[0], args[1]?.[0] || args[1]];
+            const nums = (Array.isArray(range) ? range : [range]).filter(v => typeof v === 'number').sort((a, b) => b - a);
+            return k >= 1 && k <= nums.length ? nums[k - 1] : '#NUM!';
+        },
+        SMALL: (args) => {
+            const [range, k] = [args[0], args[1]?.[0] || args[1]];
+            const nums = (Array.isArray(range) ? range : [range]).filter(v => typeof v === 'number').sort((a, b) => a - b);
+            return k >= 1 && k <= nums.length ? nums[k - 1] : '#NUM!';
+        },
+        PERCENTILE: (args) => {
+            const [range, k] = [args[0], args[1]?.[0] || args[1]];
+            const nums = (Array.isArray(range) ? range : [range]).filter(v => typeof v === 'number').sort((a, b) => a - b);
+            if (k < 0 || k > 1) return '#NUM!';
+            const index = k * (nums.length - 1);
+            const lower = Math.floor(index);
+            const upper = Math.ceil(index);
+            return lower === upper ? nums[lower] : nums[lower] + (nums[upper] - nums[lower]) * (index - lower);
+        },
+
+        // Conditional functions
+        SUMIF: (args) => {
+            const [range, criteria, sumRange] = args;
+            const values = Array.isArray(range) ? range : [range];
+            const sums = sumRange ? (Array.isArray(sumRange) ? sumRange : [sumRange]) : values;
+            let total = 0;
+            values.forEach((v, i) => {
+                if (String(v) === String(criteria) || (typeof criteria === 'number' && v === criteria)) {
+                    total += typeof sums[i] === 'number' ? sums[i] : 0;
+                }
+            });
+            return total;
+        },
+        COUNTIF: (args) => {
+            const [range, criteria] = args;
+            const values = Array.isArray(range) ? range : [range];
+            return values.filter(v => String(v) === String(criteria) || v === criteria).length;
+        },
+        AVERAGEIF: (args) => {
+            const [range, criteria, avgRange] = args;
+            const values = Array.isArray(range) ? range : [range];
+            const avgs = avgRange ? (Array.isArray(avgRange) ? avgRange : [avgRange]) : values;
+            const matches = [];
+            values.forEach((v, i) => {
+                if (String(v) === String(criteria) || v === criteria) {
+                    if (typeof avgs[i] === 'number') matches.push(avgs[i]);
+                }
+            });
+            return matches.length ? matches.reduce((a, b) => a + b, 0) / matches.length : 0;
+        },
+
+        // Lookup functions
+        VLOOKUP: (args) => {
+            const [searchKey, range, index, isSorted = true] = args.flat();
+            // Simplified - just return the search key for now
+            return `VLOOKUP: ${searchKey}`;
+        },
+        HLOOKUP: (args) => {
+            const [searchKey, range, index, isSorted = true] = args.flat();
+            return `HLOOKUP: ${searchKey}`;
+        },
+
+        // Information functions
+        ISNUMBER: (args) => typeof args.flat()[0] === 'number',
+        ISTEXT: (args) => typeof args.flat()[0] === 'string',
+        ISBLANK: (args) => {
+            const val = args.flat()[0];
+            return val === null || val === undefined || val === '';
+        },
+        ISERROR: (args) => {
+            const val = args.flat()[0];
+            return String(val).startsWith('#');
+        },
+        ISEVEN: (args) => Math.floor(args.flat()[0]) % 2 === 0,
+        ISODD: (args) => Math.floor(args.flat()[0]) % 2 !== 0,
+        TYPE: (args) => {
+            const val = args.flat()[0];
+            if (typeof val === 'number') return 1;
+            if (typeof val === 'string') return 2;
+            if (typeof val === 'boolean') return 4;
+            if (String(val).startsWith('#')) return 16;
+            return 64;
+        },
+        N: (args) => {
+            const val = args.flat()[0];
+            if (typeof val === 'number') return val;
+            if (typeof val === 'boolean') return val ? 1 : 0;
+            return 0;
+        },
 
         // Date functions
         TODAY: () => new Date().toISOString().split('T')[0],
@@ -184,6 +443,71 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange, collaborat
         YEAR: (args) => new Date(args.flat()[0]).getFullYear(),
         MONTH: (args) => new Date(args.flat()[0]).getMonth() + 1,
         DAY: (args) => new Date(args.flat()[0]).getDate(),
+        HOUR: (args) => new Date(args.flat()[0]).getHours(),
+        MINUTE: (args) => new Date(args.flat()[0]).getMinutes(),
+        SECOND: (args) => new Date(args.flat()[0]).getSeconds(),
+        WEEKDAY: (args) => {
+            const [date, type = 1] = args.flat();
+            const day = new Date(date).getDay();
+            if (type === 1) return day + 1; // Sunday = 1
+            if (type === 2) return day === 0 ? 7 : day; // Monday = 1
+            return day; // Sunday = 0
+        },
+        WEEKNUM: (args) => {
+            const date = new Date(args.flat()[0]);
+            const startOfYear = new Date(date.getFullYear(), 0, 1);
+            const days = Math.floor((date - startOfYear) / (24 * 60 * 60 * 1000));
+            return Math.ceil((days + startOfYear.getDay() + 1) / 7);
+        },
+        DATE: (args) => {
+            const [year, month, day] = args.flat();
+            return new Date(year, month - 1, day).toISOString().split('T')[0];
+        },
+        TIME: (args) => {
+            const [hour, minute, second = 0] = args.flat();
+            return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
+        },
+        DATEDIF: (args) => {
+            const [start, end, unit] = args.flat();
+            const startDate = new Date(start);
+            const endDate = new Date(end);
+            const diffMs = endDate - startDate;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            switch (String(unit).toUpperCase()) {
+                case 'D': return diffDays;
+                case 'M': return Math.floor(diffDays / 30);
+                case 'Y': return Math.floor(diffDays / 365);
+                default: return diffDays;
+            }
+        },
+        EDATE: (args) => {
+            const [start, months] = args.flat();
+            const date = new Date(start);
+            date.setMonth(date.getMonth() + months);
+            return date.toISOString().split('T')[0];
+        },
+        EOMONTH: (args) => {
+            const [start, months] = args.flat();
+            const date = new Date(start);
+            date.setMonth(date.getMonth() + months + 1, 0);
+            return date.toISOString().split('T')[0];
+        },
+        DAYS: (args) => {
+            const [end, start] = args.flat();
+            return Math.floor((new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24));
+        },
+        NETWORKDAYS: (args) => {
+            const [start, end] = args.flat();
+            let count = 0;
+            const current = new Date(start);
+            const endDate = new Date(end);
+            while (current <= endDate) {
+                const day = current.getDay();
+                if (day !== 0 && day !== 6) count++;
+                current.setDate(current.getDate() + 1);
+            }
+            return count;
+        },
     }), []);
 
     // Evaluate a formula string
@@ -660,20 +984,35 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange, collaborat
         const value = formatCellValue(node, column);
         const rawValue = node[column.id]; // Raw value for color lookup
 
-        // Special rendering for status and priority
-        if (column.id === 'status' && rawValue) {
+        // Special rendering for status - with dropdown indicator
+        if (column.id === 'status') {
             return (
-                <span className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(rawValue)}`}>
-                    {value}
-                </span>
+                <div className="flex items-center justify-between gap-1 w-full cursor-pointer hover:bg-gray-50 rounded px-1 -mx-1">
+                    {rawValue ? (
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(rawValue)}`}>
+                            {value}
+                        </span>
+                    ) : (
+                        <span className="text-gray-400 italic text-sm">Select...</span>
+                    )}
+                    <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
+                </div>
             );
         }
 
-        if (column.id === 'priority' && rawValue) {
+        // Special rendering for priority - with dropdown indicator
+        if (column.id === 'priority') {
             return (
-                <span className={`px-2 py-0.5 rounded text-xs font-medium ${getPriorityColor(rawValue)}`}>
-                    {value}
-                </span>
+                <div className="flex items-center justify-between gap-1 w-full cursor-pointer hover:bg-gray-50 rounded px-1 -mx-1">
+                    {rawValue ? (
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${getPriorityColor(rawValue)}`}>
+                            {value}
+                        </span>
+                    ) : (
+                        <span className="text-gray-400 italic text-sm">Select...</span>
+                    )}
+                    <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
+                </div>
             );
         }
 
@@ -688,6 +1027,26 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange, collaborat
                         />
                     </div>
                     <span className="text-xs text-gray-600 min-w-[32px]">{progress}%</span>
+                </div>
+            );
+        }
+
+        // For assignee column - show with dropdown indicator
+        if (column.id === 'assignee') {
+            return (
+                <div className="flex items-center justify-between gap-1 w-full cursor-pointer hover:bg-gray-50 rounded px-1 -mx-1">
+                    <span className="text-sm text-gray-700 truncate">{value || <span className="text-gray-400 italic">Select...</span>}</span>
+                    <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
+                </div>
+            );
+        }
+
+        // For other select columns - show with dropdown indicator
+        if (column.type === 'select') {
+            return (
+                <div className="flex items-center justify-between gap-1 w-full cursor-pointer hover:bg-gray-50 rounded px-1 -mx-1">
+                    <span className="text-sm text-gray-700 truncate">{value || <span className="text-gray-400 italic">Select...</span>}</span>
+                    <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
                 </div>
             );
         }
@@ -753,6 +1112,15 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange, collaborat
                                 <input type="file" accept=".csv" onChange={importFromCSV} className="hidden" />
                             </label>
                         </div>
+
+                        {/* Help button */}
+                        <button
+                            onClick={() => setShowHelpModal(true)}
+                            className="p-2 rounded-full hover:bg-gray-200 transition-colors ml-2"
+                            title="Formula Help"
+                        >
+                            <HelpCircle size={18} className="text-gray-500" />
+                        </button>
                     </div>
                 </div>
 
@@ -905,6 +1273,159 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange, collaborat
                     <span className="text-gray-400">Press F2 to edit • Tab to navigate</span>
                 </div>
             </div>
+
+            {/* Formula Help Modal */}
+            {showHelpModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowHelpModal(false)}>
+                    <div
+                        className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden flex flex-col mx-4"
+                        onClick={(e) => e.stopPropagation()}
+                        onWheel={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-900">
+                            <div className="flex items-center gap-3">
+                                <HelpCircle size={24} className="text-white" />
+                                <h2 className="text-xl font-bold text-white">Formula Reference</h2>
+                            </div>
+                            <button
+                                onClick={() => setShowHelpModal(false)}
+                                className="p-1 hover:bg-white/20 rounded-full transition-colors"
+                            >
+                                <X size={20} className="text-white" />
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-auto p-6">
+                            <p className="text-gray-600 mb-4">
+                                Start any cell with <code className="bg-gray-100 px-1.5 py-0.5 rounded text-green-600 font-mono">=</code> to create a formula.
+                                Use cell references like <code className="bg-gray-100 px-1.5 py-0.5 rounded text-green-600 font-mono">A1</code> or ranges like <code className="bg-gray-100 px-1.5 py-0.5 rounded text-green-600 font-mono">A1:A10</code>.
+                            </p>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Math Functions */}
+                                <div className="bg-blue-50 rounded-lg p-4">
+                                    <h3 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs">∑</span>
+                                        Math Functions
+                                    </h3>
+                                    <div className="space-y-1 text-sm text-gray-800">
+                                        <div><code className="text-blue-700">=SUM(A1:A10)</code> <span className="text-gray-600">- Sum of values</span></div>
+                                        <div><code className="text-blue-700">=AVERAGE(A1:A10)</code> <span className="text-gray-600">- Average</span></div>
+                                        <div><code className="text-blue-700">=COUNT(A1:A10)</code> <span className="text-gray-600">- Count numbers</span></div>
+                                        <div><code className="text-blue-700">=MIN(A1:A10)</code> / <code className="text-blue-700">=MAX(A1:A10)</code></div>
+                                        <div><code className="text-blue-700">=ROUND(A1, 2)</code> <span className="text-gray-600">- Round to decimals</span></div>
+                                        <div><code className="text-blue-700">=ABS(A1)</code>, <code className="text-blue-700">=SQRT(A1)</code>, <code className="text-blue-700">=POWER(A1, 2)</code></div>
+                                        <div><code className="text-blue-700">=MOD(A1, 3)</code> <span className="text-gray-600">- Remainder</span></div>
+                                        <div><code className="text-blue-700">=FLOOR(A1)</code>, <code className="text-blue-700">=CEILING(A1)</code></div>
+                                        <div><code className="text-blue-700">=PI()</code>, <code className="text-blue-700">=RAND()</code>, <code className="text-blue-700">=RANDBETWEEN(1, 100)</code></div>
+                                    </div>
+                                </div>
+
+                                {/* Statistical Functions */}
+                                <div className="bg-purple-50 rounded-lg p-4">
+                                    <h3 className="font-semibold text-purple-800 mb-3 flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-full bg-purple-500 text-white flex items-center justify-center text-xs">📊</span>
+                                        Statistical Functions
+                                    </h3>
+                                    <div className="space-y-1 text-sm text-gray-800">
+                                        <div><code className="text-purple-700">=MEDIAN(A1:A10)</code> <span className="text-gray-600">- Median value</span></div>
+                                        <div><code className="text-purple-700">=MODE(A1:A10)</code> <span className="text-gray-600">- Most frequent</span></div>
+                                        <div><code className="text-purple-700">=STDEV(A1:A10)</code> <span className="text-gray-600">- Standard deviation</span></div>
+                                        <div><code className="text-purple-700">=VAR(A1:A10)</code> <span className="text-gray-600">- Variance</span></div>
+                                        <div><code className="text-purple-700">=LARGE(A1:A10, 2)</code> <span className="text-gray-600">- 2nd largest</span></div>
+                                        <div><code className="text-purple-700">=SMALL(A1:A10, 3)</code> <span className="text-gray-600">- 3rd smallest</span></div>
+                                        <div><code className="text-purple-700">=PERCENTILE(A1:A10, 0.75)</code></div>
+                                    </div>
+                                </div>
+
+                                {/* Text Functions */}
+                                <div className="bg-green-50 rounded-lg p-4">
+                                    <h3 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs">Aa</span>
+                                        Text Functions
+                                    </h3>
+                                    <div className="space-y-1 text-sm text-gray-800">
+                                        <div><code className="text-green-700">=UPPER(A1)</code>, <code className="text-green-700">=LOWER(A1)</code>, <code className="text-green-700">=PROPER(A1)</code></div>
+                                        <div><code className="text-green-700">=LEN(A1)</code> <span className="text-gray-600">- Text length</span></div>
+                                        <div><code className="text-green-700">=TRIM(A1)</code> <span className="text-gray-600">- Remove extra spaces</span></div>
+                                        <div><code className="text-green-700">=LEFT(A1, 5)</code>, <code className="text-green-700">=RIGHT(A1, 5)</code></div>
+                                        <div><code className="text-green-700">=MID(A1, 2, 5)</code> <span className="text-gray-600">- Middle text</span></div>
+                                        <div><code className="text-green-700">=CONCAT(A1, " ", B1)</code></div>
+                                        <div><code className="text-green-700">=SUBSTITUTE(A1, "old", "new")</code></div>
+                                        <div><code className="text-green-700">=FIND("x", A1)</code>, <code className="text-green-700">=SEARCH("x", A1)</code></div>
+                                    </div>
+                                </div>
+
+                                {/* Logical Functions */}
+                                <div className="bg-orange-50 rounded-lg p-4">
+                                    <h3 className="font-semibold text-orange-800 mb-3 flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs">?</span>
+                                        Logical Functions
+                                    </h3>
+                                    <div className="space-y-1 text-sm text-gray-800">
+                                        <div><code className="text-orange-700">=IF(A1{">"}"5", "Yes", "No")</code></div>
+                                        <div><code className="text-orange-700">=IFS(A1{">"}10, "High", A1{">"}5, "Med", true, "Low")</code></div>
+                                        <div><code className="text-orange-700">=SWITCH(A1, 1, "One", 2, "Two")</code></div>
+                                        <div><code className="text-orange-700">=AND(A1{">"}5, B1{"<"}10)</code></div>
+                                        <div><code className="text-orange-700">=OR(A1{">"}5, B1{"<"}10)</code></div>
+                                        <div><code className="text-orange-700">=NOT(A1)</code>, <code className="text-orange-700">=XOR(A1, B1)</code></div>
+                                        <div><code className="text-orange-700">=IFERROR(A1/B1, 0)</code></div>
+                                        <div><code className="text-orange-700">=CHOOSE(2, "A", "B", "C")</code></div>
+                                    </div>
+                                </div>
+
+                                {/* Date Functions */}
+                                <div className="bg-red-50 rounded-lg p-4">
+                                    <h3 className="font-semibold text-red-800 mb-3 flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center text-xs">📅</span>
+                                        Date Functions
+                                    </h3>
+                                    <div className="space-y-1 text-sm text-gray-800">
+                                        <div><code className="text-red-700">=TODAY()</code>, <code className="text-red-700">=NOW()</code></div>
+                                        <div><code className="text-red-700">=DATE(2024, 12, 25)</code></div>
+                                        <div><code className="text-red-700">=YEAR(E1)</code>, <code className="text-red-700">=MONTH(E1)</code>, <code className="text-red-700">=DAY(E1)</code></div>
+                                        <div><code className="text-red-700">=HOUR(E1)</code>, <code className="text-red-700">=MINUTE(E1)</code>, <code className="text-red-700">=SECOND(E1)</code></div>
+                                        <div><code className="text-red-700">=WEEKDAY(E1)</code>, <code className="text-red-700">=WEEKNUM(E1)</code></div>
+                                        <div><code className="text-red-700">=DAYS(end, start)</code></div>
+                                        <div><code className="text-red-700">=DATEDIF(start, end, "D")</code></div>
+                                        <div><code className="text-red-700">=NETWORKDAYS(E1, F1)</code></div>
+                                        <div><code className="text-red-700">=EDATE(E1, 3)</code>, <code className="text-red-700">=EOMONTH(E1, 0)</code></div>
+                                    </div>
+                                </div>
+
+                                {/* Information & Conditional Functions */}
+                                <div className="bg-gray-50 rounded-lg p-4">
+                                    <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-full bg-gray-500 text-white flex items-center justify-center text-xs">i</span>
+                                        Info & Conditional
+                                    </h3>
+                                    <div className="space-y-1 text-sm text-gray-800">
+                                        <div><code className="text-gray-700">=ISNUMBER(A1)</code>, <code className="text-gray-700">=ISTEXT(A1)</code></div>
+                                        <div><code className="text-gray-700">=ISBLANK(A1)</code>, <code className="text-gray-700">=ISERROR(A1)</code></div>
+                                        <div><code className="text-gray-700">=ISEVEN(A1)</code>, <code className="text-gray-700">=ISODD(A1)</code></div>
+                                        <div><code className="text-gray-700">=SUMIF(C1:C10, "completed", G1:G10)</code></div>
+                                        <div><code className="text-gray-700">=COUNTIF(C1:C10, "completed")</code></div>
+                                        <div><code className="text-gray-700">=AVERAGEIF(C1:C10, "high", G1:G10)</code></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Tips */}
+                            <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                                <h3 className="font-semibold text-green-800 mb-2">💡 Tips</h3>
+                                <ul className="text-sm text-green-700 space-y-1">
+                                    <li>• Cell references use column letters (A, B, C...) and row numbers (1, 2, 3...)</li>
+                                    <li>• Use ranges like <code className="bg-white px-1 rounded">A1:A10</code> or <code className="bg-white px-1 rounded">B2:D5</code></li>
+                                    <li>• Formulas are case-insensitive: <code className="bg-white px-1 rounded">=SUM</code> = <code className="bg-white px-1 rounded">=sum</code></li>
+                                    <li>• Press <kbd className="bg-white px-1.5 py-0.5 rounded border">F2</kbd> to edit a cell, <kbd className="bg-white px-1.5 py-0.5 rounded border">Escape</kbd> to cancel</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

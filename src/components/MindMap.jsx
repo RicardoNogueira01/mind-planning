@@ -335,6 +335,35 @@ export default function MindMap({ mapId, onBack }) {
     return () => globalThis.removeEventListener('click', onWinClick);
   }, []);
 
+  // Resolve node collisions when switching back to mindmap view
+  // This ensures nodes don't overlap when their data was modified in other views
+  // (e.g., status/tags changed in Excel view can affect node height)
+  const prevViewMode = useRef(viewMode);
+  useEffect(() => {
+    // Only run when switching TO mindmap from another view
+    if (viewMode === 'mindmap' && prevViewMode.current !== 'mindmap') {
+      // Use a small delay to ensure the DOM has updated with any new node sizes
+      const timer = setTimeout(() => {
+        if (nodes.length > 1) {
+          // Resolve collisions for all nodes
+          const resolvedNodes = positioning.resolveAllCollisions(nodes);
+
+          // Only update if there were actual position changes
+          const hasChanges = resolvedNodes.some((node, index) =>
+            node.x !== nodes[index]?.x || node.y !== nodes[index]?.y
+          );
+
+          if (hasChanges) {
+            setNodes(resolvedNodes);
+          }
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+    prevViewMode.current = viewMode;
+  }, [viewMode, nodes, positioning]);
+
   // ============================================
   // HISTORY MANAGEMENT
   // ============================================
