@@ -3070,8 +3070,13 @@ export default function MindMap({ mapId, onBack }) {
       <DeleteConfirmDialog
         show={!!deleteConfirmNodeId}
         onClose={() => setDeleteConfirmNodeId(null)}
-        hasChildren={deleteConfirmNodeId ? getDescendantNodeIds(connections, deleteConfirmNodeId).size > 0 : false}
-        childrenCount={deleteConfirmNodeId ? getDescendantNodeIds(connections, deleteConfirmNodeId).size : 0}
+        nodeText={deleteConfirmNodeId ? (nodes.find(n => n.id === deleteConfirmNodeId)?.text || 'this node') : 'this node'}
+        hasChildren={deleteConfirmNodeId ? getDescendantNodeIds(connections, deleteConfirmNodeId).length > 0 : false}
+        childrenCount={deleteConfirmNodeId ? getDescendantNodeIds(connections, deleteConfirmNodeId).length : 0}
+        descendantNodes={deleteConfirmNodeId ? getDescendantNodeIds(connections, deleteConfirmNodeId).map(id => {
+          const node = nodes.find(n => n.id === id);
+          return { id, text: node?.text || `Node ${id}` };
+        }) : []}
         onConfirm={() => {
           // Delete only the node, keep children by removing connections
           if (deleteConfirmNodeId) {
@@ -3086,12 +3091,13 @@ export default function MindMap({ mapId, onBack }) {
           // Delete node and all its descendants
           if (deleteConfirmNodeId) {
             const descendants = getDescendantNodeIds(connections, deleteConfirmNodeId);
-            const allToDelete = [deleteConfirmNodeId, ...Array.from(descendants)];
+            const allToDelete = [deleteConfirmNodeId, ...descendants];
             nodeOps.deleteNodes(allToDelete);
           }
           setDeleteConfirmNodeId(null);
         }}
       />
+
 
       {/* Group Membership Confirmation Dialog */}
       <GroupMembershipDialog
