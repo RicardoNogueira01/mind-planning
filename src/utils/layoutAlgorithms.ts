@@ -369,81 +369,150 @@ function applyTreeLayout(
 }
 
 /**
- * Radial Layout
- * Arranges nodes in concentric circles based on hierarchy
+ * Radial Layout (Family-based)
+ * Each parent has its children arranged around it in a fan/semi-circle
+ * With collision detection to prevent overlaps
  */
 function applyRadialLayout(
   nodes: Node[],
   connections: Connection[],
   spacing: number
 ): Node[] {
-  const NODE_WIDTH = 300;
-  const levelRadius = spacing * 0.8; // Reduced from 1.2 to 0.8 for tighter spacing
+  const NODE_WIDTH = 320;
+  const NODE_HEIGHT = 100;
+  const CHILD_DISTANCE = 280;    // Distance from parent to children
+  const MIN_GAP = 60;            // Minimum gap between any two nodes
 
-  // Find roots
-  const roots = nodes.filter(n =>
-    !connections.some(c => c.to === n.id)
-  );
+  // Build parent-child relationships
+  const childrenMap = new Map<string, string[]>();
+  const parentMap = new Map<string, string>();
+
+  connections.forEach(conn => {
+    if (!childrenMap.has(conn.from)) {
+      childrenMap.set(conn.from, []);
+    }
+    childrenMap.get(conn.from)!.push(conn.to);
+    parentMap.set(conn.to, conn.from);
+  });
+
+  // Find roots (nodes with no parent)
+  const roots = nodes.filter(n => !parentMap.has(n.id));
 
   if (roots.length === 0) return nodes;
 
   const positioned = new Map<string, { x: number; y: number }>();
-  const centerX = 0;
-  const centerY = 0;
 
-  // Position roots at center
-  if (roots.length === 1) {
-    positioned.set(roots[0].id, { x: centerX, y: centerY });
-  } else {
-    // Multiple roots - arrange in small circle
-    roots.forEach((root, idx) => {
-      const angle = (idx / roots.length) * 2 * Math.PI;
-      positioned.set(root.id, {
-        x: centerX + Math.cos(angle) * levelRadius * 0.5,
-        y: centerY + Math.sin(angle) * levelRadius * 0.5
-      });
+  /**
+   * Check if a position collides with any already-positioned node
+   */
+  function hasCollision(x: number, y: number, excludeId?: string): boolean {
+    for (const [nodeId, pos] of positioned) {
+      if (nodeId === excludeId) continue;
+      const dx = Math.abs(pos.x - x);
+      const dy = Math.abs(pos.y - y);
+      if (dx < NODE_WIDTH + MIN_GAP && dy < NODE_HEIGHT + MIN_GAP) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Find a non-colliding position near the preferred position
+   */
+  function findNonCollidingPosition(preferredX: number, preferredY: number, excludeId?: string): { x: number; y: number } {
+    if (!hasCollision(preferredX, preferredY, excludeId)) {
+      return { x: preferredX, y: preferredY };
+    }
+
+    // Spiral outward to find a free spot
+    const spiralStep = 50;
+    for (let distance = spiralStep; distance < 2000; distance += spiralStep) {
+      for (let angle = 0; angle < 360; angle += 30) {
+        const rad = (angle * Math.PI) / 180;
+        const testX = preferredX + Math.cos(rad) * distance;
+        const testY = preferredY + Math.sin(rad) * distance;
+        if (!hasCollision(testX, testY, excludeId)) {
+          return { x: testX, y: testY };
+        }
+      }
+    }
+
+    // Fallback: just push it far away
+    return { x: preferredX + 500, y: preferredY };
+  }
+
+  /**
+   * Position a node and all its descendants recursively
+   * Children are arranged in a fan around the parent
+   */
+  function positionSubtree(nodeId: string, x: number, y: number, incomingAngle: number): void {
+    const pos = findNonCollidingPosition(x, y, nodeId);
+    positioned.set(nodeId, pos);
+
+    const children = childrenMap.get(nodeId) || [];
+    if (children.length === 0) return;
+
+    // Calculate the angle range for children
+    // Children spread in a fan on the OPPOSITE side from where the parent came from
+    const spreadAngle = Math.min(180, 60 + children.length * 30); // More children = wider spread
+    const halfSpread = spreadAngle / 2;
+
+    // Base angle: opposite to incoming direction
+    const baseAngle = incomingAngle + 180;
+
+    children.forEach((childId, idx) => {
+      // Distribute children evenly within the spread angle
+      let childAngle: number;
+      if (children.length === 1) {
+        childAngle = baseAngle;
+      } else {
+        const step = spreadAngle / (children.length - 1);
+        childAngle = baseAngle - halfSpread + idx * step;
+      }
+
+      const rad = (childAngle * Math.PI) / 180;
+      const childX = pos.x + Math.cos(rad) * CHILD_DISTANCE;
+      const childY = pos.y + Math.sin(rad) * CHILD_DISTANCE;
+
+      positionSubtree(childId, childX, childY, childAngle);
     });
   }
 
-  // BFS to position each level
-  let currentLevel = roots.map(r => r.id);
-  let level = 1;
+  // Position each root tree
+  let rootX = 0;
+  roots.forEach((root, rootIdx) => {
+    // Position root
+    const rootPos = findNonCollidingPosition(rootX, 0, root.id);
+    positioned.set(root.id, rootPos);
 
-  while (currentLevel.length > 0) {
-    const nextLevel: string[] = [];
-    const levelNodes: string[] = [];
+    // Position its children in a downward fan (incoming angle = -90 means children go down)
+    const children = childrenMap.get(root.id) || [];
+    if (children.length > 0) {
+      const spreadAngle = Math.min(180, 60 + children.length * 30);
+      const halfSpread = spreadAngle / 2;
+      const baseAngle = 90; // Children spread downward from root
 
-    // Gather all children in this level
-    currentLevel.forEach(parentId => {
-      const children = connections
-        .filter(c => c.from === parentId)
-        .map(c => c.to)
-        .filter(childId => !positioned.has(childId));
+      children.forEach((childId, idx) => {
+        let childAngle: number;
+        if (children.length === 1) {
+          childAngle = baseAngle;
+        } else {
+          const step = spreadAngle / (children.length - 1);
+          childAngle = baseAngle - halfSpread + idx * step;
+        }
 
-      nextLevel.push(...children);
-      levelNodes.push(...children);
-    });
+        const rad = (childAngle * Math.PI) / 180;
+        const childX = rootPos.x + Math.cos(rad) * CHILD_DISTANCE;
+        const childY = rootPos.y + Math.sin(rad) * CHILD_DISTANCE;
 
-    if (levelNodes.length === 0) break;
-
-    // Position nodes in this level
-    // Calculate radius to fit all nodes with minimal spacing
-    const minRadius = level * levelRadius;
-    const circumference = levelNodes.length * (NODE_WIDTH + 30); // Just 30px gap
-    const requiredRadius = circumference / (2 * Math.PI);
-    const radius = Math.max(minRadius, requiredRadius);
-
-    levelNodes.forEach((nodeId, idx) => {
-      const angle = (idx / levelNodes.length) * 2 * Math.PI - Math.PI / 2; // Start from top
-      positioned.set(nodeId, {
-        x: centerX + Math.cos(angle) * radius,
-        y: centerY + Math.sin(angle) * radius
+        positionSubtree(childId, childX, childY, childAngle);
       });
-    });
+    }
 
-    currentLevel = Array.from(new Set(nextLevel));
-    level++;
-  }
+    // Move next root to the right
+    rootX += 800;
+  });
 
   // Apply positions
   return nodes.map(node => {
@@ -466,22 +535,28 @@ function applyGridLayout(nodes: Node[], gridSize: number): Node[] {
 
 /**
  * Circular Layout
- * Arranges all nodes in a circle
+ * Arranges all nodes in concentric circles (ignores hierarchy)
  */
 function applyCircularLayout(
   nodes: Node[],
   connections: Connection[],
   spacing: number
 ): Node[] {
-  const NODE_WIDTH = 300;
-  const NODE_SPACING = 30; // Gap between nodes
-  const LAYER_SPACING = 200; // Distance between concentric circles
+  const NODE_WIDTH = 320;
+  const MIN_NODE_GAP = 50;       // Minimum gap between nodes
+  const MIN_FIRST_RADIUS = 250;  // Minimum radius for first ring
+  const LAYER_SPACING = 220;     // Distance between concentric circles
 
-  // Find root or use first node
+  if (nodes.length === 0) return nodes;
+
+  if (nodes.length === 1) {
+    return [{ ...nodes[0], x: 0, y: 0 }];
+  }
+
+  // Find root or use first node as center
   const roots = nodes.filter(n =>
     !connections.some(c => c.to === n.id)
   );
-
   const root = roots[0] || nodes[0];
   const otherNodes = nodes.filter(n => n.id !== root.id);
 
@@ -494,29 +569,31 @@ function applyCircularLayout(
 
   if (otherNodes.length === 0) return positioned;
 
-  // Multi-layer circular layout
-  // Calculate optimal nodes per layer to avoid overcrowding
-  const MAX_NODES_PER_LAYER = 12; // Maximum nodes in a single circle
-
+  // Calculate how many layers we need
   let remainingNodes = [...otherNodes];
   let layerIndex = 0;
 
   while (remainingNodes.length > 0) {
     layerIndex++;
-    const radius = layerIndex * LAYER_SPACING;
 
-    // Calculate how many nodes fit comfortably in this circle
-    const circumference = 2 * Math.PI * radius;
-    const maxNodesInCircle = Math.floor(circumference / (NODE_WIDTH + NODE_SPACING));
-    const nodesInThisLayer = Math.min(
-      Math.min(remainingNodes.length, MAX_NODES_PER_LAYER),
-      maxNodesInCircle
-    );
+    // Calculate radius for this layer
+    // First layer gets the minimum radius, subsequent layers add LAYER_SPACING
+    const baseRadius = MIN_FIRST_RADIUS + (layerIndex - 1) * LAYER_SPACING;
+
+    // Calculate how many nodes can fit in this circle without overlap
+    const circumference = 2 * Math.PI * baseRadius;
+    const maxNodesInCircle = Math.max(1, Math.floor(circumference / (NODE_WIDTH + MIN_NODE_GAP)));
+    const nodesInThisLayer = Math.min(remainingNodes.length, maxNodesInCircle);
+
+    // If we need more nodes than fit, expand the radius
+    const requiredCircumference = nodesInThisLayer * (NODE_WIDTH + MIN_NODE_GAP);
+    const requiredRadius = requiredCircumference / (2 * Math.PI);
+    const radius = Math.max(baseRadius, requiredRadius);
 
     // Position nodes in this layer
     const layerNodes = remainingNodes.slice(0, nodesInThisLayer);
     layerNodes.forEach((node, idx) => {
-      const angle = (idx / nodesInThisLayer) * 2 * Math.PI - Math.PI / 2;
+      const angle = (idx / nodesInThisLayer) * 2 * Math.PI - Math.PI / 2; // Start from top
       positioned.push({
         ...node,
         x: Math.round(centerX + Math.cos(angle) * radius),
