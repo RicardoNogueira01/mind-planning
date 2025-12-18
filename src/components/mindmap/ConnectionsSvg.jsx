@@ -31,7 +31,8 @@ export default function ConnectionsSvg({
   const [hoveredConnection, setHoveredConnection] = useState(null);
 
   // Use theme color if provided, otherwise fall back to defaults
-  const defaultStrokeColor = themeColors?.color || (isDarkMode ? '#6b7280' : '#94a3b8');
+  // For light mode, use a darker color (#4b5563) for better visibility of bracket connections
+  const defaultStrokeColor = themeColors?.color || (isDarkMode ? '#6b7280' : '#4b5563');
   const hasConnections = Array.isArray(connections) && connections.length > 0;
   const showPreview = connectionFrom && mousePosition;
 
@@ -135,9 +136,30 @@ export default function ConnectionsSvg({
           if (childRects.length === 0) return null;
 
           // Get parent color for the bracket
-          const parentColor = parentNode.bgColor && parentNode.bgColor !== '#ffffff'
+          // Check if parent has a non-white background color
+          let parentColor = parentNode.bgColor && parentNode.bgColor !== '#ffffff'
             ? parentNode.bgColor
             : themeColors?.color || defaultStrokeColor;
+
+          // Ensure the color is visible - if it's too light (close to white), use a dark gray
+          // This handles cases where theme colors or node colors are very light
+          const isColorTooLight = (color) => {
+            if (!color || color === '#ffffff' || color === 'white') return true;
+            // Check for very light hex colors (e.g., #f0f0f0, #fafafa, etc.)
+            const hex = color.replace('#', '');
+            if (hex.length === 6) {
+              const r = parseInt(hex.slice(0, 2), 16);
+              const g = parseInt(hex.slice(2, 4), 16);
+              const b = parseInt(hex.slice(4, 6), 16);
+              // If all RGB values are > 230, it's too light
+              if (r > 230 && g > 230 && b > 230) return true;
+            }
+            return false;
+          };
+
+          if (isColorTooLight(parentColor)) {
+            parentColor = '#4b5563'; // Dark gray for visibility
+          }
 
           // Compute bracket paths
           const { paths, underline } = computeBracketPaths(parentPos, childRects, parentColor);
