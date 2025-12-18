@@ -4,7 +4,7 @@
  */
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
 
 /**
  * Analyzes an image and extracts mind map structure
@@ -120,9 +120,8 @@ Guidelines:
   } catch (error) {
     console.error('Error analyzing image:', error);
 
-    // If API fails, return mock data as fallback
-    console.warn('Falling back to mock data due to error:', error.message);
-    return generateMockMindMapData();
+    // Re-throw the error so the UI can show it properly
+    throw error;
   }
 };
 

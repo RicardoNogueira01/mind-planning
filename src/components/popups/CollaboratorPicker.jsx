@@ -3,26 +3,27 @@ import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import NodePopup from '../mindmap/NodePopup';
 
-export default function CollaboratorPicker({ 
-  show, 
-  anchorRef, 
-  collaborators, 
-  selectedCollaboratorIds, 
-  searchQuery, 
-  onSearchChange, 
-  onToggleCollaborator, 
-  onClose 
+export default function CollaboratorPicker({
+  show,
+  anchorRef,
+  collaborators,
+  selectedCollaboratorIds,
+  searchQuery,
+  onSearchChange,
+  onToggleCollaborator,
+  onClose
 }) {
   if (!show) return null;
 
-  const rect = anchorRef?.current?.getBoundingClientRect() || 
+  const rect = anchorRef?.current?.getBoundingClientRect() ||
     { left: window.innerWidth / 2, top: 80, width: 0, height: 0, bottom: 100 };
-  
-  const popupWidth = 280;
+
+  // Use 580px for positioning (matches CSS min-width), actual width handled by CSS
+  const popupWidth = 580;
   const left = Math.max(8, Math.min(rect.left + (rect.width / 2) - (popupWidth / 2), window.innerWidth - popupWidth - 8));
   const top = Math.max(8, rect.bottom + 20);
 
-  const filteredCollaborators = collaborators.filter(collab => 
+  const filteredCollaborators = collaborators.filter(collab =>
     collab.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     collab.initials.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -35,7 +36,7 @@ export default function CollaboratorPicker({
       onClose={onClose}
     >
       <p className="text-xs text-gray-500 mb-3">Select team members for this node</p>
-      
+
       {/* Search input */}
       <div className="mb-3">
         <input
@@ -47,14 +48,14 @@ export default function CollaboratorPicker({
           onClick={(e) => e.stopPropagation()}
         />
       </div>
-      
+
       {/* Collaborator list with checkboxes */}
       <div className="max-h-48 md:max-h-64 overflow-y-auto space-y-1">
         {filteredCollaborators.map(collab => {
           const isSelected = selectedCollaboratorIds.includes(collab.id);
           return (
-            <label 
-              key={collab.id} 
+            <label
+              key={collab.id}
               className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors touch-manipulation"
             >
               <input
@@ -64,8 +65,8 @@ export default function CollaboratorPicker({
                 onClick={(e) => e.stopPropagation()}
                 className="w-4 h-4 text-cyan-600 rounded focus:ring-2 focus:ring-cyan-500"
               />
-              <span 
-                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" 
+              <span
+                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                 style={{ backgroundColor: collab.color, color: 'white' }}
               >
                 {collab.initials}

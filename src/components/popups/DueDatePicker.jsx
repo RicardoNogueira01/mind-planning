@@ -6,15 +6,16 @@ import NodePopup from '../mindmap/NodePopup';
 export default function DueDatePicker({ show, anchorRef, dueDate, onDueDateChange, onClearDate, onClose }) {
   if (!show) return null;
 
-  const rect = anchorRef?.current?.getBoundingClientRect() || 
+  const rect = anchorRef?.current?.getBoundingClientRect() ||
     { left: window.innerWidth / 2, top: 80, width: 0, height: 0, bottom: 100 };
-  
-  const popupWidth = 320;
+
+  // Use 580px for positioning (matches CSS min-width), actual width handled by CSS
+  const popupWidth = 580;
   const left = Math.max(8, Math.min(rect.left + (rect.width / 2) - (popupWidth / 2), window.innerWidth - popupWidth - 8));
   const top = Math.max(8, rect.bottom + 20);
 
   return createPortal(
-    <NodePopup 
+    <NodePopup
       position={{ left, top }}
       width={popupWidth}
       title="Due Date"
@@ -32,8 +33,8 @@ export default function DueDatePicker({ show, anchorRef, dueDate, onDueDateChang
       {dueDate && (
         <button
           className="mt-2 text-xs text-red-600 hover:text-red-700 w-full py-1 hover:bg-red-50 rounded cursor-pointer"
-          onClick={(e) => { 
-            e.stopPropagation(); 
+          onClick={(e) => {
+            e.stopPropagation();
             onClearDate && onClearDate();
           }}
         >

@@ -94,8 +94,8 @@ const GridColorPicker = ({
             }}
         >
             {/* Header */}
-            <div className="px-3 py-2 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
-                <h3 className="text-xs font-semibold text-gray-700">{title}</h3>
+            <div className="px-3 py-2 border-b border-gray-200 bg-white">
+                <h3 className="text-lg font-bold text-slate-900">{title}</h3>
             </div>
 
             {/* Color Grid */}

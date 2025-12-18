@@ -6,10 +6,11 @@ import NodePopup from '../mindmap/NodePopup';
 export default function PropertiesPanel({ show, anchorRef, nodeId, priority, status, description, startDate, dueDate, onPriorityChange, onStatusChange, onDescriptionChange, onStartDateChange, onDueDateChange, onClose }) {
   if (!show) return null;
 
-  const rect = anchorRef?.current?.getBoundingClientRect() || 
+  const rect = anchorRef?.current?.getBoundingClientRect() ||
     { left: window.innerWidth / 2, top: 80, width: 0, height: 0, bottom: 100 };
-  
-  const popupWidth = 340;
+
+  // Use 580px for positioning (matches CSS min-width), actual width handled by CSS
+  const popupWidth = 580;
   const left = Math.max(8, Math.min(rect.left + (rect.width / 2) - (popupWidth / 2), window.innerWidth - popupWidth - 8));
   const top = Math.max(8, rect.bottom + 20);
 
@@ -69,7 +70,7 @@ export default function PropertiesPanel({ show, anchorRef, nodeId, priority, sta
             </select>
           </div>
         </div>
-        
+
         {/* Start Date and Due Date in a grid */}
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -101,7 +102,7 @@ export default function PropertiesPanel({ show, anchorRef, nodeId, priority, sta
             />
           </div>
         </div>
-        
+
         {/* Description */}
         <div>
           <label htmlFor={`description-${nodeId}`} className="text-sm font-medium text-gray-700 block mb-1.5">Description</label>

@@ -6,10 +6,11 @@ import NodePopup from '../mindmap/NodePopup';
 export default function TagsPopup({ show, anchorRef, tags, showTags, onToggleShowTags, onAddTag, onRemoveTag, onClose }) {
   if (!show) return null;
 
-  const rect = anchorRef?.current?.getBoundingClientRect() || 
+  const rect = anchorRef?.current?.getBoundingClientRect() ||
     { left: window.innerWidth / 2, top: 80, width: 0, height: 0, bottom: 100 };
-  
-  const popupWidth = 320;
+
+  // Use 580px for positioning (matches CSS min-width), actual width handled by CSS
+  const popupWidth = 580;
   const left = Math.max(8, Math.min(rect.left + (rect.width / 2) - (popupWidth / 2), window.innerWidth - popupWidth - 8));
   const top = Math.max(8, rect.bottom + 20);
 
@@ -44,10 +45,10 @@ export default function TagsPopup({ show, anchorRef, tags, showTags, onToggleSho
             {(tags || []).map((tag) => (
               <span key={tag} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-blue-50 border border-blue-200 text-blue-700 font-medium hover:bg-blue-100 transition-colors">
                 {tag}
-                <button 
-                  className="text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full w-4 h-4 flex items-center justify-center text-base leading-none transition-colors" 
-                  onClick={(e) => { 
-                    e.stopPropagation(); 
+                <button
+                  className="text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full w-4 h-4 flex items-center justify-center text-base leading-none transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
                     onRemoveTag(tag);
                   }}
                   title="Remove tag"
@@ -61,7 +62,7 @@ export default function TagsPopup({ show, anchorRef, tags, showTags, onToggleSho
           <div className="text-sm text-gray-500 italic">No tags added yet</div>
         )}
       </div>
-      
+
       {/* Add Tag Input */}
       <input
         type="text"

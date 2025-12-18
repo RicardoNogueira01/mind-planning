@@ -296,13 +296,13 @@ html {
 
 /* Enhanced Node Popup Styles */
 .node-popup {
-  min-width: 320px;
-  max-width: 400px;
-  padding: 20px;
+  min-width: 580px;
+  max-width: 650px;
+  padding: 0;
   background: rgba(255, 255, 255, 0.98);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(229, 231, 235, 0.6);
   border-radius: 16px;
   box-shadow: 
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
@@ -314,12 +314,11 @@ html {
 }
 
 .node-popup h4 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 16px;
-  border-bottom: 1px solid rgba(229, 231, 235, 0.5);
-  padding-bottom: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  padding: 0;
 }
 
 .node-popup .grid {

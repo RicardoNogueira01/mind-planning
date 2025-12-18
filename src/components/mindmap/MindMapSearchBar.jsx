@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Search, X, Trash2 } from 'lucide-react';
 
@@ -16,6 +16,18 @@ const MindMapSearchBar = ({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [confirm, setConfirm] = useState(null);
   const [deleteDescendants, setDeleteDescendants] = useState(false);
+  const searchInputRef = useRef(null);
+
+  // Auto-focus search input when opened
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      // Small delay to ensure the animation has started and input is visible
+      const timeoutId = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isSearchOpen]);
 
   // Close confirm dialog if search is closed
   useEffect(() => {
@@ -28,8 +40,8 @@ const MindMapSearchBar = ({
     setSelectedNode(node.id);
     setShowSearchList(false);
     setPan({
-      x: window.innerWidth/2 - node.x,
-      y: window.innerHeight/2 - node.y
+      x: window.innerWidth / 2 - node.x,
+      y: window.innerHeight / 2 - node.y
     });
   };
 
@@ -53,31 +65,29 @@ const MindMapSearchBar = ({
         {/* Botão da Lupa */}
         <button
           onClick={toggleSearch}
-          className={`p-2 md:p-3 rounded-xl md:rounded-2xl transition-all duration-300 touch-manipulation ${
-            isSearchOpen 
-              ? 'bg-black text-white shadow-lg shadow-black/20' 
+          className={`p-2 md:p-3 rounded-xl md:rounded-2xl transition-all duration-300 touch-manipulation ${isSearchOpen
+              ? 'bg-black text-white shadow-lg shadow-black/20'
               : 'bg-white/95 backdrop-blur-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 shadow-xl border border-gray-200/50'
-          }`}
+            }`}
           title="Search nodes"
         >
           <Search size={16} className="md:w-[18px] md:h-[18px]" />
         </button>
 
         {/* Search Input com Animação */}
-        <div className={`relative transition-all duration-300 ease-in-out overflow-hidden ${
-          isSearchOpen ? 'w-52 sm:w-64 md:w-80 ml-2 md:ml-5 opacity-100' : 'w-0 ml-0 opacity-0'
-        }`}>
+        <div className={`relative transition-all duration-300 ease-in-out overflow-hidden ${isSearchOpen ? 'w-52 sm:w-64 md:w-80 ml-2 md:ml-5 opacity-100' : 'w-0 ml-0 opacity-0'
+          }`}>
           <div className="absolute inset-y-0 left-0 pl-2 md:pl-3 flex items-center pointer-events-none">
             <svg className="h-4 w-4 md:h-5 md:w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
             </svg>
           </div>
           <input
+            ref={searchInputRef}
             type="text"
             placeholder="Search..."
-            className={`w-full pl-8 md:pl-10 py-2 md:py-3 bg-white/95 backdrop-blur-lg shadow-xl border border-gray-200/50 rounded-xl md:rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 text-sm md:text-base text-gray-900 placeholder-gray-500 transition-all duration-200 ${
-              searchQuery ? 'pr-8 md:pr-10' : 'pr-3 md:pr-4'
-            }`}
+            className={`w-full pl-8 md:pl-10 py-2 md:py-3 bg-white/95 backdrop-blur-lg shadow-xl border border-gray-200/50 rounded-xl md:rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 text-sm md:text-base text-gray-900 placeholder-gray-500 transition-all duration-200 ${searchQuery ? 'pr-8 md:pr-10' : 'pr-3 md:pr-4'
+              }`}
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -97,7 +107,7 @@ const MindMapSearchBar = ({
           )}
         </div>
       </div>
-      
+
       {/* Enhanced Search Results */}
       {isSearchOpen && showSearchList && searchQuery && (
         <div className="absolute left-10 md:left-14 top-full mt-4 w-64 md:w-80 bg-white/95 backdrop-blur-lg shadow-2xl border border-gray-200/50 rounded-xl md:rounded-2xl p-2 md:p-3 max-h-72 md:max-h-96 overflow-y-auto z-50">
@@ -146,11 +156,10 @@ const MindMapSearchBar = ({
                 </div>
                 {/* Enhanced node type indicator */}
                 <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-                  <span className={`text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-medium ${
-                    node.id === 'root' 
-                      ? 'bg-purple-100 text-purple-600' 
+                  <span className={`text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full font-medium ${node.id === 'root'
+                      ? 'bg-purple-100 text-purple-600'
                       : 'bg-blue-100 text-blue-600'
-                  }`}>
+                    }`}>
                     {node.id === 'root' ? 'Root' : 'Node'}
                   </span>
                   {/* Delete icon (hidden for root) */}

@@ -653,9 +653,25 @@ export default function MindMap({ mapId, onBack }) {
       window.innerHeight
     );
 
+    // Update nodes with new positions
     setNodes(result.nodes);
     setCurrentLayoutType(layoutType); // Track the layout for connection style
     setShowLayoutMenu(false);
+
+    // Immediately calculate new nodePositions so connections render correctly
+    // This prevents the stale position issue during the 50ms useLayoutEffect delay
+    const NODE_WIDTH = 300;
+    const NODE_HEIGHT = 84;
+    const newPositions = {};
+    for (const n of result.nodes) {
+      newPositions[n.id] = {
+        left: n.x - 150,
+        top: n.y - 42,
+        right: n.x - 150 + NODE_WIDTH,
+        bottom: n.y - 42 + NODE_HEIGHT
+      };
+    }
+    setNodePositions(newPositions);
   };
 
   // Apply layout to specific node's children only
@@ -711,6 +727,20 @@ export default function MindMap({ mapId, onBack }) {
 
     setNodes(updatedNodes);
     setNodeLayoutMenuOpen(null);
+
+    // Immediately calculate new nodePositions so connections render correctly
+    const NODE_WIDTH = 300;
+    const NODE_HEIGHT = 84;
+    const newPositions = {};
+    for (const n of updatedNodes) {
+      newPositions[n.id] = {
+        left: n.x - 150,
+        top: n.y - 42,
+        right: n.x - 150 + NODE_WIDTH,
+        bottom: n.y - 42 + NODE_HEIGHT
+      };
+    }
+    setNodePositions(newPositions);
   };
 
 

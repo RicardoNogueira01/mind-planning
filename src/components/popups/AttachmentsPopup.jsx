@@ -21,7 +21,8 @@ export default function AttachmentsPopup({
   const rect = anchorRef?.current?.getBoundingClientRect() ||
     { left: window.innerWidth / 2, top: 80, width: 0, height: 0, bottom: 100 };
 
-  const popupWidth = 300;
+  // Use 580px for positioning (matches CSS min-width), actual width handled by CSS
+  const popupWidth = 580;
   const left = Math.max(8, Math.min(rect.left + (rect.width / 2) - (popupWidth / 2), window.innerWidth - popupWidth - 8));
   const top = Math.max(8, rect.bottom + 20);
 
