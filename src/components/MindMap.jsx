@@ -380,6 +380,15 @@ export default function MindMap({ mapId, onBack }) {
       }
     },
     onSelectAll: selection.selectAllNodes,
+    onSelectDescendants: () => {
+      // If a node is selected, select it and all its descendants
+      if (selectedNodes.length === 1) {
+        const nodeId = selectedNodes[0];
+        const descendantIds = getDescendantNodeIds(connections, nodeId);
+        const allIds = [nodeId, ...descendantIds];
+        setSelectedNodes(allIds);
+      }
+    },
     onCreateNode: () => {
       if (selectedNodes.length === 1) {
         nodeOps.addChildNode(selectedNodes[0]);
