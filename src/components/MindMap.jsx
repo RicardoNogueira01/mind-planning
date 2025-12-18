@@ -37,6 +37,7 @@ import ViewSelector from './mindmap/ViewSelector';
 import GanttView from './mindmap/views/GanttView';
 import BoardView from './mindmap/views/BoardView';
 import ListView from './mindmap/views/ListView';
+import ExcelView from './mindmap/views/ExcelView';
 import AnalyticsView from './mindmap/views/AnalyticsView';
 
 // Enhanced Features
@@ -129,7 +130,7 @@ export default function MindMap({ mapId, onBack }) {
   const [showLayoutMenu, setShowLayoutMenu] = useState(false); // Auto-layout dropdown
   const [nodeLayoutMenuOpen, setNodeLayoutMenuOpen] = useState(null); // Track which node's layout menu is open
   const [showImageAnalyzer, setShowImageAnalyzer] = useState(false); // Image upload & analysis modal
-  const [viewMode, setViewMode] = useState('mindmap'); // View mode: mindmap, gantt, board, list, analytics
+  const [viewMode, setViewMode] = useState('mindmap'); // View mode: mindmap, gantt, board, list, excel, analytics
   const [currentTheme, setCurrentTheme] = useState('meister'); // Mind map theme
   const [showThemePicker, setShowThemePicker] = useState(false); // Theme picker popup
   const [showMobileActionsMenu, setShowMobileActionsMenu] = useState(false); // Mobile actions dropdown menu
@@ -2283,6 +2284,16 @@ export default function MindMap({ mapId, onBack }) {
           <div className="absolute inset-0 top-16 md:top-20 overflow-hidden">
             <ListView
               nodes={nodes}
+            />
+          </div>
+        )}
+
+        {viewMode === 'excel' && (
+          <div className="absolute inset-0 top-16 md:top-20 overflow-hidden">
+            <ExcelView
+              nodes={nodes}
+              connections={connections}
+              onNodesChange={setNodes}
             />
           </div>
         )}

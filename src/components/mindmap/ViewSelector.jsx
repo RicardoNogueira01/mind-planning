@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Network, Calendar, Columns, List, BarChart3, ChevronDown } from 'lucide-react';
+import { Network, Calendar, Columns, List, Table2, BarChart3, ChevronDown } from 'lucide-react';
 
 /**
  * View Mode Selector for Mind Map
@@ -15,8 +15,10 @@ const ViewSelector = ({ currentView, onViewChange }) => {
     { id: 'gantt', label: 'Gantt', icon: Calendar, description: 'Timeline view' },
     { id: 'board', label: 'Board', icon: Columns, description: 'Kanban board' },
     { id: 'list', label: 'List', icon: List, description: 'Table view' },
+    { id: 'excel', label: 'Excel', icon: Table2, description: 'Spreadsheet view' },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, description: 'Statistics' },
   ];
+
 
   const currentViewData = views.find(v => v.id === currentView);
   const CurrentIcon = currentViewData?.icon || Network;
@@ -47,16 +49,15 @@ const ViewSelector = ({ currentView, onViewChange }) => {
         {views.map((view) => {
           const Icon = view.icon;
           const isActive = currentView === view.id;
-          
+
           return (
             <button
               key={view.id}
               onClick={() => onViewChange(view.id)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all ${
-                isActive
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all ${isActive
                   ? 'bg-black text-white shadow-sm'
                   : 'text-gray-600 hover:bg-gray-100'
-              }`}
+                }`}
               title={view.description}
             >
               <Icon size={16} />
@@ -86,7 +87,7 @@ const ViewSelector = ({ currentView, onViewChange }) => {
             {views.map((view) => {
               const Icon = view.icon;
               const isActive = currentView === view.id;
-              
+
               return (
                 <button
                   key={view.id}
@@ -94,11 +95,10 @@ const ViewSelector = ({ currentView, onViewChange }) => {
                     onViewChange(view.id);
                     setShowDropdown(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 transition-colors ${
-                    isActive
+                  className={`w-full flex items-center gap-3 px-4 py-3 transition-colors ${isActive
                       ? 'bg-gray-100 text-gray-900'
                       : 'text-gray-600 hover:bg-gray-50'
-                  }`}
+                    }`}
                 >
                   <Icon size={18} className={isActive ? 'text-blue-600' : ''} />
                   <div className="flex-1 text-left">
