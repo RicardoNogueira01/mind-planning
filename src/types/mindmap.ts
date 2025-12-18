@@ -17,6 +17,8 @@ export interface Node {
   collaboratorId?: string;
   emoji?: string;
   shapeType?: string;
+  startDate?: string;
+  dueDate?: string;
 }
 
 export interface Attachment {

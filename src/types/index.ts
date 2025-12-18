@@ -24,7 +24,7 @@
  * User roles in the system
  * Determines permissions and access levels
  */
-export type UserRole = 
+export type UserRole =
   | 'admin'        // Full system access, can manage everything
   | 'team_manager' // Can manage team members, approve holidays, view all team data
   | 'user'         // Regular user, can create/manage own content
@@ -34,7 +34,7 @@ export type UserRole =
 /**
  * Task status values
  */
-export type TaskStatus = 
+export type TaskStatus =
   | 'not_started'
   | 'in_progress'
   | 'blocked'
@@ -45,7 +45,7 @@ export type TaskStatus =
 /**
  * Task priority levels
  */
-export type TaskPriority = 
+export type TaskPriority =
   | 'critical'
   | 'high'
   | 'medium'
@@ -54,7 +54,7 @@ export type TaskPriority =
 /**
  * Holiday request status
  */
-export type HolidayStatus = 
+export type HolidayStatus =
   | 'pending'
   | 'approved'
   | 'rejected'
@@ -63,7 +63,7 @@ export type HolidayStatus =
 /**
  * Project status
  */
-export type ProjectStatus = 
+export type ProjectStatus =
   | 'planning'
   | 'active'
   | 'on_hold'
@@ -73,7 +73,7 @@ export type ProjectStatus =
 /**
  * Notification types
  */
-export type NotificationType = 
+export type NotificationType =
   | 'task_assigned'
   | 'task_completed'
   | 'task_overdue'
@@ -120,35 +120,35 @@ export interface User extends BaseEntity {
   initials: string;
   avatar?: string;
   color: string; // Hex color for UI representation
-  
+
   // Role & Permissions
   role: UserRole;
   isActive: boolean;
-  
+
   // Profile
   phone?: string;
   location?: string;
   department?: string;
   jobTitle?: string;
   bio?: string;
-  
+
   // Social links
   linkedinUrl?: string;
   githubUrl?: string;
   websiteUrl?: string;
-  
+
   // Skills & attributes
   skills: string[];
-  
+
   // Settings (stored as JSON)
   settings?: UserSettings;
-  
+
   // Relationships
   organizationId: string;
   organization?: Organization;
   teamIds: string[];
   teams?: Team[];
-  
+
   // Activity stats (computed)
   stats?: UserStats;
 }
@@ -162,19 +162,19 @@ export interface UserSettings {
   deadlineReminders: boolean;
   teamActivityNotifications: boolean;
   weeklyDigest: boolean;
-  
+
   // Privacy
   profileVisibility: 'public' | 'team' | 'private';
   showEmail: boolean;
   showPhone: boolean;
-  
+
   // Preferences
   theme: 'light' | 'dark' | 'auto';
   language: string;
   timezone: string;
   dateFormat: string;
   timeFormat: '12h' | '24h';
-  
+
   // Security
   twoFactorEnabled: boolean;
   sessionTimeout: number; // in minutes
@@ -197,10 +197,10 @@ export interface Organization extends BaseEntity {
   name: string;
   slug: string; // URL-friendly identifier
   logo?: string;
-  
+
   // Settings
   settings?: OrganizationSettings;
-  
+
   // Relationships
   ownerId: string;
   owner?: User;
@@ -223,7 +223,7 @@ export interface Team extends BaseEntity {
   name: string;
   description?: string;
   color: string;
-  
+
   // Relationships
   organizationId: string;
   organization?: Organization;
@@ -243,15 +243,15 @@ export interface Project extends OwnedEntity {
   description?: string;
   color: string;
   status: ProjectStatus;
-  
+
   // Dates
   startDate?: Date;
   endDate?: Date;
-  
+
   // Budget
   budget?: number;
   currency?: string;
-  
+
   // Relationships
   organizationId: string;
   organization?: Organization;
@@ -261,7 +261,7 @@ export interface Project extends OwnedEntity {
   members?: User[];
   mindMaps?: MindMap[];
   tasks?: Task[];
-  
+
   // Computed stats
   stats?: ProjectStats;
 }
@@ -285,25 +285,25 @@ export interface MindMap extends OwnedEntity {
   color: string;
   isFavorite: boolean;
   isTemplate: boolean;
-  
+
   // Sharing
   isPublic: boolean;
   sharedWithUserIds: string[];
   sharedWithUsers?: User[];
   sharedWithTeamIds: string[];
   sharedWithTeams?: Team[];
-  
+
   // Content - Nodes and Connections are now separate entities
   nodes?: Node[];
   connections?: NodeConnection[];
-  
+
   // Versioning / Snapshots
   snapshots?: MindMapSnapshot[];
-  
+
   // Relationships
   projectId?: string;
   project?: Project;
-  
+
   // Last activity
   lastModifiedById?: string;
   lastModifiedBy?: User;
@@ -322,59 +322,59 @@ export interface Node extends OwnedEntity {
   fontColor?: string;
   shapeType?: 'rectangle' | 'rounded' | 'diamond' | 'ellipse' | 'hexagon';
   emoji?: string;
-  
+
   // ===== TASK PROPERTIES =====
   notes?: string;
   status: TaskStatus;
   priority: TaskPriority;
   completed: boolean;
-  
+
   // Dates
   startDate?: Date;
   dueDate?: Date;
   completedAt?: Date;
-  
+
   // Time tracking
   estimatedHours?: number;
   loggedHours?: number;
-  
+
   // ===== RELATIONSHIPS =====
-  
+
   // MindMap this node belongs to
   mindMapId: string;
   mindMap?: MindMap;
-  
+
   // Project (denormalized)
   projectId?: string;
   project?: Project;
-  
+
   // Primary Assignee
   assigneeId?: string;
   assignee?: User;
-  
+
   // Multiple assignees
   assignees?: NodeAssignee[];
-  
+
   // Parent node (for hierarchy/subtasks)
   parentId?: string;
   parent?: Node;
   children?: Node[];
-  
+
   // Connections
   connectionsFrom?: NodeConnection[];
   connectionsTo?: NodeConnection[];
-  
+
   // Dependencies (blocking relationships)
   blockedByNodeIds?: string[];
   blockedByNodes?: Node[];
   blockingNodeIds?: string[];
   blockingNodes?: Node[];
-  
+
   // Rich content
   tags?: string[];
   attachments?: Attachment[];
   comments?: Comment[];
-  
+
   // Activity
   activityLog?: ActivityLogEntry[];
 }
@@ -415,7 +415,7 @@ export interface MindMapSnapshot extends BaseEntity {
   description?: string;
   nodes: Node[];
   connections: NodeConnection[];
-  
+
   mindMapId: string;
   createdById: string;
   createdBy?: User;
@@ -430,13 +430,13 @@ export interface HolidayRequest extends OwnedEntity {
   totalDays: number;
   reason?: string;
   status: HolidayStatus;
-  
+
   // Approval
   reviewedById?: string;
   reviewedBy?: User;
   reviewedAt?: Date;
   reviewNotes?: string;
-  
+
   // Relationships
   userId: string;
   user?: User;
@@ -450,7 +450,7 @@ export interface Attachment extends BaseEntity {
   url: string;
   mimeType: string;
   size: number;
-  
+
   // Relationships
   uploadedById: string;
   uploadedBy?: User;
@@ -465,18 +465,18 @@ export interface Attachment extends BaseEntity {
  */
 export interface Comment extends BaseEntity {
   content: string;
-  
+
   // Relationships
   authorId: string;
   author?: User;
   nodeId: string;
   node?: Node;
-  
+
   // Reply threading
   parentCommentId?: string;
   parentComment?: Comment;
   replies?: Comment[];
-  
+
   // Mentions
   mentionedUserIds?: string[];
   mentionedUsers?: User[];
@@ -491,7 +491,7 @@ export interface Notification extends BaseEntity {
   message: string;
   isRead: boolean;
   readAt?: Date;
-  
+
   // Related entities
   userId: string;
   user?: User;
@@ -501,7 +501,7 @@ export interface Notification extends BaseEntity {
   project?: Project;
   triggeredById?: string;
   triggeredBy?: User;
-  
+
   // Action URL
   actionUrl?: string;
 }
@@ -514,11 +514,11 @@ export interface ActivityLogEntry extends BaseEntity {
   entityType: 'node' | 'project' | 'mindmap' | 'user' | 'holiday' | 'comment';
   entityId: string;
   changes?: Record<string, { old: unknown; new: unknown }>;
-  
+
   // Who did it
   userId: string;
   user?: User;
-  
+
   // Context
   ipAddress?: string;
   userAgent?: string;
@@ -532,18 +532,18 @@ export interface Decision extends OwnedEntity {
   description: string;
   category: 'technical' | 'design' | 'process' | 'resource' | 'timeline' | 'scope' | 'other';
   status: 'final' | 'pending' | 'revised';
-  
+
   // Who decided
   decidedById: string;
   decidedBy?: User;
   decidedAt: Date;
-  
+
   // Related entities
   projectId?: string;
   project?: Project;
   taskIds?: string[];
   tasks?: Task[];
-  
+
   // Stakeholders
   stakeholderIds?: string[];
   stakeholders?: User[];
@@ -559,23 +559,23 @@ export interface Expense extends OwnedEntity {
   date: Date;
   category: 'software' | 'hardware' | 'services' | 'travel' | 'office' | 'training' | 'other';
   status: 'pending' | 'approved' | 'rejected' | 'reimbursed';
-  
+
   // Who paid
   paidById: string;
   paidBy?: User;
-  
+
   // Receipt
   receiptUrl?: string;
-  
+
   // Approval
   approvedById?: string;
   approvedBy?: User;
   approvedAt?: Date;
-  
+
   // Split between participants
   participantIds?: string[];
   participants?: User[];
-  
+
   // Relationships
   projectId?: string;
   project?: Project;
@@ -587,20 +587,20 @@ export interface Expense extends OwnedEntity {
 export interface AutomationRule extends OwnedEntity {
   name: string;
   isEnabled: boolean;
-  
+
   // Trigger
   trigger: AutomationTrigger;
-  
+
   // Conditions
   conditions?: AutomationCondition[];
-  
+
   // Actions
   actions: AutomationAction[];
-  
+
   // Stats
   runCount: number;
   lastRunAt?: Date;
-  
+
   // Scope
   projectId?: string;
   project?: Project;
@@ -609,9 +609,9 @@ export interface AutomationRule extends OwnedEntity {
 }
 
 export interface AutomationTrigger {
-  type: 'task_created' | 'task_completed' | 'task_assigned' | 'priority_changed' | 
-        'due_date_near' | 'due_date_passed' | 'status_changed' | 'blocked' | 
-        'comment_added' | 'member_joins';
+  type: 'task_created' | 'task_completed' | 'task_assigned' | 'priority_changed' |
+  'due_date_near' | 'due_date_passed' | 'status_changed' | 'blocked' |
+  'comment_added' | 'member_joins';
   config?: Record<string, unknown>;
 }
 
@@ -622,8 +622,8 @@ export interface AutomationCondition {
 }
 
 export interface AutomationAction {
-  type: 'notify' | 'email' | 'assign' | 'set_priority' | 'add_tag' | 
-        'move_status' | 'create_subtask' | 'add_to_calendar' | 'webhook';
+  type: 'notify' | 'email' | 'assign' | 'set_priority' | 'add_tag' |
+  'move_status' | 'create_subtask' | 'add_to_calendar' | 'webhook';
   config: Record<string, unknown>;
 }
 
@@ -643,7 +643,7 @@ export interface SearchResult {
   url: string;
   score: number;
   highlights?: string[];
-  
+
   // Permissions
   canView: boolean;
   canEdit: boolean;
@@ -675,14 +675,14 @@ export interface AuthContext {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  
+
   // Permissions helpers
   hasRole: (role: UserRole) => boolean;
   hasPermission: (permission: Permission) => boolean;
   canAccess: (entityType: string, entityId: string, action: 'view' | 'edit' | 'delete') => boolean;
 }
 
-export type Permission = 
+export type Permission =
   | 'manage_users'
   | 'manage_teams'
   | 'manage_projects'
@@ -690,7 +690,11 @@ export type Permission =
   | 'view_all_tasks'
   | 'view_audit_logs'
   | 'manage_automations'
-  | 'manage_billing';
+  | 'manage_billing'
+  | 'read'
+  | 'write'
+  | 'delete'
+  | 'admin';
 
 /**
  * Role-based permission mapping
@@ -698,7 +702,7 @@ export type Permission =
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   admin: [
     'manage_users',
-    'manage_teams', 
+    'manage_teams',
     'manage_projects',
     'approve_holidays',
     'view_all_tasks',
