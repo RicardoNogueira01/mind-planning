@@ -161,24 +161,24 @@ export default function ConnectionsSvg({
             parentColor = '#4b5563'; // Dark gray for visibility
           }
 
-          // Compute bracket paths
-          const { paths, underline } = computeBracketPaths(parentPos, childRects, parentColor);
+          // Compute bracket paths with circles
+          const { paths, underline, circles } = computeBracketPaths(parentPos, childRects, parentColor);
 
           const strokeWidth = themeColors?.strokeWidth || 2.5;
 
           return (
             <g key={`bracket-${parentId}`}>
-              {/* Parent underline - colored bar */}
+              {/* Parent underline - connector from parent to spine */}
               {underline.d && (
                 <path
                   d={underline.d}
                   stroke={underline.color}
-                  strokeWidth={4}
+                  strokeWidth={strokeWidth}
                   fill="none"
                   strokeLinecap="round"
                 />
               )}
-              {/* Bracket paths */}
+              {/* Bracket paths - spine and connectors */}
               {paths.map((pathData, idx) => (
                 <path
                   key={`${parentId}-path-${idx}`}
@@ -188,6 +188,19 @@ export default function ConnectionsSvg({
                   fill="none"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  style={{ transition: 'all 0.2s ease-out' }}
+                />
+              ))}
+              {/* Junction circles for a polished look */}
+              {circles && circles.map((circle, idx) => (
+                <circle
+                  key={`${parentId}-circle-${idx}`}
+                  cx={circle.cx}
+                  cy={circle.cy}
+                  r={circle.r}
+                  fill={circle.color}
+                  stroke="white"
+                  strokeWidth={1.5}
                   style={{ transition: 'all 0.2s ease-out' }}
                 />
               ))}
