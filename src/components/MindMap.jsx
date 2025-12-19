@@ -39,6 +39,7 @@ import BoardView from './mindmap/views/BoardView';
 import ListView from './mindmap/views/ListView';
 import ExcelView from './mindmap/views/ExcelView';
 import AnalyticsView from './mindmap/views/AnalyticsView';
+import GhostPreview from './mindmap/GhostPreview';
 
 // Enhanced Features
 import {
@@ -135,6 +136,14 @@ export default function MindMap({ mapId, onBack }) {
   const [showThemePicker, setShowThemePicker] = useState(false); // Theme picker popup
   const [showMobileActionsMenu, setShowMobileActionsMenu] = useState(false); // Mobile actions dropdown menu
   const [currentLayoutType, setCurrentLayoutType] = useState('free'); // Track current layout for connection style
+
+  // Ghost Preview State - Shows translucent preview of nodes before placement
+  const [ghostPreview, setGhostPreview] = useState({
+    show: false,
+    nodes: [],
+    connections: [],
+    template: null, // Store the original template for reference
+  });
 
   // Per-node button anchor refs for popovers
   const detailsBtnRefs = useRef({});
@@ -638,48 +647,90 @@ export default function MindMap({ mapId, onBack }) {
     // TODO: Save to backend/localStorage
   };
 
-  // Apply template - ADDS to existing nodes instead of replacing
-  const handleApplyTemplate = (template) => {
-    // Find a good position for the new template nodes
-    // Place them to the right of existing content with some spacing
-    let maxX = 0;
-    let avgY = 0;
-
-    if (nodes.length > 0) {
-      maxX = Math.max(...nodes.map(n => n.x)) + 400; // Offset to the right
-      avgY = nodes.reduce((sum, n) => sum + n.y, 0) / nodes.length;
-    } else {
-      maxX = window.innerWidth / 2;
-      avgY = window.innerHeight / 2;
-    }
-
+  // Start template preview - Shows ghost preview before placing
+  const startTemplatePreview = (template) => {
+    // Create preview nodes centered at origin (will be offset by mouse position)
     const { nodes: templateNodes, connections: templateConns } = instantiateTemplate(template, {
-      centerX: maxX,
-      centerY: avgY,
+      centerX: 0,
+      centerY: 0,
       scaleNodes: 1,
       preserveColors: true
     });
 
     // Generate new unique IDs for template nodes to avoid conflicts
     const idMap = {};
-    const newNodes = templateNodes.map(node => {
+    const previewNodes = templateNodes.map(node => {
       const newId = `${node.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       idMap[node.id] = newId;
       return { ...node, id: newId };
     });
 
     // Update connection references with new IDs
-    const newConns = templateConns.map(conn => ({
+    const previewConns = templateConns.map(conn => ({
       ...conn,
       id: `${conn.id}_${Date.now()}`,
       from: idMap[conn.from] || conn.from,
       to: idMap[conn.to] || conn.to
     }));
 
-    // ADD to existing nodes and connections
-    setNodes(prev => [...prev, ...newNodes]);
-    setConnections(prev => [...prev, ...newConns]);
+    // Enter ghost preview mode
+    setGhostPreview({
+      show: true,
+      nodes: previewNodes,
+      connections: previewConns,
+      template: template,
+    });
+
     setShowTemplateGallery(false);
+  };
+
+  // Confirm template placement - Called when user clicks to place
+  const handleConfirmTemplatePlacement = (position) => {
+    if (!ghostPreview.show || ghostPreview.nodes.length === 0) return;
+
+    // Calculate the center of the preview nodes
+    const xs = ghostPreview.nodes.map(n => n.x);
+    const ys = ghostPreview.nodes.map(n => n.y);
+    const centerX = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const centerY = (Math.min(...ys) + Math.max(...ys)) / 2;
+
+    // Calculate offset to move nodes to the clicked position
+    const offsetX = position.x - centerX;
+    const offsetY = position.y - centerY;
+
+    // Apply offset to all nodes
+    const placedNodes = ghostPreview.nodes.map(node => ({
+      ...node,
+      x: node.x + offsetX,
+      y: node.y + offsetY,
+    }));
+
+    // Add nodes and connections to the canvas
+    setNodes(prev => [...prev, ...placedNodes]);
+    setConnections(prev => [...prev, ...ghostPreview.connections]);
+
+    // Exit ghost preview mode
+    setGhostPreview({
+      show: false,
+      nodes: [],
+      connections: [],
+      template: null,
+    });
+  };
+
+  // Cancel template placement
+  const handleCancelTemplatePlacement = () => {
+    setGhostPreview({
+      show: false,
+      nodes: [],
+      connections: [],
+      template: null,
+    });
+  };
+
+  // Legacy function name for backwards compatibility (redirects to preview mode)
+  const handleApplyTemplate = (template) => {
+    startTemplatePreview(template);
   };
 
   // Apply auto-layout
@@ -3493,6 +3544,19 @@ export default function MindMap({ mapId, onBack }) {
           }]);
           setConnections([]);
         }}
+      />
+
+      {/* Ghost Preview for Template Placement */}
+      <GhostPreview
+        show={ghostPreview.show}
+        nodes={ghostPreview.nodes}
+        connections={ghostPreview.connections}
+        onConfirm={handleConfirmTemplatePlacement}
+        onCancel={handleCancelTemplatePlacement}
+        zoom={zoom}
+        pan={dragging.pan}
+        onPanChange={setPan}
+        containerRef={canvasRef}
       />
     </div>
   );
