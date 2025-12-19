@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import WeeklyCalendarWidget from './WeeklyCalendarWidget';
 import TopBar from './shared/TopBar';
+import { StatCard, CardHeader, ProgressBar, AvatarWithInitials } from './shared';
 import { useLanguage } from '../context/LanguageContext';
 import {
   CheckCircle,
@@ -302,25 +303,12 @@ const Dashboard = () => {
 
           {/* Recent Mind Maps Card */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-6">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <Map size={18} className="text-gray-700" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>Recent Mind Maps</h2>
-                  <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>Recently modified maps</p>
-                </div>
-              </div>
-              <Link
-                to="/mindmaps"
-                className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
-                style={{ fontFamily: 'DM Sans, sans-serif' }}
-              >
-                View All
-                <ArrowRight size={14} />
-              </Link>
-            </div>
+            <CardHeader
+              icon={Map}
+              title="Recent Mind Maps"
+              subtitle="Recently modified maps"
+              viewAllLink="/mindmaps"
+            />
 
             <div className="space-y-3">
               {recentMindMaps.map((mindMap) => (
@@ -398,34 +386,24 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {/* Team Overview Card */}
             <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-gray-50 rounded-lg">
-                    <Users size={18} className="text-gray-700" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm sm:text-base font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>Team</h2>
-                    <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>{collaborators.length} Members</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => navigate('/team-members')}
-                  className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors cursor-pointer"
-                  style={{ fontFamily: 'DM Sans, sans-serif' }}
-                >
-                  View All
-                  <ArrowRight size={14} />
-                </button>
-              </div>
+              <CardHeader
+                icon={Users}
+                title="Team"
+                subtitle={`${collaborators.length} Members`}
+                onViewAllClick={() => navigate('/team-members')}
+              />
 
               <div className="space-y-4 sm:space-y-5">
                 {collaborators.map(collab => (
                   <div key={collab.id} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                     {/* Mobile: Avatar and name in one row */}
                     <div className="flex items-center gap-3 sm:gap-0">
-                      <div className={clsx("w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0", collab.color)}>
-                        {collab.initials}
-                      </div>
+                      <AvatarWithInitials
+                        initials={collab.initials}
+                        color={collab.color}
+                        size="md"
+                        className="sm:w-12 sm:h-12"
+                      />
                       <div className="flex-1 sm:hidden">
                         <h3 className="font-semibold text-gray-900 text-sm" style={{ fontFamily: 'DM Sans, sans-serif' }}>{collab.name}</h3>
                         <span className="text-xs font-mono text-gray-500" style={{ fontFamily: 'DM Mono, monospace' }}>{collab.tasksCompleted}/{collab.tasksAssigned}</span>
@@ -460,12 +438,13 @@ const Dashboard = () => {
                           </span>
                         </div>
                       </div>
-                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className={clsx("h-2 rounded-full transition-all duration-500", collab.color)}
-                          style={{ width: `${(collab.tasksCompleted / collab.tasksAssigned) * 100}%` }}
-                        ></div>
-                      </div>
+                      <ProgressBar
+                        percentage={(collab.tasksCompleted / collab.tasksAssigned) * 100}
+                        color={collab.color}
+                        bgColor="bg-gray-100"
+                        height="h-2"
+                        animated={true}
+                      />
                     </div>
                   </div>
                 ))}
@@ -474,25 +453,12 @@ const Dashboard = () => {
 
             {/* Team Holiday Requests Summary */}
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-6">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-gray-50 rounded-lg">
-                    <Users size={18} className="text-gray-700" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>Team Holidays</h2>
-                    <p className="text-xs text-gray-500" style={{ fontFamily: 'DM Sans, sans-serif' }}>Holiday requests</p>
-                  </div>
-                </div>
-                <Link
-                  to="/team-holidays"
-                  className="text-xs text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors whitespace-nowrap"
-                  style={{ fontFamily: 'DM Sans, sans-serif' }}
-                >
-                  View All
-                  <ArrowRight size={14} />
-                </Link>
-              </div>
+              <CardHeader
+                icon={Users}
+                title="Team Holidays"
+                subtitle="Holiday requests"
+                viewAllLink="/team-holidays"
+              />
 
               {/* Statistics Cards */}
               <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
@@ -574,33 +540,33 @@ const Dashboard = () => {
 
               {/* Stats */}
               <div className="flex flex-wrap gap-3">
-                <div className="bg-white rounded-xl px-4 py-3 border border-teal-200 min-w-[100px]">
-                  <div className="flex items-center gap-2">
-                    <CalendarDays size={16} className="text-teal-500" />
-                    <span className="text-2xl font-bold text-teal-600" style={{ fontFamily: 'DM Mono, monospace' }}>
-                      13
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-600 font-medium mt-1">Available</p>
-                </div>
-                <div className="bg-white rounded-xl px-4 py-3 border border-amber-200 min-w-[100px]">
-                  <div className="flex items-center gap-2">
-                    <Clock size={16} className="text-amber-500" />
-                    <span className="text-2xl font-bold text-amber-600" style={{ fontFamily: 'DM Mono, monospace' }}>
-                      3
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-600 font-medium mt-1">Pending</p>
-                </div>
-                <div className="bg-white rounded-xl px-4 py-3 border border-gray-200 min-w-[100px]">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={16} className="text-gray-500" />
-                    <span className="text-2xl font-bold text-gray-600" style={{ fontFamily: 'DM Mono, monospace' }}>
-                      8
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-600 font-medium mt-1">Used</p>
-                </div>
+                <StatCard
+                  value={13}
+                  label="Available"
+                  icon={CalendarDays}
+                  iconColor="text-teal-500"
+                  bgColor="bg-white"
+                  borderColor="border-teal-200"
+                  valueColor="text-teal-600"
+                />
+                <StatCard
+                  value={3}
+                  label="Pending"
+                  icon={Clock}
+                  iconColor="text-amber-500"
+                  bgColor="bg-white"
+                  borderColor="border-amber-200"
+                  valueColor="text-amber-600"
+                />
+                <StatCard
+                  value={8}
+                  label="Used"
+                  icon={CheckCircle}
+                  iconColor="text-gray-500"
+                  bgColor="bg-white"
+                  borderColor="border-gray-200"
+                  valueColor="text-gray-600"
+                />
               </div>
 
               {/* Actions */}
@@ -645,33 +611,33 @@ const Dashboard = () => {
 
               {/* Stats */}
               <div className="flex flex-wrap gap-3">
-                <div className="bg-white rounded-xl px-4 py-3 border border-red-200 min-w-[100px]">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle size={16} className="text-red-500" />
-                    <span className="text-2xl font-bold text-red-600" style={{ fontFamily: 'DM Mono, monospace' }}>
-                      {stats.overdueTasks}
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-600 font-medium mt-1">Overdue</p>
-                </div>
-                <div className="bg-white rounded-xl px-4 py-3 border border-orange-200 min-w-[100px]">
-                  <div className="flex items-center gap-2">
-                    <Clock size={16} className="text-orange-500" />
-                    <span className="text-2xl font-bold text-orange-600" style={{ fontFamily: 'DM Mono, monospace' }}>
-                      2
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-600 font-medium mt-1">Due Today</p>
-                </div>
-                <div className="bg-white rounded-xl px-4 py-3 border border-blue-200 min-w-[100px]">
-                  <div className="flex items-center gap-2">
-                    <Clock size={16} className="text-blue-500" />
-                    <span className="text-2xl font-bold text-blue-600" style={{ fontFamily: 'DM Mono, monospace' }}>
-                      8
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-600 font-medium mt-1">This Week</p>
-                </div>
+                <StatCard
+                  value={stats.overdueTasks}
+                  label="Overdue"
+                  icon={AlertTriangle}
+                  iconColor="text-red-500"
+                  bgColor="bg-white"
+                  borderColor="border-red-200"
+                  valueColor="text-red-600"
+                />
+                <StatCard
+                  value={2}
+                  label="Due Today"
+                  icon={Clock}
+                  iconColor="text-orange-500"
+                  bgColor="bg-white"
+                  borderColor="border-orange-200"
+                  valueColor="text-orange-600"
+                />
+                <StatCard
+                  value={8}
+                  label="This Week"
+                  icon={Clock}
+                  iconColor="text-blue-500"
+                  bgColor="bg-white"
+                  borderColor="border-blue-200"
+                  valueColor="text-blue-600"
+                />
               </div>
 
               {/* Actions */}

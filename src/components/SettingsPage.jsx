@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import TopBar from './shared/TopBar';
+import { ToggleSwitch, SectionCard, SelectInput } from './shared';
 import {
   ArrowLeft,
   Bell,
@@ -126,326 +127,208 @@ const SettingsPage = () => {
           {/* Notifications and Privacy - Grid Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Notifications */}
-            <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Bell size={20} className="text-blue-600" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-gray-900">{t('settings.notifications.title')}</h2>
-                  <p className="text-sm text-gray-500">{t('settings.notifications.subtitle')}</p>
-                </div>
-              </div>
-
+            <SectionCard
+              icon={Bell}
+              iconColor="bg-blue-100"
+              iconTextColor="text-blue-600"
+              title={t('settings.notifications.title')}
+              subtitle={t('settings.notifications.subtitle')}
+            >
               <div className="space-y-4">
-                <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <Mail size={18} className="text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Email Notifications</p>
-                      <p className="text-xs text-gray-500">Receive notifications via email</p>
-                    </div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={settings.emailNotifications}
-                      onChange={() => handleToggle('emailNotifications')}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
+                <ToggleSwitch
+                  checked={settings.emailNotifications}
+                  onChange={() => handleToggle('emailNotifications')}
+                  label="Email Notifications"
+                  description="Receive notifications via email"
+                  icon={Mail}
+                />
 
-                <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <Smartphone size={18} className="text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Push Notifications</p>
-                      <p className="text-xs text-gray-500">Receive push notifications on your devices</p>
-                    </div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={settings.pushNotifications}
-                      onChange={() => handleToggle('pushNotifications')}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
+                <ToggleSwitch
+                  checked={settings.pushNotifications}
+                  onChange={() => handleToggle('pushNotifications')}
+                  label="Push Notifications"
+                  description="Receive push notifications on your devices"
+                  icon={Smartphone}
+                />
 
                 <div className="pl-9 space-y-3 py-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-700">Task assignments</p>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.taskAssignments}
-                        onChange={() => handleToggle('taskAssignments')}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-700">Task updates</p>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.taskUpdates}
-                        onChange={() => handleToggle('taskUpdates')}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-700">Deadline reminders</p>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.deadlineReminders}
-                        onChange={() => handleToggle('deadlineReminders')}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-700">Team activity</p>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.teamActivity}
-                        onChange={() => handleToggle('teamActivity')}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-700">Weekly digest</p>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.weeklyDigest}
-                        onChange={() => handleToggle('weeklyDigest')}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
+                  <ToggleSwitch
+                    checked={settings.taskAssignments}
+                    onChange={() => handleToggle('taskAssignments')}
+                    label="Task assignments"
+                  />
+                  <ToggleSwitch
+                    checked={settings.taskUpdates}
+                    onChange={() => handleToggle('taskUpdates')}
+                    label="Task updates"
+                  />
+                  <ToggleSwitch
+                    checked={settings.deadlineReminders}
+                    onChange={() => handleToggle('deadlineReminders')}
+                    label="Deadline reminders"
+                  />
+                  <ToggleSwitch
+                    checked={settings.teamActivity}
+                    onChange={() => handleToggle('teamActivity')}
+                    label="Team activity"
+                  />
+                  <ToggleSwitch
+                    checked={settings.weeklyDigest}
+                    onChange={() => handleToggle('weeklyDigest')}
+                    label="Weekly digest"
+                  />
                 </div>
               </div>
-            </div>
+            </SectionCard>
+
 
             {/* Privacy */}
-            <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Eye size={20} className="text-purple-600" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-gray-900">Privacy</h2>
-                  <p className="text-sm text-gray-500">Control what others can see</p>
-                </div>
-              </div>
-
+            <SectionCard
+              icon={Eye}
+              iconColor="bg-purple-100"
+              iconTextColor="text-purple-600"
+              title="Privacy"
+              subtitle="Control what others can see"
+            >
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Profile Visibility</label>
-                  <select
-                    value={settings.profileVisibility}
-                    onChange={(e) => handleChange('profileVisibility', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="public">Public - Everyone can see</option>
-                    <option value="team">Team - Only team members</option>
-                    <option value="private">Private - Only me</option>
-                  </select>
-                </div>
+                <SelectInput
+                  label="Profile Visibility"
+                  value={settings.profileVisibility}
+                  onChange={(e) => handleChange('profileVisibility', e.target.value)}
+                  options={[
+                    { value: 'public', label: 'Public - Everyone can see' },
+                    { value: 'team', label: 'Team - Only team members' },
+                    { value: 'private', label: 'Private - Only me' }
+                  ]}
+                />
 
-                <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">Show email address</p>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={settings.showEmail}
-                      onChange={() => handleToggle('showEmail')}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
+                <ToggleSwitch
+                  checked={settings.showEmail}
+                  onChange={() => handleToggle('showEmail')}
+                  label="Show email address"
+                />
 
-                <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">Show phone number</p>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={settings.showPhone}
-                      onChange={() => handleToggle('showPhone')}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
+                <ToggleSwitch
+                  checked={settings.showPhone}
+                  onChange={() => handleToggle('showPhone')}
+                  label="Show phone number"
+                />
 
-                <div className="flex items-center justify-between py-3">
-                  <p className="text-sm font-medium text-gray-900">Show activity history</p>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={settings.showActivity}
-                      onChange={() => handleToggle('showActivity')}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
+                <ToggleSwitch
+                  checked={settings.showActivity}
+                  onChange={() => handleToggle('showActivity')}
+                  label="Show activity history"
+                />
               </div>
-            </div>
+            </SectionCard>
           </div>
 
           {/* Preferences and Security - Grid Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Preferences */}
-            <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Globe size={20} className="text-green-600" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-gray-900">Preferences</h2>
-                  <p className="text-sm text-gray-500">Customize your experience</p>
-                </div>
-              </div>
-
+            <SectionCard
+              icon={Globe}
+              iconColor="bg-green-100"
+              iconTextColor="text-green-600"
+              title="Preferences"
+              subtitle="Customize your experience"
+            >
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                    {settings.theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
-                    Theme
-                  </label>
-                  <select
-                    value={settings.theme}
-                    onChange={(e) => handleChange('theme', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                    <option value="auto">Auto (System)</option>
-                  </select>
-                </div>
+                <SelectInput
+                  label="Theme"
+                  value={settings.theme}
+                  onChange={(e) => handleChange('theme', e.target.value)}
+                  options={[
+                    { value: 'light', label: 'Light' },
+                    { value: 'dark', label: 'Dark' },
+                    { value: 'auto', label: 'Auto (System)' }
+                  ]}
+                  icon={settings.theme === 'dark' ? Moon : Sun}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
-                  <select
-                    value={settings.language}
-                    onChange={(e) => handleChange('language', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="en">English</option>
-                    <option value="pt">Português</option>
-                    <option value="es">Español</option>
-                    <option value="fr">Français</option>
-                  </select>
-                </div>
+                <SelectInput
+                  label="Language"
+                  value={settings.language}
+                  onChange={(e) => handleChange('language', e.target.value)}
+                  options={[
+                    { value: 'en', label: 'English' },
+                    { value: 'pt', label: 'Português' },
+                    { value: 'es', label: 'Español' },
+                    { value: 'fr', label: 'Français' }
+                  ]}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
-                  <select
-                    value={settings.timezone}
-                    onChange={(e) => handleChange('timezone', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="America/Los_Angeles">Pacific Time (PT)</option>
-                    <option value="America/New_York">Eastern Time (ET)</option>
-                    <option value="Europe/London">London (GMT)</option>
-                    <option value="Europe/Lisbon">Lisbon (WET)</option>
-                    <option value="Asia/Tokyo">Tokyo (JST)</option>
-                  </select>
-                </div>
+                <SelectInput
+                  label="Timezone"
+                  value={settings.timezone}
+                  onChange={(e) => handleChange('timezone', e.target.value)}
+                  options={[
+                    { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
+                    { value: 'America/New_York', label: 'Eastern Time (ET)' },
+                    { value: 'Europe/London', label: 'London (GMT)' },
+                    { value: 'Europe/Lisbon', label: 'Lisbon (WET)' },
+                    { value: 'Asia/Tokyo', label: 'Tokyo (JST)' }
+                  ]}
+                />
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Date Format</label>
-                    <select
-                      value={settings.dateFormat}
-                      onChange={(e) => handleChange('dateFormat', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                      <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                      <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Time Format</label>
-                    <select
-                      value={settings.timeFormat}
-                      onChange={(e) => handleChange('timeFormat', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="12h">12 Hour</option>
-                      <option value="24h">24 Hour</option>
-                    </select>
-                  </div>
+                  <SelectInput
+                    label="Date Format"
+                    value={settings.dateFormat}
+                    onChange={(e) => handleChange('dateFormat', e.target.value)}
+                    options={[
+                      { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },
+                      { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' },
+                      { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD' }
+                    ]}
+                  />
+                  <SelectInput
+                    label="Time Format"
+                    value={settings.timeFormat}
+                    onChange={(e) => handleChange('timeFormat', e.target.value)}
+                    options={[
+                      { value: '12h', label: '12 Hour' },
+                      { value: '24h', label: '24 Hour' }
+                    ]}
+                  />
                 </div>
               </div>
-            </div>
+            </SectionCard>
 
             {/* Security */}
-            <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-red-100 rounded-lg">
-                  <Shield size={20} className="text-red-600" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-gray-900">Security</h2>
-                  <p className="text-sm text-gray-500">Protect your account</p>
-                </div>
-              </div>
-
+            <SectionCard
+              icon={Shield}
+              iconColor="bg-red-100"
+              iconTextColor="text-red-600"
+              title="Security"
+              subtitle="Protect your account"
+            >
               <div className="space-y-4">
-                <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Two-Factor Authentication</p>
-                    <p className="text-xs text-gray-500">Add an extra layer of security</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={settings.twoFactorAuth}
-                      onChange={() => handleToggle('twoFactorAuth')}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
+                <ToggleSwitch
+                  checked={settings.twoFactorAuth}
+                  onChange={() => handleToggle('twoFactorAuth')}
+                  label="Two-Factor Authentication"
+                  description="Add an extra layer of security"
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Session Timeout</label>
-                  <select
-                    value={settings.sessionTimeout}
-                    onChange={(e) => handleChange('sessionTimeout', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="15">15 minutes</option>
-                    <option value="30">30 minutes</option>
-                    <option value="60">1 hour</option>
-                    <option value="never">Never</option>
-                  </select>
-                </div>
+                <SelectInput
+                  label="Session Timeout"
+                  value={settings.sessionTimeout}
+                  onChange={(e) => handleChange('sessionTimeout', e.target.value)}
+                  options={[
+                    { value: '15', label: '15 minutes' },
+                    { value: '30', label: '30 minutes' },
+                    { value: '60', label: '1 hour' },
+                    { value: 'never', label: 'Never' }
+                  ]}
+                />
 
                 <button className="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm font-medium">
                   <Lock size={16} />
                   Change Password
                 </button>
               </div>
-            </div>
+            </SectionCard>
           </div>
 
           {/* Reminders & Alerts Section */}
@@ -494,17 +377,13 @@ const SettingsPage = () => {
           </div>
 
           {/* Data & Account - Full Width */}
-          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <Activity size={20} className="text-orange-600" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">Data & Account</h2>
-                <p className="text-sm text-gray-500">Manage your data and account</p>
-              </div>
-            </div>
-
+          <SectionCard
+            icon={Activity}
+            iconColor="bg-orange-100"
+            iconTextColor="text-orange-600"
+            title="Data & Account"
+            subtitle="Manage your data and account"
+          >
             <div className="space-y-3">
               <button
                 onClick={handleExportData}
@@ -533,10 +412,10 @@ const SettingsPage = () => {
                 </button>
               </div>
             </div>
-          </div>
+          </SectionCard>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 
