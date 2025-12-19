@@ -741,7 +741,7 @@ export default function MindMap({ mapId, onBack }) {
     const result = applyLayout(
       nodes,
       connections,
-      { type: layoutType, spacing: 80, animate: true },
+      { type: layoutType, spacing: 30, animate: true },
       window.innerWidth,
       window.innerHeight
     );
@@ -791,7 +791,7 @@ export default function MindMap({ mapId, onBack }) {
     const result = applyLayout(
       subsetNodes,
       subsetConnections,
-      { type: layoutType, spacing: 80, animate: true },
+      { type: layoutType, spacing: 30, animate: true },
       window.innerWidth,
       window.innerHeight
     );
@@ -922,8 +922,8 @@ export default function MindMap({ mapId, onBack }) {
 
     // Constants for layout
     const NODE_HEIGHT = 70;
-    const NODE_SPACING = 15;
-    const HORIZONTAL_OFFSET = 380; // Distance to the right of parent
+    const NODE_SPACING = 10;
+    const HORIZONTAL_OFFSET = 250; // Distance to the right of parent
 
     // Calculate starting Y position to center children relative to parent
     const totalHeight = childNodes.length * NODE_HEIGHT + (childNodes.length - 1) * NODE_SPACING;
@@ -2484,7 +2484,7 @@ export default function MindMap({ mapId, onBack }) {
                       </div>
                     )}
 
-                    {/* Progress Indicator (top-left) - Shows completion count for parent nodes */}
+                    {/* Progress Indicator (bottom-right outside) - Shows completion count for parent nodes */}
                     {(() => {
                       const progress = getNodeProgress(node.id, connections, nodes);
                       const hasProgress = progress && !node.completed;
@@ -2492,36 +2492,36 @@ export default function MindMap({ mapId, onBack }) {
 
                       return (
                         <div
-                          className="absolute top-3 left-3 flex items-center gap-1 z-20"
+                          className="absolute -bottom-3 -right-3 flex items-center gap-1 z-20"
                           title={`Total Progress: ${progress.completed}/${progress.total} tasks completed (${progress.percentage}%) - ${progress.depth + 1} levels deep`}
                         >
-                          <div className="relative w-10 h-10">
-                            <svg className="w-10 h-10 transform -rotate-90" viewBox="0 0 40 40">
+                          <div className="relative w-12 h-12">
+                            <svg className="w-12 h-12 transform -rotate-90" viewBox="0 0 48 48">
                               {/* Background circle */}
                               <circle
-                                cx="20"
-                                cy="20"
-                                r="16"
+                                cx="24"
+                                cy="24"
+                                r="20"
                                 stroke="#d1d5db"
-                                strokeWidth="3"
+                                strokeWidth="3.5"
                                 fill="white"
                               />
                               {/* Progress arc */}
                               <circle
-                                cx="20"
-                                cy="20"
-                                r="16"
+                                cx="24"
+                                cy="24"
+                                r="20"
                                 stroke={progress.percentage === 100 ? '#10b981' : '#3b82f6'}
-                                strokeWidth="3"
+                                strokeWidth="3.5"
                                 fill="transparent"
-                                strokeDasharray={`${2 * Math.PI * 16}`}
-                                strokeDashoffset={`${2 * Math.PI * 16 * (1 - progress.percentage / 100)}`}
+                                strokeDasharray={`${2 * Math.PI * 20}`}
+                                strokeDashoffset={`${2 * Math.PI * 20 * (1 - progress.percentage / 100)}`}
                                 className="transition-all duration-300"
                               />
                             </svg>
                             {/* Centered count text */}
                             <div className="absolute inset-0 flex items-center justify-center">
-                              <span className="text-xs font-bold text-gray-700">
+                              <span className="text-sm font-bold text-gray-700">
                                 {progress.completed}/{progress.total}
                               </span>
                             </div>

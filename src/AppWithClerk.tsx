@@ -6,6 +6,7 @@ import Dashboard from './components/Dashboard';
 import MindMap from './components/MindMap';
 import MindMapManager from './components/MindMapManager';
 import TeamMembersManager from './components/TeamMembersManager';
+import TeamHierarchy from './components/TeamHierarchy';
 import RecentlyCompletedTasksManager from './components/RecentlyCompletedTasksManager';
 import UpcomingDeadlinesManager from './components/UpcomingDeadlinesManager';
 import TeamHolidaysManager from './components/TeamHolidaysManager';
@@ -137,11 +138,8 @@ function AppRoutes() {
           <MindMapManagerWrapper />
         </ProtectedRoute>
       } />
-      <Route path="/team-members" element={
-        <ProtectedRoute>
-          <TeamMembersManager />
-        </ProtectedRoute>
-      } />
+      <Route path="/team-members" element={<TeamMembersManager />} />
+      <Route path="/team-hierarchy/:profession" element={<TeamHierarchy />} />
       <Route path="/completed-tasks" element={
         <ProtectedRoute>
           <RecentlyCompletedTasksManager />
@@ -215,6 +213,8 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/mindmap/:mapId" element={<MindMapWrapper />} />
               <Route path="/mindmaps" element={<MindMapManagerWrapper />} />
+              <Route path="/team-members" element={<TeamMembersManager />} />
+              <Route path="/team-hierarchy/:profession" element={<TeamHierarchy />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </div>

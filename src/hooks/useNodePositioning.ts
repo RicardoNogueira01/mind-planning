@@ -8,9 +8,9 @@ import type { Node, Position, Connection } from '../types/mindmap';
 
 const NODE_WIDTH = 300;
 const NODE_HEIGHT = 56;
-const MARGIN = 25; // 25px spacing between nodes
-const COLLISION_DISTANCE = 100; // Minimum distance between node centers
-const MIN_HORIZONTAL_SPACING = NODE_WIDTH + 40; // Prevent horizontal overlap
+const MARGIN = 15; // 15px spacing between nodes
+const COLLISION_DISTANCE = 90; // Minimum distance between node centers
+const MIN_HORIZONTAL_SPACING = NODE_WIDTH + 20; // Prevent horizontal overlap
 const MIN_VERTICAL_SPACING = NODE_HEIGHT + MARGIN; // Prevent vertical overlap
 
 export function useNodePositioning(nodes: Node[], connections: Connection[] = []) {
@@ -110,8 +110,8 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
     const parent = nodes.find(n => n.id === parentId);
     if (!parent) return { x: preferredX, y: preferredY };
 
-    const OFFSET_DISTANCE = NODE_WIDTH + 80; // Distance from parent
-    const CHILD_SPACING = NODE_HEIGHT + 25; // Vertical spacing between siblings
+    const OFFSET_DISTANCE = NODE_WIDTH + 40; // Distance from parent
+    const CHILD_SPACING = NODE_HEIGHT + 15; // Vertical spacing between siblings
 
     // Find all existing children of this parent using connections
     const childNodeIds = connections
@@ -285,7 +285,7 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
       }));
     }
 
-    const OFFSET_DISTANCE = NODE_WIDTH + 100;
+    const OFFSET_DISTANCE = NODE_WIDTH + 60;
     const positions: Position[] = [];
     const placedPositions: Array<{ x: number; y: number }> = [];
 

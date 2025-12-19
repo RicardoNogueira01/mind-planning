@@ -22,7 +22,7 @@ export function useNodeOperations(
 
   const addStandaloneNode = useCallback(() => {
     const { x, y } = findStackedPosition();
-    
+
     // Generate default startDate
     const now = new Date();
     const year = now.getFullYear();
@@ -31,12 +31,12 @@ export function useNodeOperations(
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const defaultStartDate = `${year}-${month}-${day}T${hours}:${minutes}`;
-    
+
     const id = `node-${Date.now()}`;
-    const newNode: Node = { 
-      id, 
-      text: 'Task', 
-      x, 
+    const newNode: Node = {
+      id,
+      text: 'Task',
+      x,
       y,
       bgColor: isDarkMode ? '#374151' : '#ffffff',
       fontColor: isDarkMode ? '#f3f4f6' : '#2d3748',
@@ -50,7 +50,7 @@ export function useNodeOperations(
     if (!parent) return;
 
     // Get position for new child
-    const { x, y } = findStackedChildPosition(parentId, parent.x + NODE_WIDTH + 40, parent.y);
+    const { x, y } = findStackedChildPosition(parentId, parent.x + NODE_WIDTH + 20, parent.y);
 
     // Generate default startDate
     const now = new Date();
@@ -62,10 +62,10 @@ export function useNodeOperations(
     const defaultStartDate = `${year}-${month}-${day}T${hours}:${minutes}`;
 
     const id = `node-${Date.now()}`;
-    const child: Node = { 
-      id, 
-      text: 'New Task', 
-      x, 
+    const child: Node = {
+      id,
+      text: 'New Task',
+      x,
       y,
       bgColor: isDarkMode ? '#374151' : '#ffffff',
       fontColor: isDarkMode ? '#f3f4f6' : '#2d3748',
@@ -78,7 +78,7 @@ export function useNodeOperations(
 
     // Rebalance all children of this parent first
     let rebalancedNodes = rebalanceChildren(newNodes, newConnections, parentId);
-    
+
     // After rebalancing, push any colliding nodes away
     // This handles non-sibling nodes that might be in the way
     if (pushCollidingNodes) {
@@ -86,10 +86,10 @@ export function useNodeOperations(
       const siblingIds = newConnections
         .filter(conn => conn.from === parentId)
         .map(conn => conn.to);
-      
+
       // Also include the parent as protected
       const protectedIds = [parentId, ...siblingIds];
-      
+
       // Push collisions for each child (only affects non-family nodes)
       for (const childId of siblingIds) {
         const childNode = rebalancedNodes.find(n => n.id === childId);
@@ -98,7 +98,7 @@ export function useNodeOperations(
         }
       }
     }
-    
+
     setNodes(rebalancedNodes);
     setConnections(newConnections);
   }, [connections, findStackedChildPosition, isDarkMode, NODE_WIDTH, nodes, pushCollidingNodes, setConnections, setNodes]);
@@ -116,7 +116,7 @@ export function useNodeOperations(
     if (childIds.length <= 1) return nodeList; // No need to rebalance 0 or 1 child
 
     const children = nodeList.filter(n => childIds.includes(n.id));
-    
+
     // Determine layout direction from first child
     const firstChild = children[0];
     const dx = firstChild.x - parent.x;
@@ -124,18 +124,18 @@ export function useNodeOperations(
     const isHorizontal = Math.abs(dx) > Math.abs(dy);
 
     const totalChildren = children.length;
-    const SPACING = NODE_HEIGHT + 25; // Spacing between children
+    const SPACING = NODE_HEIGHT + 15; // Spacing between children
 
     if (isHorizontal) {
       // Children are LEFT or RIGHT of parent
       // Sort children by their current Y position (top to bottom)
       const sortedChildren = [...children].sort((a, b) => a.y - b.y);
-      
+
       // Keep same X (left or right side), redistribute Y positions evenly
       // Center the group around parent's Y
       const totalHeight = (totalChildren - 1) * SPACING;
       const startY = parent.y - (totalHeight / 2);
-      
+
       const rebalancedChildren = sortedChildren.map((child, index) => ({
         ...child,
         x: firstChild.x, // Keep same X position as first child
@@ -147,17 +147,17 @@ export function useNodeOperations(
         const rebalanced = rebalancedChildren.find(c => c.id === node.id);
         return rebalanced || node;
       });
-      
+
     } else {
       // Children are ABOVE or BELOW parent
       // Sort children by their current X position (left to right)
       const sortedChildren = [...children].sort((a, b) => a.x - b.x);
-      
+
       // Keep same Y (up or down side), redistribute X positions evenly
       // Center the group around parent's X
       const totalWidth = (totalChildren - 1) * SPACING;
       const startX = parent.x - (totalWidth / 2);
-      
+
       const rebalancedChildren = sortedChildren.map((child, index) => ({
         ...child,
         x: startX + (index * SPACING),

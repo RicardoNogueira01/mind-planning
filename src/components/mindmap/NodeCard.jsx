@@ -290,7 +290,6 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
             autoFocus
             className="w-full text-center resize-none bg-transparent outline-none font-medium border-0 overflow-hidden"
             style={{
-              paddingLeft: hasProgress ? '48px' : '0',
               color: 'inherit',
               minHeight: '24px',
               lineHeight: '1.5'
@@ -357,7 +356,7 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
                 {node.emoji}
               </div>
             )}
-            <div className="text-center font-medium whitespace-pre-wrap break-words" style={{ paddingLeft: hasProgress ? '48px' : '0', color: 'inherit' }}>
+            <div className="text-center font-medium whitespace-pre-wrap break-words" style={{ color: 'inherit' }}>
               {node.text || 'New Task'}
             </div>
           </div>
