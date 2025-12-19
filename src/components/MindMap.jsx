@@ -753,15 +753,17 @@ export default function MindMap({ mapId, onBack }) {
 
     // Immediately calculate new nodePositions so connections render correctly
     // This prevents the stale position issue during the 50ms useLayoutEffect delay
-    const NODE_WIDTH = 300;
-    const NODE_HEIGHT = 84;
     const newPositions = {};
     for (const n of result.nodes) {
+      const nodeWidth = calculateNodeWidth(n);
+      const halfWidth = nodeWidth / 2;
+      const NODE_HEIGHT = 56; // Estimated height
+
       newPositions[n.id] = {
-        left: n.x - 150,
-        top: n.y - 42,
-        right: n.x - 150 + NODE_WIDTH,
-        bottom: n.y - 42 + NODE_HEIGHT
+        left: n.x - halfWidth,
+        top: n.y - 28,
+        right: n.x + halfWidth,
+        bottom: n.y - 28 + NODE_HEIGHT
       };
     }
     setNodePositions(newPositions);
@@ -822,15 +824,17 @@ export default function MindMap({ mapId, onBack }) {
     setNodeLayoutMenuOpen(null);
 
     // Immediately calculate new nodePositions so connections render correctly
-    const NODE_WIDTH = 300;
-    const NODE_HEIGHT = 84;
     const newPositions = {};
     for (const n of updatedNodes) {
+      const nodeWidth = calculateNodeWidth(n);
+      const halfWidth = nodeWidth / 2;
+      const NODE_HEIGHT = 56; // Estimated height
+
       newPositions[n.id] = {
-        left: n.x - 150,
-        top: n.y - 42,
-        right: n.x - 150 + NODE_WIDTH,
-        bottom: n.y - 42 + NODE_HEIGHT
+        left: n.x - halfWidth,
+        top: n.y - 28,
+        right: n.x + halfWidth,
+        bottom: n.y - 28 + NODE_HEIGHT
       };
     }
     setNodePositions(newPositions);
@@ -847,6 +851,20 @@ export default function MindMap({ mapId, onBack }) {
     for (const id of getAncestorNodeIds(connections, selectedNode)) set.add(id);
     return set;
   }, [selectedNode, connections]);
+
+  // Helper function to calculate node width (matches NodeCard calculation)
+  const calculateNodeWidth = (node) => {
+    const baseWidth = 120; // Minimum width
+    const maxWidth = 300; // Maximum width
+    const charWidth = 8; // Approximate pixels per character
+    const padding = 32; // Horizontal padding
+
+    const textWidth = (node.text || 'New Task').length * charWidth + padding;
+    const emojiWidth = node.emoji ? 40 : 0; // Space for emoji
+
+    const calculatedWidth = Math.min(maxWidth, Math.max(baseWidth, textWidth + emojiWidth));
+    return calculatedWidth;
+  };
 
   // Create a hash of node content to detect when text changes (affects height)
   const nodeContentHash = React.useMemo(() => {
@@ -872,22 +890,25 @@ export default function MindMap({ mapId, onBack }) {
           // Divide by zoom to get actual logical dimensions (getBoundingClientRect includes zoom transform)
           const actualWidth = rect.width / zoom;
           const actualHeight = rect.height / zoom;
+          const halfWidth = actualWidth / 2;
 
           map[n.id] = {
-            left: n.x - 150,
-            top: n.y - 42,
-            right: n.x - 150 + actualWidth,
-            bottom: n.y - 42 + actualHeight
+            left: n.x - halfWidth,
+            top: n.y - 28, // Adjusted for new height
+            right: n.x + halfWidth,
+            bottom: n.y - 28 + actualHeight
           };
         } else {
-          // Fallback if element not yet rendered
-          const NODE_WIDTH = 300;
-          const NODE_HEIGHT = 84;
+          // Fallback: calculate width based on content
+          const nodeWidth = calculateNodeWidth(n);
+          const halfWidth = nodeWidth / 2;
+          const NODE_HEIGHT = 56; // Estimated height
+
           map[n.id] = {
-            left: n.x - 150,
-            top: n.y - 42,
-            right: n.x - 150 + NODE_WIDTH,
-            bottom: n.y - 42 + NODE_HEIGHT
+            left: n.x - halfWidth,
+            top: n.y - 28,
+            right: n.x + halfWidth,
+            bottom: n.y - 28 + NODE_HEIGHT
           };
         }
       }

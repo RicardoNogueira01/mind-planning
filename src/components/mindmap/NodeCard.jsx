@@ -193,18 +193,34 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
           ? 'ring-2 ring-amber-400/70'
           : '';
 
+  // Calculate dynamic width based on content
+  const calculateNodeWidth = () => {
+    const baseWidth = 120; // Minimum width
+    const maxWidth = 300; // Maximum width (current fixed width)
+    const charWidth = 8; // Approximate pixels per character
+    const padding = 32; // Horizontal padding
+
+    const textWidth = (node.text || 'New Task').length * charWidth + padding;
+    const emojiWidth = node.emoji ? 40 : 0; // Space for emoji
+
+    const calculatedWidth = Math.min(maxWidth, Math.max(baseWidth, textWidth + emojiWidth));
+    return calculatedWidth;
+  };
+
+  const nodeWidth = calculateNodeWidth();
+  const halfWidth = nodeWidth / 2;
+
   return (
     <div
       className={`absolute ${ringStyle} ${className || ''}`}
       style={{
-        left: node.x - 150,
-        top: node.y - 42,
-        minWidth: 300,
-        maxWidth: 300,
+        left: node.x - halfWidth,
+        top: node.y - 28, // Adjusted for new height
+        width: nodeWidth,
         position: 'absolute',
         opacity,
         zIndex,
-        transition: 'opacity 0.2s ease-out',
+        transition: 'opacity 0.2s ease-out, width 0.3s ease-out',
         borderRadius: themeStyles.borderRadius,
         ...(selected && { '--tw-ring-color': themeStyles.selectedRing }),
       }}
@@ -266,7 +282,7 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
       )}
       <button
         type="button"
-        className={`w-full px-4 py-4 border text-left transition-all duration-200`}
+        className={`w-full px-3 py-2.5 border text-left transition-all duration-200 hover:shadow-md`}
         onClick={(e) => {
           e.stopPropagation();
           onSelect?.(node.id, e);
@@ -351,13 +367,16 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
               </div>
             )}
 
-            {node.emoji && (
-              <div className="text-3xl">
-                {node.emoji}
+            {/* Emoji and Text - Centered inline */}
+            <div className="flex items-center justify-center gap-2">
+              {node.emoji && (
+                <span className="text-2xl leading-none" style={{ flexShrink: 0 }}>
+                  {node.emoji}
+                </span>
+              )}
+              <div className="text-center font-medium whitespace-pre-wrap break-words leading-snug" style={{ color: 'inherit' }}>
+                {node.text || 'New Task'}
               </div>
-            )}
-            <div className="text-center font-medium whitespace-pre-wrap break-words" style={{ color: 'inherit' }}>
-              {node.text || 'New Task'}
             </div>
           </div>
         )}
