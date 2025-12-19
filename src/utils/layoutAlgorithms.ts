@@ -208,12 +208,12 @@ function applyTreeLayout(
   spacing: number,
   direction: 'vertical' | 'horizontal'
 ): Node[] {
-  const NODE_WIDTH = 320;  // Slightly wider to account for actual node width
-  const NODE_HEIGHT = 100; // Account for node card height + some padding
+  const NODE_WIDTH = 300;  // Match actual dynamic node width
+  const NODE_HEIGHT = 60;  // Minimal height for tight clustering
 
   // Spacing configuration
-  const HORIZONTAL_GAP = 20;  // Gap between sibling nodes horizontally
-  const VERTICAL_GAP = 40;    // Gap between levels vertically
+  const HORIZONTAL_GAP = 5;   // Ultra-tight gap between siblings (almost touching)
+  const VERTICAL_GAP = 60;    // Gap between parent and children levels (reduced for cozier feel)
 
   // Build tree structure
   const childrenMap = new Map<string, string[]>();
@@ -380,8 +380,8 @@ function applyRadialLayout(
 ): Node[] {
   const NODE_WIDTH = 320;
   const NODE_HEIGHT = 100;
-  const CHILD_DISTANCE = 150;    // Distance from parent to children
-  const MIN_GAP = 30;            // Minimum gap between any two nodes
+  const CHILD_DISTANCE = 120;    // Distance from parent to children
+  const MIN_GAP = 15;            // Minimum gap between any two nodes
 
   // Build parent-child relationships
   const childrenMap = new Map<string, string[]>();
@@ -543,9 +543,9 @@ function applyCircularLayout(
   spacing: number
 ): Node[] {
   const NODE_WIDTH = 320;
-  const MIN_NODE_GAP = 25;       // Minimum gap between nodes
+  const MIN_NODE_GAP = 12;       // Minimum gap between nodes
   const MIN_FIRST_RADIUS = 180;  // Minimum radius for first ring
-  const LAYER_SPACING = 120;     // Distance between concentric circles
+  const LAYER_SPACING = 100;     // Distance between concentric circles
 
   if (nodes.length === 0) return nodes;
 

@@ -415,7 +415,7 @@ const TeamMembersManager = () => {
   };
 
   const GridView = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {filteredMembers.map(member => (
         <div key={member.id} className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 overflow-hidden group">
           {/* Colored Header with Profession Badge */}
@@ -557,7 +557,7 @@ const TeamMembersManager = () => {
                   console.log('Nudge sent!', nudgeData);
                   triggerNudge(member.name);
                 }}
-                maxNudgesPerDay={5}
+                maxNudgesPerMinute={5}
               />
             </div>
           </div>

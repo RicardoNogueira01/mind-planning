@@ -4,6 +4,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { Search, Bell, Languages, CheckCircle, AlertTriangle, Users, Calendar, FileText, X, Check, MessageCircle, Send, Maximize2, Minimize2 } from 'lucide-react';
 import PropTypes from 'prop-types';
 import { GlobalSearch, MobileSearchOverlay } from './GlobalSearch';
+import NudgeButton from './NudgeButton';
 
 const TopBar = ({ showSearch = true }) => {
   const { language, changeLanguage, t } = useLanguage();
@@ -16,7 +17,7 @@ const TopBar = ({ showSearch = true }) => {
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const notificationRef = useRef(null);
   const languageRef = useRef(null);
-  
+
   // Dummy chat contacts
   const [contacts] = useState([
     {
@@ -89,7 +90,7 @@ const TopBar = ({ showSearch = true }) => {
   });
 
   const totalUnreadMessages = contacts.reduce((sum, contact) => sum + contact.unreadCount, 0);
-  
+
   // Dummy notifications data
   const [notifications] = useState([
     {
@@ -179,7 +180,7 @@ const TopBar = ({ showSearch = true }) => {
   const formatDate = (date) => {
     const now = new Date();
     const diffInHours = Math.abs(now - date) / (1000 * 60 * 60);
-    
+
     if (diffInHours < 1) {
       const minutes = Math.floor(diffInHours * 60);
       return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
@@ -218,7 +219,7 @@ const TopBar = ({ showSearch = true }) => {
           <div className="flex items-center gap-2 md:gap-3">
             {/* Search Icon for Mobile */}
             {showSearch && (
-              <button 
+              <button
                 onClick={() => setShowMobileSearch(true)}
                 className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
@@ -228,7 +229,7 @@ const TopBar = ({ showSearch = true }) => {
 
             {/* Language Switcher */}
             <div className="relative" ref={languageRef}>
-              <button 
+              <button
                 onClick={() => setShowLanguages(!showLanguages)}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors group"
               >
@@ -313,7 +314,7 @@ const TopBar = ({ showSearch = true }) => {
 
             {/* Chat */}
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setShowChat(!showChat)}
                 className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
@@ -328,7 +329,7 @@ const TopBar = ({ showSearch = true }) => {
 
             {/* Notifications */}
             <div className="relative" ref={notificationRef}>
-              <button 
+              <button
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
@@ -351,7 +352,7 @@ const TopBar = ({ showSearch = true }) => {
                         <p className="text-xs text-gray-500">{unreadCount} unread</p>
                       )}
                     </div>
-                    <button 
+                    <button
                       onClick={() => setShowNotifications(false)}
                       className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
                     >
@@ -366,11 +367,10 @@ const TopBar = ({ showSearch = true }) => {
                         {notifications.map((notification) => {
                           const Icon = notification.icon;
                           return (
-                            <div 
-                              key={notification.id} 
-                              className={`px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer ${
-                                !notification.read ? 'bg-blue-50/30' : ''
-                              }`}
+                            <div
+                              key={notification.id}
+                              className={`px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer ${!notification.read ? 'bg-blue-50/30' : ''
+                                }`}
                             >
                               <div className="flex gap-3">
                                 <div className={`flex-shrink-0 w-10 h-10 ${notification.bgColor} rounded-lg flex items-center justify-center`}>
@@ -424,8 +424,8 @@ const TopBar = ({ showSearch = true }) => {
             </div>
 
             {/* User Profile */}
-            <Link 
-              to="/profile/current-user" 
+            <Link
+              to="/profile/current-user"
               className="flex items-center gap-2 pl-2 pr-3 py-1.5 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
             >
               <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white font-semibold text-sm shadow-sm">
@@ -442,10 +442,9 @@ const TopBar = ({ showSearch = true }) => {
 
       {/* Chat Panel */}
       {showChat && (
-        <div className={`fixed top-0 bg-white shadow-2xl border-l border-gray-200 z-50 transition-all duration-300 ${
-          isChatFullscreen ? 'left-0 right-0' : 'right-0 w-full sm:w-[550px]'
-        }`}
-        style={{ height: 'calc(100vh)' }}
+        <div className={`fixed top-0 bg-white shadow-2xl border-l border-gray-200 z-50 transition-all duration-300 ${isChatFullscreen ? 'left-0 right-0' : 'right-0 w-full sm:w-[550px]'
+          }`}
+          style={{ height: 'calc(100vh)' }}
         >
           {/* Chat Header */}
           <div className="bg-black px-4 py-4 flex items-center justify-between">
@@ -483,14 +482,12 @@ const TopBar = ({ showSearch = true }) => {
           {/* Chat Content */}
           <div className="flex" style={{ height: 'calc(100vh - 60px)' }}>
             {/* Contacts List */}
-            <div className={`${
-              selectedContact && !isChatFullscreen ? 'hidden sm:block' : ''
-            } w-full sm:w-60 border-r border-gray-200 bg-gray-50 overflow-y-auto`}>
+            <div className={`${selectedContact && !isChatFullscreen ? 'hidden sm:block' : ''
+              } w-full sm:w-60 border-r border-gray-200 bg-gray-50 overflow-y-auto`}>
               <div className="p-3">
                 <input
                   type="text"
-                  placeholder="Search messages..."
-                  className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Search messages..." className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div className="divide-y divide-gray-200">
@@ -498,9 +495,8 @@ const TopBar = ({ showSearch = true }) => {
                   <div
                     key={contact.id}
                     onClick={() => setSelectedContact(contact)}
-                    className={`px-4 py-3 hover:bg-white cursor-pointer transition-colors ${
-                      selectedContact?.id === contact.id ? 'bg-white border-l-4 border-blue-600' : ''
-                    }`}
+                    className={`px-4 py-3 hover:bg-white cursor-pointer transition-colors ${selectedContact?.id === contact.id ? 'bg-white border-l-4 border-blue-600' : ''
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className="relative">
@@ -551,6 +547,16 @@ const TopBar = ({ showSearch = true }) => {
                     <p className="text-sm font-semibold text-gray-900">{selectedContact.name}</p>
                     <p className="text-xs text-gray-500">{selectedContact.online ? 'Online' : 'Offline'}</p>
                   </div>
+                  <NudgeButton
+                    recipientId={selectedContact.id.toString()}
+                    recipientName={selectedContact.name}
+                    senderId="current-user"
+                    onNudge={(nudgeData) => {
+                      console.log('Nudge sent from chat!', nudgeData);
+                    }}
+                    maxNudgesPerMinute={5}
+                    compact={true}
+                  />
                 </div>
 
                 {/* Messages */}
@@ -560,15 +566,13 @@ const TopBar = ({ showSearch = true }) => {
                       key={message.id}
                       className={`flex ${message.sender === 'me' ? 'justify-end' : 'justify-start'}`}
                     >
-                      <div className={`max-w-[70%] ${
-                        message.sender === 'me'
+                      <div className={`max-w-[70%] ${message.sender === 'me'
                           ? 'bg-blue-600 text-white rounded-2xl rounded-br-sm'
                           : 'bg-gray-100 text-gray-900 rounded-2xl rounded-bl-sm'
-                      } px-4 py-2`}>
+                        } px-4 py-2`}>
                         <p className="text-sm">{message.text}</p>
-                        <p className={`text-xs mt-1 ${
-                          message.sender === 'me' ? 'text-blue-100' : 'text-gray-500'
-                        }`}>
+                        <p className={`text-xs mt-1 ${message.sender === 'me' ? 'text-blue-100' : 'text-gray-500'
+                          }`}>
                           {message.time}
                         </p>
                       </div>
@@ -593,7 +597,7 @@ const TopBar = ({ showSearch = true }) => {
                       value={messageInput}
                       onChange={(e) => setMessageInput(e.target.value)}
                       placeholder="Type a message..."
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900"
                     />
                     <button
                       type="submit"
@@ -616,11 +620,11 @@ const TopBar = ({ showSearch = true }) => {
           </div>
         </div>
       )}
-      
+
       {/* Mobile Search Overlay */}
-      <MobileSearchOverlay 
-        isOpen={showMobileSearch} 
-        onClose={() => setShowMobileSearch(false)} 
+      <MobileSearchOverlay
+        isOpen={showMobileSearch}
+        onClose={() => setShowMobileSearch(false)}
       />
     </div>
   );

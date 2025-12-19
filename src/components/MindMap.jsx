@@ -2505,7 +2505,7 @@ export default function MindMap({ mapId, onBack }) {
                       </div>
                     )}
 
-                    {/* Progress Indicator (bottom-right outside) - Shows completion count for parent nodes */}
+                    {/* Progress Indicator (bottom-left outside) - Shows completion count for parent nodes */}
                     {(() => {
                       const progress = getNodeProgress(node.id, connections, nodes);
                       const hasProgress = progress && !node.completed;
@@ -2513,36 +2513,31 @@ export default function MindMap({ mapId, onBack }) {
 
                       return (
                         <div
-                          className="absolute -bottom-3 -right-3 flex items-center gap-1 z-20"
+                          className="absolute -bottom-6 -left-6 flex items-center gap-1 z-20"
                           title={`Total Progress: ${progress.completed}/${progress.total} tasks completed (${progress.percentage}%) - ${progress.depth + 1} levels deep`}
                         >
-                          <div className="relative w-12 h-12">
-                            <svg className="w-12 h-12 transform -rotate-90" viewBox="0 0 48 48">
+                          <div className="relative w-11 h-11">
+                            <svg className="w-11 h-11 transform -rotate-90" viewBox="0 0 44 44">
                               {/* Background circle */}
                               <circle
-                                cx="24"
-                                cy="24"
-                                r="20"
-                                stroke="#d1d5db"
-                                strokeWidth="3.5"
+                                cx="22" cy="22" r="18"
+                                stroke="#e5e7eb"
+                                strokeWidth="3"
                                 fill="white"
                               />
                               {/* Progress arc */}
                               <circle
-                                cx="24"
-                                cy="24"
-                                r="20"
+                                cx="22" cy="22" r="18"
                                 stroke={progress.percentage === 100 ? '#10b981' : '#3b82f6'}
-                                strokeWidth="3.5"
+                                strokeWidth="3"
                                 fill="transparent"
-                                strokeDasharray={`${2 * Math.PI * 20}`}
-                                strokeDashoffset={`${2 * Math.PI * 20 * (1 - progress.percentage / 100)}`}
-                                className="transition-all duration-300"
+                                strokeDasharray={`${2 * Math.PI * 18}`}
+                                strokeDashoffset={`${2 * Math.PI * 18 * (1 - progress.percentage / 100)}`} strokeLinecap="round" className="transition-all duration-300"
                               />
                             </svg>
                             {/* Centered count text */}
                             <div className="absolute inset-0 flex items-center justify-center">
-                              <span className="text-sm font-bold text-gray-700">
+                              <span className="text-xs font-bold text-gray-700" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                                 {progress.completed}/{progress.total}
                               </span>
                             </div>
