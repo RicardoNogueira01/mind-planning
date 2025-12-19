@@ -13,6 +13,7 @@ import SettingsPage from './components/SettingsPage';
 import CalendarPage from './components/CalendarPage';
 import ScrollToTop from './components/ScrollToTop';
 import ReminderRulesSettings from './components/ReminderRulesSettings';
+import RemindersPage from './components/RemindersPage';
 import { LanguageProvider } from './context/LanguageContext';
 import { AuthProvider } from './context/AuthContext';
 import { NudgeReceiver } from './components/shared/NudgeButton';
@@ -80,7 +81,7 @@ function App() {
               <Route path="/profile/:memberId" element={<ProfilePage />} />
               <Route path="/profile/:memberId/edit" element={<EditProfilePage />} />
               <Route path="/profile/:memberId/settings" element={<SettingsPage />} />
-              <Route path="/calendar" element={<CalendarPage />} />
+              <Route path="/calendar" element={<CalendarPage />} />`r`n              <Route path="/reminders" element={<RemindersPage />} />
               {/* Manager Feature Routes */}
               <Route path="/settings/reminders" element={<ReminderRulesSettings />} />
               <Route path="*" element={<Navigate to="/" />} />

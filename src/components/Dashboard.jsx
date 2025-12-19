@@ -518,9 +518,9 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-
-        {/* My Leave Balance Card - For Team Members */}
-        <div className="mb-6">
+        {/* Leave Balance & Deadline Reminders - Side by Side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* My Leave Balance Card - For Team Members */}
           <div className="bg-gradient-to-r from-teal-50 via-emerald-50 to-teal-50 rounded-xl p-6 shadow-sm border border-teal-200">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               {/* Header */}
@@ -588,10 +588,8 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Deadline Reminders Card - Manager Feature */}
-        <div className="mb-6">
+          {/* Deadline Reminders Card - Manager Feature */}
           <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-indigo-50 rounded-xl p-6 shadow-sm border border-indigo-200">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               {/* Header */}
