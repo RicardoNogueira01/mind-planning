@@ -101,18 +101,17 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
   }, [nodes]);
 
   /**
-   * Position children intelligently without moving existing children:
-   * - For first child: Detects available space around parent
-   * - For additional children: Stacks them in the same direction as first child
-   * - NO auto-rebalancing - children stay where placed
+   * Position children intelligently:
+   * - For first child: Prefers RIGHT placement (more natural for mind maps)
+   * - For additional children: Stacks them vertically, centered around parent
+   * - Always places children in intuitive positions, never far from parent
    */
   const findStackedChildPosition = useCallback((parentId: string, preferredX: number, preferredY: number): Position => {
     const parent = nodes.find(n => n.id === parentId);
     if (!parent) return { x: preferredX, y: preferredY };
 
-    const NODE_WIDTH = 300;
     const OFFSET_DISTANCE = NODE_WIDTH + 80; // Distance from parent
-    const DETECTION_RADIUS = 400; // How far to check for obstacles
+    const CHILD_SPACING = NODE_HEIGHT + 25; // Vertical spacing between siblings
 
     // Find all existing children of this parent using connections
     const childNodeIds = connections
@@ -121,113 +120,100 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
 
     const childNodes = nodes.filter(n => childNodeIds.includes(n.id));
 
-    // If no children exist yet, detect which direction has most free space
-    if (childNodeIds.length === 0) {
-      // Check all 4 directions for obstacles
-      const directions = [
-        { name: 'right', x: parent.x + OFFSET_DISTANCE, y: parent.y, angle: 0 },
-        { name: 'down', x: parent.x, y: parent.y + OFFSET_DISTANCE, angle: 90 },
-        { name: 'left', x: parent.x - OFFSET_DISTANCE, y: parent.y, angle: 180 },
-        { name: 'up', x: parent.x, y: parent.y - OFFSET_DISTANCE, angle: 270 },
-      ];
+    // If no children exist yet, place to the RIGHT of parent (most natural for mind maps)
+    if (childNodes.length === 0) {
+      // Check if RIGHT is clear
+      const rightX = parent.x + OFFSET_DISTANCE;
+      const rightY = parent.y;
 
-      // Count obstacles in each direction
-      const directionScores = directions.map(dir => {
-        const obstacles = nodes.filter(n => {
-          if (n.id === parentId) return false;
-
-          const dx = n.x - dir.x;
-          const dy = n.y - dir.y;
-          const distance = Math.hypot(dx, dy);
-
-          return distance < DETECTION_RADIUS;
-        });
-
-        return {
-          ...dir,
-          obstacles: obstacles.length,
-          score: DETECTION_RADIUS - obstacles.length * 100 // Fewer obstacles = higher score
-        };
+      const rightClear = !nodes.some(n => {
+        if (n.id === parentId) return false;
+        const dx = Math.abs(n.x - rightX);
+        const dy = Math.abs(n.y - rightY);
+        return dx < MIN_HORIZONTAL_SPACING && dy < MIN_VERTICAL_SPACING;
       });
 
-      // Choose direction with fewest obstacles (highest score)
-      const bestDirection = directionScores.reduce((best, current) =>
-        current.score > best.score ? current : best,
-        directionScores[0]
-      );
+      if (rightClear) {
+        return { x: rightX, y: rightY };
+      }
 
-      return { x: bestDirection.x, y: bestDirection.y };
+      // If RIGHT is blocked, try other directions: DOWN, LEFT, UP (in order of preference)
+      const fallbackDirections = [
+        { x: parent.x, y: parent.y + OFFSET_DISTANCE }, // DOWN
+        { x: parent.x - OFFSET_DISTANCE, y: parent.y }, // LEFT
+        { x: parent.x, y: parent.y - OFFSET_DISTANCE }, // UP
+      ];
+
+      for (const pos of fallbackDirections) {
+        const isClear = !nodes.some(n => {
+          if (n.id === parentId) return false;
+          const dx = Math.abs(n.x - pos.x);
+          const dy = Math.abs(n.y - pos.y);
+          return dx < MIN_HORIZONTAL_SPACING && dy < MIN_VERTICAL_SPACING;
+        });
+
+        if (isClear) {
+          return pos;
+        }
+      }
+
+      // Default: place to the right
+      return { x: rightX, y: rightY };
     }
 
-    // If children exist, stack new child in same direction as siblings
+    // Children already exist - determine layout direction from first child
     const firstChild = childNodes[0];
     const dx = firstChild.x - parent.x;
     const dy = firstChild.y - parent.y;
-
-    // Determine the primary direction of existing children
     const isHorizontal = Math.abs(dx) > Math.abs(dy);
 
     if (isHorizontal) {
-      // Children are positioned horizontally (left or right)
-      const isRight = dx > 0;
+      // Children are positioned horizontally (left or right of parent)
+      // Stack new children vertically, centered around parent's Y position
 
-      // Use the X position of existing children (average) instead of fixed offset from parent
-      // This keeps new children aligned with siblings
-      const childrenXPositions = childNodes.map(c => c.x);
-      const avgChildX = childrenXPositions.reduce((a, b) => a + b, 0) / childrenXPositions.length;
-      const targetX = avgChildX; // Align with existing siblings
+      // Use the X position from first child (stay in same column)
+      const targetX = firstChild.x;
 
-      // Stack vertically: find the highest or lowest child and add below/above
-      const childrenYPositions = childNodes.map(c => c.y);
-      const maxY = Math.max(...childrenYPositions);
-      const minY = Math.min(...childrenYPositions);
+      // Find the Y extent of existing children
+      const childYPositions = childNodes.map(c => c.y).sort((a, b) => a - b);
+      const minY = Math.min(...childYPositions);
+      const maxY = Math.max(...childYPositions);
 
-      // Determine if children are stacking upward or downward
-      const lastChildY = childNodes[childNodes.length - 1].y;
-      const stackingDown = lastChildY >= parent.y;
+      // Calculate new position that keeps children centered around parent
+      const numChildren = childNodes.length + 1; // Including new child
+      const totalHeight = (numChildren - 1) * CHILD_SPACING;
+      const centeredStartY = parent.y - totalHeight / 2;
 
-      if (stackingDown) {
-        // Add below the lowest child
-        return {
-          x: targetX,
-          y: maxY + NODE_HEIGHT + MARGIN
-        };
-      } else {
-        // Add above the highest child
-        return {
-          x: targetX,
-          y: minY - NODE_HEIGHT - MARGIN
-        };
+      // Find a free slot - prefer adding to the bottom of existing children
+      // This is more intuitive than adding to top
+      let newY = maxY + CHILD_SPACING;
+
+      // Check if this would make the group too unbalanced
+      // If the group would extend too far below parent, add a slot above instead
+      const distanceBelow = newY - parent.y;
+      const distanceAbove = parent.y - minY;
+
+      // Only add above if below is significantly more unbalanced
+      if (distanceBelow > distanceAbove + CHILD_SPACING * 2) {
+        newY = minY - CHILD_SPACING;
       }
+
+      return { x: targetX, y: newY };
+
     } else {
-      // Children are positioned vertically (up or down)
-      const isDown = dy > 0;
+      // Children are positioned vertically (above or below parent)
+      // Stack new children horizontally
 
-      // Use the Y position of existing children (average) instead of fixed offset from parent
-      const childrenYPositions = childNodes.map(c => c.y);
-      const avgChildY = childrenYPositions.reduce((a, b) => a + b, 0) / childrenYPositions.length;
-      const targetY = avgChildY; // Align with existing siblings
+      const targetY = firstChild.y;
 
-      // Stack horizontally: find rightmost or leftmost child and add next to it
-      const childrenXPositions = childNodes.map(c => c.x);
-      const maxX = Math.max(...childrenXPositions);
-      const minX = Math.min(...childrenXPositions);
+      const childXPositions = childNodes.map(c => c.x).sort((a, b) => a - b);
+      const minX = Math.min(...childXPositions);
+      const maxX = Math.max(...childXPositions);
 
-      // Determine stacking direction
-      const lastChildX = childNodes[childNodes.length - 1].x;
-      const stackingRight = lastChildX >= parent.x;
+      // Prefer adding to the right
+      const newX = maxX + NODE_WIDTH + MARGIN;
 
-      if (stackingRight) {
-        return {
-          x: maxX + NODE_WIDTH + MARGIN,
-          y: targetY
-        };
-      } else {
-        return {
-          x: minX - NODE_WIDTH - MARGIN,
-          y: targetY
-        };
-      }
+      return { x: newX, y: targetY };
     }
   }, [nodes, connections]);
 
