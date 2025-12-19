@@ -2513,7 +2513,7 @@ export default function MindMap({ mapId, onBack }) {
 
                       return (
                         <div
-                          className="absolute -bottom-6 -left-6 flex items-center gap-1 z-20"
+                          className="absolute -bottom-10 -left-10 flex items-center gap-1 z-20"
                           title={`Total Progress: ${progress.completed}/${progress.total} tasks completed (${progress.percentage}%) - ${progress.depth + 1} levels deep`}
                         >
                           <div className="relative w-11 h-11">

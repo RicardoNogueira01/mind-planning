@@ -94,14 +94,26 @@ const TeamMemberCard = ({
                     <div className="flex gap-2">
                         <Link
                             to={`/profile/${member.id}`}
-                            className="flex-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-xs font-medium flex items-center justify-center gap-2"
+                            className="flex-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-xs font-medium flex items-center justify-center gap-2 cursor-pointer"
                         >
                             <User size={14} />
                             Profile
                         </Link>
                         <button
-                            onClick={onMessageClick}
-                            className="flex-1 px-3 py-2 bg-black hover:bg-gray-900 text-white rounded-lg transition-colors text-xs font-medium flex items-center justify-center gap-2"
+                            onClick={() => {
+                                // Dispatch custom event to open chat with this member
+                                window.dispatchEvent(new CustomEvent('openChatWith', {
+                                    detail: {
+                                        id: member.id,
+                                        name: member.name,
+                                        initials: member.initials,
+                                        color: member.color,
+                                        email: member.email
+                                    }
+                                }));
+                                if (onMessageClick) onMessageClick();
+                            }}
+                            className="flex-1 px-3 py-2 bg-black hover:bg-gray-900 text-white rounded-lg transition-colors text-xs font-medium flex items-center justify-center gap-2 cursor-pointer"
                         >
                             <Mail size={14} />
                             Message

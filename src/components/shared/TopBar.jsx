@@ -177,6 +177,32 @@ const TopBar = ({ showSearch = true }) => {
     };
   }, [showNotifications, showLanguages]);
 
+  // Listen for openChatWith events from other components (e.g., TeamMembersManager)
+  useEffect(() => {
+    const handleOpenChatWith = (event) => {
+      const { id, name, initials, color, email } = event.detail;
+
+      // Create or find contact
+      const newContact = {
+        id: id,
+        name: name,
+        initials: initials || name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+        color: color ? `bg-[${color}]` : 'bg-purple-500',
+        lastMessage: '',
+        lastMessageTime: 'Just now',
+        unreadCount: 0,
+        online: true
+      };
+
+      // Open chat and select the contact
+      setShowChat(true);
+      setSelectedContact(newContact);
+    };
+
+    window.addEventListener('openChatWith', handleOpenChatWith);
+    return () => window.removeEventListener('openChatWith', handleOpenChatWith);
+  }, []);
+
   const formatDate = (date) => {
     const now = new Date();
     const diffInHours = Math.abs(now - date) / (1000 * 60 * 60);
@@ -567,8 +593,8 @@ const TopBar = ({ showSearch = true }) => {
                       className={`flex ${message.sender === 'me' ? 'justify-end' : 'justify-start'}`}
                     >
                       <div className={`max-w-[70%] ${message.sender === 'me'
-                          ? 'bg-blue-600 text-white rounded-2xl rounded-br-sm'
-                          : 'bg-gray-100 text-gray-900 rounded-2xl rounded-bl-sm'
+                        ? 'bg-blue-600 text-white rounded-2xl rounded-br-sm'
+                        : 'bg-gray-100 text-gray-900 rounded-2xl rounded-bl-sm'
                         } px-4 py-2`}>
                         <p className="text-sm">{message.text}</p>
                         <p className={`text-xs mt-1 ${message.sender === 'me' ? 'text-blue-100' : 'text-gray-500'

@@ -419,7 +419,7 @@ const TeamMembersManager = () => {
       {filteredMembers.map(member => (
         <div key={member.id} className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 overflow-hidden group">
           {/* Colored Header with Profession Badge */}
-          <div className={`h-24 bg-gradient-to-br ${member.color === '#3B82F6' ? 'from-blue-500 to-blue-600' :
+          <div className={`h-20 bg-gradient-to-br ${member.color === '#3B82F6' ? 'from-blue-500 to-blue-600' :
             member.color === '#10B981' ? 'from-green-500 to-green-600' :
               member.color === '#F59E0B' ? 'from-orange-500 to-orange-600' :
                 member.color === '#8B5CF6' ? 'from-purple-500 to-purple-600' :
@@ -442,7 +442,24 @@ const TeamMembersManager = () => {
                 <MoreVertical size={18} className="text-white" />
               </button>
               {openMenuId === member.id && (
-                <div className="absolute right-0 top-10 w-44 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50">
+                <div className="absolute right-0 top-10 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50">
+                  <Link
+                    to={`/profile/${member.id}`}
+                    className="w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-50 flex items-center gap-2"
+                    onClick={() => setOpenMenuId(null)}
+                  >
+                    <User size={13} />
+                    View Profile
+                  </Link>
+                  <Link
+                    to={`/team-hierarchy/${encodeURIComponent(member.department)}`}
+                    className="w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-50 flex items-center gap-2"
+                    onClick={() => setOpenMenuId(null)}
+                  >
+                    <Users size={13} />
+                    Position Hierarchy
+                  </Link>
+                  <div className="border-t border-gray-100 my-1"></div>
                   <button
                     className="w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-50 flex items-center gap-2"
                     onClick={() => handleEdit(member)}
@@ -462,12 +479,12 @@ const TeamMembersManager = () => {
             </div>
           </div>
 
-          <div className="p-6 -mt-10">
+          <div className="p-5 -mt-8">
             {/* Avatar */}
-            <div className="flex justify-center mb-4">
+            <div className="flex justify-center mb-3">
               <div className="relative">
                 <div
-                  className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg border-4 border-white"
+                  className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg border-4 border-white"
                   style={{ backgroundColor: member.color }}
                 >
                   {member.initials}
@@ -477,7 +494,7 @@ const TeamMembersManager = () => {
             </div>
 
             {/* Name and Role */}
-            <div className="text-center mb-4">
+            <div className="text-center mb-3">
               <h3 className="font-bold text-gray-900 text-lg mb-1">{member.name}</h3>
               <p className="text-sm text-gray-600 mb-2">{member.role}</p>
               <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${getPerformanceColor(member.performance)}`}>
@@ -489,7 +506,7 @@ const TeamMembersManager = () => {
             </div>
 
             {/* Contact Info */}
-            <div className="space-y-2 mb-4 text-center">
+            <div className="space-y-1.5 mb-3 text-center">
               <div className="flex items-center justify-center gap-2 text-xs text-gray-600">
                 <Mail size={12} className="text-gray-400" />
                 <span className="truncate">{member.email}</span>
@@ -501,13 +518,12 @@ const TeamMembersManager = () => {
             </div>
 
             {/* Progress Bar */}
-            <div className="mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Sprint Tasks</span>
-                <span className="text-xs font-bold text-gray-900">
-                  {Math.round((member.tasksCompleted / (member.tasksCompleted + member.tasksInProgress + member.overdueTasks)) * 100)}%
-                </span>
-              </div>
+            <div className="mb-3">`r`n              <div className="flex justify-between items-center mb-1">
+              <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Sprint Tasks</span>
+              <span className="text-xs font-bold text-gray-900">
+                {Math.round((member.tasksCompleted / (member.tasksCompleted + member.tasksInProgress + member.overdueTasks)) * 100)}%
+              </span>
+            </div>
               <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                 <div
                   className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-500"
@@ -517,23 +533,23 @@ const TeamMembersManager = () => {
             </div>
 
             {/* Task Stats */}
-            <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="grid grid-cols-3 gap-2 mb-3">
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{member.tasksCompleted}</div>
+                <div className="text-xl font-bold text-green-600">{member.tasksCompleted}</div>
                 <div className="text-[10px] text-gray-500 uppercase tracking-wide">Done</div>
               </div>
               <div className="text-center border-x border-gray-200">
-                <div className="text-2xl font-bold text-blue-600">{member.tasksInProgress}</div>
+                <div className="text-xl font-bold text-blue-600">{member.tasksInProgress}</div>
                 <div className="text-[10px] text-gray-500 uppercase tracking-wide">Active</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">{member.overdueTasks}</div>
+                <div className="text-xl font-bold text-red-600">{member.overdueTasks}</div>
                 <div className="text-[10px] text-gray-500 uppercase tracking-wide">Overdue</div>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-2 pt-4 border-t border-gray-100">
+            <div className="flex gap-2 pt-3 border-t border-gray-100">
               <Link
                 to={`/profile/${member.id}`}
                 className="flex-1 px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl transition-colors text-sm font-semibold flex items-center justify-center gap-2"
@@ -541,14 +557,27 @@ const TeamMembersManager = () => {
                 <User size={16} />
                 Profile
               </Link>
-              <button className="flex-1 px-4 py-2.5 bg-black hover:bg-gray-900 text-white rounded-xl transition-colors text-sm font-semibold flex items-center justify-center gap-2">
+              <button
+                className="flex-1 px-4 py-2.5 bg-black hover:bg-gray-900 text-white rounded-xl transition-colors text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
+                onClick={() => {
+                  // Dispatch custom event to open chat with this member
+                  window.dispatchEvent(new CustomEvent('openChatWith', {
+                    detail: {
+                      id: member.id,
+                      name: member.name,
+                      initials: member.initials,
+                      color: member.color,
+                      email: member.email
+                    }
+                  }));
+                }}
+              >
                 <Mail size={16} />
                 Message
               </button>
             </div>
 
-            {/* Nudge Button */}
-            <div className="mt-3">
+            {/* Nudge Button */}`r`n            <div className="mt-2">
               <NudgeButton
                 recipientId={member.id.toString()}
                 recipientName={member.name}
