@@ -15,9 +15,15 @@ import {
   ChevronLeft,
   ChevronRight,
   Map,
-  Star
+  Star,
+  Bell,
+  Shield,
+  Settings,
+  Palmtree,
+  CalendarDays
 } from 'lucide-react';
 import clsx from 'clsx';
+
 
 const Dashboard = () => {
   const { t } = useLanguage();
@@ -542,6 +548,148 @@ const Dashboard = () => {
                       </div>
                     </div>
                   ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* My Leave Balance Card - For Team Members */}
+        <div className="mb-6">
+          <div className="bg-gradient-to-r from-teal-50 via-emerald-50 to-teal-50 rounded-xl p-6 shadow-sm border border-teal-200">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              {/* Header */}
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-teal-100 rounded-xl">
+                  <Palmtree size={24} className="text-teal-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                    My Leave Balance
+                  </h2>
+                  <p className="text-sm text-gray-600" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                    Track your vacation and time off
+                  </p>
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div className="flex flex-wrap gap-3">
+                <div className="bg-white rounded-xl px-4 py-3 border border-teal-200 min-w-[100px]">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays size={16} className="text-teal-500" />
+                    <span className="text-2xl font-bold text-teal-600" style={{ fontFamily: 'DM Mono, monospace' }}>
+                      13
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 font-medium mt-1">Available</p>
+                </div>
+                <div className="bg-white rounded-xl px-4 py-3 border border-amber-200 min-w-[100px]">
+                  <div className="flex items-center gap-2">
+                    <Clock size={16} className="text-amber-500" />
+                    <span className="text-2xl font-bold text-amber-600" style={{ fontFamily: 'DM Mono, monospace' }}>
+                      3
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 font-medium mt-1">Pending</p>
+                </div>
+                <div className="bg-white rounded-xl px-4 py-3 border border-gray-200 min-w-[100px]">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle size={16} className="text-gray-500" />
+                    <span className="text-2xl font-bold text-gray-600" style={{ fontFamily: 'DM Mono, monospace' }}>
+                      8
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 font-medium mt-1">Used</p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Link
+                  to="/my-leave"
+                  className="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-md shadow-teal-500/30"
+                >
+                  <Palmtree size={16} />
+                  Request Leave
+                </Link>
+                <Link
+                  to="/my-leave"
+                  className="px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors"
+                >
+                  View History
+                  <ArrowRight size={16} />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Deadline Reminders Card - Manager Feature */}
+        <div className="mb-6">
+          <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-indigo-50 rounded-xl p-6 shadow-sm border border-indigo-200">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              {/* Header */}
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-indigo-100 rounded-xl">
+                  <Bell size={24} className="text-indigo-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                    Deadline Reminders
+                  </h2>
+                  <p className="text-sm text-gray-600" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                    Automatic reminders for approaching deadlines
+                  </p>
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div className="flex flex-wrap gap-3">
+                <div className="bg-white rounded-xl px-4 py-3 border border-red-200 min-w-[100px]">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle size={16} className="text-red-500" />
+                    <span className="text-2xl font-bold text-red-600" style={{ fontFamily: 'DM Mono, monospace' }}>
+                      {stats.overdueTasks}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 font-medium mt-1">Overdue</p>
+                </div>
+                <div className="bg-white rounded-xl px-4 py-3 border border-orange-200 min-w-[100px]">
+                  <div className="flex items-center gap-2">
+                    <Clock size={16} className="text-orange-500" />
+                    <span className="text-2xl font-bold text-orange-600" style={{ fontFamily: 'DM Mono, monospace' }}>
+                      2
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 font-medium mt-1">Due Today</p>
+                </div>
+                <div className="bg-white rounded-xl px-4 py-3 border border-blue-200 min-w-[100px]">
+                  <div className="flex items-center gap-2">
+                    <Clock size={16} className="text-blue-500" />
+                    <span className="text-2xl font-bold text-blue-600" style={{ fontFamily: 'DM Mono, monospace' }}>
+                      8
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 font-medium mt-1">This Week</p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Link
+                  to="/settings/reminders"
+                  className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-md shadow-indigo-500/30"
+                >
+                  <Settings size={16} />
+                  Configure Rules
+                </Link>
+                <Link
+                  to="/upcoming-deadlines"
+                  className="px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors"
+                >
+                  View All
+                  <ArrowRight size={16} />
+                </Link>
               </div>
             </div>
           </div>

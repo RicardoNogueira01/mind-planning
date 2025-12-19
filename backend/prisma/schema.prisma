@@ -268,6 +268,9 @@ model User {
   // Node multiple assignees
   nodeAssignments    NodeAssignee[]
   
+  // Leave Balances
+  leaveBalances      LeaveBalance[]
+  
   // Sessions (API tokens - auth handled by Clerk)
   sessions           Session[]
 
@@ -732,29 +735,139 @@ model NodeAssignee {
   @@index([userId])
 }
 
-model HolidayRequest {
-  id          String        @id @default(cuid())
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+// ============================================
+// LEAVE / HOLIDAY MANAGEMENT SYSTEM
+// ============================================
+
+// Types of leave (vacation, sick, personal, etc.)
+model LeaveType {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   
-  startDate   DateTime
-  endDate     DateTime
-  totalDays   Int
-  reason      String?
-  status      HolidayStatus @default(pending)
+  name          String          // "Annual Leave", "Sick Leave", "Personal Day", etc.
+  code          String   @unique // "ANNUAL", "SICK", "PERSONAL", "BEREAVEMENT", etc.
+  description   String?
+  color         String   @default("#3B82F6") // For calendar display
+  icon          String?                       // Emoji or icon name
+  
+  // Default annual allowance (days per year)
+  defaultDays   Float    @default(0)
+  
+  // Carry-over rules
+  canCarryOver  Boolean  @default(false)
+  maxCarryOver  Float?   // Maximum days that can carry over
+  
+  // Approval rules
+  requiresApproval Boolean @default(true)
+  autoApprove      Boolean @default(false) // e.g., Sick leave might be auto-approved
+  
+  // Minimum notice required (in days)
+  minNoticeDays    Int     @default(0)
+  
+  // Whether this affects work schedule
+  isPaidLeave      Boolean @default(true)
+  
+  // Sort order in UI
+  sortOrder        Int     @default(0)
+  
+  // Is this type active?
+  isActive         Boolean @default(true)
+  
+  // Organization-specific (if null, it's system-wide)
+  organizationId   String?
+  
+  // Relationships
+  leaveRequests    HolidayRequest[]
+  leaveBalances    LeaveBalance[]
+  
+  @@index([code])
+  @@index([isActive])
+  @@index([organizationId])
+}
+
+// User's leave balance per type per year
+model LeaveBalance {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  year          Int      // e.g., 2024, 2025
+  
+  // Balance tracking
+  totalDays     Float    // Total days entitled for this year
+  usedDays      Float    @default(0) // Days already used (approved leaves)
+  pendingDays   Float    @default(0) // Days in pending requests
+  carriedOver   Float    @default(0) // Days carried from previous year
+  
+  // Calculated: totalDays + carriedOver - usedDays = available
+  // pendingDays shows what's waiting for approval
+  
+  // User
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Leave Type
+  leaveTypeId   String
+  leaveType     LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
+  
+  // Adjustments (e.g., bonus days, manual corrections)
+  adjustments   Float    @default(0)
+  adjustmentNotes String?
+  
+  @@unique([userId, leaveTypeId, year])
+  @@index([userId])
+  @@index([leaveTypeId])
+  @@index([year])
+}
+
+// Leave/Holiday request (enhanced version)
+model HolidayRequest {
+  id            String        @id @default(cuid())
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  // Date range
+  startDate     DateTime
+  endDate       DateTime
+  totalDays     Float         // Calculated business days
+  
+  // Half-day support
+  isHalfDayStart Boolean @default(false) // Start date is afternoon only
+  isHalfDayEnd   Boolean @default(false) // End date is morning only
+  
+  // Request details
+  reason        String?       // Notes/reason for the request
+  status        HolidayStatus @default(pending)
+  
+  // Leave Type
+  leaveTypeId   String?
+  leaveType     LeaveType?    @relation(fields: [leaveTypeId], references: [id])
   
   // Requestor
-  userId      String
-  user        User          @relation("HolidayRequestor", fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User          @relation("HolidayRequestor", fields: [userId], references: [id], onDelete: Cascade)
   
   // Reviewer
-  reviewedById String?
-  reviewedBy   User?        @relation("HolidayReviewer", fields: [reviewedById], references: [id])
-  reviewedAt   DateTime?
-  reviewNotes  String?
+  reviewedById  String?
+  reviewedBy    User?         @relation("HolidayReviewer", fields: [reviewedById], references: [id])
+  reviewedAt    DateTime?
+  reviewNotes   String?       // Approval/rejection notes
+  
+  // Cancellation details
+  cancelledAt   DateTime?
+  cancelReason  String?
+  
+  // Conflict detection
+  hasConflict   Boolean @default(false)
+  conflictNotes String?
+  
+  // Audit trail
+  submittedAt   DateTime @default(now())
   
   @@index([userId])
   @@index([reviewedById])
+  @@index([leaveTypeId])
   @@index([status])
   @@index([startDate])
   @@index([endDate])
@@ -1468,4 +1581,158 @@ model TimelineDependency {
   @@unique([dependentItemId, dependencyItemId])
   @@index([dependentItemId])
   @@index([dependencyItemId])
+}
+
+// ============================================
+// REMINDER SYSTEM - US-1.1.1 & US-1.1.2
+// Automatic deadline reminders and overdue alerts
+// ============================================
+
+// Configurable reminder rules (Manager feature)
+model ReminderRule {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Rule name for identification
+  name        String
+  description String?
+  
+  // When to trigger (days before deadline)
+  daysBefore  Int      @default(3)  // 1, 3, 7 days before deadline
+  
+  // Who to notify
+  notifyOwner   Boolean @default(true)   // Notify task owner/assignee
+  notifyManager Boolean @default(false)  // Notify team manager
+  notifyCreator Boolean @default(false)  // Notify task creator
+  
+  // Filter conditions
+  taskPriority  TaskPriority?  // Only apply to specific priority (null = all)
+  taskStatus    TaskStatus?    // Only apply to specific status (null = all except completed)
+  projectId     String?        // Only apply to specific project (null = all)
+  
+  // Escalation for overdue (hours after deadline)
+  escalationHours Int?         // If set, escalate to manager after X hours
+  
+  // Notification settings
+  sendEmail     Boolean @default(false)  // Also send email notification
+  sendInApp     Boolean @default(true)   // Send in-app notification
+  
+  // Owner (who created the rule - typically a manager)
+  createdById   String
+  
+  // Organization scope
+  organizationId String?
+  
+  // Active status
+  isActive    Boolean @default(true)
+  
+  // Sent reminders for this rule
+  sentReminders SentReminder[]
+  
+  @@index([organizationId])
+  @@index([createdById])
+  @@index([isActive])
+  @@index([daysBefore])
+}
+
+// Track sent reminders to avoid duplicates
+model SentReminder {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  // Type of reminder
+  type        String   // 'deadline_reminder', 'overdue_alert', 'escalation'
+  
+  // Which rule triggered this
+  ruleId      String?
+  rule        ReminderRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  
+  // Task/Node that was reminded about
+  nodeId      String
+  
+  // Who received the reminder
+  recipientId String
+  
+  // Details
+  daysBefore  Int?     // For deadline reminders
+  daysOverdue Int?     // For overdue alerts
+  
+  // Was email sent?
+  emailSent   Boolean  @default(false)
+  emailSentAt DateTime?
+  
+  // Was in-app notification sent?
+  inAppSent   Boolean  @default(false)
+  inAppSentAt DateTime?
+  
+  // Did user acknowledge?
+  acknowledged Boolean @default(false)
+  acknowledgedAt DateTime?
+  
+  @@index([nodeId])
+  @@index([recipientId])
+  @@index([ruleId])
+  @@index([createdAt])
+  @@index([type])
+  @@unique([nodeId, recipientId, type, daysBefore])  // Prevent duplicate reminders
+}
+
+// User-specific reminder preferences
+model ReminderSettings {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  userId      String   @unique
+  
+  // Notification preferences
+  enableDeadlineReminders Boolean @default(true)
+  enableOverdueAlerts     Boolean @default(true)
+  enableEscalations       Boolean @default(true)
+  
+  // Preferred reminder times (days before)
+  reminderDays Json @default("[1, 3, 7]")  // Array of days before deadline
+  
+  // Email preferences
+  emailDeadlineReminders Boolean @default(false)
+  emailOverdueAlerts     Boolean @default(true)
+  
+  // Quiet hours (don't send reminders during these times)
+  quietHoursStart String?  // e.g., "22:00"
+  quietHoursEnd   String?  // e.g., "08:00"
+  timezone        String   @default("UTC")
+  
+  @@index([userId])
+}
+
+// Overdue task tracking for escalation
+model OverdueTask {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  nodeId      String   @unique
+  
+  // When it became overdue
+  overdueAt   DateTime
+  
+  // Current days overdue (updated by cron job)
+  daysOverdue Int      @default(0)
+  
+  // Escalation status
+  ownerNotified     Boolean  @default(false)
+  ownerNotifiedAt   DateTime?
+  managerNotified   Boolean  @default(false)
+  managerNotifiedAt DateTime?
+  
+  // Resolution
+  resolved    Boolean  @default(false)
+  resolvedAt  DateTime?
+  resolvedBy  String?
+  
+  @@index([nodeId])
+  @@index([daysOverdue])
+  @@index([resolved])
+  @@index([overdueAt])
 }

@@ -445,9 +445,12 @@ export default function MindMap({ mapId, onBack }) {
     }
   });
 
-  // Wheel event for zooming
+  // Wheel event for zooming - Only in mindmap view
   useEffect(() => {
     const handleWheel = (e) => {
+      // Only handle zoom in mindmap view mode
+      if (viewMode !== 'mindmap') return;
+
       if (!canvasRef.current) return;
       // Only zoom if the mouse is over the canvas
       if (!canvasRef.current.contains(e.target)) return;
@@ -465,7 +468,7 @@ export default function MindMap({ mapId, onBack }) {
       canvas.addEventListener('wheel', handleWheel, { passive: false });
       return () => canvas.removeEventListener('wheel', handleWheel);
     }
-  }, [canvasRef]);
+  }, [canvasRef, viewMode]);
 
   // ============================================
   // COLLABORATOR SELECTION MODE
@@ -2343,7 +2346,10 @@ export default function MindMap({ mapId, onBack }) {
 
         {/* Different View Modes */}
         {viewMode === 'gantt' && (
-          <div className="absolute inset-0 top-16 md:top-20 overflow-hidden">
+          <div
+            className="absolute inset-0 top-16 md:top-20 overflow-hidden z-20 bg-white"
+            onWheel={(e) => e.stopPropagation()}
+          >
             <GanttView
               nodes={nodes}
               connections={connections}
@@ -2352,7 +2358,10 @@ export default function MindMap({ mapId, onBack }) {
         )}
 
         {viewMode === 'board' && (
-          <div className="absolute inset-0 top-16 md:top-20 overflow-auto">
+          <div
+            className="absolute inset-0 top-16 md:top-20 overflow-auto z-20 bg-gray-50"
+            onWheel={(e) => e.stopPropagation()}
+          >
             <BoardView
               nodes={nodes}
               onNodeUpdate={handleNodeUpdate}
@@ -2361,7 +2370,10 @@ export default function MindMap({ mapId, onBack }) {
         )}
 
         {viewMode === 'list' && (
-          <div className="absolute inset-0 top-16 md:top-20 overflow-hidden">
+          <div
+            className="absolute inset-0 top-16 md:top-20 overflow-hidden z-20 bg-white"
+            onWheel={(e) => e.stopPropagation()}
+          >
             <ListView
               nodes={nodes}
             />
@@ -2369,7 +2381,10 @@ export default function MindMap({ mapId, onBack }) {
         )}
 
         {viewMode === 'excel' && (
-          <div className="absolute inset-0 top-16 md:top-20 overflow-hidden">
+          <div
+            className="absolute inset-0 top-16 md:top-20 overflow-hidden z-20 bg-white"
+            onWheel={(e) => e.stopPropagation()}
+          >
             <ExcelView
               nodes={nodes}
               connections={connections}
@@ -2381,7 +2396,10 @@ export default function MindMap({ mapId, onBack }) {
         )}
 
         {viewMode === 'analytics' && (
-          <div className="absolute inset-0 top-16 md:top-20 overflow-auto">
+          <div
+            className="absolute inset-0 top-16 md:top-20 overflow-auto z-20 bg-gray-50"
+            onWheel={(e) => e.stopPropagation()}
+          >
             <AnalyticsView
               nodes={nodes}
               connections={connections}

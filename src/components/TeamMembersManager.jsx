@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import TopBar from './shared/TopBar';
-import { 
-  ArrowLeft, 
-  Search, 
-  Filter, 
-  Grid3X3, 
-  List, 
+import { NudgeButton, triggerNudge } from './shared/NudgeButton';
+import {
+  ArrowLeft,
+  Search,
+  Filter,
+  Grid3X3,
+  List,
   Plus,
   Edit2,
   Trash2,
@@ -30,13 +31,13 @@ import {
 
 const TeamMembersManager = () => {
   const { t } = useLanguage();
-  
+
   // Modal state
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [showEditMemberModal, setShowEditMemberModal] = useState(false);
   const [editingMemberId, setEditingMemberId] = useState(null);
   const [feedbackMessage, setFeedbackMessage] = useState(null);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     photo: null,
@@ -112,21 +113,21 @@ const TeamMembersManager = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (editingMemberId) {
       // Edit existing member
-      setTeamMembers(prevMembers => 
-        prevMembers.map(member => 
-          member.id === editingMemberId 
-            ? { 
-                ...member, 
-                name: formData.name,
-                email: formData.email,
-                phone: formData.phone,
-                role: formData.jobTitle,
-                department: formData.subDepartment,
-                avatar: formData.photoPreview
-              }
+      setTeamMembers(prevMembers =>
+        prevMembers.map(member =>
+          member.id === editingMemberId
+            ? {
+              ...member,
+              name: formData.name,
+              email: formData.email,
+              phone: formData.phone,
+              role: formData.jobTitle,
+              department: formData.subDepartment,
+              avatar: formData.photoPreview
+            }
             : member
         )
       );
@@ -143,7 +144,7 @@ const TeamMembersManager = () => {
         department: formData.subDepartment,
         avatar: formData.photoPreview,
         initials: formData.name.split(' ').map(n => n[0]).join('').toUpperCase(),
-        color: '#' + Math.floor(Math.random()*16777215).toString(16),
+        color: '#' + Math.floor(Math.random() * 16777215).toString(16),
         joinDate: new Date().toISOString().split('T')[0],
         status: 'active',
         tasksAssigned: 0,
@@ -160,7 +161,7 @@ const TeamMembersManager = () => {
       showFeedback('Member added successfully!');
       setShowAddMemberModal(false);
     }
-    
+
     resetForm();
   };
 
@@ -350,23 +351,23 @@ const TeamMembersManager = () => {
   const filteredMembers = teamMembers
     .filter(member => {
       const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           member.role.toLowerCase().includes(searchTerm.toLowerCase());
+        member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        member.role.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesDepartment = selectedDepartment === 'all' || member.department === selectedDepartment;
       const matchesStatus = selectedStatus === 'all' || member.status === selectedStatus;
       const matchesPerformance = selectedPerformance === 'all' || member.performance === selectedPerformance;
-      
+
       return matchesSearch && matchesDepartment && matchesStatus && matchesPerformance;
     })
     .sort((a, b) => {
       let aValue = a[sortBy];
       let bValue = b[sortBy];
-      
+
       if (sortBy === 'completionRate' || sortBy === 'tasksAssigned' || sortBy === 'tasksCompleted' || sortBy === 'overdueTasks') {
         aValue = Number(aValue);
         bValue = Number(bValue);
       }
-      
+
       if (sortOrder === 'asc') {
         return aValue > bValue ? 1 : -1;
       } else {
@@ -404,7 +405,7 @@ const TeamMembersManager = () => {
   };
 
   const getPerformanceTopColor = (performance) => {
-    switch(performance) {
+    switch (performance) {
       case 'excellent': return 'bg-green-500';
       case 'good': return 'bg-blue-500';
       case 'average': return 'bg-yellow-500';
@@ -419,12 +420,12 @@ const TeamMembersManager = () => {
         <div key={member.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 overflow-hidden group">
           {/* Performance Top Line */}
           <div className={`h-1 ${getPerformanceTopColor(member.performance)}`}></div>
-          
+
           <div className="p-4">
             {/* Header with Avatar and Actions */}
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-2">
-                <div 
+                <div
                   className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md relative"
                   style={{ backgroundColor: member.color }}
                 >
@@ -437,7 +438,7 @@ const TeamMembersManager = () => {
                 </div>
               </div>
               <div className="relative">
-                <button 
+                <button
                   className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
                   onClick={() => setOpenMenuId(openMenuId === member.id ? null : member.id)}
                 >
@@ -445,14 +446,14 @@ const TeamMembersManager = () => {
                 </button>
                 {openMenuId === member.id && (
                   <div className="absolute right-0 top-8 w-44 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50">
-                    <button 
+                    <button
                       className="w-full px-3 py-2 text-left text-sm text-gray-900 hover:bg-gray-50 flex items-center gap-2"
                       onClick={() => handleEdit(member)}
                     >
                       <Edit2 size={13} />
                       Edit Member
                     </button>
-                    <button 
+                    <button
                       className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                       onClick={() => handleDelete(member.id, member.name)}
                     >
@@ -488,18 +489,18 @@ const TeamMembersManager = () => {
                 <span className="text-xs font-medium text-gray-600">Progress</span>
                 <span className="text-xs font-bold text-gray-900">{member.tasksCompleted}/{member.tasksCompleted + member.tasksInProgress + member.overdueTasks}</span>
               </div>
-              
+
               {/* Progress Bar with Segments */}
               <div className="flex gap-0.5 h-1.5 rounded-full overflow-hidden bg-gray-200">
-                <div 
+                <div
                   className="bg-green-500"
                   style={{ width: `${(member.tasksCompleted / (member.tasksCompleted + member.tasksInProgress + member.overdueTasks)) * 100}%` }}
                 ></div>
-                <div 
+                <div
                   className="bg-yellow-500"
                   style={{ width: `${(member.tasksInProgress / (member.tasksCompleted + member.tasksInProgress + member.overdueTasks)) * 100}%` }}
                 ></div>
-                <div 
+                <div
                   className="bg-red-500"
                   style={{ width: `${(member.overdueTasks / (member.tasksCompleted + member.tasksInProgress + member.overdueTasks)) * 100}%` }}
                 ></div>
@@ -538,7 +539,7 @@ const TeamMembersManager = () => {
 
             {/* Bottom Action Buttons */}
             <div className="flex gap-2 pt-3 border-t border-gray-100">
-              <Link 
+              <Link
                 to={`/profile/${member.id}`}
                 className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
               >
@@ -549,6 +550,21 @@ const TeamMembersManager = () => {
                 <Mail size={16} />
                 Message
               </button>
+            </div>
+            {/* Nudge Button - Fun poke feature! */}
+            <div className="mt-2">
+              <NudgeButton
+                recipientId={member.id.toString()}
+                recipientName={member.name}
+                senderId="current-user" // Replace with actual user ID from auth
+                onNudge={(nudgeData) => {
+                  // In a real app, this would send via WebSocket/API
+                  console.log('Nudge sent!', nudgeData);
+                  // For demo: trigger the nudge effect locally
+                  triggerNudge(member.name);
+                }}
+                maxNudgesPerDay={5}
+              />
             </div>
           </div>
         </div>
@@ -576,7 +592,7 @@ const TeamMembersManager = () => {
               <tr key={member.id} className="hover:bg-gray-50">
                 <td className="py-4 px-4">
                   <div className="flex items-center gap-3">
-                    <div 
+                    <div
                       className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium"
                       style={{ backgroundColor: member.color }}
                     >
@@ -611,7 +627,7 @@ const TeamMembersManager = () => {
                 <td className="py-4 px-4">
                   <div className="flex items-center gap-2">
                     <div className="w-16 bg-gray-200 rounded-full h-2">
-                      <div 
+                      <div
                         className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600"
                         style={{ width: `${member.completionRate}%` }}
                       ></div>
@@ -640,557 +656,556 @@ const TeamMembersManager = () => {
   return (
     <div className="min-h-screen bg-[#FAFAFA]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
       <TopBar showSearch={false} />
-      
+
       <div className="p-4 md:p-8">
         {/* Feedback Message */}
         {feedbackMessage && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[60] animate-fade-in">
-          <div className={`px-6 py-3 rounded-xl shadow-sm border ${
-            feedbackMessage.type === 'success' 
-              ? 'bg-emerald-50 border-emerald-100 text-emerald-700' 
-              : 'bg-red-50 border-red-100 text-red-700'
-          }`}>
-            <p className="font-semibold">{feedbackMessage.message}</p>
-          </div>
-        </div>
-      )}
-      
-      {/* Header */}
-      <header className="mb-8">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="p-2 hover:bg-white rounded-xl transition-colors shadow-sm border border-gray-100">
-              <ArrowLeft size={20} className="text-gray-700" strokeWidth={2} />
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>{t('teamMembers.title')}</h1>
-              <p className="text-sm text-gray-500 mt-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>{t('teamMembers.subtitle')}</p>
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[60] animate-fade-in">
+            <div className={`px-6 py-3 rounded-xl shadow-sm border ${feedbackMessage.type === 'success'
+                ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
+                : 'bg-red-50 border-red-100 text-red-700'
+              }`}>
+              <p className="font-semibold">{feedbackMessage.message}</p>
             </div>
           </div>
-          <button 
-            onClick={() => setShowAddMemberModal(true)}
-            className="px-3 md:px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2 text-sm touch-manipulation cursor-pointer"
-            style={{ fontFamily: 'DM Sans, sans-serif' }}
-          >
-            <Plus size={16} />
-            {t('teamMembers.addMember')}
-          </button>
-        </div>
-      </header>      {/* Main Content */}
-      <main>
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 md:mb-6">
-          {/* Total Members */}
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg shadow-blue-500/30">
-            <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-              <div className="p-2 sm:p-2.5 bg-white/20 backdrop-blur-sm rounded-xl">
-                <Users size={20} className="sm:hidden" />
-                <Users size={24} className="hidden sm:block" />
-              </div>
+        )}
+
+        {/* Header */}
+        <header className="mb-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Link to="/" className="p-2 hover:bg-white rounded-xl transition-colors shadow-sm border border-gray-100">
+                <ArrowLeft size={20} className="text-gray-700" strokeWidth={2} />
+              </Link>
               <div>
-                <p className="text-xs sm:text-sm font-medium text-blue-100">Total Members</p>
-                <p className="text-2xl sm:text-3xl font-bold">{stats.total}</p>
+                <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>{t('teamMembers.title')}</h1>
+                <p className="text-sm text-gray-500 mt-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>{t('teamMembers.subtitle')}</p>
               </div>
             </div>
-            <p className="text-xs text-blue-100">+2 this month</p>
+            <button
+              onClick={() => setShowAddMemberModal(true)}
+              className="px-3 md:px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2 text-sm touch-manipulation cursor-pointer"
+              style={{ fontFamily: 'DM Sans, sans-serif' }}
+            >
+              <Plus size={16} />
+              {t('teamMembers.addMember')}
+            </button>
           </div>
-
-          {/* Active Members */}
-          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-100">
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <div className="p-2 sm:p-3 bg-green-100 rounded-xl">
-                <CheckCircle size={20} className="sm:hidden text-green-600" />
-                <CheckCircle size={24} className="hidden sm:block text-green-600" />
+        </header>      {/* Main Content */}
+        <main>
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 md:mb-6">
+            {/* Total Members */}
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg shadow-blue-500/30">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                <div className="p-2 sm:p-2.5 bg-white/20 backdrop-blur-sm rounded-xl">
+                  <Users size={20} className="sm:hidden" />
+                  <Users size={24} className="hidden sm:block" />
+                </div>
+                <div>
+                  <p className="text-xs sm:text-sm font-medium text-blue-100">Total Members</p>
+                  <p className="text-2xl sm:text-3xl font-bold">{stats.total}</p>
+                </div>
               </div>
-              <span className="text-xs font-semibold px-2 sm:px-2.5 py-1 bg-green-100 text-green-700 rounded-full">+100%</span>
+              <p className="text-xs text-blue-100">+2 this month</p>
             </div>
-            <p className="text-xs sm:text-sm text-gray-600 mb-1">Active Members</p>
-            <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.active}</p>
-            <p className="text-xs text-gray-500 mt-1 sm:mt-2">On track</p>
-          </div>
 
-          {/* Avg Completion */}
-          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-100">
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <div className="p-2 sm:p-3 bg-purple-100 rounded-xl">
-                <TrendingUp size={20} className="sm:hidden text-purple-600" />
-                <TrendingUp size={24} className="hidden sm:block text-purple-600" />
+            {/* Active Members */}
+            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-100">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className="p-2 sm:p-3 bg-green-100 rounded-xl">
+                  <CheckCircle size={20} className="sm:hidden text-green-600" />
+                  <CheckCircle size={24} className="hidden sm:block text-green-600" />
+                </div>
+                <span className="text-xs font-semibold px-2 sm:px-2.5 py-1 bg-green-100 text-green-700 rounded-full">+100%</span>
               </div>
-              <span className="text-xs font-semibold px-2 sm:px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full">Good</span>
+              <p className="text-xs sm:text-sm text-gray-600 mb-1">Active Members</p>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.active}</p>
+              <p className="text-xs text-gray-500 mt-1 sm:mt-2">On track</p>
             </div>
-            <p className="text-xs sm:text-sm text-gray-600 mb-1">Avg Completion</p>
-            <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.avgCompletionRate}%</p>
-            <p className="text-xs text-gray-500 mt-1 sm:mt-2">+1.2% vs last month</p>
-          </div>
 
-          {/* Total Overdue */}
-          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-100">
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <div className="p-2 sm:p-3 bg-red-100 rounded-xl">
-                <AlertTriangle size={20} className="sm:hidden text-red-600" />
-                <AlertTriangle size={24} className="hidden sm:block text-red-600" />
+            {/* Avg Completion */}
+            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-100">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className="p-2 sm:p-3 bg-purple-100 rounded-xl">
+                  <TrendingUp size={20} className="sm:hidden text-purple-600" />
+                  <TrendingUp size={24} className="hidden sm:block text-purple-600" />
+                </div>
+                <span className="text-xs font-semibold px-2 sm:px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full">Good</span>
               </div>
-              <span className="text-xs font-semibold px-2 sm:px-2.5 py-1 bg-red-100 text-red-700 rounded-full">-4 from last week</span>
+              <p className="text-xs sm:text-sm text-gray-600 mb-1">Avg Completion</p>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.avgCompletionRate}%</p>
+              <p className="text-xs text-gray-500 mt-1 sm:mt-2">+1.2% vs last month</p>
             </div>
-            <p className="text-xs sm:text-sm text-gray-600 mb-1">Total Overdue</p>
-            <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.totalOverdue}</p>
-          </div>
-        </div>
 
-        {/* Controls */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 mb-6">
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-            <div className="flex flex-col sm:flex-row gap-3 flex-1 w-full lg:w-auto">
-              <div className="relative">
-                <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />                <input
-                  type="text"
-                  placeholder="Search members..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64 text-gray-900 placeholder-gray-500"
-                />
+            {/* Total Overdue */}
+            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-100">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className="p-2 sm:p-3 bg-red-100 rounded-xl">
+                  <AlertTriangle size={20} className="sm:hidden text-red-600" />
+                  <AlertTriangle size={24} className="hidden sm:block text-red-600" />
+                </div>
+                <span className="text-xs font-semibold px-2 sm:px-2.5 py-1 bg-red-100 text-red-700 rounded-full">-4 from last week</span>
               </div>
+              <p className="text-xs sm:text-sm text-gray-600 mb-1">Total Overdue</p>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.totalOverdue}</p>
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 mb-6">
+            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+              <div className="flex flex-col sm:flex-row gap-3 flex-1 w-full lg:w-auto">
+                <div className="relative">
+                  <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />                <input
+                    type="text"
+                    placeholder="Search members..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64 text-gray-900 placeholder-gray-500"
+                  />
+                </div>
                 <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-black ${showFilters ? 'bg-gray-50' : ''}`}
-              >
-                <Filter size={16} />
-                {t('common.filters')}
-              </button>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 md:gap-4">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black text-sm md:text-base min-w-0 flex-shrink"
-              >
-                <option value="name">{t('common.name')}</option>
-                <option value="role">{t('common.role')}</option>
-                <option value="completionRate">{t('common.completion')}</option>
-                <option value="tasksAssigned">{t('common.tasks')}</option>
-                <option value="overdueTasks">{t('common.overdue')}</option>
-              </select>
-              <button
-                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-black flex-shrink-0"
-              >
-                {sortOrder === 'asc' ? '↑' : '↓'}
-              </button>
-
-              <div className="flex border border-gray-300 rounded-lg overflow-hidden flex-shrink-0">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 ${viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} transition-colors`}
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-black ${showFilters ? 'bg-gray-50' : ''}`}
                 >
-                  <Grid3X3 size={16} />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 ${viewMode === 'list' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} transition-colors`}
-                >
-                  <List size={16} />
+                  <Filter size={16} />
+                  {t('common.filters')}
                 </button>
               </div>
-            </div>
-          </div>
 
-          {/* Filter Options */}
-          {showFilters && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>                  <select
-                    value={selectedDepartment}
-                    onChange={(e) => setSelectedDepartment(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black"
+              <div className="flex flex-wrap items-center gap-2 md:gap-4">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black text-sm md:text-base min-w-0 flex-shrink"
+                >
+                  <option value="name">{t('common.name')}</option>
+                  <option value="role">{t('common.role')}</option>
+                  <option value="completionRate">{t('common.completion')}</option>
+                  <option value="tasksAssigned">{t('common.tasks')}</option>
+                  <option value="overdueTasks">{t('common.overdue')}</option>
+                </select>
+                <button
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-black flex-shrink-0"
+                >
+                  {sortOrder === 'asc' ? '↑' : '↓'}
+                </button>
+
+                <div className="flex border border-gray-300 rounded-lg overflow-hidden flex-shrink-0">
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2 ${viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} transition-colors`}
                   >
-                    <option value="all">All Departments</option>
-                    {departments.map(dept => (
-                      <option key={dept} value={dept}>{dept}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('common.status')}</label>                  <select
-                    value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black"
+                    <Grid3X3 size={16} />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 ${viewMode === 'list' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} transition-colors`}
                   >
-                    <option value="all">All Statuses</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Performance</label>                  <select
-                    value={selectedPerformance}
-                    onChange={(e) => setSelectedPerformance(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black"
-                  >
-                    <option value="all">All Performance Levels</option>
-                    <option value="excellent">Excellent</option>
-                    <option value="good">Good</option>
-                    <option value="needs-improvement">Needs Improvement</option>
-                  </select>
+                    <List size={16} />
+                  </button>
                 </div>
               </div>
             </div>
-          )}
-        </div>
 
-        {/* Results */}
-        <div className="mb-4">
-          <p className="text-sm text-gray-600">
-            {t('common.showing')} {filteredMembers.length} {t('common.of')} {teamMembers.length} {t('common.members')}
-          </p>
-        </div>        {/* Members List */}
-        {viewMode === 'grid' ? <GridView /> : <ListView />}
-      </main>
-
-      {/* Add Member Modal */}
-      {showAddMemberModal && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Add Team Member</h2>
-                <p className="text-sm text-gray-500">Fill in the details to add a new member</p>
-              </div>
-              <button
-                onClick={() => setShowAddMemberModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
-              >
-                <X size={20} className="text-gray-500" />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <form onSubmit={handleSubmit} className="p-6">
-              {/* Photo Upload */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Profile Photo
-                </label>
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    {formData.photoPreview ? (
-                      <img
-                        src={formData.photoPreview}
-                        alt="Preview"
-                        className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
-                      />
-                    ) : (
-                      <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-200">
-                        <User size={32} className="text-gray-400" />
-                      </div>
-                    )}
+            {/* Filter Options */}
+            {showFilters && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>                  <select
+                      value={selectedDepartment}
+                      onChange={(e) => setSelectedDepartment(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black"
+                    >
+                      <option value="all">All Departments</option>
+                      {departments.map(dept => (
+                        <option key={dept} value={dept}>{dept}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
-                    <label className="cursor-pointer px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center gap-2">
-                      <Upload size={16} />
-                      Upload Photo
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoUpload}
-                        className="hidden"
-                      />
-                    </label>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Recommended: Square image, at least 200x200px
-                    </p>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('common.status')}</label>                  <select
+                      value={selectedStatus}
+                      onChange={(e) => setSelectedStatus(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black"
+                    >
+                      <option value="all">All Statuses</option>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Performance</label>                  <select
+                      value={selectedPerformance}
+                      onChange={(e) => setSelectedPerformance(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black"
+                    >
+                      <option value="all">All Performance Levels</option>
+                      <option value="excellent">Excellent</option>
+                      <option value="good">Good</option>
+                      <option value="needs-improvement">Needs Improvement</option>
+                    </select>
                   </div>
                 </div>
               </div>
+            )}
+          </div>
 
-              {/* Name */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="e.g., John Doe"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                />
-              </div>
+          {/* Results */}
+          <div className="mb-4">
+            <p className="text-sm text-gray-600">
+              {t('common.showing')} {filteredMembers.length} {t('common.of')} {teamMembers.length} {t('common.members')}
+            </p>
+          </div>        {/* Members List */}
+          {viewMode === 'grid' ? <GridView /> : <ListView />}
+        </main>
 
-              {/* Email and Phone in Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Add Member Modal */}
+        {showAddMemberModal && (
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Mail size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      placeholder="john.doe@company.com"
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    />
-                  </div>
+                  <h2 className="text-xl font-bold text-gray-900">Add Team Member</h2>
+                  <p className="text-sm text-gray-500">Fill in the details to add a new member</p>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Phone size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="tel"
-                      required
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      placeholder="+1 (555) 123-4567"
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Job Title */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Job Title <span className="text-red-500">*</span>
-                </label>
-                <select
-                  required
-                  value={formData.jobTitle}
-                  onChange={(e) => handleInputChange('jobTitle', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                >
-                  <option value="">Select a job title...</option>
-                  {Object.keys(jobTitleDepartments).sort().map(title => (
-                    <option key={title} value={title}>{title}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Sub Department - Only show when job title is selected */}
-              {formData.jobTitle && (
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Sub Department <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    required
-                    value={formData.subDepartment}
-                    onChange={(e) => handleInputChange('subDepartment', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                  >
-                    <option value="">Select a sub department...</option>
-                    {jobTitleDepartments[formData.jobTitle].map(dept => (
-                      <option key={dept} value={dept}>{dept}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Form Actions */}
-              <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-200">
                 <button
-                  type="button"
                   onClick={() => setShowAddMemberModal(false)}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2 cursor-pointer"
-                >
-                  <Plus size={16} />
-                  Add Member
+                  <X size={20} className="text-gray-500" />
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
 
-      {/* Edit Member Modal */}
-      {showEditMemberModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Edit Team Member</h2>
-                <p className="text-sm text-gray-500">Update member details</p>
-              </div>
-              <button
-                onClick={() => {
-                  setShowEditMemberModal(false);
-                  resetForm();
-                }}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X size={20} className="text-gray-500" />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <form onSubmit={handleSubmit} className="p-6">
-              {/* Photo Upload */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Profile Photo
-                </label>
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    {formData.photoPreview ? (
-                      <img
-                        src={formData.photoPreview}
-                        alt="Preview"
-                        className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
-                      />
-                    ) : (
-                      <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-200">
-                        <User size={32} className="text-gray-400" />
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="cursor-pointer px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center gap-2">
-                      <Upload size={16} />
-                      Upload Photo
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoUpload}
-                        className="hidden"
-                      />
-                    </label>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Recommended: Square image, at least 200x200px
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Name */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="e.g., John Doe"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                />
-              </div>
-
-              {/* Email and Phone in Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address <span className="text-red-500">*</span>
+              {/* Modal Body */}
+              <form onSubmit={handleSubmit} className="p-6">
+                {/* Photo Upload */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Profile Photo
                   </label>
-                  <div className="relative">
-                    <Mail size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      placeholder="john.doe@company.com"
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    />
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      {formData.photoPreview ? (
+                        <img
+                          src={formData.photoPreview}
+                          alt="Preview"
+                          className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                        />
+                      ) : (
+                        <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-200">
+                          <User size={32} className="text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <label className="cursor-pointer px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center gap-2">
+                        <Upload size={16} />
+                        Upload Photo
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePhotoUpload}
+                          className="hidden"
+                        />
+                      </label>
+                      <p className="text-xs text-gray-500 mt-2">
+                        Recommended: Square image, at least 200x200px
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Phone size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="tel"
-                      required
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      placeholder="+1 (555) 123-4567"
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Job Title */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Job Title <span className="text-red-500">*</span>
-                </label>
-                <select
-                  required
-                  value={formData.jobTitle}
-                  onChange={(e) => handleInputChange('jobTitle', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                >
-                  <option value="">Select a job title...</option>
-                  {Object.keys(jobTitleDepartments).sort().map(title => (
-                    <option key={title} value={title}>{title}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Sub Department - Only show when job title is selected */}
-              {formData.jobTitle && (
+                {/* Name */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Sub Department <span className="text-red-500">*</span>
+                    Full Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    placeholder="e.g., John Doe"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  />
+                </div>
+
+                {/* Email and Phone in Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <Mail size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
+                        placeholder="john.doe@company.com"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone Number <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <Phone size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="tel"
+                        required
+                        value={formData.phone}
+                        onChange={(e) => handleInputChange('phone', e.target.value)}
+                        placeholder="+1 (555) 123-4567"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Job Title */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Job Title <span className="text-red-500">*</span>
                   </label>
                   <select
                     required
-                    value={formData.subDepartment}
-                    onChange={(e) => handleInputChange('subDepartment', e.target.value)}
+                    value={formData.jobTitle}
+                    onChange={(e) => handleInputChange('jobTitle', e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   >
-                    <option value="">Select a sub department...</option>
-                    {jobTitleDepartments[formData.jobTitle].map(dept => (
-                      <option key={dept} value={dept}>{dept}</option>
+                    <option value="">Select a job title...</option>
+                    {Object.keys(jobTitleDepartments).sort().map(title => (
+                      <option key={title} value={title}>{title}</option>
                     ))}
                   </select>
                 </div>
-              )}
 
-              {/* Form Actions */}
-              <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-200">
+                {/* Sub Department - Only show when job title is selected */}
+                {formData.jobTitle && (
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Sub Department <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      required
+                      value={formData.subDepartment}
+                      onChange={(e) => handleInputChange('subDepartment', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    >
+                      <option value="">Select a sub department...</option>
+                      {jobTitleDepartments[formData.jobTitle].map(dept => (
+                        <option key={dept} value={dept}>{dept}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Form Actions */}
+                <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddMemberModal(false)}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2 cursor-pointer"
+                  >
+                    <Plus size={16} />
+                    Add Member
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Member Modal */}
+        {showEditMemberModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Edit Team Member</h2>
+                  <p className="text-sm text-gray-500">Update member details</p>
+                </div>
                 <button
-                  type="button"
                   onClick={() => {
                     setShowEditMemberModal(false);
                     resetForm();
                   }}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2"
-                >
-                  <Edit2 size={16} />
-                  Update Member
+                  <X size={20} className="text-gray-500" />
                 </button>
               </div>
-            </form>
+
+              {/* Modal Body */}
+              <form onSubmit={handleSubmit} className="p-6">
+                {/* Photo Upload */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Profile Photo
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      {formData.photoPreview ? (
+                        <img
+                          src={formData.photoPreview}
+                          alt="Preview"
+                          className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                        />
+                      ) : (
+                        <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-200">
+                          <User size={32} className="text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <label className="cursor-pointer px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center gap-2">
+                        <Upload size={16} />
+                        Upload Photo
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePhotoUpload}
+                          className="hidden"
+                        />
+                      </label>
+                      <p className="text-xs text-gray-500 mt-2">
+                        Recommended: Square image, at least 200x200px
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Name */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Full Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    placeholder="e.g., John Doe"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  />
+                </div>
+
+                {/* Email and Phone in Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <Mail size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
+                        placeholder="john.doe@company.com"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone Number <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <Phone size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="tel"
+                        required
+                        value={formData.phone}
+                        onChange={(e) => handleInputChange('phone', e.target.value)}
+                        placeholder="+1 (555) 123-4567"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Job Title */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Job Title <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    required
+                    value={formData.jobTitle}
+                    onChange={(e) => handleInputChange('jobTitle', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  >
+                    <option value="">Select a job title...</option>
+                    {Object.keys(jobTitleDepartments).sort().map(title => (
+                      <option key={title} value={title}>{title}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Sub Department - Only show when job title is selected */}
+                {formData.jobTitle && (
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Sub Department <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      required
+                      value={formData.subDepartment}
+                      onChange={(e) => handleInputChange('subDepartment', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    >
+                      <option value="">Select a sub department...</option>
+                      {jobTitleDepartments[formData.jobTitle].map(dept => (
+                        <option key={dept} value={dept}>{dept}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Form Actions */}
+                <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEditMemberModal(false);
+                      resetForm();
+                    }}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2"
+                  >
+                    <Edit2 size={16} />
+                    Update Member
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     </div>
   );

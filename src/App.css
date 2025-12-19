@@ -18,14 +18,14 @@ html {
   overflow: visible;
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
-  box-shadow: 
+  box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.08),
     0 2px 4px rgba(0, 0, 0, 0.04),
     0 1px 2px rgba(0, 0, 0, 0.02);
   /* Smooth transitions only for specific properties, not position */
   transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   /* Enhanced word wrapping */
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -44,7 +44,7 @@ html {
   transition: none !important;
   z-index: 1000;
   transform: scale(1.05);
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.15),
     0 4px 16px rgba(0, 0, 0, 0.10),
     0 2px 8px rgba(0, 0, 0, 0.08);
@@ -52,7 +52,7 @@ html {
 
 .node:hover:not(.dragging) {
   transform: translateY(-2px) scale(1.01);
-  box-shadow: 
+  box-shadow:
     0 8px 24px rgba(0, 0, 0, 0.12),
     0 4px 12px rgba(0, 0, 0, 0.08),
     0 2px 6px rgba(0, 0, 0, 0.04);
@@ -60,7 +60,7 @@ html {
 
 .node:focus-within {
   outline: none;
-  box-shadow: 
+  box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.08),
     0 0 0 3px rgba(59, 130, 246, 0.15);
 }
@@ -115,6 +115,7 @@ html {
     opacity: 0;
     transform: scale(0.8);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -126,16 +127,20 @@ html {
   from {
     stroke-dashoffset: 0;
   }
+
   to {
     stroke-dashoffset: -12;
   }
 }
 
 @keyframes pulse-circle {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.3;
     r: 8;
   }
+
   50% {
     opacity: 0.6;
     r: 12;
@@ -147,6 +152,7 @@ html {
     opacity: 0;
     transform: translate(-50%, -20px);
   }
+
   to {
     opacity: 1;
     transform: translate(-50%, 0);
@@ -200,7 +206,7 @@ html {
   backdrop-filter: blur(12px);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.12),
     0 2px 8px rgba(0, 0, 0, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
@@ -215,7 +221,7 @@ html {
 
 .enhanced-node-toolbar:hover {
   transform: translateY(-2px);
-  box-shadow: 
+  box-shadow:
     0 12px 40px rgba(0, 0, 0, 0.15),
     0 4px 12px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
@@ -250,7 +256,7 @@ html {
 .node-toolbar-btn:hover {
   background: rgba(255, 255, 255, 0.8);
   border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 
+  box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.15),
     0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -265,6 +271,7 @@ html {
     opacity: 0;
     transform: translateY(-10px) scale(0.95);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -281,15 +288,13 @@ html {
 
 .enhanced-node-toolbar .w-px.h-6 {
   margin: 0 12px;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(148, 163, 184, 0.5) 20%,
-    rgba(148, 163, 184, 0.8) 50%,
-    rgba(148, 163, 184, 0.5) 80%,
-    transparent 100%
-  );
-  box-shadow: 
+  background: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(148, 163, 184, 0.5) 20%,
+      rgba(148, 163, 184, 0.8) 50%,
+      rgba(148, 163, 184, 0.5) 80%,
+      transparent 100%);
+  box-shadow:
     1px 0 0 rgba(255, 255, 255, 0.3),
     -1px 0 0 rgba(255, 255, 255, 0.3);
 }
@@ -304,7 +309,7 @@ html {
   backdrop-filter: blur(16px);
   border: 1px solid rgba(229, 231, 235, 0.6);
   border-radius: 16px;
-  box-shadow: 
+  box-shadow:
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04),
     0 0 0 1px rgba(255, 255, 255, 0.5);
@@ -343,11 +348,13 @@ html {
     opacity: 0;
     transform: translateY(-8px) scale(0.96);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
+
 .toolbar-group {
   position: relative;
   background: rgba(249, 250, 251, 0.6);
@@ -483,4 +490,101 @@ html {
 .search-result-item:hover {
   background: rgba(249, 250, 251, 0.8);
   transform: translateX(4px);
+}
+
+/* ===================================
+   OVERDUE TASK INDICATORS
+   US-1.1.2 Implementation
+   =================================== */
+
+/* Pulse animation for overdue badges */
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+/* Overdue glow animation for node cards */
+@keyframes overdue-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.6);
+  }
+}
+
+/* Apply to overdue nodes */
+.node-overdue {
+  animation: overdue-glow 2s ease-in-out infinite;
+}
+
+/* Overdue indicator badge */
+.overdue-badge {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Subtle overdue indicator */
+.overdue-subtle {
+  border-left: 4px solid #ef4444;
+  background: linear-gradient(to right, rgba(239, 68, 68, 0.08), transparent);
+}
+
+/* Days overdue counter */
+.days-overdue-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.days-overdue-counter.severe {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: white;
+}
+
+/* Deadline approaching indicators */
+.deadline-today {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: white;
+}
+
+.deadline-tomorrow {
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+}
+
+.deadline-soon {
+  background: #fef9c3;
+  border: 1px solid #fde047;
+  color: #854d0e;
 }

@@ -9,6 +9,8 @@ import TeamMembersManager from './components/TeamMembersManager';
 import RecentlyCompletedTasksManager from './components/RecentlyCompletedTasksManager';
 import UpcomingDeadlinesManager from './components/UpcomingDeadlinesManager';
 import TeamHolidaysManager from './components/TeamHolidaysManager';
+import LeaveRequestPage from './components/LeaveRequestPage';
+import TeamHolidaysPage from './components/TeamHolidaysPage';
 import ProfilePage from './components/ProfilePage';
 import EditProfilePage from './components/EditProfilePage';
 import SettingsPage from './components/SettingsPage';
@@ -27,24 +29,24 @@ if (!CLERK_PUBLISHABLE_KEY) {
 // Wrapper components to handle navigation
 const MindMapManagerWrapper = () => {
   const navigate = useNavigate();
-  
+
   const handleCreateNew = () => {
     // The MindMapManager component handles adding the new map to the list
     // We stay on the manager page to allow creating more maps
   };
-  
+
   const handleOpenMindMap = (mapId: string) => {
     // Navigate to mind map editor with specific map ID
     navigate(`/mindmap/${mapId}`);
   };
-  
+
   const handleBack = () => {
     // Navigate back to dashboard
     navigate('/');
   };
-  
+
   return (
-    <MindMapManager 
+    <MindMapManager
       onCreateNew={handleCreateNew}
       onOpenMindMap={handleOpenMindMap}
       onBack={handleBack}
@@ -55,13 +57,13 @@ const MindMapManagerWrapper = () => {
 const MindMapWrapper = () => {
   const navigate = useNavigate();
   const { mapId } = useParams();
-  
+
   const handleBackToManager = () => {
     navigate('/mindmaps');
   };
-  
+
   return (
-    <MindMap 
+    <MindMap
       mapId={mapId}
       onBack={handleBackToManager}
     />
@@ -88,8 +90,8 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
 function SignInPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <SignIn 
-        routing="path" 
+      <SignIn
+        routing="path"
         path="/sign-in"
         signUpUrl="/sign-up"
         afterSignInUrl="/"
@@ -101,8 +103,8 @@ function SignInPage() {
 function SignUpPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <SignUp 
-        routing="path" 
+      <SignUp
+        routing="path"
         path="/sign-up"
         signInUrl="/sign-in"
         afterSignUpUrl="/"
@@ -118,7 +120,7 @@ function AppRoutes() {
       {/* Auth Routes */}
       <Route path="/sign-in/*" element={<SignInPage />} />
       <Route path="/sign-up/*" element={<SignUpPage />} />
-      
+
       {/* Protected Routes */}
       <Route path="/" element={
         <ProtectedRoute>
@@ -150,11 +152,25 @@ function AppRoutes() {
           <UpcomingDeadlinesManager />
         </ProtectedRoute>
       } />
+
+      {/* Leave Management Routes */}
+      <Route path="/my-leave" element={
+        <ProtectedRoute>
+          <LeaveRequestPage />
+        </ProtectedRoute>
+      } />
       <Route path="/team-holidays" element={
+        <ProtectedRoute>
+          <TeamHolidaysPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/team-holidays-old" element={
         <ProtectedRoute>
           <TeamHolidaysManager />
         </ProtectedRoute>
       } />
+
+      {/* Profile Routes */}
       <Route path="/profile/:memberId" element={
         <ProtectedRoute>
           <ProfilePage />
@@ -175,7 +191,7 @@ function AppRoutes() {
           <CalendarPage />
         </ProtectedRoute>
       } />
-      
+
       {/* Catch all */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

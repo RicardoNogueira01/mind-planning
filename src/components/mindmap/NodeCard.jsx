@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { DeadlineBadge, isOverdue } from '../shared/OverdueBadge';
 
 const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatching, connectionMode, isConnectionSource, isAlreadyConnected, isParentOfSelected, isChildOfSelected, hasProgress, theme, className, children, collaborators = [] }) => {
   const [isEditing, setIsEditing] = React.useState(false);
@@ -100,23 +101,62 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
 
   const daysUntilDue = calculateDaysUntilDue();
 
-  // Get priority color and icon
+  // Get priority color and icon - Professional minimal design
   const getPriorityDisplay = () => {
     switch (node.priority) {
-      case 'high': return { color: 'bg-red-100 text-red-700 border-red-300', icon: '🔴', label: 'High' };
-      case 'medium': return { color: 'bg-yellow-100 text-yellow-700 border-yellow-300', icon: '🟡', label: 'Med' };
-      case 'low': return { color: 'bg-green-100 text-green-700 border-green-300', icon: '🟢', label: 'Low' };
+      case 'high':
+        return {
+          color: 'bg-red-50 text-red-700 border-red-200',
+          dotColor: 'bg-red-500',
+          label: 'High'
+        };
+      case 'medium':
+        return {
+          color: 'bg-amber-50 text-amber-700 border-amber-200',
+          dotColor: 'bg-amber-500',
+          label: 'Medium'
+        };
+      case 'low':
+        return {
+          color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+          dotColor: 'bg-emerald-500',
+          label: 'Low'
+        };
       default: return null;
     }
   };
 
-  // Get status color and icon
+  // Get status color and icon - Professional minimal design
   const getStatusDisplay = () => {
     switch (node.status) {
-      case 'completed': return { color: 'bg-green-100 text-green-700 border-green-300', icon: '✓', label: 'Done' };
-      case 'in-progress': return { color: 'bg-blue-100 text-blue-700 border-blue-300', icon: '▶', label: 'Active' };
-      case 'review': return { color: 'bg-purple-100 text-purple-700 border-purple-300', icon: '👁', label: 'Review' };
-      case 'not-started': return { color: 'bg-gray-100 text-gray-600 border-gray-300', icon: '○', label: 'To Do' };
+      case 'completed':
+        return {
+          color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+          dotColor: 'bg-emerald-500',
+          icon: '✓',
+          label: 'Completed'
+        };
+      case 'in-progress':
+        return {
+          color: 'bg-blue-50 text-blue-700 border-blue-200',
+          dotColor: 'bg-blue-500',
+          icon: null,
+          label: 'In Progress'
+        };
+      case 'review':
+        return {
+          color: 'bg-violet-50 text-violet-700 border-violet-200',
+          dotColor: 'bg-violet-500',
+          icon: null,
+          label: 'Review'
+        };
+      case 'not-started':
+        return {
+          color: 'bg-slate-50 text-slate-600 border-slate-200',
+          dotColor: 'bg-slate-400',
+          icon: null,
+          label: 'To Do'
+        };
       default: return null;
     }
   };
@@ -139,14 +179,19 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
     zIndex = 30;
   }
 
-  // Dynamic ring color based on theme
+  // Check if task is overdue (using imported helper)
+  const isTaskOverdue = isOverdue(node.dueDate, node.status);
+
+  // Dynamic ring color based on theme and overdue status
   const ringStyle = selected
     ? `ring-2`
-    : isParentOfSelected
-      ? 'ring-2 ring-purple-400/70'
-      : isChildOfSelected
-        ? 'ring-2 ring-amber-400/70'
-        : '';
+    : isTaskOverdue
+      ? 'ring-2 ring-red-500 shadow-lg shadow-red-500/30'
+      : isParentOfSelected
+        ? 'ring-2 ring-purple-400/70'
+        : isChildOfSelected
+          ? 'ring-2 ring-amber-400/70'
+          : '';
 
   return (
     <div
@@ -185,7 +230,20 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
         </div>
       )}
 
-      {/* Connection Points - visible when in connection mode */}
+      {/* Overdue indicator badge - Pulsing animation for attention */}
+      {isTaskOverdue && !isParentOfSelected && !isChildOfSelected && (
+        <div className="absolute -top-3 -right-3 z-30">
+          <div
+            className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center gap-1"
+            style={{
+              animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+            }}
+          >
+            <span>🚨</span>
+            <span>OVERDUE</span>
+          </div>
+        </div>
+      )}
       {connectionMode && !isConnectionSource && (
         <>
           {isAlreadyConnected ? (
@@ -263,41 +321,33 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
             {/* Task info badges */}
             {(priorityDisplay || statusDisplay || daysUntilDue !== null) && (
               <div className="flex items-center gap-1.5 flex-wrap justify-center">
-                {/* Priority Badge */}
+                {/* Priority Badge - Professional design with dot indicator */}
                 {priorityDisplay && (
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border ${priorityDisplay.color}`}>
-                    <span>{priorityDisplay.icon}</span>
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold rounded-full border shadow-sm ${priorityDisplay.color}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${priorityDisplay.dotColor}`}></span>
+                    <span>{priorityDisplay.label}</span>
                   </span>
                 )}
 
-                {/* Status Badge */}
+                {/* Status Badge - Professional design with dot indicator */}
                 {statusDisplay && (
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border ${statusDisplay.color}`}>
-                    <span>{statusDisplay.icon}</span>
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold rounded-full border shadow-sm ${statusDisplay.color}`}>
+                    {statusDisplay.icon ? (
+                      <span className="text-xs">{statusDisplay.icon}</span>
+                    ) : (
+                      <span className={`w-1.5 h-1.5 rounded-full ${statusDisplay.dotColor}`}></span>
+                    )}
                     <span>{statusDisplay.label}</span>
                   </span>
                 )}
 
-                {/* Days Until Due Badge */}
-                {daysUntilDue !== null && (
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border ${daysUntilDue < 0
-                    ? 'bg-red-100 text-red-700 border-red-300'
-                    : daysUntilDue === 0
-                      ? 'bg-orange-100 text-orange-700 border-orange-300'
-                      : daysUntilDue <= 3
-                        ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
-                        : 'bg-gray-100 text-gray-600 border-gray-300'
-                    }`}>
-                    <span>📅</span>
-                    <span>
-                      {daysUntilDue < 0
-                        ? `${Math.abs(daysUntilDue)}d overdue`
-                        : daysUntilDue === 0
-                          ? 'Due today'
-                          : `${daysUntilDue}d left`
-                      }
-                    </span>
-                  </span>
+                {/* Deadline Badge - Using the new enhanced component */}
+                {node.dueDate && (
+                  <DeadlineBadge
+                    dueDate={node.dueDate}
+                    status={node.status}
+                    size="xs"
+                  />
                 )}
               </div>
             )}

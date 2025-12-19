@@ -7,6 +7,9 @@ import { config } from './config/env';
 import prisma from './config/database';
 import { requireAuth, optionalAuth, requireRole } from './middleware/auth';
 import webhooksRouter from './routes/webhooks';
+import remindersRouter from './routes/reminders';
+import leaveRouter from './routes/leave';
+import { startCronJobs } from './services/cronJobs';
 
 const app = express();
 
@@ -44,6 +47,12 @@ app.get('/api/health', (_req, res) => {
 // Webhooks (no auth required)
 app.use('/api/webhooks', webhooksRouter);
 
+// Reminders (protected)
+app.use('/api/reminders', requireAuth, remindersRouter);
+
+// Leave/Holiday Management (protected)
+app.use('/api/leave', requireAuth, leaveRouter);
+
 // ===========================================
 // PROTECTED API ROUTES
 // ===========================================
@@ -60,7 +69,7 @@ app.get('/api/me', requireAuth, async (req, res) => {
         },
       },
     });
-    
+
     res.json(user);
   } catch (error) {
     console.error('Error fetching user:', error);
@@ -72,7 +81,7 @@ app.get('/api/me', requireAuth, async (req, res) => {
 app.patch('/api/me', requireAuth, async (req, res) => {
   try {
     const { initials, color, phone, location, department, jobTitle, bio, skills } = req.body;
-    
+
     const user = await prisma.user.update({
       where: { id: req.auth!.user!.id },
       data: {
@@ -86,7 +95,7 @@ app.patch('/api/me', requireAuth, async (req, res) => {
         skills,
       },
     });
-    
+
     res.json(user);
   } catch (error) {
     console.error('Error updating user:', error);
@@ -120,7 +129,7 @@ app.get('/api/users', requireAuth, async (req, res) => {
       },
       orderBy: { name: 'asc' },
     });
-    
+
     res.json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -132,10 +141,10 @@ app.get('/api/users', requireAuth, async (req, res) => {
 app.get('/api/users/:id', requireAuth, async (req, res) => {
   try {
     const userId = req.params.id;
-    
+
     // Handle "me" as alias for current user
     const targetId = userId === 'me' ? req.auth!.user!.id : userId;
-    
+
     const user = await prisma.user.findFirst({
       where: {
         id: targetId,
@@ -175,21 +184,21 @@ app.get('/api/users/:id', requireAuth, async (req, res) => {
         },
       },
     });
-    
+
     if (!user) {
       res.status(404).json({ error: 'User not found' });
       return;
     }
-    
+
     // Calculate stats
     const completedTasks = await prisma.node.count({
       where: { assigneeId: targetId, status: 'completed' },
     });
-    
+
     const inProgressTasks = await prisma.node.count({
       where: { assigneeId: targetId, status: 'in_progress' },
     });
-    
+
     const overdueTasks = await prisma.node.count({
       where: {
         assigneeId: targetId,
@@ -197,11 +206,11 @@ app.get('/api/users/:id', requireAuth, async (req, res) => {
         dueDate: { lt: new Date() },
       },
     });
-    
+
     const totalAssigned = await prisma.node.count({
       where: { assigneeId: targetId },
     });
-    
+
     // Get recent activity (last 10 completed tasks)
     const recentActivity = await prisma.node.findMany({
       where: { assigneeId: targetId },
@@ -215,7 +224,7 @@ app.get('/api/users/:id', requireAuth, async (req, res) => {
       orderBy: { updatedAt: 'desc' },
       take: 10,
     });
-    
+
     res.json({
       ...user,
       stats: {
@@ -245,14 +254,14 @@ app.patch('/api/users/:id', requireAuth, async (req, res) => {
     const userId = req.params.id;
     const isAdmin = req.auth!.user!.role === 'admin';
     const isSelf = userId === req.auth!.user!.id;
-    
+
     if (!isAdmin && !isSelf) {
       res.status(403).json({ error: 'Not authorized to update this user' });
       return;
     }
-    
+
     const { name, initials, color, phone, location, department, jobTitle, bio, skills, linkedinUrl, githubUrl, websiteUrl } = req.body;
-    
+
     const user = await prisma.user.update({
       where: { id: userId },
       data: {
@@ -270,7 +279,7 @@ app.patch('/api/users/:id', requireAuth, async (req, res) => {
         websiteUrl,
       },
     });
-    
+
     res.json(user);
   } catch (error) {
     console.error('Error updating user:', error);
@@ -300,7 +309,7 @@ app.get('/api/mindmaps', requireAuth, async (req, res) => {
       },
       orderBy: { updatedAt: 'desc' },
     });
-    
+
     res.json(mindMaps);
   } catch (error) {
     console.error('Error fetching mindmaps:', error);
@@ -332,12 +341,12 @@ app.get('/api/mindmaps/:id', requireAuth, async (req, res) => {
         connections: true,
       },
     });
-    
+
     if (!mindMap) {
       res.status(404).json({ error: 'MindMap not found' });
       return;
     }
-    
+
     res.json(mindMap);
   } catch (error) {
     console.error('Error fetching mindmap:', error);
@@ -349,7 +358,7 @@ app.get('/api/mindmaps/:id', requireAuth, async (req, res) => {
 app.post('/api/mindmaps', requireAuth, async (req, res) => {
   try {
     const { title, description, color, projectId } = req.body;
-    
+
     const mindMap = await prisma.mindMap.create({
       data: {
         title,
@@ -359,7 +368,7 @@ app.post('/api/mindmaps', requireAuth, async (req, res) => {
         createdById: req.auth!.user!.id,
       },
     });
-    
+
     res.status(201).json(mindMap);
   } catch (error) {
     console.error('Error creating mindmap:', error);
@@ -371,17 +380,17 @@ app.post('/api/mindmaps', requireAuth, async (req, res) => {
 app.patch('/api/mindmaps/:id', requireAuth, async (req, res) => {
   try {
     const { title, description, color, isFavorite, isPublic } = req.body;
-    
+
     // Check ownership
     const existing = await prisma.mindMap.findFirst({
       where: { id: req.params.id, createdById: req.auth!.user!.id },
     });
-    
+
     if (!existing) {
       res.status(404).json({ error: 'MindMap not found or access denied' });
       return;
     }
-    
+
     const mindMap = await prisma.mindMap.update({
       where: { id: req.params.id },
       data: {
@@ -393,7 +402,7 @@ app.patch('/api/mindmaps/:id', requireAuth, async (req, res) => {
         lastModifiedById: req.auth!.user!.id,
       },
     });
-    
+
     res.json(mindMap);
   } catch (error) {
     console.error('Error updating mindmap:', error);
@@ -408,14 +417,14 @@ app.delete('/api/mindmaps/:id', requireAuth, async (req, res) => {
     const existing = await prisma.mindMap.findFirst({
       where: { id: req.params.id, createdById: req.auth!.user!.id },
     });
-    
+
     if (!existing) {
       res.status(404).json({ error: 'MindMap not found or access denied' });
       return;
     }
-    
+
     await prisma.mindMap.delete({ where: { id: req.params.id } });
-    
+
     res.status(204).send();
   } catch (error) {
     console.error('Error deleting mindmap:', error);
@@ -431,13 +440,13 @@ app.delete('/api/mindmaps/:id', requireAuth, async (req, res) => {
 app.post('/api/mindmaps/:mindMapId/nodes', requireAuth, async (req, res) => {
   try {
     const { text, x, y, bgColor, fontColor, shapeType, emoji, status, priority, parentId } = req.body;
-    
+
     // Get mindmap's project
     const mindMap = await prisma.mindMap.findUnique({
       where: { id: req.params.mindMapId },
       select: { projectId: true },
     });
-    
+
     const node = await prisma.node.create({
       data: {
         text,
@@ -455,7 +464,7 @@ app.post('/api/mindmaps/:mindMapId/nodes', requireAuth, async (req, res) => {
         createdById: req.auth!.user!.id,
       },
     });
-    
+
     res.status(201).json(node);
   } catch (error) {
     console.error('Error creating node:', error);
@@ -470,7 +479,7 @@ app.patch('/api/nodes/:id', requireAuth, async (req, res) => {
       where: { id: req.params.id },
       data: req.body,
     });
-    
+
     res.json(node);
   } catch (error) {
     console.error('Error updating node:', error);
@@ -497,7 +506,7 @@ app.delete('/api/nodes/:id', requireAuth, async (req, res) => {
 app.post('/api/mindmaps/:mindMapId/connections', requireAuth, async (req, res) => {
   try {
     const { fromId, toId, label, style, color } = req.body;
-    
+
     const connection = await prisma.nodeConnection.create({
       data: {
         fromId,
@@ -508,7 +517,7 @@ app.post('/api/mindmaps/:mindMapId/connections', requireAuth, async (req, res) =
         mindMapId: req.params.mindMapId,
       },
     });
-    
+
     res.status(201).json(connection);
   } catch (error) {
     console.error('Error creating connection:', error);
@@ -546,7 +555,7 @@ app.get('/api/admin/users', requireAuth, requireRole('admin'), async (_req, res)
       },
       orderBy: { createdAt: 'desc' },
     });
-    
+
     res.json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -558,12 +567,12 @@ app.get('/api/admin/users', requireAuth, requireRole('admin'), async (_req, res)
 app.patch('/api/admin/users/:id/role', requireAuth, requireRole('admin'), async (req, res) => {
   try {
     const { role } = req.body;
-    
+
     const user = await prisma.user.update({
       where: { id: req.params.id },
       data: { role },
     });
-    
+
     res.json(user);
   } catch (error) {
     console.error('Error updating user role:', error);
@@ -595,7 +604,11 @@ async function main() {
     // Test database connection
     await prisma.$connect();
     console.log('✅ Database connected');
-    
+
+    // Start cron jobs for reminders
+    startCronJobs();
+    console.log('✅ Cron jobs started');
+
     // Start server
     app.listen(config.port, () => {
       console.log(`✅ Server running on http://localhost:${config.port}`);
@@ -611,3 +624,4 @@ async function main() {
 main();
 
 export default app;
+

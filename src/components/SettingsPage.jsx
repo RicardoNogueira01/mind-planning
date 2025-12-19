@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import TopBar from './shared/TopBar';
-import { 
+import {
   ArrowLeft,
   Bell,
   Lock,
@@ -19,7 +19,9 @@ import {
   Download,
   Trash2,
   AlertTriangle,
-  Check
+  Check,
+  Clock,
+  ChevronRight
 } from 'lucide-react';
 
 const SettingsPage = () => {
@@ -37,20 +39,20 @@ const SettingsPage = () => {
     deadlineReminders: true,
     teamActivity: false,
     weeklyDigest: true,
-    
+
     // Privacy
     profileVisibility: 'team',
     showEmail: true,
     showPhone: false,
     showActivity: true,
-    
+
     // Preferences
     theme: 'light',
     language: 'en',
     timezone: 'America/Los_Angeles',
     dateFormat: 'MM/DD/YYYY',
     timeFormat: '12h',
-    
+
     // Security
     twoFactorAuth: false,
     sessionTimeout: '30',
@@ -88,11 +90,10 @@ const SettingsPage = () => {
         {/* Feedback Message */}
         {feedbackMessage && (
           <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[60] animate-fade-in">
-            <div className={`px-6 py-3 rounded-lg shadow-lg border ${
-              feedbackMessage.type === 'success' 
-                ? 'bg-green-50 border-green-200 text-green-800' 
-                : 'bg-red-50 border-red-200 text-red-800'
-            }`}>
+            <div className={`px-6 py-3 rounded-lg shadow-lg border ${feedbackMessage.type === 'success'
+              ? 'bg-green-50 border-green-200 text-green-800'
+              : 'bg-red-50 border-red-200 text-red-800'
+              }`}>
               <p className="font-medium">{feedbackMessage.message}</p>
             </div>
           </div>
@@ -101,7 +102,7 @@ const SettingsPage = () => {
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <button 
+            <button
               onClick={() => navigate(`/profile/${memberId}`)}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
@@ -126,325 +127,370 @@ const SettingsPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Notifications */}
             <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Bell size={20} className="text-blue-600" />
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Bell size={20} className="text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">{t('settings.notifications.title')}</h2>
+                  <p className="text-sm text-gray-500">{t('settings.notifications.subtitle')}</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">{t('settings.notifications.title')}</h2>
-                <p className="text-sm text-gray-500">{t('settings.notifications.subtitle')}</p>
-              </div>
-            </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <div className="flex items-center gap-3">
-                  <Mail size={18} className="text-gray-400" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Email Notifications</p>
-                    <p className="text-xs text-gray-500">Receive notifications via email</p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <Mail size={18} className="text-gray-400" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Email Notifications</p>
+                      <p className="text-xs text-gray-500">Receive notifications via email</p>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.emailNotifications}
+                      onChange={() => handleToggle('emailNotifications')}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <Smartphone size={18} className="text-gray-400" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Push Notifications</p>
+                      <p className="text-xs text-gray-500">Receive push notifications on your devices</p>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.pushNotifications}
+                      onChange={() => handleToggle('pushNotifications')}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+
+                <div className="pl-9 space-y-3 py-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-700">Task assignments</p>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.taskAssignments}
+                        onChange={() => handleToggle('taskAssignments')}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-700">Task updates</p>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.taskUpdates}
+                        onChange={() => handleToggle('taskUpdates')}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-700">Deadline reminders</p>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.deadlineReminders}
+                        onChange={() => handleToggle('deadlineReminders')}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-700">Team activity</p>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.teamActivity}
+                        onChange={() => handleToggle('teamActivity')}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-700">Weekly digest</p>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.weeklyDigest}
+                        onChange={() => handleToggle('weeklyDigest')}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
                   </div>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={settings.emailNotifications}
-                    onChange={() => handleToggle('emailNotifications')}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <div className="flex items-center gap-3">
-                  <Smartphone size={18} className="text-gray-400" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Push Notifications</p>
-                    <p className="text-xs text-gray-500">Receive push notifications on your devices</p>
-                  </div>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={settings.pushNotifications}
-                    onChange={() => handleToggle('pushNotifications')}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-
-              <div className="pl-9 space-y-3 py-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-700">Task assignments</p>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={settings.taskAssignments}
-                      onChange={() => handleToggle('taskAssignments')}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-700">Task updates</p>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={settings.taskUpdates}
-                      onChange={() => handleToggle('taskUpdates')}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-700">Deadline reminders</p>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={settings.deadlineReminders}
-                      onChange={() => handleToggle('deadlineReminders')}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-700">Team activity</p>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={settings.teamActivity}
-                      onChange={() => handleToggle('teamActivity')}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-700">Weekly digest</p>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={settings.weeklyDigest}
-                      onChange={() => handleToggle('weeklyDigest')}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
               </div>
             </div>
-          </div>
 
             {/* Privacy */}
             <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Eye size={20} className="text-purple-600" />
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Eye size={20} className="text-purple-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Privacy</h2>
+                  <p className="text-sm text-gray-500">Control what others can see</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">Privacy</h2>
-                <p className="text-sm text-gray-500">Control what others can see</p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Profile Visibility</label>
+                  <select
+                    value={settings.profileVisibility}
+                    onChange={(e) => handleChange('profileVisibility', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="public">Public - Everyone can see</option>
+                    <option value="team">Team - Only team members</option>
+                    <option value="private">Private - Only me</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                  <p className="text-sm font-medium text-gray-900">Show email address</p>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.showEmail}
+                      onChange={() => handleToggle('showEmail')}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                  <p className="text-sm font-medium text-gray-900">Show phone number</p>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.showPhone}
+                      onChange={() => handleToggle('showPhone')}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-between py-3">
+                  <p className="text-sm font-medium text-gray-900">Show activity history</p>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.showActivity}
+                      onChange={() => handleToggle('showActivity')}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
               </div>
             </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Profile Visibility</label>
-                <select
-                  value={settings.profileVisibility}
-                  onChange={(e) => handleChange('profileVisibility', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="public">Public - Everyone can see</option>
-                  <option value="team">Team - Only team members</option>
-                  <option value="private">Private - Only me</option>
-                </select>
-              </div>
-
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <p className="text-sm font-medium text-gray-900">Show email address</p>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={settings.showEmail}
-                    onChange={() => handleToggle('showEmail')}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <p className="text-sm font-medium text-gray-900">Show phone number</p>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={settings.showPhone}
-                    onChange={() => handleToggle('showPhone')}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between py-3">
-                <p className="text-sm font-medium text-gray-900">Show activity history</p>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={settings.showActivity}
-                    onChange={() => handleToggle('showActivity')}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-            </div>
-          </div>
           </div>
 
           {/* Preferences and Security - Grid Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Preferences */}
-          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Globe size={20} className="text-green-600" />
+            {/* Preferences */}
+            <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Globe size={20} className="text-green-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Preferences</h2>
+                  <p className="text-sm text-gray-500">Customize your experience</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">Preferences</h2>
-                <p className="text-sm text-gray-500">Customize your experience</p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    {settings.theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
+                    Theme
+                  </label>
+                  <select
+                    value={settings.theme}
+                    onChange={(e) => handleChange('theme', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="auto">Auto (System)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
+                  <select
+                    value={settings.language}
+                    onChange={(e) => handleChange('language', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="en">English</option>
+                    <option value="pt">Português</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
+                  <select
+                    value={settings.timezone}
+                    onChange={(e) => handleChange('timezone', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                    <option value="America/New_York">Eastern Time (ET)</option>
+                    <option value="Europe/London">London (GMT)</option>
+                    <option value="Europe/Lisbon">Lisbon (WET)</option>
+                    <option value="Asia/Tokyo">Tokyo (JST)</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Date Format</label>
+                    <select
+                      value={settings.dateFormat}
+                      onChange={(e) => handleChange('dateFormat', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                      <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                      <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Time Format</label>
+                    <select
+                      value={settings.timeFormat}
+                      onChange={(e) => handleChange('timeFormat', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="12h">12 Hour</option>
+                      <option value="24h">24 Hour</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  {settings.theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
-                  Theme
-                </label>
-                <select
-                  value={settings.theme}
-                  onChange={(e) => handleChange('theme', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                  <option value="auto">Auto (System)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
-                <select
-                  value={settings.language}
-                  onChange={(e) => handleChange('language', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="en">English</option>
-                  <option value="pt">Português</option>
-                  <option value="es">Español</option>
-                  <option value="fr">Français</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
-                <select
-                  value={settings.timezone}
-                  onChange={(e) => handleChange('timezone', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="America/Los_Angeles">Pacific Time (PT)</option>
-                  <option value="America/New_York">Eastern Time (ET)</option>
-                  <option value="Europe/London">London (GMT)</option>
-                  <option value="Europe/Lisbon">Lisbon (WET)</option>
-                  <option value="Asia/Tokyo">Tokyo (JST)</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Date Format</label>
-                  <select
-                    value={settings.dateFormat}
-                    onChange={(e) => handleChange('dateFormat', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                    <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                  </select>
+            {/* Security */}
+            <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-red-100 rounded-lg">
+                  <Shield size={20} className="text-red-600" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Time Format</label>
+                  <h2 className="text-lg font-bold text-gray-900">Security</h2>
+                  <p className="text-sm text-gray-500">Protect your account</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Two-Factor Authentication</p>
+                    <p className="text-xs text-gray-500">Add an extra layer of security</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.twoFactorAuth}
+                      onChange={() => handleToggle('twoFactorAuth')}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Session Timeout</label>
                   <select
-                    value={settings.timeFormat}
-                    onChange={(e) => handleChange('timeFormat', e.target.value)}
+                    value={settings.sessionTimeout}
+                    onChange={(e) => handleChange('sessionTimeout', e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="12h">12 Hour</option>
-                    <option value="24h">24 Hour</option>
+                    <option value="15">15 minutes</option>
+                    <option value="30">30 minutes</option>
+                    <option value="60">1 hour</option>
+                    <option value="never">Never</option>
                   </select>
                 </div>
+
+                <button className="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm font-medium">
+                  <Lock size={16} />
+                  Change Password
+                </button>
               </div>
             </div>
           </div>
 
-          {/* Security */}
-          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
+          {/* Reminders & Alerts Section */}
+          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl shadow-md border border-indigo-200 p-6">
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <Shield size={20} className="text-red-600" />
+              <div className="p-2 bg-indigo-100 rounded-lg">
+                <Bell size={20} className="text-indigo-600" />
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">Security</h2>
-                <p className="text-sm text-gray-500">Protect your account</p>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-gray-900">Reminders & Alerts</h2>
+                <p className="text-sm text-gray-500">Configure deadline notifications and alerts</p>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Two-Factor Authentication</p>
-                  <p className="text-xs text-gray-500">Add an extra layer of security</p>
+            <div className="space-y-3">
+              {/* Reminder Rules Link */}
+              <button
+                onClick={() => navigate('/settings/reminders')}
+                className="w-full px-4 py-4 bg-white border border-indigo-200 text-left rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-all flex items-center gap-4 group"
+              >
+                <div className="p-3 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
+                  <Clock size={24} className="text-indigo-600" />
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={settings.twoFactorAuth}
-                    onChange={() => handleToggle('twoFactorAuth')}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-900">Deadline Reminders</p>
+                  <p className="text-sm text-gray-500">Configure automatic task deadline reminders and overdue alerts</p>
+                </div>
+                <ChevronRight size={20} className="text-gray-400 group-hover:text-indigo-600 transition-colors" />
+              </button>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Session Timeout</label>
-                <select
-                  value={settings.sessionTimeout}
-                  onChange={(e) => handleChange('sessionTimeout', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="15">15 minutes</option>
-                  <option value="30">30 minutes</option>
-                  <option value="60">1 hour</option>
-                  <option value="never">Never</option>
-                </select>
-              </div>
-
-              <button className="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm font-medium">
-                <Lock size={16} />
-                Change Password
+              {/* Future: Team Management Link */}
+              <button
+                className="w-full px-4 py-4 bg-white/50 border border-gray-200 text-left rounded-xl opacity-60 cursor-not-allowed flex items-center gap-4"
+                disabled
+              >
+                <div className="p-3 bg-gray-100 rounded-lg">
+                  <Users size={24} className="text-gray-400" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-500">Team Management</p>
+                  <p className="text-sm text-gray-400">Manage team roles and permissions (Coming soon)</p>
+                </div>
+                <span className="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">Soon</span>
               </button>
             </div>
-          </div>
           </div>
 
           {/* Data & Account - Full Width */}
@@ -460,7 +506,7 @@ const SettingsPage = () => {
             </div>
 
             <div className="space-y-3">
-              <button 
+              <button
                 onClick={handleExportData}
                 className="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
               >
@@ -478,7 +524,7 @@ const SettingsPage = () => {
                     </div>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={handleDeleteAccount}
                   className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
                 >

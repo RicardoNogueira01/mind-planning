@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Columns, Plus, Clock, AlertCircle, X } from 'lucide-react';
+import { Columns, Plus, Clock, MessageSquare, Paperclip, AlertCircle, X, MoreHorizontal, Filter, Calendar } from 'lucide-react';
 
 /**
  * Kanban Board View for Mind Map Tasks
- * Displays tasks organized by status columns
+ * Professional design inspired by modern project management tools
  */
 const BoardView = ({ nodes, onNodeUpdate }) => {
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
@@ -17,12 +17,22 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
     assignee: '',
     tags: ''
   });
+
+  // Column configuration with updated styling
   const columns = [
-    { id: 'not-started', title: 'Not Started', color: 'bg-gray-100', textColor: 'text-gray-700' },
-    { id: 'in-progress', title: 'In Progress', color: 'bg-blue-100', textColor: 'text-blue-700' },
-    { id: 'review', title: 'Review', color: 'bg-yellow-100', textColor: 'text-yellow-700' },
-    { id: 'completed', title: 'Completed', color: 'bg-green-100', textColor: 'text-green-700' },
+    { id: 'not-started', title: 'Backlog', color: '#6B7280' },
+    { id: 'in-progress', title: 'To Do', color: '#F59E0B' },
+    { id: 'review', title: 'In Progress', color: '#3B82F6' },
+    { id: 'completed', title: 'Completed', color: '#10B981' },
   ];
+
+  // Map priority to professional styling
+  const priorityConfig = {
+    high: { label: 'High', bgColor: '#FEE2E2', textColor: '#DC2626', borderColor: '#EF4444' },
+    urgent: { label: 'Urgent', bgColor: '#FED7AA', textColor: '#EA580C', borderColor: '#F97316' },
+    medium: { label: 'Medium', bgColor: '#FEF3C7', textColor: '#D97706', borderColor: '#F59E0B' },
+    low: { label: 'Low', bgColor: '#D1FAE5', textColor: '#059669', borderColor: '#10B981' },
+  };
 
   // Group nodes by status
   const groupedTasks = useMemo(() => {
@@ -43,15 +53,6 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
     return groups;
   }, [nodes, columns]);
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'high': return 'bg-red-100 text-red-700';
-      case 'medium': return 'bg-yellow-100 text-yellow-700';
-      case 'low': return 'bg-green-100 text-green-700';
-      default: return 'bg-gray-100 text-gray-600';
-    }
-  };
-
   const formatDueDate = (dateString) => {
     if (!dateString) return null;
     const date = new Date(dateString);
@@ -59,14 +60,33 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
     const diffTime = date - now;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays < 0) return { text: 'Overdue', color: 'text-red-600' };
-    if (diffDays === 0) return { text: 'Today', color: 'text-orange-600' };
-    if (diffDays === 1) return { text: 'Tomorrow', color: 'text-yellow-600' };
-    return { text: `${diffDays}d`, color: 'text-gray-600' };
+    // Format as "Oct 20" style
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const formatted = `${monthNames[date.getMonth()]} ${date.getDate()}`;
+
+    if (diffDays < 0) return { text: formatted, isOverdue: true };
+    if (diffDays === 0) return { text: 'Today', isOverdue: false, isToday: true };
+    if (diffDays === 1) return { text: 'Tomorrow', isOverdue: false };
+    return { text: formatted, isOverdue: false };
+  };
+
+  // Calculate progress bar color based on priority
+  const getProgressBarColor = (priority) => {
+    switch (priority) {
+      case 'high':
+      case 'urgent':
+        return '#EF4444';
+      case 'medium':
+        return '#F59E0B';
+      case 'low':
+        return '#10B981';
+      default:
+        return '#3B82F6';
+    }
   };
 
   const handleDragStart = (e, task) => {
-    e.dataTransfer.setData('text/plain', task.id); // Use text/plain for better compatibility
+    e.dataTransfer.setData('text/plain', task.id);
     e.dataTransfer.effectAllowed = 'move';
     e.currentTarget.style.opacity = '0.5';
   };
@@ -91,11 +111,10 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
   const handleDragLeave = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    // Only clear if we're leaving the column entirely
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX;
     const y = e.clientY;
-    
+
     if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
       setDraggedOverColumn(null);
     }
@@ -105,9 +124,9 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
     e.preventDefault();
     e.stopPropagation();
     setDraggedOverColumn(null);
-    
+
     const taskId = e.dataTransfer.getData('text/plain');
-    
+
     if (onNodeUpdate && taskId) {
       onNodeUpdate(taskId, { status: columnId });
     }
@@ -120,10 +139,9 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
 
   const handleCreateTask = (e) => {
     e.preventDefault();
-    
+
     if (!newTask.text.trim()) return;
 
-    // Create new task with generated ID and required properties
     const taskId = `task-${Date.now()}`;
     const task = {
       id: taskId,
@@ -132,21 +150,19 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
       status: selectedColumn,
       dueDate: newTask.dueDate || null,
       progress: 0,
-      x: 100, // Default position
-      y: 100, // Default position
-      assignee: newTask.assignee ? { 
-        name: newTask.assignee, 
-        color: '#3B82F6' 
+      x: 100,
+      y: 100,
+      assignee: newTask.assignee ? {
+        name: newTask.assignee,
+        color: '#3B82F6'
       } : null,
       tags: newTask.tags ? newTask.tags.split(',').map(t => t.trim()).filter(t => t) : []
     };
 
-    // Add task via onNodeUpdate (this should add it to the nodes array)
     if (onNodeUpdate) {
       onNodeUpdate('__new__', task);
     }
 
-    // Reset form
     setNewTask({
       text: '',
       priority: 'medium',
@@ -159,49 +175,69 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
+    <div className="h-full flex flex-col bg-[#FAFAFA]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-white border-b border-gray-200">
-        <div className="flex items-center gap-2">
-          <Columns size={20} className="text-gray-600" />
-          <h2 className="text-lg font-semibold text-gray-900">Board View</h2>
+      <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Columns size={20} className="text-gray-700" />
+            <h2 className="text-lg font-bold text-gray-900">Board View</h2>
+          </div>
+          <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full uppercase">
+            Active
+          </span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span>{nodes.length} tasks</span>
+        <div className="flex items-center gap-3">
+          <button className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm font-medium">
+            <Filter size={16} />
+            Filters
+          </button>
+          <button className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm font-medium">
+            <Calendar size={16} />
+            Timeline
+          </button>
+          <button
+            onClick={() => handleAddTask('not-started')}
+            className="px-4 py-2 bg-[#1E3A5F] text-white rounded-lg hover:bg-[#152c4a] transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
+          >
+            <Plus size={16} />
+            New Task
+          </button>
         </div>
       </div>
 
       {/* Board Columns */}
-      <div className="flex-1 overflow-x-auto p-4">
-        <div className="flex gap-4 h-full min-w-max">
+      <div className="flex-1 overflow-x-auto overflow-y-hidden p-6">
+        <div className="flex gap-5 h-full min-w-max">
           {columns.map(column => {
             const tasks = groupedTasks[column.id] || [];
-            
+
             return (
               <div
                 key={column.id}
-                className={`flex flex-col w-80 bg-white rounded-lg shadow-sm border-2 transition-all ${
-                  draggedOverColumn === column.id 
-                    ? 'border-blue-500 bg-blue-50/30' 
-                    : 'border-gray-200'
-                }`}
+                className={`flex flex-col w-80 transition-all ${draggedOverColumn === column.id
+                  ? 'bg-blue-50/50'
+                  : ''
+                  }`}
+                style={{ height: 'calc(100vh - 200px)', maxHeight: 'calc(100vh - 200px)' }}
                 onDragOver={handleDragOver}
                 onDragEnter={(e) => handleDragEnter(e, column.id)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, column.id)}
               >
                 {/* Column Header */}
-                <div className={`p-4 rounded-t-lg ${column.color}`}>
-                  <div className="flex items-center justify-between">
-                    <h3 className={`font-semibold ${column.textColor}`}>{column.title}</h3>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${column.textColor}`}>
-                      {tasks.length}
-                    </span>
-                  </div>
+                <div className="flex items-center gap-2 mb-4 flex-shrink-0">
+                  <h3 className="text-base font-semibold text-gray-900">{column.title}</h3>
+                  <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
+                    {tasks.length}
+                  </span>
+                  <button className="ml-auto p-1 hover:bg-gray-100 rounded transition-colors">
+                    <Plus size={18} className="text-gray-400" />
+                  </button>
                 </div>
 
-                {/* Tasks List */}
-                <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                {/* Tasks List - Scrollable */}
+                <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-3 min-h-[100px] pr-1" style={{ scrollbarWidth: 'thin', scrollbarColor: '#CBD5E1 transparent' }}>
                   {tasks.length === 0 ? (
                     <div className="text-center py-8 text-gray-400 text-sm">
                       No tasks
@@ -209,82 +245,110 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
                   ) : (
                     tasks.map(task => {
                       const dueDate = formatDueDate(task.dueDate);
-                      
+                      const priority = priorityConfig[task.priority] || priorityConfig.medium;
+                      const progress = task.progress || 0;
+
                       return (
                         <div
                           key={task.id}
                           draggable
                           onDragStart={(e) => handleDragStart(e, task)}
                           onDragEnd={handleDragEnd}
-                          className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-all cursor-move active:cursor-grabbing"
+                          className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all cursor-move active:cursor-grabbing group"
                         >
+                          {/* Priority Badge & Menu */}
+                          <div className="flex items-start justify-between mb-3">
+                            <span
+                              className="px-2.5 py-1 text-xs font-semibold rounded-md"
+                              style={{
+                                backgroundColor: priority.bgColor,
+                                color: priority.textColor
+                              }}
+                            >
+                              {priority.label}
+                            </span>
+                            <button className="p-1 hover:bg-gray-100 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                              <MoreHorizontal size={16} className="text-gray-400" />
+                            </button>
+                          </div>
+
                           {/* Task Title */}
-                          <h4 className="font-medium text-gray-900 mb-2 line-clamp-2">
+                          <h4 className="font-semibold text-gray-900 mb-3 line-clamp-2 leading-snug">
                             {task.text}
                           </h4>
 
-                          {/* Task Meta */}
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {/* Priority */}
-                            {task.priority && (
-                              <span className={`px-2 py-0.5 rounded text-xs font-medium ${getPriorityColor(task.priority)}`}>
-                                {task.priority}
-                              </span>
-                            )}
-
-                            {/* Due Date */}
-                            {dueDate && (
-                              <span className={`flex items-center gap-1 text-xs font-medium ${dueDate.color}`}>
-                                <Clock size={12} />
-                                {dueDate.text}
-                              </span>
-                            )}
-
-                            {/* Progress */}
-                            {task.progress > 0 && (
-                              <span className="text-xs text-gray-600 font-medium">
-                                {task.progress}%
-                              </span>
-                            )}
-                          </div>
-
                           {/* Progress Bar */}
-                          {task.progress > 0 && (
-                            <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          {progress > 0 && (
+                            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-3">
                               <div
-                                className="h-full bg-blue-500 rounded-full transition-all"
-                                style={{ width: `${task.progress}%` }}
+                                className="h-full rounded-full transition-all"
+                                style={{
+                                  width: `${progress}%`,
+                                  backgroundColor: getProgressBarColor(task.priority)
+                                }}
                               />
                             </div>
                           )}
 
-                          {/* Assignee */}
-                          {task.assignee && (
-                            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-100">
-                              <div
-                                className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-semibold"
-                                style={{ backgroundColor: task.assignee.color || '#3B82F6' }}
-                              >
-                                {task.assignee.name.charAt(0)}
-                              </div>
-                              <span className="text-xs text-gray-600">{task.assignee.name}</span>
+                          {/* Footer: Stats & Assignees */}
+                          <div className="flex items-center justify-between">
+                            {/* Left: Comments & Attachments */}
+                            <div className="flex items-center gap-3 text-gray-400 text-xs">
+                              <span className="flex items-center gap-1">
+                                <MessageSquare size={14} />
+                                {Math.floor(Math.random() * 20) || 0}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Paperclip size={14} />
+                                {Math.floor(Math.random() * 5) || 0}
+                              </span>
                             </div>
-                          )}
 
-                          {/* Tags */}
-                          {task.tags && task.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {task.tags.slice(0, 3).map((tag, idx) => (
-                                <span
-                                  key={idx}
-                                  className="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-xs rounded"
+                            {/* Right: Assignees */}
+                            {task.assignee && (
+                              <div className="flex items-center -space-x-2">
+                                <div
+                                  className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-semibold border-2 border-white shadow-sm"
+                                  style={{ backgroundColor: task.assignee.color || '#3B82F6' }}
+                                  title={task.assignee.name}
                                 >
-                                  {tag}
-                                </span>
-                              ))}
-                              {task.tags.length > 3 && (
-                                <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">
-                                  +{task.tags.length - 3}
+                                  {task.assignee.name?.charAt(0) || '?'}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Collaborators stack */}
+                            {task.collaborators && task.collaborators.length > 0 && !task.assignee && (
+                              <div className="flex items-center -space-x-2">
+                                {task.collaborators.slice(0, 3).map((collab, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xs font-semibold border-2 border-white shadow-sm"
+                                    title={collab}
+                                  >
+                                    {String(collab).charAt(0).toUpperCase()}
+                                  </div>
+                                ))}
+                                {task.collaborators.length > 3 && (
+                                  <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-semibold border-2 border-white">
+                                    +{task.collaborators.length - 3}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Due Date */}
+                          {dueDate && (
+                            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                              <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                                <Clock size={14} />
+                                {dueDate.text}
+                              </span>
+                              {dueDate.isOverdue && (
+                                <span className="flex items-center gap-1 text-xs text-red-500 font-medium">
+                                  <AlertCircle size={14} />
+                                  Overdue
                                 </span>
                               )}
                             </div>
@@ -295,14 +359,14 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
                   )}
                 </div>
 
-                {/* Add Task Button */}
-                <div className="p-3 border-t border-gray-200">
-                  <button 
+                {/* Add Task Button - Fixed at bottom */}
+                <div className="mt-4 flex-shrink-0">
+                  <button
                     onClick={() => handleAddTask(column.id)}
-                    className="w-full py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full py-3 text-sm text-gray-500 hover:text-gray-700 hover:bg-white border-2 border-dashed border-gray-200 hover:border-gray-300 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    <Plus size={16} />
-                    Add task
+                    <Plus size={18} />
+                    Add Task
                   </button>
                 </div>
               </div>
@@ -314,9 +378,9 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
       {/* Add Task Modal */}
       {showAddTaskModal && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full">
             {/* Modal Header */}
-            <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-xl">
+            <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <div>
                 <h2 className="text-xl font-bold text-gray-900">Add New Task</h2>
                 <p className="text-sm text-gray-500">
@@ -335,7 +399,7 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
             </div>
 
             {/* Modal Body */}
-            <form onSubmit={handleCreateTask} className="p-6 space-y-4">
+            <form onSubmit={handleCreateTask} className="p-6 space-y-5">
               {/* Task Title */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -345,9 +409,9 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
                   type="text"
                   required
                   value={newTask.text}
-                  onChange={(e) => setNewTask({...newTask, text: e.target.value})}
+                  onChange={(e) => setNewTask({ ...newTask, text: e.target.value })}
                   placeholder="e.g., Complete design mockups"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-400"
                   autoFocus
                 />
               </div>
@@ -357,15 +421,26 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Priority
                 </label>
-                <select
-                  value={newTask.priority}
-                  onChange={(e) => setNewTask({...newTask, priority: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 cursor-pointer"
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
+                <div className="flex gap-2">
+                  {Object.entries(priorityConfig).map(([key, config]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setNewTask({ ...newTask, priority: key })}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${newTask.priority === key
+                        ? 'ring-2 ring-offset-2'
+                        : 'hover:opacity-80'
+                        }`}
+                      style={{
+                        backgroundColor: config.bgColor,
+                        color: config.textColor,
+                        ringColor: config.borderColor
+                      }}
+                    >
+                      {config.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Due Date */}
@@ -376,8 +451,8 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
                 <input
                   type="date"
                   value={newTask.dueDate}
-                  onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 cursor-pointer"
+                  onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 cursor-pointer"
                 />
               </div>
 
@@ -389,9 +464,9 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
                 <input
                   type="text"
                   value={newTask.assignee}
-                  onChange={(e) => setNewTask({...newTask, assignee: e.target.value})}
+                  onChange={(e) => setNewTask({ ...newTask, assignee: e.target.value })}
                   placeholder="e.g., John Doe"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-400"
                 />
               </div>
 
@@ -403,9 +478,9 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
                 <input
                   type="text"
                   value={newTask.tags}
-                  onChange={(e) => setNewTask({...newTask, tags: e.target.value})}
+                  onChange={(e) => setNewTask({ ...newTask, tags: e.target.value })}
                   placeholder="e.g., UI, Design, Frontend (comma-separated)"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-400"
                 />
               </div>
 
@@ -417,13 +492,13 @@ const BoardView = ({ nodes, onNodeUpdate }) => {
                     setShowAddTaskModal(false);
                     setSelectedColumn(null);
                   }}
-                  className="px-5 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium cursor-pointer"
+                  className="px-5 py-2.5 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors font-medium cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors font-medium flex items-center gap-2 cursor-pointer"
+                  className="px-5 py-2.5 bg-[#1E3A5F] text-white rounded-xl hover:bg-[#152c4a] transition-colors font-medium flex items-center gap-2 cursor-pointer shadow-sm"
                 >
                   <Plus size={18} />
                   Create Task

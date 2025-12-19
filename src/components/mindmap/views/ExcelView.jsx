@@ -35,6 +35,7 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange, collaborat
     const columns = useMemo(() => [
         { id: 'id', label: 'ID', width: 80, type: 'text', editable: false },
         { id: 'text', label: 'Task Name', width: 200, type: 'text', editable: true },
+        { id: 'relationship', label: 'Hierarchy', width: 220, type: 'relationship', editable: false },
         {
             id: 'status', label: 'Status', width: 140, type: 'select', editable: true, options: [
                 { value: 'not-started', label: 'Not Started' },
@@ -58,6 +59,47 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange, collaborat
         { id: 'notes', label: 'Notes', width: 250, type: 'text', editable: true },
         { id: 'assignee', label: 'Assignee', width: 140, type: 'select', editable: true, options: assigneeOptions },
     ], [assigneeOptions]);
+
+    // Helper function to get relationship info for a node
+    const getNodeRelationship = useCallback((node) => {
+        if (!connections || connections.length === 0) {
+            return { type: 'orphan', parent: null, children: [], siblings: [] };
+        }
+
+        // Find parent (connections where this node is 'to')
+        const parentConnection = connections.find(c => c.to === node.id);
+        const parentNode = parentConnection ? nodes.find(n => n.id === parentConnection.from) : null;
+
+        // Find children (connections where this node is 'from')
+        const childConnections = connections.filter(c => c.from === node.id);
+        const childNodes = childConnections.map(c => nodes.find(n => n.id === c.to)).filter(Boolean);
+
+        // Find siblings (other nodes with same parent)
+        let siblingNodes = [];
+        if (parentConnection) {
+            const siblingConnections = connections.filter(c =>
+                c.from === parentConnection.from && c.to !== node.id
+            );
+            siblingNodes = siblingConnections.map(c => nodes.find(n => n.id === c.to)).filter(Boolean);
+        }
+
+        // Determine node type
+        let type = 'orphan';
+        if (!parentNode && childNodes.length > 0) {
+            type = 'root';
+        } else if (parentNode && childNodes.length === 0) {
+            type = 'leaf';
+        } else if (parentNode && childNodes.length > 0) {
+            type = 'branch';
+        }
+
+        return {
+            type,
+            parent: parentNode ? { id: parentNode.id, name: parentNode.text } : null,
+            children: childNodes.map(c => ({ id: c.id, name: c.text })),
+            siblings: siblingNodes.map(s => ({ id: s.id, name: s.text }))
+        };
+    }, [connections, nodes]);
     const [selectedCell, setSelectedCell] = useState(null); // { rowId, colId }
     const [editingCell, setEditingCell] = useState(null); // { rowId, colId, value }
     const [selectedRows, setSelectedRows] = useState(new Set());
@@ -1026,6 +1068,60 @@ const ExcelView = ({ nodes, connections, onNodeUpdate, onNodesChange, collaborat
 
         const value = formatCellValue(node, column);
         const rawValue = node[column.id]; // Raw value for color lookup
+
+        // Special rendering for relationship/hierarchy column
+        if (column.id === 'relationship') {
+            const rel = getNodeRelationship(node);
+            return (
+                <div className="flex flex-wrap items-center gap-1.5">
+                    {/* Node Type Badge */}
+                    {rel.type === 'root' && (
+                        <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-semibold rounded-full flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
+                            Root
+                        </span>
+                    )}
+                    {rel.type === 'orphan' && (
+                        <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[10px] font-medium rounded-full">
+                            Standalone
+                        </span>
+                    )}
+
+                    {/* Parent Info */}
+                    {rel.parent && (
+                        <span
+                            className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-medium rounded-full flex items-center gap-1 max-w-[100px] truncate"
+                            title={`Child of: ${rel.parent.name}`}
+                        >
+                            <span className="text-blue-400">↳</span>
+                            {rel.parent.name?.length > 12 ? rel.parent.name.slice(0, 12) + '...' : rel.parent.name}
+                        </span>
+                    )}
+
+                    {/* Children Count */}
+                    {rel.children.length > 0 && (
+                        <span
+                            className="px-2 py-0.5 bg-green-50 text-green-700 text-[10px] font-medium rounded-full flex items-center gap-1"
+                            title={`Children: ${rel.children.map(c => c.name).join(', ')}`}
+                        >
+                            <span className="text-green-500">▼</span>
+                            {rel.children.length} {rel.children.length === 1 ? 'child' : 'children'}
+                        </span>
+                    )}
+
+                    {/* Siblings Count */}
+                    {rel.siblings.length > 0 && (
+                        <span
+                            className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-medium rounded-full flex items-center gap-1"
+                            title={`Siblings: ${rel.siblings.map(s => s.name).join(', ')}`}
+                        >
+                            <span className="text-amber-500">↔</span>
+                            {rel.siblings.length} {rel.siblings.length === 1 ? 'sibling' : 'siblings'}
+                        </span>
+                    )}
+                </div>
+            );
+        }
 
         // Special rendering for status - with dropdown indicator
         if (column.id === 'status') {
