@@ -605,6 +605,7 @@ const Dashboard = () => {
                 bgColor="bg-teal-50"
                 borderColor="border-teal-200"
                 valueColor="text-teal-600"
+                className="flex-1"
               />
               <StatCard
                 value={3}
@@ -614,6 +615,7 @@ const Dashboard = () => {
                 bgColor="bg-amber-50"
                 borderColor="border-amber-200"
                 valueColor="text-amber-600"
+                className="flex-1"
               />
               <StatCard
                 value={8}
@@ -623,6 +625,7 @@ const Dashboard = () => {
                 bgColor="bg-gray-50"
                 borderColor="border-gray-200"
                 valueColor="text-gray-600"
+                className="flex-1"
               />
             </div>
 
@@ -657,6 +660,7 @@ const Dashboard = () => {
                 bgColor="bg-red-50"
                 borderColor="border-red-200"
                 valueColor="text-red-600"
+                className="flex-1"
               />
               <StatCard
                 value={2}
@@ -666,6 +670,7 @@ const Dashboard = () => {
                 bgColor="bg-orange-50"
                 borderColor="border-orange-200"
                 valueColor="text-orange-600"
+                className="flex-1"
               />
               <StatCard
                 value={8}
@@ -675,6 +680,7 @@ const Dashboard = () => {
                 bgColor="bg-blue-50"
                 borderColor="border-blue-200"
                 valueColor="text-blue-600"
+                className="flex-1"
               />
             </div>
 
