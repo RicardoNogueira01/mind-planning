@@ -161,59 +161,42 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
       return { x: rightX, y: rightY };
     }
 
-    // Children already exist - determine layout direction from first child
+    // Intelligent placement logic
+    const rightChildren = childNodes.filter(n => n.x > parent.x + 50);
+    const leftChildren = childNodes.filter(n => n.x < parent.x - 50);
+    const belowChildren = childNodes.filter(n => n.y > parent.y + 50 && Math.abs(n.x - parent.x) <= 50);
+    const aboveChildren = childNodes.filter(n => n.y < parent.y - 50 && Math.abs(n.x - parent.x) <= 50);
+
+    const isVertical = (belowChildren.length + aboveChildren.length) > (rightChildren.length + leftChildren.length);
     const firstChild = childNodes[0];
-    const dx = firstChild.x - parent.x;
-    const dy = firstChild.y - parent.y;
-    const isHorizontal = Math.abs(dx) > Math.abs(dy);
 
-    if (isHorizontal) {
-      // Children are positioned horizontally (left or right of parent)
-      // Stack new children vertically, centered around parent's Y position
+    if (isVertical) {
+      // Vertical layout (Org Chart style) - Add downward
+      const targetY = firstChild ? Math.max(...childNodes.map(c => c.y)) + CHILD_SPACING : parent.y + OFFSET_DISTANCE;
+      const targetX = parent.x; // Keep aligned vertically
 
-      // Use the X position from first child (stay in same column)
-      const targetX = firstChild.x;
+      // Check for overlapping (if multiple columns in vertical mode)
+      // For now, simple vertical stack
+      return { x: targetX, y: targetY };
+    } else {
+      // Horizontal layout (Mind Map style) - Balance Left/Right
 
-      // Find the Y extent of existing children
-      const childYPositions = childNodes.map(c => c.y).sort((a, b) => a - b);
-      const minY = Math.min(...childYPositions);
-      const maxY = Math.max(...childYPositions);
+      // Determine target side: simple balancing
+      // If Left < Right, go Left. Otherwise Right.
+      // This creates R, L, R, L pattern
+      const targetSide = leftChildren.length < rightChildren.length ? 'left' : 'right';
+      const direction = targetSide === 'left' ? -1 : 1;
+      const targetX = parent.x + direction * OFFSET_DISTANCE;
 
-      // Calculate new position that keeps children centered around parent
-      const numChildren = childNodes.length + 1; // Including new child
-      const totalHeight = (numChildren - 1) * CHILD_SPACING;
-      const centeredStartY = parent.y - totalHeight / 2;
+      const siblingsOnSide = targetSide === 'left' ? leftChildren : rightChildren;
 
-      // Find a free slot - prefer adding to the bottom of existing children
-      // This is more intuitive than adding to top
-      let newY = maxY + CHILD_SPACING;
-
-      // Check if this would make the group too unbalanced
-      // If the group would extend too far below parent, add a slot above instead
-      const distanceBelow = newY - parent.y;
-      const distanceAbove = parent.y - minY;
-
-      // Only add above if below is significantly more unbalanced
-      if (distanceBelow > distanceAbove + CHILD_SPACING * 2) {
-        newY = minY - CHILD_SPACING;
+      if (siblingsOnSide.length === 0) {
+        return { x: targetX, y: parent.y };
       }
 
-      return { x: targetX, y: newY };
-
-    } else {
-      // Children are positioned vertically (above or below parent)
-      // Stack new children horizontally
-
-      const targetY = firstChild.y;
-
-      const childXPositions = childNodes.map(c => c.x).sort((a, b) => a - b);
-      const minX = Math.min(...childXPositions);
-      const maxX = Math.max(...childXPositions);
-
-      // Prefer adding to the right
-      const newX = maxX + NODE_WIDTH + MARGIN;
-
-      return { x: newX, y: targetY };
+      // Stack below existing on this side
+      const maxY = Math.max(...siblingsOnSide.map(c => c.y));
+      return { x: targetX, y: maxY + CHILD_SPACING };
     }
   }, [nodes, connections]);
 

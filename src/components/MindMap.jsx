@@ -2201,6 +2201,7 @@ export default function MindMap({ mapId, onBack }) {
                         <h3 className="font-semibold text-sm text-gray-900 px-3 py-2 border-b">Choose Layout</h3>
                         <div className="flex flex-col gap-1 pt-2">
                           {[
+                            { type: 'mindmap', label: 'Mind Map', icon: '🧠', desc: 'Balanced radial' },
                             { type: 'force-directed', label: 'Force Directed', icon: '⚡', desc: 'Physics-based' },
                             { type: 'tree-vertical', label: 'Tree (Vertical)', icon: '🌲', desc: 'Top to bottom' },
                             { type: 'tree-horizontal', label: 'Tree (Horizontal)', icon: '🌳', desc: 'Left to right' },

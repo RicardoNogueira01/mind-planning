@@ -128,24 +128,42 @@ export function useNodeOperations(
 
     if (isHorizontal) {
       // Children are LEFT or RIGHT of parent
-      // Sort children by their current Y position (top to bottom)
-      const sortedChildren = [...children].sort((a, b) => a.y - b.y);
+      // Split into Left and Right groups
+      const rightChildren = children.filter(c => c.x > parent.x);
+      const leftChildren = children.filter(c => c.x < parent.x);
 
-      // Keep same X (left or right side), redistribute Y positions evenly
-      // Center the group around parent's Y
-      const totalHeight = (totalChildren - 1) * SPACING;
-      const startY = parent.y - (totalHeight / 2);
+      // Helper to rebalance a single vertical stack
+      const rebalanceStack = (stackNodes: Node[]) => {
+        if (stackNodes.length === 0) return [];
+        // Sort top-to-bottom
+        const sorted = [...stackNodes].sort((a, b) => a.y - b.y);
 
-      const rebalancedChildren = sortedChildren.map((child, index) => ({
-        ...child,
-        x: firstChild.x, // Keep same X position as first child
-        y: startY + (index * SPACING)
-      }));
+        // Center around parent Y
+        const totalHeight = (stackNodes.length - 1) * SPACING;
+        const startY = parent.y - (totalHeight / 2);
+
+        // Use average X of the stack to keep alignment
+        const avgX = stackNodes.reduce((sum, n) => sum + n.x, 0) / stackNodes.length;
+
+        return sorted.map((child, index) => ({
+          ...child,
+          x: avgX,
+          y: startY + (index * SPACING)
+        }));
+      };
+
+      const rebalancedRight = rebalanceStack(rightChildren);
+      const rebalancedLeft = rebalanceStack(leftChildren);
 
       // Merge rebalanced children back
+      const rebalancedMap = new Map();
+      [...rebalancedRight, ...rebalancedLeft].forEach(n => rebalancedMap.set(n.id, n));
+
       return nodeList.map(node => {
-        const rebalanced = rebalancedChildren.find(c => c.id === node.id);
-        return rebalanced || node;
+        if (rebalancedMap.has(node.id)) {
+          return rebalancedMap.get(node.id);
+        }
+        return node;
       });
 
     } else {

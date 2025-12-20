@@ -477,39 +477,27 @@ export function computeBezierPath(
     // HORIZONTAL layout - child is more left/right than up/down
     if (dx > 0) {
       // Child is to the RIGHT of parent
-      // → Parent exits from RIGHT edge, Child enters from LEFT edge
-      const parentConnectionY = Math.max(fromRect.top + 10, Math.min(fromRect.bottom - 10, toCenterY));
-      const childConnectionY = Math.max(toRect.top + 10, Math.min(toRect.bottom - 10, fromCenterY));
-
-      start = { x: fromRect.right - edgeInset, y: parentConnectionY };
-      end = { x: toRect.left + edgeInset, y: childConnectionY };
+      // Start from vertical center of parent's RIGHT edge
+      start = { x: fromRect.right - edgeInset, y: fromCenterY };
+      end = { x: toRect.left + edgeInset, y: toCenterY };
     } else {
       // Child is to the LEFT of parent
-      // → Parent exits from LEFT edge, Child enters from RIGHT edge
-      const parentConnectionY = Math.max(fromRect.top + 10, Math.min(fromRect.bottom - 10, toCenterY));
-      const childConnectionY = Math.max(toRect.top + 10, Math.min(toRect.bottom - 10, fromCenterY));
-
-      start = { x: fromRect.left + edgeInset, y: parentConnectionY };
-      end = { x: toRect.right - edgeInset, y: childConnectionY };
+      // Start from vertical center of parent's LEFT edge
+      start = { x: fromRect.left + edgeInset, y: fromCenterY };
+      end = { x: toRect.right - edgeInset, y: toCenterY };
     }
   } else {
     // VERTICAL layout - child is more up/down than left/right
     if (dy > 0) {
       // Child is BELOW parent
-      // → Parent exits from BOTTOM edge, Child enters from TOP edge
-      const parentConnectionX = Math.max(fromRect.left + 10, Math.min(fromRect.right - 10, toCenterX));
-      const childConnectionX = Math.max(toRect.left + 10, Math.min(toRect.right - 10, fromCenterX));
-
-      start = { x: parentConnectionX, y: fromRect.bottom - edgeInset };
-      end = { x: childConnectionX, y: toRect.top + edgeInset };
+      // Start from horizontal center of parent's BOTTOM edge
+      start = { x: fromCenterX, y: fromRect.bottom - edgeInset };
+      end = { x: toCenterX, y: toRect.top + edgeInset };
     } else {
       // Child is ABOVE parent
-      // → Parent exits from TOP edge, Child enters from BOTTOM edge
-      const parentConnectionX = Math.max(fromRect.left + 10, Math.min(fromRect.right - 10, toCenterX));
-      const childConnectionX = Math.max(toRect.left + 10, Math.min(toRect.right - 10, fromCenterX));
-
-      start = { x: parentConnectionX, y: fromRect.top + edgeInset };
-      end = { x: childConnectionX, y: toRect.bottom - edgeInset };
+      // Start from horizontal center of parent's TOP edge
+      start = { x: fromCenterX, y: fromRect.top + edgeInset };
+      end = { x: toCenterX, y: toRect.bottom - edgeInset };
     }
   }
 

@@ -320,10 +320,37 @@ export default function ConnectionsSvg({
         const isOrthogonal = connectionStyle === 'orthogonal-h' || connectionStyle === 'orthogonal-v';
         const focusOpacity = isHovered ? 0.95 : (isSelected ? 0.8 : (isOrthogonal ? 0.75 : (isRelated ? 0.6 : 0.5)));
 
+        // Rainbow colors for mind map branches
+        const RAINBOW_COLORS = [
+          '#3b82f6', // Blue
+          '#8b5cf6', // Violet
+          '#d946ef', // Fuchsia
+          '#ec4899', // Pink
+          '#ef4444', // Red
+          '#f97316', // Orange
+          '#f59e0b', // Amber
+          '#84cc16', // Lime
+          '#10b981', // Emerald
+          '#06b6d4', // Cyan
+        ];
+
         // For tree layouts, inherit color from child node for visual hierarchy
         let connectionColor;
-        if (isOrthogonal && toNode?.bgColor && toNode.bgColor !== '#ffffff') {
-          connectionColor = toNode.bgColor;
+        if (connectionStyle === 'curved' || isOrthogonal) {
+          // Priority 1: Child node's specific background color (if not white/gray)
+          if (toNode?.bgColor && toNode.bgColor !== '#ffffff' && toNode.bgColor !== '#f3f4f6') {
+            connectionColor = toNode.bgColor;
+          }
+          // Priority 2: For Mind Map (curved), use rainbow palette based on child index
+          else if (connectionStyle === 'curved') {
+            // Use stable index from sorted siblings
+            const colorIndex = childIndex % RAINBOW_COLORS.length;
+            connectionColor = RAINBOW_COLORS[colorIndex];
+          }
+          // Fallback
+          else {
+            connectionColor = getConnectionColor(conn, fromNode);
+          }
         } else {
           connectionColor = getConnectionColor(conn, fromNode);
         }
