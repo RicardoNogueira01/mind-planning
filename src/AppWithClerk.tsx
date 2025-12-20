@@ -190,6 +190,11 @@ function AppRoutes() {
           <CalendarPage />
         </ProtectedRoute>
       } />
+      <Route path="/reminders" element={
+        <ProtectedRoute>
+          <RemindersPage />
+        </ProtectedRoute>
+      } />
 
       {/* Catch all */}
       <Route path="*" element={<Navigate to="/" />} />
