@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import TopBar from './shared/TopBar';
-import { 
-  ArrowLeft, 
-  Calendar, 
-  ChevronLeft, 
-  ChevronRight, 
-  Clock, 
-  Plus, 
+import { events as sharedEvents, holidays as sharedHolidays, categories as sharedCategories } from '../data/calendarData';
+import {
+  ArrowLeft,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Plus,
   Filter,
   Grid3X3,
   List,
@@ -27,148 +28,10 @@ const CalendarPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  // Holidays data
-  const [holidays] = useState([
-    { id: 1, name: 'First Friday', date: '2025-12-05', emoji: '🎉', color: '#8B5CF6' },
-    { id: 2, name: 'Christmas Day', date: '2025-12-25', emoji: '🎄', color: '#EF4444' },
-    { id: 3, name: 'New Year\'s Day', date: '2026-01-01', emoji: '🎆', color: '#6366F1' }
-  ]);
-
-  // Sample tasks/events data
-  const [events] = useState([
-    {
-      id: 1,
-      title: 'Team standup',
-      description: 'Daily team synchronization meeting',
-      startTime: '09:00',
-      endTime: '09:30',
-      date: '2025-12-01',
-      color: '#3B82F6',
-      category: 'meeting',
-      attendees: ['John Doe', 'Alex Kim'],
-      location: 'Conference Room A',
-      isRecurring: true
-    },
-    {
-      id: 2,
-      title: 'API review session',
-      description: 'Review the new API endpoints and documentation',
-      startTime: '14:30',
-      endTime: '15:30',
-      date: '2025-12-02',
-      color: '#10B981',
-      category: 'review',
-      attendees: ['Maria Rodriguez', 'Taylor Smith'],
-      location: 'Virtual',
-      isRecurring: false
-    },
-    {
-      id: 3,
-      title: 'Client presentation',
-      description: 'Quarterly business review with key client',
-      startTime: '16:00',
-      endTime: '17:00',
-      date: '2025-12-03',
-      color: '#F59E0B',
-      category: 'presentation',
-      attendees: ['Alex Kim', 'Sarah Wilson'],
-      location: 'Client Office',
-      isRecurring: false
-    },
-    {
-      id: 4,
-      title: 'Design workshop',
-      description: 'Collaborative design session for new features',
-      startTime: '10:00',
-      endTime: '12:00',
-      date: '2025-12-04',
-      color: '#8B5CF6',
-      category: 'workshop',
-      attendees: ['Design Team'],
-      location: 'Design Studio',
-      isRecurring: false
-    },
-    {
-      id: 5,
-      title: 'Sprint planning',
-      description: 'Plan tasks and estimates for next sprint',
-      startTime: '15:00',
-      endTime: '16:30',
-      date: '2025-12-05',
-      color: '#EF4444',
-      category: 'planning',
-      attendees: ['Development Team'],
-      location: 'Conference Room B',
-      isRecurring: true
-    },
-    {
-      id: 6,
-      title: 'Code review session',
-      description: 'Review pull requests and code quality',
-      startTime: '11:00',
-      endTime: '12:00',
-      date: '2025-12-08',
-      color: '#06B6D4',
-      category: 'review',
-      attendees: ['John Doe', 'Taylor Smith'],
-      location: 'Virtual',
-      isRecurring: true
-    },
-    {
-      id: 7,
-      title: 'Product demo',
-      description: 'Demonstrate new features to stakeholders',
-      startTime: '13:30',
-      endTime: '14:30',
-      date: '2025-12-10',
-      color: '#84CC16',
-      category: 'demo',
-      attendees: ['Product Team', 'Stakeholders'],
-      location: 'Main Conference Room',
-      isRecurring: false
-    },
-    {
-      id: 8,
-      title: 'Team retrospective',
-      description: 'Reflect on sprint performance and improvements',
-      startTime: '09:30',
-      endTime: '10:30',
-      date: '2025-12-15',
-      color: '#F97316',
-      category: 'meeting',
-      attendees: ['Full Team'],
-      location: 'Conference Room A',
-      isRecurring: true
-    },
-    {
-      id: 9,
-      title: 'User testing session',
-      description: 'Conduct usability tests with real users',
-      startTime: '14:00',
-      endTime: '16:00',
-      date: '2025-12-18',
-      color: '#EC4899',
-      category: 'testing',
-      attendees: ['UX Team', 'Research Team'],
-      location: 'UX Lab',
-      isRecurring: false
-    },
-    {
-      id: 10,
-      title: 'Weekly report preparation',
-      description: 'Compile and prepare weekly progress report',
-      startTime: '16:30',
-      endTime: '17:30',
-      date: '2025-12-22',
-      color: '#6366F1',
-      category: 'administrative',
-      attendees: ['Project Managers'],
-      location: 'Office',
-      isRecurring: true
-    }
-  ]);
-
-  const categories = ['all', 'meeting', 'review', 'presentation', 'workshop', 'planning', 'demo', 'testing', 'administrative'];
+  // Use shared calendar data for consistency with dashboard widget
+  const holidays = sharedHolidays;
+  const events = sharedEvents;
+  const categories = sharedCategories;
 
   // Navigation functions
   const navigateDate = (direction) => {
@@ -226,7 +89,7 @@ const CalendarPage = () => {
     const dateStr = date.toISOString().split('T')[0];
     return events.filter(event => {
       const matchesDate = event.date === dateStr;
-      const matchesSearch = searchTerm === '' || 
+      const matchesSearch = searchTerm === '' ||
         event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         event.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || event.category === selectedCategory;
@@ -302,20 +165,18 @@ const CalendarPage = () => {
             return (
               <div
                 key={index}
-                className={`min-h-32 p-2 border-r border-b border-gray-100 ${
-                  hasHoliday ? 'bg-gradient-to-br from-purple-50 to-pink-50' :
+                className={`min-h-32 p-2 border-r border-b border-gray-100 ${hasHoliday ? 'bg-gradient-to-br from-purple-50 to-pink-50' :
                   !isCurrentMonthDate ? 'bg-gray-50' : 'bg-white'
-                } hover:bg-gray-50 transition-colors`}
+                  } hover:bg-gray-50 transition-colors`}
               >
-                <div className={`text-sm font-medium mb-2 ${
-                  isTodayDate 
-                    ? 'text-white bg-indigo-600 rounded-full w-6 h-6 flex items-center justify-center' 
-                    : hasHoliday
-                      ? 'text-purple-600'
-                    : isCurrentMonthDate 
-                      ? 'text-gray-900' 
+                <div className={`text-sm font-medium mb-2 ${isTodayDate
+                  ? 'text-white bg-indigo-600 rounded-full w-6 h-6 flex items-center justify-center'
+                  : hasHoliday
+                    ? 'text-purple-600'
+                    : isCurrentMonthDate
+                      ? 'text-gray-900'
                       : 'text-gray-400'
-                }`}>
+                  }`}>
                   {date.getDate()}
                 </div>
 
@@ -369,13 +230,11 @@ const CalendarPage = () => {
           {weekDates.map((date, index) => {
             const isTodayDate = isToday(date);
             return (
-              <div key={index} className={`p-4 text-center border-l border-gray-200 ${
-                isTodayDate ? 'bg-indigo-50' : 'bg-gray-50'
-              }`}>
-                <div className="text-sm font-medium text-gray-500">{dayNames[index]}</div>
-                <div className={`text-lg font-semibold ${
-                  isTodayDate ? 'text-indigo-600' : 'text-gray-900'
+              <div key={index} className={`p-4 text-center border-l border-gray-200 ${isTodayDate ? 'bg-indigo-50' : 'bg-gray-50'
                 }`}>
+                <div className="text-sm font-medium text-gray-500">{dayNames[index]}</div>
+                <div className={`text-lg font-semibold ${isTodayDate ? 'text-indigo-600' : 'text-gray-900'
+                  }`}>
                   {date.getDate()}
                 </div>
               </div>
@@ -433,11 +292,11 @@ const CalendarPage = () => {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xl font-semibold text-gray-900">
-                {currentDate.toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  month: 'long', 
-                  day: 'numeric', 
-                  year: 'numeric' 
+                {currentDate.toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric'
                 })}
               </h3>
               <p className="text-sm text-gray-500 mt-1">
@@ -469,7 +328,7 @@ const CalendarPage = () => {
                     <div
                       key={event.id}
                       className="p-3 rounded-lg mb-2 border-l-4 cursor-pointer hover:shadow-md transition-shadow"
-                      style={{ 
+                      style={{
                         backgroundColor: event.color + '10',
                         borderLeftColor: event.color
                       }}
@@ -513,27 +372,27 @@ const CalendarPage = () => {
     <div className="min-h-screen bg-[#FAFAFA]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
       <TopBar showSearch={false} />
       <div className="p-3 md:p-6">
-      {/* Header */}
-      <header className="mb-4 md:mb-8">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
-          <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
-            <Link to="/" className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 touch-manipulation">
-              <ArrowLeft size={20} className="text-gray-600" />
-            </Link>
-            <div className="flex-1 md:flex-initial">
-              <h1 className="text-xl md:text-2xl font-bold text-gray-900">Calendar</h1>
-              <p className="text-sm md:text-base text-gray-500">Manage your schedule and events</p>
+        {/* Header */}
+        <header className="mb-4 md:mb-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
+            <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
+              <Link to="/" className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 touch-manipulation">
+                <ArrowLeft size={20} className="text-gray-600" />
+              </Link>
+              <div className="flex-1 md:flex-initial">
+                <h1 className="text-xl md:text-2xl font-bold text-gray-900">Calendar</h1>
+                <p className="text-sm md:text-base text-gray-500">Manage your schedule and events</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
+              <button className="flex-1 md:flex-initial px-3 md:px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center justify-center gap-2 text-sm touch-manipulation">
+                <Plus size={16} />
+                Add Event
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
-            <button className="flex-1 md:flex-initial px-3 md:px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center justify-center gap-2 text-sm touch-manipulation">
-              <Plus size={16} />
-              Add Event
-            </button>
-          </div>
-        </div>
-      </header>      {/* Controls */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-4 mb-4 md:mb-6">
+        </header>      {/* Controls */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-4 mb-4 md:mb-6">
           <div className="flex flex-col gap-3">
             {/* Top row: Navigation and Today button */}
             <div className="flex items-center gap-2 w-full">
@@ -578,9 +437,8 @@ const CalendarPage = () => {
                 </div>
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`px-3 sm:px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-gray-700 text-sm whitespace-nowrap flex-shrink-0 ${
-                    showFilters ? 'bg-gray-50' : ''
-                  }`}
+                  className={`px-3 sm:px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-gray-700 text-sm whitespace-nowrap flex-shrink-0 ${showFilters ? 'bg-gray-50' : ''
+                    }`}
                 >
                   <Filter size={16} />
                   <span className="hidden sm:inline">{t('common.filters')}</span>
@@ -591,31 +449,28 @@ const CalendarPage = () => {
               <div className="flex border border-gray-300 rounded-lg overflow-hidden flex-shrink-0">
                 <button
                   onClick={() => setViewMode('month')}
-                  className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors flex-1 sm:flex-initial ${
-                    viewMode === 'month' 
-                      ? 'bg-gray-800 text-white' 
-                      : 'bg-white text-gray-600 hover:bg-gray-50'
-                  }`}
+                  className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors flex-1 sm:flex-initial ${viewMode === 'month'
+                    ? 'bg-gray-800 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
                 >
                   {t('common.month')}
                 </button>
                 <button
                   onClick={() => setViewMode('week')}
-                  className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors border-l border-gray-300 flex-1 sm:flex-initial ${
-                    viewMode === 'week' 
-                      ? 'bg-gray-800 text-white' 
-                      : 'bg-white text-gray-600 hover:bg-gray-50'
-                  }`}
+                  className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors border-l border-gray-300 flex-1 sm:flex-initial ${viewMode === 'week'
+                    ? 'bg-gray-800 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
                 >
                   {t('common.week')}
                 </button>
                 <button
                   onClick={() => setViewMode('day')}
-                  className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors border-l border-gray-300 flex-1 sm:flex-initial ${
-                    viewMode === 'day' 
-                      ? 'bg-gray-800 text-white' 
-                      : 'bg-white text-gray-600 hover:bg-gray-50'
-                  }`}
+                  className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors border-l border-gray-300 flex-1 sm:flex-initial ${viewMode === 'day'
+                    ? 'bg-gray-800 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
                 >
                   {t('common.day')}
                 </button>

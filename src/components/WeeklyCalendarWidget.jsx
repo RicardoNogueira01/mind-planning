@@ -2,93 +2,13 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Calendar, Clock, Plus } from 'lucide-react';
 import PropTypes from 'prop-types';
+import { events as sharedEvents, holidays as sharedHolidays } from '../data/calendarData';
 
-const WeeklyCalendarWidget = ({ holidays = [] }) => {
+const WeeklyCalendarWidget = ({ holidays = sharedHolidays, events = sharedEvents }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  // Sample tasks data - in a real app, this would come from props or state
-  const [tasks] = useState([
-    {
-      id: 1,
-      title: 'Team standup',
-      time: '09:00',
-      date: '2025-12-01',
-      color: '#3B82F6',
-      type: 'meeting'
-    },
-    {
-      id: 2,
-      title: 'API review',
-      time: '14:30',
-      date: '2025-12-01',
-      color: '#10B981',
-      type: 'review'
-    },
-    {
-      id: 3,
-      title: 'Client presentation',
-      time: '16:00',
-      date: '2025-12-02',
-      color: '#F59E0B',
-      type: 'presentation'
-    },
-    {
-      id: 4,
-      title: 'Design workshop',
-      time: '10:00',
-      date: '2025-12-03',
-      color: '#8B5CF6',
-      type: 'workshop'
-    },
-    {
-      id: 5,
-      title: 'Sprint planning',
-      time: '15:00',
-      date: '2025-12-03',
-      color: '#EF4444',
-      type: 'planning'
-    },
-    {
-      id: 6,
-      title: 'Code review',
-      time: '11:00',
-      date: '2025-12-04',
-      color: '#06B6D4',
-      type: 'review'
-    },
-    {
-      id: 7,
-      title: 'Product demo',
-      time: '13:30',
-      date: '2025-12-05',
-      color: '#84CC16',
-      type: 'demo'
-    },
-    {
-      id: 8,
-      title: 'Team retrospective',
-      time: '09:30',
-      date: '2025-12-05',
-      color: '#F97316',
-      type: 'meeting'
-    },
-    {
-      id: 9,
-      title: 'User testing',
-      time: '14:00',
-      date: '2025-12-06',
-      color: '#EC4899',
-      type: 'testing'
-    },
-    {
-      id: 10,
-      title: 'Weekly report',
-      time: '16:30',
-      date: '2025-12-07',
-      color: '#6366F1',
-      type: 'report'
-    }
-  ]);
+  // Use passed events/tasks or default to shared data
+  const tasks = events;
 
   // Get current week's dates
   const getWeekDates = (date) => {
@@ -135,9 +55,9 @@ const WeeklyCalendarWidget = ({ holidays = [] }) => {
 
   // Format date for display
   const formatDate = (date) => {
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      year: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      year: 'numeric'
     });
   };
 
@@ -196,26 +116,24 @@ const WeeklyCalendarWidget = ({ holidays = [] }) => {
           const dayHolidays = getHolidaysForDate(date);
           const isTodayDate = isToday(date);
           const hasHoliday = dayHolidays.length > 0;
-          
+
           return (
             <div
               key={index}
-              className={`p-2 md:p-3 rounded-lg border-2 transition-colors ${
-                hasHoliday
-                  ? 'border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50'
-                  : isTodayDate 
-                  ? 'border-blue-200 bg-blue-50' 
+              className={`p-2 md:p-3 rounded-lg border-2 transition-colors ${hasHoliday
+                ? 'border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50'
+                : isTodayDate
+                  ? 'border-blue-200 bg-blue-50'
                   : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
-              }`}
+                }`}
             >
               {/* Day header */}
               <div className="text-center mb-2 md:mb-3">
                 <div className="text-xs font-medium text-gray-500 mb-1">
                   {dayNames[index]}
                 </div>
-                <div className={`text-base md:text-lg font-semibold ${
-                  hasHoliday ? 'text-purple-600' : isTodayDate ? 'text-blue-600' : 'text-gray-800'
-                }`}>
+                <div className={`text-base md:text-lg font-semibold ${hasHoliday ? 'text-purple-600' : isTodayDate ? 'text-blue-600' : 'text-gray-800'
+                  }`}>
                   {date.getDate()}
                 </div>
               </div>
@@ -246,7 +164,7 @@ const WeeklyCalendarWidget = ({ holidays = [] }) => {
                   <div
                     key={task.id}
                     className="p-1.5 md:p-2 rounded-md border border-gray-100 hover:shadow-sm transition-shadow cursor-pointer touch-manipulation"
-                    style={{ 
+                    style={{
                       borderLeftColor: task.color,
                       borderLeftWidth: '2px'
                     }}
@@ -260,7 +178,7 @@ const WeeklyCalendarWidget = ({ holidays = [] }) => {
                     </div>
                   </div>
                 ))}
-                
+
                 {/* Show more indicator if there are more tasks */}
                 {tasks.filter(task => task.date === date.toISOString().split('T')[0]).length > 3 && (
                   <div className="text-[10px] md:text-xs text-gray-400 text-center py-1">
@@ -310,6 +228,14 @@ WeeklyCalendarWidget.propTypes = {
     emoji: PropTypes.string.isRequired,
     color: PropTypes.string,
     daysUntil: PropTypes.number
+  })),
+  events: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    title: PropTypes.string.isRequired,
+    time: PropTypes.string,
+    date: PropTypes.string.isRequired,
+    color: PropTypes.string,
+    type: PropTypes.string
   }))
 };
 
