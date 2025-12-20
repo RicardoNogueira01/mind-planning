@@ -20,6 +20,7 @@ import RemindersPage from './components/RemindersPage';
 import ScrollToTop from './components/ScrollToTop';
 import { LanguageProvider } from './context/LanguageContext';
 import { AuthProvider } from './context/ClerkAuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 // Get Clerk publishable key from environment
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -207,25 +208,27 @@ function App() {
   if (!CLERK_PUBLISHABLE_KEY) {
     return (
       <LanguageProvider>
-        <BrowserRouter>
-          <ScrollToTop />
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/mindmap/:mapId" element={<MindMapWrapper />} />
-            <Route path="/mindmaps" element={<MindMapManagerWrapper />} />
-            <Route path="/team-members" element={<TeamMembersManager />} />
-            <Route path="/team-hierarchy/:profession" element={<TeamHierarchy />} />
-            <Route path="/completed-tasks" element={<RecentlyCompletedTasksManager />} />
-            <Route path="/upcoming-deadlines" element={<UpcomingDeadlinesManager />} />
-            <Route path="/my-leave" element={<LeaveRequestPage />} />
-            <Route path="/team-holidays" element={<TeamHolidaysPage />} />
-            <Route path="/profile/:memberId" element={<ProfilePage />} />
-            <Route path="/profile/:memberId/edit" element={<EditProfilePage />} />
-            <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/reminders" element={<RemindersPage />} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </BrowserRouter>
+        <ThemeProvider>
+          <BrowserRouter>
+            <ScrollToTop />
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/mindmap/:mapId" element={<MindMapWrapper />} />
+              <Route path="/mindmaps" element={<MindMapManagerWrapper />} />
+              <Route path="/team-members" element={<TeamMembersManager />} />
+              <Route path="/team-hierarchy/:profession" element={<TeamHierarchy />} />
+              <Route path="/completed-tasks" element={<RecentlyCompletedTasksManager />} />
+              <Route path="/upcoming-deadlines" element={<UpcomingDeadlinesManager />} />
+              <Route path="/my-leave" element={<LeaveRequestPage />} />
+              <Route path="/team-holidays" element={<TeamHolidaysPage />} />
+              <Route path="/profile/:memberId" element={<ProfilePage />} />
+              <Route path="/profile/:memberId/edit" element={<EditProfilePage />} />
+              <Route path="/calendar" element={<CalendarPage />} />
+              <Route path="/reminders" element={<RemindersPage />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </BrowserRouter>
+        </ThemeProvider>
       </LanguageProvider>
     );
   }
@@ -234,10 +237,12 @@ function App() {
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
       <AuthProvider>
         <LanguageProvider>
-          <BrowserRouter>
-            <ScrollToTop />
-            <AppRoutes />
-          </BrowserRouter>
+          <ThemeProvider>
+            <BrowserRouter>
+              <ScrollToTop />
+              <AppRoutes />
+            </BrowserRouter>
+          </ThemeProvider>
         </LanguageProvider>
       </AuthProvider>
     </ClerkProvider>

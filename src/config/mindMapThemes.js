@@ -200,6 +200,200 @@ export const mindMapThemes = {
     },
 
     // ============================================
+    // HOLIDAY THEMES (Seasonal & Festive)
+    // ============================================
+
+    christmas: {
+        id: 'christmas',
+        name: 'Christmas',
+        isDark: false,
+        vibe: 'creative',
+        canvas: {
+            background: '#f0fdf4',
+            gridColor: '#dcfce7',
+            pattern: 'none',
+        },
+        nodes: {
+            palette: ['#166534', '#dc2626', '#15803d', '#b91c1c', '#fca5a5', '#86efac', '#ffffff'],
+            defaultBg: '#ffffff',
+            defaultText: '#166534',
+            borderColor: '#dc2626',
+            borderRadius: '12px',
+            borderWidth: '2px',
+            selectedRing: '#15803d',
+            shadow: '0 4px 12px rgba(22,101,52,0.15)',
+            shape: 'rounded',
+        },
+        typography: {
+            fontFamily: "'Mountains of Christmas', cursive",
+            fontSize: '18px',
+            fontWeight: '700',
+            headingSize: '22px',
+            lineHeight: '1.5',
+        },
+        connections: {
+            color: '#dc2626',
+            colorMode: 'parent',
+            strokeWidth: 2.5,
+        },
+        decorations: {
+            emoji: '🎄',
+        },
+    },
+
+    'new-year': {
+        id: 'new-year',
+        name: 'New Year',
+        isDark: true,
+        vibe: 'creative',
+        canvas: {
+            background: 'radial-gradient(circle at 50% 50%, #1f2937 0%, #111827 100%)',
+            gridColor: '#374151',
+            pattern: 'none',
+        },
+        nodes: {
+            palette: ['#fbbf24', '#f59e0b', '#d97706', '#f3f4f6', '#e5e7eb', '#9ca3af', '#fbbf24'],
+            defaultBg: '#1f2937',
+            defaultText: '#fbbf24', // Gold text
+            borderColor: '#fbbf24',
+            borderRadius: '8px',
+            borderWidth: '1px',
+            selectedRing: '#f59e0b',
+            shadow: '0 0 15px rgba(251, 191, 36, 0.3)',
+            shape: 'rounded',
+        },
+        typography: {
+            fontFamily: "'Cinzel', serif",
+            fontSize: '15px',
+            fontWeight: '600',
+            headingSize: '18px',
+            lineHeight: '1.6',
+        },
+        connections: {
+            color: '#fbbf24',
+            colorMode: 'parent',
+            strokeWidth: 2,
+        },
+        decorations: {
+            emoji: '🎆',
+        },
+    },
+
+    halloween: {
+        id: 'halloween',
+        name: 'Halloween',
+        isDark: true,
+        vibe: 'creative',
+        canvas: {
+            background: '#271a10',
+            gridColor: '#431407',
+            pattern: 'none',
+        },
+        nodes: {
+            palette: ['#f97316', '#ea580c', '#c2410c', '#a855f7', '#9333ea', '#84cc16', '#000000'],
+            defaultBg: '#271a10',
+            defaultText: '#f97316',
+            borderColor: '#f97316',
+            borderRadius: '16px', // "spooky" shape
+            borderWidth: '2px',
+            selectedRing: '#f97316',
+            shadow: '0 4px 20px rgba(249, 115, 22, 0.3)',
+            shape: 'notch',
+        },
+        typography: {
+            fontFamily: "'Creepster', display",
+            fontSize: '20px',
+            fontWeight: '400',
+            headingSize: '24px',
+            lineHeight: '1.2',
+        },
+        connections: {
+            color: '#ea580c',
+            colorMode: 'parent',
+            strokeWidth: 3,
+        },
+        decorations: {
+            emoji: '🎃',
+        },
+    },
+
+    thanksgiving: {
+        id: 'thanksgiving',
+        name: 'Thanksgiving',
+        isDark: false,
+        vibe: 'creative',
+        canvas: {
+            background: '#fffbeb',
+            gridColor: '#fde68a',
+            pattern: 'none',
+        },
+        nodes: {
+            palette: ['#92400e', '#b45309', '#d97706', '#f59e0b', '#78350f', '#fff7ed', '#fef3c7'],
+            defaultBg: '#fff7ed',
+            defaultText: '#78350f',
+            borderColor: '#92400e',
+            borderRadius: '4px',
+            borderWidth: '2px',
+            selectedRing: '#b45309',
+            shadow: '0 2px 8px rgba(120, 53, 15, 0.1)',
+            shape: 'rounded',
+        },
+        typography: {
+            fontFamily: "'Homemade Apple', cursive",
+            fontSize: '16px',
+            fontWeight: '600',
+            headingSize: '20px',
+            lineHeight: '1.6',
+        },
+        connections: {
+            color: '#b45309',
+            colorMode: 'parent',
+            strokeWidth: 2,
+        },
+        decorations: {
+            emoji: '🦃',
+        },
+    },
+
+    'black-friday': {
+        id: 'black-friday',
+        name: 'Black Friday',
+        isDark: true,
+        vibe: 'creative',
+        canvas: {
+            background: '#0a0a0a',
+            gridColor: '#262626',
+            pattern: 'grid',
+        },
+        nodes: {
+            palette: ['#ffffff', '#dc2626', '#b91c1c', '#000000', '#525252', '#d4d4d4', '#ef4444'],
+            defaultBg: '#000000',
+            defaultText: '#ffffff',
+            borderColor: '#dc2626',
+            borderRadius: '0px',
+            borderWidth: '2px',
+            selectedRing: '#dc2626',
+            shadow: '4px 4px 0px #dc2626',
+            shape: 'square',
+        },
+        typography: {
+            fontFamily: "'Berkshire Swash', display",
+            fontSize: '16px',
+            fontWeight: '500',
+            headingSize: '18px',
+            lineHeight: '1.4',
+        },
+        connections: {
+            color: '#dc2626',
+            colorMode: 'default',
+            strokeWidth: 3,
+        },
+        decorations: {
+            emoji: '🏷️',
+        },
+    },
+
+    // ============================================
     // CREATIVE THEMES (Colorful but still professional)
     // ============================================
 

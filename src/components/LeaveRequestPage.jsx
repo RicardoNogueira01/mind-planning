@@ -29,7 +29,8 @@ import {
     CalendarDays,
     History,
     TrendingUp,
-    Loader2
+    Loader2,
+    Filter
 } from 'lucide-react';
 
 // Mock data for leave types
@@ -107,6 +108,8 @@ export default function LeaveRequestPage() {
     const [balances, setBalances] = useState(mockBalances);
     const [requests, setRequests] = useState(mockRequests);
     const [loading, setLoading] = useState(false);
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [typeFilter, setTypeFilter] = useState('all');
 
     // New request form state
     const [newRequest, setNewRequest] = useState({
@@ -207,6 +210,12 @@ export default function LeaveRequestPage() {
     const totalAvailableDays = balances.reduce((acc, b) => acc + getAvailableDays(b), 0);
     const totalPendingDays = balances.reduce((acc, b) => acc + b.pendingDays, 0);
     const pendingRequests = requests.filter(r => r.status === 'pending').length;
+
+    const filteredRequests = requests.filter(req => {
+        const matchesStatus = statusFilter === 'all' || req.status === statusFilter;
+        const matchesType = typeFilter === 'all' || req.leaveTypeId === typeFilter;
+        return matchesStatus && matchesType;
+    });
 
     return (
         <div className="min-h-screen bg-gray-50" style={{ fontFamily: 'DM Sans, sans-serif' }}>
@@ -317,7 +326,7 @@ export default function LeaveRequestPage() {
 
                     {/* Balance Overview Tab */}
                     {activeTab === 'overview' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {balances.map(balance => {
                                 const available = getAvailableDays(balance);
                                 const usedPercent = (balance.usedDays / balance.totalDays) * 100;
@@ -379,81 +388,138 @@ export default function LeaveRequestPage() {
 
                     {/* My Requests Tab */}
                     {activeTab === 'requests' && (
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                            {requests.length === 0 ? (
-                                <div className="text-center py-16">
-                                    <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                                        <Calendar size={32} className="text-gray-400" />
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No requests yet</h3>
-                                    <p className="text-gray-500 mb-4">Submit your first leave request to get started</p>
-                                    <button
-                                        onClick={() => setShowNewRequestModal(true)}
-                                        className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors inline-flex items-center gap-2"
+                        <div className="space-y-4">
+                            {/* Filters */}
+                            <div className="flex flex-wrap items-center gap-3">
+                                <div className="relative">
+                                    <select
+                                        value={statusFilter}
+                                        onChange={(e) => setStatusFilter(e.target.value)}
+                                        className="appearance-none pl-9 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer hover:border-gray-300 transition-colors shadow-sm"
                                     >
-                                        <Plus size={18} />
-                                        New Request
-                                    </button>
+                                        <option value="all">All Status</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="approved">Approved</option>
+                                        <option value="rejected">Rejected</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                    <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
                                 </div>
-                            ) : (
-                                <div className="divide-y divide-gray-100">
-                                    {requests.map(request => {
-                                        const statusBadge = getStatusBadge(request.status);
-                                        const StatusIcon = statusBadge.icon;
 
-                                        return (
-                                            <div key={request.id} className="p-5 hover:bg-gray-50 transition-colors">
-                                                <div className="flex items-start justify-between">
-                                                    <div className="flex items-start gap-4">
-                                                        <div
-                                                            className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
-                                                            style={{ backgroundColor: `${request.leaveType.color}15` }}
-                                                        >
-                                                            {request.leaveType.icon}
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="font-semibold text-gray-900">{request.leaveType.name}</h4>
-                                                            <p className="text-sm text-gray-500 mt-0.5">
-                                                                {new Date(request.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                                                {request.startDate !== request.endDate && (
-                                                                    <> — {new Date(request.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</>
-                                                                )}
-                                                                <span className="mx-2">•</span>
-                                                                {request.totalDays} {request.totalDays === 1 ? 'day' : 'days'}
-                                                            </p>
-                                                            {request.reason && (
-                                                                <p className="text-sm text-gray-600 mt-2 italic">"{request.reason}"</p>
-                                                            )}
-                                                            {request.reviewedBy && (
-                                                                <p className="text-xs text-gray-400 mt-2">
-                                                                    Reviewed by {request.reviewedBy.name} on {new Date(request.reviewedAt).toLocaleDateString()}
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                    </div>
+                                <div className="relative">
+                                    <select
+                                        value={typeFilter}
+                                        onChange={(e) => setTypeFilter(e.target.value)}
+                                        className="appearance-none pl-9 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer hover:border-gray-300 transition-colors shadow-sm"
+                                    >
+                                        <option value="all">All Leave Types</option>
+                                        {mockLeaveTypes.map(type => (
+                                            <option key={type.id} value={type.id}>{type.name}</option>
+                                        ))}
+                                    </select>
+                                    <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                                </div>
 
-                                                    <div className="flex items-center gap-3">
-                                                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border ${statusBadge.bg} ${statusBadge.text} ${statusBadge.border}`}>
-                                                            <StatusIcon size={14} />
-                                                            {statusBadge.label}
-                                                        </span>
+                                {(statusFilter !== 'all' || typeFilter !== 'all') && (
+                                    <button
+                                        onClick={() => { setStatusFilter('all'); setTypeFilter('all'); }}
+                                        className="text-sm text-red-600 hover:text-red-700 font-medium px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                                    >
+                                        Clear filters
+                                    </button>
+                                )}
+                            </div>
 
-                                                        {request.status === 'pending' && (
-                                                            <button
-                                                                onClick={() => handleCancelRequest(request.id)}
-                                                                className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
-                                                                title="Cancel request"
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                {requests.length === 0 ? (
+                                    <div className="text-center py-16">
+                                        <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                                            <Calendar size={32} className="text-gray-400" />
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No requests yet</h3>
+                                        <p className="text-gray-500 mb-4">Submit your first leave request to get started</p>
+                                        <button
+                                            onClick={() => setShowNewRequestModal(true)}
+                                            className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors inline-flex items-center gap-2"
+                                        >
+                                            <Plus size={18} />
+                                            New Request
+                                        </button>
+                                    </div>
+                                ) : filteredRequests.length === 0 ? (
+                                    <div className="text-center py-16">
+                                        <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <Filter size={20} className="text-gray-400" />
+                                        </div>
+                                        <h3 className="text-gray-900 font-medium mb-1">No matching requests</h3>
+                                        <p className="text-gray-500 text-sm">Try adjusting your filters to see more results</p>
+                                        <button
+                                            onClick={() => { setStatusFilter('all'); setTypeFilter('all'); }}
+                                            className="mt-4 text-sm text-blue-600 font-medium hover:underline"
+                                        >
+                                            Clear all filters
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="divide-y divide-gray-100">
+                                        {filteredRequests.map(request => {
+                                            const statusBadge = getStatusBadge(request.status);
+                                            const StatusIcon = statusBadge.icon;
+
+                                            return (
+                                                <div key={request.id} className="p-5 hover:bg-gray-50 transition-colors">
+                                                    <div className="flex items-start justify-between">
+                                                        <div className="flex items-start gap-4">
+                                                            <div
+                                                                className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
+                                                                style={{ backgroundColor: `${request.leaveType.color}15` }}
                                                             >
-                                                                <X size={18} />
-                                                            </button>
-                                                        )}
+                                                                {request.leaveType.icon}
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="font-semibold text-gray-900">{request.leaveType.name}</h4>
+                                                                <p className="text-sm text-gray-500 mt-0.5">
+                                                                    {new Date(request.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                                    {request.startDate !== request.endDate && (
+                                                                        <> — {new Date(request.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</>
+                                                                    )}
+                                                                    <span className="mx-2">•</span>
+                                                                    {request.totalDays} {request.totalDays === 1 ? 'day' : 'days'}
+                                                                </p>
+                                                                {request.reason && (
+                                                                    <p className="text-sm text-gray-600 mt-2 italic">"{request.reason}"</p>
+                                                                )}
+                                                                {request.reviewedBy && (
+                                                                    <p className="text-xs text-gray-400 mt-2">
+                                                                        Reviewed by {request.reviewedBy.name} on {new Date(request.reviewedAt).toLocaleDateString()}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex items-center gap-3">
+                                                            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border ${statusBadge.bg} ${statusBadge.text} ${statusBadge.border}`}>
+                                                                <StatusIcon size={14} />
+                                                                {statusBadge.label}
+                                                            </span>
+
+                                                            {request.status === 'pending' && (
+                                                                <button
+                                                                    onClick={() => handleCancelRequest(request.id)}
+                                                                    className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
+                                                                    title="Cancel request"
+                                                                >
+                                                                    <X size={18} />
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
 

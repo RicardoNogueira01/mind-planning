@@ -1,5 +1,5 @@
 /* Import DM Sans and DM Mono fonts */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Mountains+of+Christmas:wght@400;700&family=Cinzel:wght@400;700&family=Creepster&family=Homemade+Apple&family=Berkshire+Swash&display=swap');
 
 :root {
   font-family: 'DM Sans', system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -8,6 +8,8 @@
 
   color: rgba(255, 255, 255, 0.87);
 
+  /* Theme variables defaults */
+  --theme-bg-opacity: 0.05;
 }
 
 body {
@@ -17,6 +19,178 @@ body {
   min-height: 100vh;
   width: 100%;
   height: 100%;
+  transition: background-color 0.5s ease;
+  overflow-x: hidden;
+  /* Prevent horizontal scroll during shake */
+}
+
+/* =========================================
+   ANIMATIONS
+   ========================================= */
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+.shake {
+  animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+}
+
+/* =========================================
+   THEMES
+   ========================================= */
+
+/* --- Birthday Theme --- */
+body.theme-birthday {
+  background-image: radial-gradient(#FFD700 15%, transparent 16%),
+    radial-gradient(#FF69B4 15%, transparent 16%),
+    radial-gradient(#00CED1 15%, transparent 16%),
+    radial-gradient(#32CD32 15%, transparent 16%);
+  background-color: #fffdf0;
+  background-position: 0 0, 20px 20px, 40px 10px, 60px 30px;
+  background-size: 80px 80px;
+}
+
+
+
+/* --- Christmas Theme --- */
+body.theme-christmas {
+  background-color: #f0fdf4;
+  font-family: 'Mountains of Christmas', cursive;
+  --theme-primary: #15803d;
+  --theme-secondary: #dc2626;
+}
+
+body.theme-christmas .bg-black {
+  background-color: #15803d !important;
+}
+
+body.theme-christmas h1,
+body.theme-christmas h2,
+body.theme-christmas h3,
+body.theme-christmas h4 {
+  letter-spacing: 1px;
+}
+
+/* --- New Year Theme --- */
+body.theme-new-year {
+  background-color: #111827;
+  color: #f3f4f6;
+  background-image: radial-gradient(circle at 50% 50%, #1f2937 0%, #111827 100%);
+  font-family: 'Cinzel', serif;
+  --theme-primary: #fbbf24;
+}
+
+/* Fix text colors for dark mode new year */
+body.theme-new-year .text-gray-900 {
+  color: #f3f4f6 !important;
+}
+
+body.theme-new-year .text-gray-700,
+body.theme-new-year .text-gray-600,
+body.theme-new-year .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+body.theme-new-year .bg-white {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+body.theme-new-year .bg-gray-50 {
+  background-color: #111827 !important;
+}
+
+/* --- Halloween Theme --- */
+body.theme-halloween {
+  background-color: #271a10;
+  color: #fde047;
+  font-family: 'Creepster', display;
+}
+
+body.theme-halloween .bg-black {
+  background-color: #ea580c !important;
+  color: #271a10 !important;
+}
+
+body.theme-halloween .text-gray-900 {
+  color: #fde047 !important;
+}
+
+body.theme-halloween .text-gray-600 {
+  color: #fdba74 !important;
+}
+
+/* --- Thanksgiving Theme --- */
+body.theme-thanksgiving {
+  background-color: #fffbeb;
+  font-family: 'Homemade Apple', cursive;
+  --theme-primary: #92400e;
+}
+
+body.theme-thanksgiving h1,
+body.theme-thanksgiving h2 {
+  color: #78350f !important;
+}
+
+/* --- Black Friday Theme --- */
+body.theme-black-friday {
+  background-color: #000000;
+  color: white;
+}
+
+body.theme-black-friday {
+  background-color: #000000;
+  color: white;
+  font-family: 'Berkshire Swash', display;
+}
+
+/* Helper Animation */
+@keyframes float {
+  0% {
+    transform: translate(-50%, 0px);
+  }
+
+  50% {
+    transform: translate(-50%, -10px);
+  }
+
+  100% {
+    transform: translate(-50%, 0px);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: translate(-50%, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(-50%, 0) scale(1.05);
+  }
+
+  100% {
+    transform: translate(-50%, 0) scale(1);
+  }
 }
 
 /* Dashboard animations */
@@ -25,6 +199,7 @@ body {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -35,6 +210,7 @@ body {
   from {
     width: 0;
   }
+
   to {
     width: var(--progress-width, 0%);
   }
@@ -54,6 +230,7 @@ body {
     opacity: 0;
     transform: translateX(-50%) translateY(-10px);
   }
+
   100% {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
@@ -65,6 +242,7 @@ body {
     opacity: 0;
     transform: scale(0.9);
   }
+
   100% {
     opacity: 1;
     transform: scale(1);
@@ -75,6 +253,7 @@ body {
   0% {
     box-shadow: 0 0 0 0px currentColor;
   }
+
   100% {
     box-shadow: 0 0 0 20px transparent;
   }
@@ -85,10 +264,12 @@ body {
     transform: scale(1);
     opacity: 1;
   }
+
   50% {
     transform: scale(1.15);
     opacity: 0.8;
   }
+
   100% {
     transform: scale(1);
     opacity: 1;

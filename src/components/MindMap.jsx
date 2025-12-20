@@ -32,6 +32,8 @@ import AttachmentsPopup from './popups/AttachmentsPopup';
 import CollaboratorPicker from './popups/CollaboratorPicker';
 import ThemePicker from './popups/ThemePicker';
 import { getTheme } from '../config/mindMapThemes';
+// @ts-ignore
+import { useTheme } from '../context/ThemeContext';
 import ImageAnalyzerModal from './mindmap/ImageAnalyzerModal';
 import ViewSelector from './mindmap/ViewSelector';
 import GanttView from './mindmap/views/GanttView';
@@ -80,6 +82,9 @@ import { useNodeSelection } from '../hooks/useNodeSelection';
 import { getNodeProgress, formatVisitorTime } from '../utils/nodeUtils';
 
 export default function MindMap({ mapId, onBack }) {
+  // @ts-ignore
+  const { currentTheme: globalTheme } = useTheme();
+
   // Detect if mobile/tablet
   const isMobileOrTablet = window.innerWidth < 1024; // lg breakpoint
   const initialZoom = isMobileOrTablet ? 0.7 : 1;
@@ -136,6 +141,13 @@ export default function MindMap({ mapId, onBack }) {
   const [showThemePicker, setShowThemePicker] = useState(false); // Theme picker popup
   const [showMobileActionsMenu, setShowMobileActionsMenu] = useState(false); // Mobile actions dropdown menu
   const [currentLayoutType, setCurrentLayoutType] = useState('free'); // Track current layout for connection style
+
+  // Sync with global theme
+  useEffect(() => {
+    if (globalTheme && globalTheme !== 'default') {
+      setCurrentTheme(globalTheme);
+    }
+  }, [globalTheme]);
 
   // Ghost Preview State - Shows translucent preview of nodes before placement
   const [ghostPreview, setGhostPreview] = useState({

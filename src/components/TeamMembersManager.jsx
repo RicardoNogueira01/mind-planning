@@ -706,14 +706,80 @@ const TeamMembersManager = () => {
                 <p className="text-sm text-gray-500 mt-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>{t('teamMembers.subtitle')}</p>
               </div>
             </div>
-            <button
-              onClick={() => setShowAddMemberModal(true)}
-              className="px-3 md:px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2 text-sm touch-manipulation cursor-pointer"
-              style={{ fontFamily: 'DM Sans, sans-serif' }}
-            >
-              <Plus size={16} />
-              {t('teamMembers.addMember')}
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  // 1. Play Sound
+                  try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) {
+                      const ctx = new AudioContext();
+                      const osc = ctx.createOscillator();
+                      const gain = ctx.createGain();
+                      osc.connect(gain); gain.connect(ctx.destination);
+                      osc.type = 'sine'; osc.frequency.setValueAtTime(600, ctx.currentTime);
+                      osc.frequency.exponentialRampToValueAtTime(1000, ctx.currentTime + 0.1);
+                      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+                      osc.start(); osc.stop(ctx.currentTime + 0.4);
+                    }
+                  } catch (e) { }
+
+                  // 2. Shake Screen
+                  document.body.classList.add('shake');
+                  setTimeout(() => document.body.classList.remove('shake'), 500);
+
+                  // 3. Show Toast Notification
+                  const existingNudge = document.getElementById('test-nudge-toast');
+                  if (existingNudge) existingNudge.remove();
+
+                  const nudge = document.createElement('div');
+                  nudge.id = 'test-nudge-toast';
+                  nudge.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-white border border-blue-100 rounded-xl shadow-xl p-4 z-[9999] animate-fade-in flex items-start gap-4 max-w-sm pointer-events-auto cursor-pointer hover:bg-gray-50 transition-colors w-full md:w-auto min-w-[320px]';
+                  nudge.innerHTML = `
+                    <div class="p-2 bg-blue-50 rounded-full text-blue-600 flex-shrink-0">
+                       👋
+                    </div>
+                    <div class="flex-1 min-w-0">
+                       <h4 class="font-bold text-gray-900 text-sm">You've been nudged!</h4>
+                       <p class="text-xs text-gray-600 mt-1">John Doe wants your attention on "Project Alpha".</p>
+                       <div class="mt-2 text-[10px] text-gray-400">Just now</div>
+                    </div>
+                  `;
+
+                  // Add click to dismiss
+                  nudge.onclick = () => {
+                    nudge.style.opacity = '0';
+                    nudge.style.transform = 'translate(-50%, -20px)';
+                    setTimeout(() => nudge.remove(), 300);
+                  };
+
+                  document.body.appendChild(nudge);
+
+                  // Auto dismiss
+                  setTimeout(() => {
+                    if (document.body.contains(nudge)) {
+                      nudge.style.opacity = '0';
+                      nudge.style.transform = 'translate(-50%, -20px)';
+                      setTimeout(() => nudge.remove(), 300);
+                    }
+                  }, 5000);
+                }}
+                className="px-3 md:px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm touch-manipulation cursor-pointer"
+                style={{ fontFamily: 'DM Sans, sans-serif' }}
+              >
+                <span className="text-xl">👋</span>
+                Test Nudge
+              </button>
+              <button
+                onClick={() => setShowAddMemberModal(true)}
+                className="px-3 md:px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2 text-sm touch-manipulation cursor-pointer"
+                style={{ fontFamily: 'DM Sans, sans-serif' }}
+              >
+                <Plus size={16} />
+                {t('teamMembers.addMember')}
+              </button>
+            </div>
           </div>
         </header>      {/* Main Content */}
         <main>

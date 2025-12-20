@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import WeeklyCalendarWidget from './WeeklyCalendarWidget';
 import TopBar from './shared/TopBar';
 import { StatCard, CardHeader, ProgressBar, AvatarWithInitials } from './shared';
 import { useLanguage } from '../context/LanguageContext';
+// @ts-ignore
+import { useTheme } from '../context/ThemeContext';
 import {
   CheckCircle,
   Clock,
@@ -21,13 +23,33 @@ import {
   Shield,
   Settings,
   Palmtree,
-  CalendarDays
+  CalendarDays,
+  Palette,
+  PartyPopper,
+  Check
 } from 'lucide-react';
 import clsx from 'clsx';
 
 
 const Dashboard = () => {
   const { t } = useLanguage();
+  // @ts-ignore
+  const { currentTheme, setCurrentTheme, isBirthdayMode, toggleBirthdayMode, themes } = useTheme();
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
+  const themeMenuRef = useRef(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (themeMenuRef.current && !themeMenuRef.current.contains(event.target)) {
+        setShowThemeMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const navigate = useNavigate();
   const [currentHolidayIndex, setCurrentHolidayIndex] = useState(0);
 
@@ -217,7 +239,7 @@ const Dashboard = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 bg-clip-text text-transparent mb-2">
-                {t('greeting.hello')}, John Doe 👋
+                {isBirthdayMode ? 'Happy Birthday' : (themes.find(t => t.id === currentTheme)?.greeting || t('greeting.hello'))}, John Doe {isBirthdayMode ? '🎂' : (themes.find(t => t.id === currentTheme)?.emoji || '👋')}
               </h2>
               <p className="text-sm md:text-base text-gray-600">
                 {dateInfo.dayName}, {dateInfo.month} {dateInfo.day}, {dateInfo.year}
@@ -226,13 +248,63 @@ const Dashboard = () => {
                 {t('greeting.subtitle')}
               </p>
             </div>
-            <Link
-              to="/mindmaps"
-              className="w-full md:w-auto px-4 md:px-6 py-2.5 md:py-3 bg-black hover:bg-gray-900 text-white rounded-xl font-semibold shadow-lg shadow-black/30 hover:shadow-xl hover:shadow-black/40 transition-all duration-300 flex items-center justify-center gap-2 text-sm touch-manipulation transform hover:scale-[1.02]"
-            >
-              <Activity size={18} />
-              {t('buttons.openMindMaps')}
-            </Link>
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Birthday Toggle */}
+              <button
+                onClick={toggleBirthdayMode}
+                className={`px-3 md:px-4 py-2.5 md:py-3 border ${isBirthdayMode ? 'bg-pink-50 border-pink-200 text-pink-600' : 'border-gray-200 text-gray-700 bg-white hover:bg-gray-50'} rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-medium whitespace-nowrap touch-manipulation shadow-sm`}
+                aria-label="Toggle Birthday Mode"
+              >
+                <PartyPopper size={18} className={isBirthdayMode ? 'text-pink-500' : ''} />
+                <span className="hidden sm:inline">{isBirthdayMode ? 'Birthday On!' : 'Test Birthday'}</span>
+              </button>
+
+              {/* Theme Dropdown */}
+              <div className="relative" ref={themeMenuRef}>
+                <button
+                  onClick={() => setShowThemeMenu(!showThemeMenu)}
+                  className="px-3 md:px-4 py-2.5 md:py-3 border border-gray-200 text-gray-700 bg-white rounded-xl hover:bg-gray-50 transition-colors duration-200 flex items-center gap-2 text-sm font-medium whitespace-nowrap touch-manipulation min-w-[140px] justify-between shadow-sm"
+                  aria-label="Theme selector"
+                >
+                  <div className="flex items-center gap-2">
+                    <Palette size={18} />
+                    <span>{themes.find((t) => t.id === currentTheme)?.name || 'Theme'}</span>
+                  </div>
+                  {themes.find((t) => t.id === currentTheme)?.icon || ''}
+                </button>
+
+                {showThemeMenu && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-1 z-50 animate-scale-in origin-top-right">
+                    {themes.map((theme) => (
+                      <button
+                        key={theme.id}
+                        onClick={() => {
+                          setCurrentTheme(theme.id);
+                          setShowThemeMenu(false);
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center justify-between transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{theme.icon}</span>
+                          <span className={`font-medium ${currentTheme === theme.id ? 'text-blue-600' : 'text-gray-700'}`}>
+                            {theme.name}
+                          </span>
+                        </div>
+                        {currentTheme === theme.id && <Check size={14} className="text-blue-600" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <Link
+                to="/mindmaps"
+                className="w-full md:w-auto px-4 md:px-6 py-2.5 md:py-3 bg-black hover:bg-gray-900 text-white rounded-xl font-semibold shadow-lg shadow-black/30 hover:shadow-xl hover:shadow-black/40 transition-all duration-300 flex items-center justify-center gap-2 text-sm touch-manipulation transform hover:scale-[1.02]"
+              >
+                <Activity size={18} />
+                {t('buttons.openMindMaps')}
+              </Link>
+            </div>
           </div>
         </div>
 
