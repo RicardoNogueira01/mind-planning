@@ -447,6 +447,7 @@ export function computeBezierPath(
     totalChildren?: number;
     parentId?: string;
     allNodeRects?: Rect[]; // All node rectangles for collision detection
+    forceOrientation?: 'horizontal' | 'vertical';
   }
 ) {
   // Calculate centers of both rectangles
@@ -469,34 +470,69 @@ export function computeBezierPath(
 
   let start: { x: number; y: number };
   let end: { x: number; y: number };
+  const edgeInset = 0; // Create at actual edge
 
-  // Small inset from edge for visual appeal
-  const edgeInset = 0; // Connect at actual edge
+  // Distribute start points based on child index to avoid overlapping lines
+  const childIndex = options?.childIndex ?? 0;
+  const totalChildren = options?.totalChildren ?? 1;
 
-  if (absDx >= absDy) {
+  // Calculate generic offsets
+  // We use 60% of the parent dimension to keep lines clustered near center but distinct
+  // This prevents them from bunching at the very corners
+  let startOffsetX = 0;
+  let startOffsetY = 0;
+
+  // Determine layout orientation: Use forced override OR aspect ratio check
+  const isHorizontal = options?.forceOrientation
+    ? options.forceOrientation === 'horizontal'
+    : absDx >= absDy;
+
+  if (totalChildren > 1) {
+    // Spread range - how far apart the first and last line should be
+    // Cap strictly at node dimension - 20px padding (reduced to 10px for wider spread)
+    const spreadFactor = 0.9;
+
+
+    if (isHorizontal) {
+      // Horizontal Layout: Distribute vertically
+      const height = fromRect.bottom - fromRect.top;
+      const availableHeight = Math.min(height * spreadFactor, height - 10); // Minimal padding
+      const step = availableHeight / (totalChildren - 1);
+      // Start from top-most point in the spread range
+      startOffsetY = -availableHeight / 2 + childIndex * step;
+    } else {
+      // Vertical Layout: Distribute horizontally
+      const width = fromRect.right - fromRect.left;
+      const availableWidth = Math.min(width * spreadFactor, width - 10);
+      const step = availableWidth / (totalChildren - 1);
+      startOffsetX = -availableWidth / 2 + childIndex * step;
+    }
+  }
+
+  if (isHorizontal) {
     // HORIZONTAL layout - child is more left/right than up/down
     if (dx > 0) {
       // Child is to the RIGHT of parent
-      // Start from vertical center of parent's RIGHT edge
-      start = { x: fromRect.right - edgeInset, y: fromCenterY };
+      // Start from distributed vertical center of parent's RIGHT edge
+      start = { x: fromRect.right - edgeInset, y: fromCenterY + startOffsetY };
       end = { x: toRect.left + edgeInset, y: toCenterY };
     } else {
       // Child is to the LEFT of parent
-      // Start from vertical center of parent's LEFT edge
-      start = { x: fromRect.left + edgeInset, y: fromCenterY };
+      // Start from distributed vertical center of parent's LEFT edge
+      start = { x: fromRect.left + edgeInset, y: fromCenterY + startOffsetY };
       end = { x: toRect.right - edgeInset, y: toCenterY };
     }
   } else {
     // VERTICAL layout - child is more up/down than left/right
     if (dy > 0) {
       // Child is BELOW parent
-      // Start from horizontal center of parent's BOTTOM edge
-      start = { x: fromCenterX, y: fromRect.bottom - edgeInset };
+      // Start from distributed horizontal center of parent's BOTTOM edge
+      start = { x: fromCenterX + startOffsetX, y: fromRect.bottom - edgeInset };
       end = { x: toCenterX, y: toRect.top + edgeInset };
     } else {
       // Child is ABOVE parent
-      // Start from horizontal center of parent's TOP edge
-      start = { x: fromCenterX, y: fromRect.top + edgeInset };
+      // Start from distributed horizontal center of parent's TOP edge
+      start = { x: fromCenterX + startOffsetX, y: fromRect.top + edgeInset };
       end = { x: toCenterX, y: toRect.bottom - edgeInset };
     }
   }

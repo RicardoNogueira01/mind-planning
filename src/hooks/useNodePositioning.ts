@@ -110,7 +110,21 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
     const parent = nodes.find(n => n.id === parentId);
     if (!parent) return { x: preferredX, y: preferredY };
 
-    const OFFSET_DISTANCE = NODE_WIDTH + 40; // Distance from parent
+    // Helper to estimate node width (mirrors NodeCard logic)
+    const estimateWidth = (n: Node) => {
+      const text = n.text || '';
+      const len = text.length;
+      // Base 120, max 300, ~8px per char + 32px padding
+      return Math.min(300, Math.max(120, len * 8 + 40));
+    };
+
+    const parentWidth = estimateWidth(parent);
+    const childWidth = 150; // Estimate for new "New Task" node
+    const HORIZONTAL_GAP = 50; // Desired visual gap between edges
+
+    // Calculate precise center-to-center distance needed
+    const OFFSET_DISTANCE = (parentWidth / 2) + HORIZONTAL_GAP + (childWidth / 2);
+
     const CHILD_SPACING = NODE_HEIGHT + 15; // Vertical spacing between siblings
 
     // Find all existing children of this parent using connections
@@ -126,38 +140,8 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
       const rightX = parent.x + OFFSET_DISTANCE;
       const rightY = parent.y;
 
-      const rightClear = !nodes.some(n => {
-        if (n.id === parentId) return false;
-        const dx = Math.abs(n.x - rightX);
-        const dy = Math.abs(n.y - rightY);
-        return dx < MIN_HORIZONTAL_SPACING && dy < MIN_VERTICAL_SPACING;
-      });
-
-      if (rightClear) {
-        return { x: rightX, y: rightY };
-      }
-
-      // If RIGHT is blocked, try other directions: DOWN, LEFT, UP (in order of preference)
-      const fallbackDirections = [
-        { x: parent.x, y: parent.y + OFFSET_DISTANCE }, // DOWN
-        { x: parent.x - OFFSET_DISTANCE, y: parent.y }, // LEFT
-        { x: parent.x, y: parent.y - OFFSET_DISTANCE }, // UP
-      ];
-
-      for (const pos of fallbackDirections) {
-        const isClear = !nodes.some(n => {
-          if (n.id === parentId) return false;
-          const dx = Math.abs(n.x - pos.x);
-          const dy = Math.abs(n.y - pos.y);
-          return dx < MIN_HORIZONTAL_SPACING && dy < MIN_VERTICAL_SPACING;
-        });
-
-        if (isClear) {
-          return pos;
-        }
-      }
-
-      // Default: place to the right
+      // Simple collision check logic...
+      // We skip complex check for manual add to prioritize "closest possible"
       return { x: rightX, y: rightY };
     }
 
@@ -174,16 +158,11 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
       // Vertical layout (Org Chart style) - Add downward
       const targetY = firstChild ? Math.max(...childNodes.map(c => c.y)) + CHILD_SPACING : parent.y + OFFSET_DISTANCE;
       const targetX = parent.x; // Keep aligned vertically
-
-      // Check for overlapping (if multiple columns in vertical mode)
-      // For now, simple vertical stack
       return { x: targetX, y: targetY };
     } else {
       // Horizontal layout (Mind Map style) - Balance Left/Right
 
-      // Determine target side: simple balancing
-      // If Left < Right, go Left. Otherwise Right.
-      // This creates R, L, R, L pattern
+      // Determin target side: simple balancing
       const targetSide = leftChildren.length < rightChildren.length ? 'left' : 'right';
       const direction = targetSide === 'left' ? -1 : 1;
       const targetX = parent.x + direction * OFFSET_DISTANCE;

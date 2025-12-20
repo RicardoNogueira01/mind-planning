@@ -384,7 +384,7 @@ function applyMindMapLayout(
   const NODE_HEIGHT = 60;
   // Gap settings
   const HORIZONTAL_GAP = 5; // Gap between siblings
-  const VERTICAL_GAP = 80;  // Gap between levels (Parent <-> Child)
+  const VERTICAL_GAP = 50;  // Gap between levels (Parent <-> Child)
 
   // Build tree structure
   const childrenMap = new Map<string, string[]>();
@@ -431,6 +431,14 @@ function applyMindMapLayout(
     // Let's refine: positionNode(nodeId, x, y, direction)
   }
 
+  // Helper to estimate node width (mirrors NodeCard logic)
+  const estimateWidth = (n: Node) => {
+    const text = n.text || '';
+    const len = text.length;
+    // Base 120, max 300, ~8px per char + 40px padding
+    return Math.min(300, Math.max(120, len * 8 + 40));
+  };
+
   // Recursive placement function
   function placeNode(nodeId: string, x: number, globalStartY: number, direction: number): number {
     // This function positions 'nodeId' at 'x' and centered vertically in its allocated space
@@ -439,14 +447,24 @@ function applyMindMapLayout(
     const children = childrenMap.get(nodeId) || [];
     const subtreeHeight = getSubtreeHeight(nodeId);
 
+    const parentNode = nodes.find(n => n.id === nodeId);
+    const parentWidth = parentNode ? estimateWidth(parentNode) : NODE_WIDTH;
+
     // Position children first to find their centers
     if (children.length > 0) {
       let currentChildY = globalStartY;
       const childCentersY: number[] = [];
 
       children.forEach(childId => {
+        const childNode = nodes.find(n => n.id === childId);
+        const childWidth = childNode ? estimateWidth(childNode) : NODE_WIDTH;
+
+        // Calculate dynamic offset
+        // ParentHalf + Gap + ChildHalf
+        const offset = (parentWidth / 2) + VERTICAL_GAP + (childWidth / 2); // VERTICAL_GAP is actually horizontal spacing here
+
         const childHeight = getSubtreeHeight(childId);
-        placeNode(childId, x + direction * (NODE_WIDTH + VERTICAL_GAP), currentChildY, direction);
+        placeNode(childId, x + direction * offset, currentChildY, direction);
 
         const childPos = positioned.get(childId);
         if (childPos) childCentersY.push(childPos.y);
@@ -477,6 +495,8 @@ function applyMindMapLayout(
     const leftChildren: string[] = [];
     const rightChildren: string[] = [];
 
+    const rootWidth = estimateWidth(root);
+
     // Balance children: Alternate
     children.forEach((childId, index) => {
       // First goes right, second left, etc.
@@ -496,16 +516,24 @@ function applyMindMapLayout(
     // Layout Right Side
     let currentY = rootY - rightTotalHeight / 2;
     rightChildren.forEach(childId => {
+      const childNode = nodes.find(n => n.id === childId);
+      const childWidth = childNode ? estimateWidth(childNode) : NODE_WIDTH;
+      const offset = (rootWidth / 2) + VERTICAL_GAP + (childWidth / 2);
+
       const h = getSubtreeHeight(childId);
-      placeNode(childId, rootX + NODE_WIDTH + VERTICAL_GAP, currentY, 1);
+      placeNode(childId, rootX + offset, currentY, 1);
       currentY += h + HORIZONTAL_GAP;
     });
 
     // Layout Left Side
     currentY = rootY - leftTotalHeight / 2;
     leftChildren.forEach(childId => {
+      const childNode = nodes.find(n => n.id === childId);
+      const childWidth = childNode ? estimateWidth(childNode) : NODE_WIDTH;
+      const offset = (rootWidth / 2) + VERTICAL_GAP + (childWidth / 2);
+
       const h = getSubtreeHeight(childId);
-      placeNode(childId, rootX - NODE_WIDTH - VERTICAL_GAP, currentY, -1);
+      placeNode(childId, rootX - offset, currentY, -1);
       currentY += h + HORIZONTAL_GAP;
     });
 

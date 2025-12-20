@@ -299,11 +299,21 @@ export default function ConnectionsSvg({
             pos && typeof pos.left === 'number'
           );
 
+          // Determine forced orientation based on the calculated direction
+          // This prevents connections from snapping to top/bottom for tall lists
+          let forceOrientation = undefined;
+          if (direction === 'left' || direction === 'right') {
+            forceOrientation = 'horizontal';
+          } else if (direction === 'top' || direction === 'bottom') {
+            forceOrientation = 'vertical';
+          }
+
           const result = computeBezierPath(fromPos, toPos, {
             childIndex,
             totalChildren,
             parentId: conn.from,
-            allNodeRects
+            allNodeRects,
+            forceOrientation
           });
           pathData = result.d;
           labelPoint = result.label;
