@@ -60,6 +60,11 @@ body {
    ========================================= */
 
 /* --- Birthday Theme --- */
+body.theme-birthday,
+body.theme-birthday * {
+  font-family: 'Pacifico', cursive !important;
+}
+
 body.theme-birthday {
   background-image: radial-gradient(#FFD700 15%, transparent 16%),
     radial-gradient(#FF69B4 15%, transparent 16%),
@@ -68,7 +73,6 @@ body.theme-birthday {
   background-color: #fffdf0;
   background-position: 0 0, 20px 20px, 40px 10px, 60px 30px;
   background-size: 80px 80px;
-  font-family: 'Pacifico', cursive;
   --theme-primary: #ec4899;
   --theme-secondary: #facc15;
 }
@@ -76,9 +80,13 @@ body.theme-birthday {
 
 
 /* --- Christmas Theme --- */
+body.theme-christmas,
+body.theme-christmas * {
+  font-family: 'Mountains of Christmas', cursive !important;
+}
+
 body.theme-christmas {
   background-color: #f0fdf4;
-  font-family: 'Mountains of Christmas', cursive;
   --theme-primary: #15803d;
   --theme-secondary: #dc2626;
 }
@@ -95,11 +103,15 @@ body.theme-christmas h4 {
 }
 
 /* --- New Year Theme --- */
+body.theme-new-year,
+body.theme-new-year * {
+  font-family: 'Cinzel', serif !important;
+}
+
 body.theme-new-year {
   background-color: #111827;
   color: #f3f4f6;
   background-image: radial-gradient(circle at 50% 50%, #1f2937 0%, #111827 100%);
-  font-family: 'Cinzel', serif;
   --theme-primary: #fbbf24;
 }
 
@@ -124,10 +136,15 @@ body.theme-new-year .bg-gray-50 {
 }
 
 /* --- Halloween Theme --- */
+body.theme-halloween,
+body.theme-halloween * {
+  font-family: 'Creepster', display !important;
+  letter-spacing: 1px;
+}
+
 body.theme-halloween {
   background-color: #271a10;
   color: #fde047;
-  font-family: 'Creepster', display;
 }
 
 body.theme-halloween .bg-black {
@@ -144,9 +161,13 @@ body.theme-halloween .text-gray-600 {
 }
 
 /* --- Thanksgiving Theme --- */
+body.theme-thanksgiving,
+body.theme-thanksgiving * {
+  font-family: 'Homemade Apple', cursive !important;
+}
+
 body.theme-thanksgiving {
   background-color: #fffbeb;
-  font-family: 'Homemade Apple', cursive;
   --theme-primary: #92400e;
 }
 
@@ -156,15 +177,36 @@ body.theme-thanksgiving h2 {
 }
 
 /* --- Black Friday Theme --- */
-body.theme-black-friday {
-  background-color: #000000;
-  color: white;
+body.theme-black-friday,
+body.theme-black-friday * {
+  font-family: 'Berkshire Swash', display !important;
 }
 
 body.theme-black-friday {
   background-color: #000000;
   color: white;
-  font-family: 'Berkshire Swash', display;
+}
+
+body.theme-black-friday .bg-white {
+  background-color: #171717 !important;
+  color: white !important;
+  border-color: #404040 !important;
+}
+
+body.theme-black-friday .bg-gray-50,
+body.theme-black-friday .bg-gray-100 {
+  background-color: #0a0a0a !important;
+}
+
+body.theme-black-friday .text-gray-900,
+body.theme-black-friday .text-gray-800,
+body.theme-black-friday .text-gray-700 {
+  color: #ffffff !important;
+}
+
+body.theme-black-friday .text-gray-600,
+body.theme-black-friday .text-gray-500 {
+  color: #d4d4d4 !important;
 }
 
 /* Helper Animation */
