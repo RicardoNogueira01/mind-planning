@@ -521,140 +521,97 @@ const Dashboard = () => {
         {/* Leave Balance & Deadline Reminders - Side by Side */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* My Leave Balance Card - For Team Members */}
-          <div className="bg-gradient-to-r from-teal-50 via-emerald-50 to-teal-50 rounded-xl p-6 shadow-sm border border-teal-200">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              {/* Header */}
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-teal-100 rounded-xl">
-                  <Palmtree size={24} className="text-teal-600" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                    My Leave Balance
-                  </h2>
-                  <p className="text-sm text-gray-600" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                    Track your vacation and time off
-                  </p>
-                </div>
-              </div>
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <CardHeader
+              icon={Palmtree}
+              title="My Leave Balance"
+              subtitle="Track your vacation and time off"
+              viewAllLink="/my-leave"
+              iconBgColor="bg-teal-50"
+              iconColor="text-teal-600"
+            />
 
-              {/* Stats */}
-              <div className="flex flex-wrap gap-3">
-                <StatCard
-                  value={13}
-                  label="Available"
-                  icon={CalendarDays}
-                  iconColor="text-teal-500"
-                  bgColor="bg-white"
-                  borderColor="border-teal-200"
-                  valueColor="text-teal-600"
-                />
-                <StatCard
-                  value={3}
-                  label="Pending"
-                  icon={Clock}
-                  iconColor="text-amber-500"
-                  bgColor="bg-white"
-                  borderColor="border-amber-200"
-                  valueColor="text-amber-600"
-                />
-                <StatCard
-                  value={8}
-                  label="Used"
-                  icon={CheckCircle}
-                  iconColor="text-gray-500"
-                  bgColor="bg-white"
-                  borderColor="border-gray-200"
-                  valueColor="text-gray-600"
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Link
-                  to="/my-leave"
-                  className="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-md shadow-teal-500/30"
-                >
-                  <Palmtree size={16} />
-                  Request Leave
-                </Link>
-                <Link
-                  to="/my-leave"
-                  className="px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors"
-                >
-                  View History
-                  <ArrowRight size={16} />
-                </Link>
-              </div>
+            {/* Stats */}
+            <div className="flex flex-wrap gap-3 mb-4">
+              <StatCard
+                value={13}
+                label="Available"
+                icon={CalendarDays}
+                iconColor="text-teal-500"
+                bgColor="bg-teal-50"
+                borderColor="border-teal-200"
+                valueColor="text-teal-600"
+              />
+              <StatCard
+                value={3}
+                label="Pending"
+                icon={Clock}
+                iconColor="text-amber-500"
+                bgColor="bg-amber-50"
+                borderColor="border-amber-200"
+                valueColor="text-amber-600"
+              />
+              <StatCard
+                value={8}
+                label="Used"
+                icon={CheckCircle}
+                iconColor="text-gray-500"
+                bgColor="bg-gray-50"
+                borderColor="border-gray-200"
+                valueColor="text-gray-600"
+              />
             </div>
+
+            {/* Actions */}
+            <Link
+              to="/my-leave"
+              className="w-full px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-sm"
+            >
+              <Palmtree size={16} />
+              Request Leave
+            </Link>
           </div>
 
-          {/* Deadline Reminders Card - Manager Feature */}
-          <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-indigo-50 rounded-xl p-6 shadow-sm border border-indigo-200">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              {/* Header */}
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-indigo-100 rounded-xl">
-                  <Bell size={24} className="text-indigo-600" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                    Deadline Reminders
-                  </h2>
-                  <p className="text-sm text-gray-600" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                    Automatic reminders for approaching deadlines
-                  </p>
-                </div>
-              </div>
+          {/* Deadline Reminders Card */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <CardHeader
+              icon={Bell}
+              title="Deadline Reminders"
+              subtitle="Automatic reminders for approaching deadlines"
+              viewAllLink="/reminders"
+              iconBgColor="bg-indigo-50"
+              iconColor="text-indigo-600"
+            />
 
-              {/* Stats */}
-              <div className="flex flex-wrap gap-3">
-                <StatCard
-                  value={stats.overdueTasks}
-                  label="Overdue"
-                  icon={AlertTriangle}
-                  iconColor="text-red-500"
-                  bgColor="bg-white"
-                  borderColor="border-red-200"
-                  valueColor="text-red-600"
-                />
-                <StatCard
-                  value={2}
-                  label="Due Today"
-                  icon={Clock}
-                  iconColor="text-orange-500"
-                  bgColor="bg-white"
-                  borderColor="border-orange-200"
-                  valueColor="text-orange-600"
-                />
-                <StatCard
-                  value={8}
-                  label="This Week"
-                  icon={Clock}
-                  iconColor="text-blue-500"
-                  bgColor="bg-white"
-                  borderColor="border-blue-200"
-                  valueColor="text-blue-600"
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Link
-                  to="/reminders"
-                  className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-md shadow-indigo-500/30"
-                >
-                  <Bell size={16} />
-                  My Reminders
-                </Link>
-                <Link
-                  to="/settings/reminders"
-                  className="px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors"
-                >
-                  <Settings size={16} />
-                  Rules
-                </Link>
-              </div>
+            {/* Stats */}
+            <div className="flex flex-wrap gap-3">
+              <StatCard
+                value={stats.overdueTasks}
+                label="Overdue"
+                icon={AlertTriangle}
+                iconColor="text-red-500"
+                bgColor="bg-red-50"
+                borderColor="border-red-200"
+                valueColor="text-red-600"
+              />
+              <StatCard
+                value={2}
+                label="Due Today"
+                icon={Clock}
+                iconColor="text-orange-500"
+                bgColor="bg-orange-50"
+                borderColor="border-orange-200"
+                valueColor="text-orange-600"
+              />
+              <StatCard
+                value={8}
+                label="This Week"
+                icon={Clock}
+                iconColor="text-blue-500"
+                bgColor="bg-blue-50"
+                borderColor="border-blue-200"
+                valueColor="text-blue-600"
+              />
             </div>
           </div>
         </div>
