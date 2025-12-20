@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import TopBar from './shared/TopBar';
 import {
     ArrowLeft,
     Plus,
@@ -19,6 +18,7 @@ import {
 } from 'lucide-react';
 
 const RemindersPage = () => {
+    const navigate = useNavigate();
     const { t } = useLanguage();
     const [reminders, setReminders] = useState([
         {
@@ -240,40 +240,50 @@ const RemindersPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#FAFAFA]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-            <TopBar showSearch={false} />
-
-            <div className="p-4 md:p-8">
-                {/* Header */}
-                <header className="mb-8">
-                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="min-h-screen bg-gray-50" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+            {/* Header */}
+            <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+                <div className="px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-between h-16">
                         <div className="flex items-center gap-4">
-                            <Link to="/" className="p-2 hover:bg-white rounded-xl transition-colors shadow-sm border border-gray-100">
-                                <ArrowLeft size={20} className="text-gray-700" strokeWidth={2} />
-                            </Link>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">Reminders</h1>
-                                <p className="text-sm text-gray-500 mt-1">Manage your personal reminders and notifications</p>
+                            <button
+                                onClick={() => navigate(-1)}
+                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                                <ArrowLeft size={20} className="text-gray-600" />
+                            </button>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gradient-to-br from-gray-800 to-black rounded-lg flex items-center justify-center">
+                                    <Bell className="text-white" size={20} />
+                                </div>
+                                <div>
+                                    <h1 className="text-xl font-bold text-gray-900">Reminders</h1>
+                                    <p className="text-sm text-gray-500">Manage your personal reminders</p>
+                                </div>
                             </div>
                         </div>
+
                         <div className="flex gap-2">
                             <button
                                 onClick={triggerTestPopup}
-                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 text-sm font-medium"
+                                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
                             >
                                 <Bell size={16} />
                                 Test Popup
                             </button>
                             <button
                                 onClick={() => setShowAddModal(true)}
-                                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2 text-sm font-medium"
+                                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
                             >
                                 <Plus size={16} />
                                 New Reminder
                             </button>
                         </div>
                     </div>
-                </header>
+                </div>
+            </header>
+
+            <main className="px-4 md:px-8 py-8">
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -328,13 +338,13 @@ const RemindersPage = () => {
                                 placeholder="Search reminders..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-gray-900"
                             />
                         </div>
                         <select
                             value={filterPriority}
                             onChange={(e) => setFilterPriority(e.target.value)}
-                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black text-gray-900"
                         >
                             <option value="all">All Priorities</option>
                             <option value="high">High Priority</option>
@@ -344,7 +354,7 @@ const RemindersPage = () => {
                         <select
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
-                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black text-gray-900"
                         >
                             <option value="all">All Status</option>
                             <option value="pending">Pending</option>
@@ -437,7 +447,7 @@ const RemindersPage = () => {
                         </div>
                     )}
                 </div>
-            </div>
+            </main>
 
             {/* Add/Edit Modal */}
             {showAddModal && (
@@ -466,7 +476,7 @@ const RemindersPage = () => {
                                         required
                                         value={formData.title}
                                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-gray-900"
                                         placeholder="Enter reminder title"
                                     />
                                 </div>
@@ -478,7 +488,7 @@ const RemindersPage = () => {
                                     <textarea
                                         value={formData.description}
                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 resize-none"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-gray-900 resize-none"
                                         rows={3}
                                         placeholder="Enter reminder description"
                                     />
@@ -494,7 +504,7 @@ const RemindersPage = () => {
                                             required
                                             value={formData.date}
                                             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-gray-900"
                                         />
                                     </div>
 
@@ -507,7 +517,7 @@ const RemindersPage = () => {
                                             required
                                             value={formData.time}
                                             onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-gray-900"
                                         />
                                     </div>
                                 </div>
@@ -519,7 +529,7 @@ const RemindersPage = () => {
                                     <select
                                         value={formData.priority}
                                         onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-gray-900"
                                     >
                                         <option value="low">Low</option>
                                         <option value="medium">Medium</option>
@@ -553,17 +563,17 @@ const RemindersPage = () => {
                 <div className="fixed inset-0 flex items-start justify-center pt-20 z-[100] pointer-events-none">
                     <div className="pointer-events-auto animate-bounce-in">
                         <div className={`bg-white rounded-2xl shadow-2xl border-2 max-w-md w-full mx-4 overflow-hidden ${showPopupNotification.priority === 'high'
-                                ? 'border-red-400'
-                                : showPopupNotification.priority === 'medium'
-                                    ? 'border-yellow-400'
-                                    : 'border-green-400'
+                            ? 'border-red-400'
+                            : showPopupNotification.priority === 'medium'
+                                ? 'border-yellow-400'
+                                : 'border-green-400'
                             }`}>
                             {/* Header with bell animation */}
                             <div className={`px-6 py-4 flex items-center gap-4 ${showPopupNotification.priority === 'high'
-                                    ? 'bg-gradient-to-r from-red-500 to-red-600'
-                                    : showPopupNotification.priority === 'medium'
-                                        ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
-                                        : 'bg-gradient-to-r from-green-500 to-green-600'
+                                ? 'bg-gradient-to-r from-red-500 to-red-600'
+                                : showPopupNotification.priority === 'medium'
+                                    ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                                    : 'bg-gradient-to-r from-green-500 to-green-600'
                                 }`}>
                                 <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
                                     <Bell size={28} className="text-white animate-wiggle" />

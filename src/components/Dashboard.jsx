@@ -584,7 +584,7 @@ const Dashboard = () => {
             />
 
             {/* Stats */}
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3 mb-4">
               <StatCard
                 value={stats.overdueTasks}
                 label="Overdue"
@@ -613,6 +613,15 @@ const Dashboard = () => {
                 valueColor="text-blue-600"
               />
             </div>
+
+            {/* Actions */}
+            <Link
+              to="/reminders"
+              className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-sm"
+            >
+              <Bell size={16} />
+              Create Reminder
+            </Link>
           </div>
         </div>
 
