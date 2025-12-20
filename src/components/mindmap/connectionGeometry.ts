@@ -448,6 +448,7 @@ export function computeBezierPath(
     parentId?: string;
     allNodeRects?: Rect[]; // All node rectangles for collision detection
     forceOrientation?: 'horizontal' | 'vertical';
+    spreadFactor?: number;
   }
 ) {
   // Calculate centers of both rectangles
@@ -490,7 +491,7 @@ export function computeBezierPath(
   if (totalChildren > 1) {
     // Spread range - how far apart the first and last line should be
     // Cap strictly at node dimension - 20px padding (reduced to 10px for wider spread)
-    const spreadFactor = 0.9;
+    const spreadFactor = options?.spreadFactor ?? 0.9;
 
 
     if (isHorizontal) {

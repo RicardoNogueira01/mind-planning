@@ -308,12 +308,18 @@ export default function ConnectionsSvg({
             forceOrientation = 'vertical';
           }
 
+          // Determine if parent is a root node (no incoming connections)
+          const isRoot = !connections.some(c => c.to === conn.from);
+          // Root nodes fan out (0.9), Child nodes bundle together (0)
+          const spreadFactor = isRoot ? 0.9 : 0;
+
           const result = computeBezierPath(fromPos, toPos, {
             childIndex,
             totalChildren,
             parentId: conn.from,
             allNodeRects,
-            forceOrientation
+            forceOrientation,
+            spreadFactor
           });
           pathData = result.d;
           labelPoint = result.label;

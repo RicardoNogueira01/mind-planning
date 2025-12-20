@@ -290,7 +290,7 @@ export default function MindMap({ mapId, onBack }) {
     positioning.pushCollidingNodes
   );
 
-  const dragging = useDragging(nodes, setNodes, canvasRef, mode, selectedNodes, getNodeGroup, constrainPositionToGroup, zoom, positioning.pushCollidingNodes);
+  const dragging = useDragging(nodes, connections, setNodes, canvasRef, mode, selectedNodes, getNodeGroup, constrainPositionToGroup, zoom, positioning.pushCollidingNodes);
 
   // Selection management hook
   const selection = useNodeSelection(nodes, selectedNodes, setSelectedNodes, selectionType);

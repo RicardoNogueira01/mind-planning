@@ -110,71 +110,90 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
     const parent = nodes.find(n => n.id === parentId);
     if (!parent) return { x: preferredX, y: preferredY };
 
-    // Helper to estimate node width (mirrors NodeCard logic)
+    // Helper to calculate node depth (0 = Root, 1 = Child, etc.)
+    const getNodeDepth = (id: string, conns: Connection[]): number => {
+      let depth = 0;
+      let currentId = id;
+      let parentConn = conns.find(c => c.to === currentId);
+
+      while (parentConn && depth < 20) { // Safety break
+        depth++;
+        currentId = parentConn.from;
+        parentConn = conns.find(c => c.to === currentId);
+      }
+      return depth;
+    };
+
     const estimateWidth = (n: Node) => {
       const text = n.text || '';
       const len = text.length;
-      // Base 120, max 300, ~8px per char + 32px padding
       return Math.min(300, Math.max(120, len * 8 + 40));
     };
 
     const parentWidth = estimateWidth(parent);
-    const childWidth = 150; // Estimate for new "New Task" node
-    const HORIZONTAL_GAP = 50; // Desired visual gap between edges
+    const childWidth = 150;
+    const HORIZONTAL_GAP = 50;
 
-    // Calculate precise center-to-center distance needed
     const OFFSET_DISTANCE = (parentWidth / 2) + HORIZONTAL_GAP + (childWidth / 2);
+    const CHILD_SPACING = NODE_HEIGHT + 15;
 
-    const CHILD_SPACING = NODE_HEIGHT + 15; // Vertical spacing between siblings
-
-    // Find all existing children of this parent using connections
     const childNodeIds = connections
       .filter(conn => conn.from === parentId)
       .map(conn => conn.to);
 
     const childNodes = nodes.filter(n => childNodeIds.includes(n.id));
+    const parentDepth = getNodeDepth(parentId, connections);
 
-    // If no children exist yet, place to the RIGHT of parent (most natural for mind maps)
-    if (childNodes.length === 0) {
-      // Check if RIGHT is clear
-      const rightX = parent.x + OFFSET_DISTANCE;
-      const rightY = parent.y;
+    // ROOT Logic (Depth 0) -> Balance Left/Right
+    if (parentDepth === 0) {
+      // Existing Balancing Logic
+      const rightChildren = childNodes.filter(n => n.x > parent.x + 50);
+      const leftChildren = childNodes.filter(n => n.x < parent.x - 50);
 
-      // Simple collision check logic...
-      // We skip complex check for manual add to prioritize "closest possible"
-      return { x: rightX, y: rightY };
-    }
-
-    // Intelligent placement logic
-    const rightChildren = childNodes.filter(n => n.x > parent.x + 50);
-    const leftChildren = childNodes.filter(n => n.x < parent.x - 50);
-    const belowChildren = childNodes.filter(n => n.y > parent.y + 50 && Math.abs(n.x - parent.x) <= 50);
-    const aboveChildren = childNodes.filter(n => n.y < parent.y - 50 && Math.abs(n.x - parent.x) <= 50);
-
-    const isVertical = (belowChildren.length + aboveChildren.length) > (rightChildren.length + leftChildren.length);
-    const firstChild = childNodes[0];
-
-    if (isVertical) {
-      // Vertical layout (Org Chart style) - Add downward
-      const targetY = firstChild ? Math.max(...childNodes.map(c => c.y)) + CHILD_SPACING : parent.y + OFFSET_DISTANCE;
-      const targetX = parent.x; // Keep aligned vertically
-      return { x: targetX, y: targetY };
-    } else {
-      // Horizontal layout (Mind Map style) - Balance Left/Right
-
-      // Determin target side: simple balancing
+      // Balance counts
       const targetSide = leftChildren.length < rightChildren.length ? 'left' : 'right';
       const direction = targetSide === 'left' ? -1 : 1;
-      const targetX = parent.x + direction * OFFSET_DISTANCE;
 
       const siblingsOnSide = targetSide === 'left' ? leftChildren : rightChildren;
+      const targetX = parent.x + direction * OFFSET_DISTANCE;
 
       if (siblingsOnSide.length === 0) {
         return { x: targetX, y: parent.y };
       }
 
-      // Stack below existing on this side
+      // Stack below existing siblings on this side
       const maxY = Math.max(...siblingsOnSide.map(c => c.y));
+      return { x: targetX, y: maxY + CHILD_SPACING };
+    }
+
+    // TIER 2+ Logic (Depth >= 1) -> Vertical Stack
+    else {
+      // For Grandchildren, we stack them vertically.
+      // Direction typically follows the Parent's direction from Root.
+      // We can determine direction by looking at Parent relative to GrandParent.
+      // But simply: If Parent is to the Left of GrandParent, we stack Left. if Right, Right.
+
+      // Find Grandparent to determine side
+      const parentConn = connections.find(c => c.to === parentId);
+      let direction = 1; // Default Right
+
+      if (parentConn) {
+        const grandParent = nodes.find(n => n.id === parentConn.from);
+        if (grandParent) {
+          // If parent is left of grandparent, we continue left
+          if (parent.x < grandParent.x) direction = -1;
+        }
+      }
+
+      const targetX = parent.x + direction * OFFSET_DISTANCE;
+
+      if (childNodes.length === 0) {
+        // Align with parent Y
+        return { x: targetX, y: parent.y };
+      }
+
+      // Place below last child
+      const maxY = Math.max(...childNodes.map(c => c.y));
       return { x: targetX, y: maxY + CHILD_SPACING };
     }
   }, [nodes, connections]);

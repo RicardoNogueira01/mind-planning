@@ -4,10 +4,12 @@
  */
 
 import { useRef, useState, useCallback } from 'react';
-import type { Node, Position } from '../types/mindmap';
+import { getDescendantNodeIds } from '../components/mindmap/graphUtils';
+import type { Node, Position, Connection } from '../types/mindmap';
 
 export function useDragging(
   nodes: Node[],
+  connections: Connection[],
   setNodes: (nodes: Node[] | ((prev: Node[]) => Node[])) => void,
   canvasRef: React.RefObject<HTMLDivElement>,
   mode: string,
@@ -53,9 +55,13 @@ export function useDragging(
                 x: (e.clientX - rect.left - pan.x) / currentZoom - node.x,
                 y: (e.clientY - rect.top - pan.y) / currentZoom - node.y,
               });
-              
+
+              // Store initial position for single drag too (to detect if it actually moved)
+              if (selectedNodes.length <= 1 || !selectedNodes.includes(id)) {
+                setInitialPositions({ [id]: { x: node.x, y: node.y } });
+              }
               // Store initial positions for all selected nodes if this is a multi-select drag
-              if (selectedNodes.includes(id) && selectedNodes.length > 1) {
+              else if (selectedNodes.includes(id) && selectedNodes.length > 1) {
                 const positions: Record<string, { x: number; y: number }> = {};
                 selectedNodes.forEach(nodeId => {
                   const n = nodes.find(node => node.id === nodeId);
@@ -65,7 +71,7 @@ export function useDragging(
                 });
                 setInitialPositions(positions);
               }
-              
+
               return;
             }
           }
@@ -79,14 +85,14 @@ export function useDragging(
         // In cursor mode, only pan if clicking directly on canvas (empty space)
         if (e.target !== canvasRef.current) return;
       }
-      
+
       setIsPanning(true);
       panRef.current = {
         startX: e.clientX - pan.x,
         startY: e.clientY - pan.y,
       };
     },
-    [nodes, pan, mode, canvasRef, selectedNodes]
+    [nodes, pan, mode, canvasRef, selectedNodes, zoom]
   );
 
   /**
@@ -107,7 +113,7 @@ export function useDragging(
           const currentZoom = zoom || 1;
           let newX = (e.clientX - rect.left - pan.x) / currentZoom - dragOffset.x;
           let newY = (e.clientY - rect.top - pan.y) / currentZoom - dragOffset.y;
-          
+
           // Check if node is in a group and constrain movement
           if (getNodeGroup && constrainPositionToGroup) {
             const group = getNodeGroup(draggingNodeId);
@@ -117,21 +123,22 @@ export function useDragging(
               newY = constrained.y;
             }
           }
-          
+
           // If multiple nodes are selected, move them all together
           if (selectedNodes.includes(draggingNodeId) && selectedNodes.length > 1 && Object.keys(initialPositions).length > 0) {
+            // Multi-select logic
             const draggedNode = nodes.find(n => n.id === draggingNodeId);
-            if (draggedNode) {
+            if (draggedNode && initialPositions[draggingNodeId]) {
               const deltaX = newX - initialPositions[draggingNodeId].x;
               const deltaY = newY - initialPositions[draggingNodeId].y;
-              
+
               setNodes(prev =>
                 prev.map(n => {
                   if (selectedNodes.includes(n.id) && initialPositions[n.id]) {
                     let finalX = initialPositions[n.id].x + deltaX;
                     let finalY = initialPositions[n.id].y + deltaY;
-                    
-                    // Apply group constraints to each selected node if applicable
+
+                    // Apply group constraints
                     if (getNodeGroup && constrainPositionToGroup) {
                       const nodeGroup = getNodeGroup(n.id);
                       if (nodeGroup && nodeGroup.boundingBox) {
@@ -140,7 +147,7 @@ export function useDragging(
                         finalY = constrained.y;
                       }
                     }
-                    
+
                     return {
                       ...n,
                       x: finalX,
@@ -152,12 +159,26 @@ export function useDragging(
               );
             }
           } else {
-            // Single node drag
-            setNodes(prev =>
-              prev.map(n =>
-                n.id === draggingNodeId ? { ...n, x: newX, y: newY } : n
-              )
-            );
+            // Single node drag with subtree
+            const draggedNode = nodes.find(n => n.id === draggingNodeId);
+            if (draggedNode) {
+              const deltaX = newX - draggedNode.x;
+              const deltaY = newY - draggedNode.y;
+
+              // Find all descendants
+              // IMPORTANT: We need connections passed to useDragging
+              const descendants = getDescendantNodeIds(connections, draggingNodeId);
+              const nodesToMove = new Set([draggingNodeId, ...descendants]);
+
+              setNodes(prev =>
+                prev.map(n => {
+                  if (nodesToMove.has(n.id)) {
+                    return { ...n, x: n.x + deltaX, y: n.y + deltaY };
+                  }
+                  return n;
+                })
+              );
+            }
           }
         }
         return;
@@ -170,7 +191,7 @@ export function useDragging(
         y: e.clientY - panRef.current.startY,
       });
     },
-    [draggingNodeId, pan, dragOffset, isPanning, setNodes, canvasRef, selectedNodes, initialPositions, getNodeGroup, constrainPositionToGroup, nodes, zoom]
+    [draggingNodeId, pan, dragOffset, isPanning, setNodes, canvasRef, selectedNodes, initialPositions, getNodeGroup, constrainPositionToGroup, nodes, zoom, connections]
   );
 
   /**
@@ -180,31 +201,43 @@ export function useDragging(
   const stopPanning = useCallback(() => {
     const wasDraggingNode = draggingNodeId !== null;
     const draggedNodeId = draggingNodeId;
-    
+
+    // Check if the node actually moved significantly (> 1px)
+    let hasMoved = false;
+    if (wasDraggingNode && draggedNodeId && initialPositions[draggedNodeId]) {
+      const current = nodes.find(n => n.id === draggedNodeId);
+      const start = initialPositions[draggedNodeId];
+      if (current && start) {
+        const dist = Math.hypot(current.x - start.x, current.y - start.y);
+        hasMoved = dist > 1; // Tolerance for micro-movements
+      }
+    }
+
     // Apply collision pushing if available - push other nodes out of the way
-    if (wasDraggingNode && draggedNodeId && pushCollidingNodes) {
+    // ONLY if the node was actually dragged (moved)
+    if (wasDraggingNode && draggedNodeId && pushCollidingNodes && hasMoved) {
       const draggedNode = nodes.find(n => n.id === draggedNodeId);
       if (draggedNode) {
         const updatedNodes = pushCollidingNodes(draggedNodeId, draggedNode.x, draggedNode.y, nodes);
-        
+
         // Check if any positions changed
-        const hasChanges = updatedNodes.some((updated, idx) => 
+        const hasChanges = updatedNodes.some((updated, idx) =>
           updated.x !== nodes[idx]?.x || updated.y !== nodes[idx]?.y
         );
-        
+
         if (hasChanges) {
           setNodes(updatedNodes);
         }
       }
     }
-    
+
     setIsPanning(false);
     setDraggingNodeId(null);
     setInitialPositions({});
-    
+
     // Return info about what was being dragged for the caller to handle
     return { wasDraggingNode, draggedNodeId };
-  }, [draggingNodeId, nodes, pushCollidingNodes, setNodes]);
+  }, [draggingNodeId, nodes, pushCollidingNodes, setNodes, initialPositions]);
 
   return {
     // Dragging state
