@@ -34,7 +34,7 @@ import clsx from 'clsx';
 const Dashboard = () => {
   const { t } = useLanguage();
   // @ts-ignore
-  const { currentTheme, setCurrentTheme, isBirthdayMode, toggleBirthdayMode, themes } = useTheme();
+  const { currentTheme, setCurrentTheme, themes } = useTheme();
   const [showThemeMenu, setShowThemeMenu] = useState(false);
   const themeMenuRef = useRef(null);
 
@@ -239,7 +239,7 @@ const Dashboard = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 bg-clip-text text-transparent mb-2">
-                {isBirthdayMode ? 'Happy Birthday' : (themes.find(t => t.id === currentTheme)?.greeting || t('greeting.hello'))}, John Doe {isBirthdayMode ? '🎂' : (themes.find(t => t.id === currentTheme)?.emoji || '👋')}
+                {themes.find(t => t.id === currentTheme)?.greeting || t('greeting.hello')}, John Doe {themes.find(t => t.id === currentTheme)?.emoji || '👋'}
               </h2>
               <p className="text-sm md:text-base text-gray-600">
                 {dateInfo.dayName}, {dateInfo.month} {dateInfo.day}, {dateInfo.year}
@@ -249,15 +249,7 @@ const Dashboard = () => {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              {/* Birthday Toggle */}
-              <button
-                onClick={toggleBirthdayMode}
-                className={`px-3 md:px-4 py-2.5 md:py-3 border ${isBirthdayMode ? 'bg-pink-50 border-pink-200 text-pink-600' : 'border-gray-200 text-gray-700 bg-white hover:bg-gray-50'} rounded-xl transition-all duration-200 flex items-center gap-2 text-sm font-medium whitespace-nowrap touch-manipulation shadow-sm`}
-                aria-label="Toggle Birthday Mode"
-              >
-                <PartyPopper size={18} className={isBirthdayMode ? 'text-pink-500' : ''} />
-                <span className="hidden sm:inline">{isBirthdayMode ? 'Birthday On!' : 'Test Birthday'}</span>
-              </button>
+
 
               {/* Theme Dropdown */}
               <div className="relative" ref={themeMenuRef}>

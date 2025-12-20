@@ -1,5 +1,5 @@
 /* Import DM Sans and DM Mono fonts */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Mountains+of+Christmas:wght@400;700&family=Cinzel:wght@400;700&family=Creepster&family=Homemade+Apple&family=Berkshire+Swash&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Mountains+of+Christmas:wght@400;700&family=Cinzel:wght@400;700&family=Creepster&family=Homemade+Apple&family=Berkshire+Swash&family=Pacifico&display=swap');
 
 :root {
   font-family: 'DM Sans', system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -68,6 +68,9 @@ body.theme-birthday {
   background-color: #fffdf0;
   background-position: 0 0, 20px 20px, 40px 10px, 60px 30px;
   background-size: 80px 80px;
+  font-family: 'Pacifico', cursive;
+  --theme-primary: #ec4899;
+  --theme-secondary: #facc15;
 }
 
 

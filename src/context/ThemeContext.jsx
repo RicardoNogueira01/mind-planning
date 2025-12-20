@@ -12,7 +12,6 @@ export const useTheme = () => {
 
 export const ThemeProvider = ({ children }) => {
     const [currentTheme, setCurrentTheme] = useState('default');
-    const [isBirthdayMode, setIsBirthdayMode] = useState(false);
 
     // Apply theme classes to the document body or a root element
     useEffect(() => {
@@ -30,15 +29,11 @@ export const ThemeProvider = ({ children }) => {
         if (currentTheme !== 'default') {
             document.body.classList.add(`theme-${currentTheme.replace(' ', '-').toLowerCase()}`);
         }
-
-        // Apply birthday mode class
-        if (isBirthdayMode) {
-            document.body.classList.add('theme-birthday');
-        }
-    }, [currentTheme, isBirthdayMode]);
+    }, [currentTheme]);
 
     const themes = [
         { id: 'default', name: 'Default', icon: '🎨', greeting: 'Hello', emoji: '👋' },
+        { id: 'birthday', name: 'Birthday', icon: '🎂', greeting: 'Happy Birthday', emoji: '🎉' },
         { id: 'christmas', name: 'Christmas', icon: '🎄', greeting: 'Merry Christmas', emoji: '🎄' },
         { id: 'new-year', name: 'New Year', icon: '🎆', greeting: 'Happy New Year', emoji: '🎉' },
         { id: 'black-friday', name: 'Black Friday', icon: '🏷️', greeting: 'Big Deals', emoji: '🛍️' },
@@ -49,8 +44,6 @@ export const ThemeProvider = ({ children }) => {
     const value = {
         currentTheme,
         setCurrentTheme,
-        isBirthdayMode,
-        toggleBirthdayMode: () => setIsBirthdayMode(prev => !prev),
         themes
     };
 

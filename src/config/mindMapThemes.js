@@ -203,6 +203,44 @@ export const mindMapThemes = {
     // HOLIDAY THEMES (Seasonal & Festive)
     // ============================================
 
+    birthday: {
+        id: 'birthday',
+        name: 'Birthday',
+        isDark: false,
+        vibe: 'creative',
+        canvas: {
+            background: 'radial-gradient(circle at 50% 50%, #fffdf0 0%, #fff7ed 100%)',
+            gridColor: '#fecdd3',
+            pattern: 'dots',
+        },
+        nodes: {
+            palette: ['#ec4899', '#facc15', '#22d3ee', '#8b5cf6', '#fb7185', '#4ade80', '#fbbf24'],
+            defaultBg: '#ffffff',
+            defaultText: '#ec4899',
+            borderColor: '#facc15',
+            borderRadius: '24px',
+            borderWidth: '3px',
+            selectedRing: '#22d3ee',
+            shadow: '0 4px 15px rgba(236, 72, 153, 0.2)',
+            shape: 'pill',
+        },
+        typography: {
+            fontFamily: "'Pacifico', cursive",
+            fontSize: '18px',
+            fontWeight: '400',
+            headingSize: '24px',
+            lineHeight: '1.6',
+        },
+        connections: {
+            color: '#f472b6',
+            colorMode: 'parent',
+            strokeWidth: 3,
+        },
+        decorations: {
+            emoji: '🎂',
+        },
+    },
+
     christmas: {
         id: 'christmas',
         name: 'Christmas',

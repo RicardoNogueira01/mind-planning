@@ -13,7 +13,7 @@ import { useTheme } from '../../context/ThemeContext';
  */
 const DashboardHeader: React.FC = () => {
   // @ts-ignore
-  const { currentTheme, setCurrentTheme, isBirthdayMode, toggleBirthdayMode, themes } = useTheme();
+  const { currentTheme, setCurrentTheme, themes } = useTheme();
   const [showThemeMenu, setShowThemeMenu] = useState(false);
   const themeMenuRef = useRef<HTMLDivElement>(null);
 
@@ -40,15 +40,7 @@ const DashboardHeader: React.FC = () => {
             <p className="text-xs md:text-base text-gray-500 mt-1">Monitor your team's progress and key performance indicators</p>
           </div>
           <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-            {/* Birthday Toggle */}
-            <button
-              onClick={toggleBirthdayMode}
-              className={`px-3 md:px-4 py-2 border ${isBirthdayMode ? 'bg-pink-50 border-pink-200 text-pink-600' : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'} rounded-lg transition-all duration-200 flex items-center gap-2 text-xs md:text-sm font-medium whitespace-nowrap touch-manipulation`}
-              aria-label="Toggle Birthday Mode"
-            >
-              <PartyPopper size={16} className={isBirthdayMode ? 'text-pink-500' : ''} />
-              {isBirthdayMode ? 'Birthday On!' : 'Test Birthday'}
-            </button>
+
 
             {/* Theme Dropdown */}
             <div className="relative" ref={themeMenuRef}>
