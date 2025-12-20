@@ -444,3 +444,37 @@ body.theme-black-friday select {
 [contenteditable] .user-reference:hover {
   background-color: #bfdbfe;
 }
+
+/* Nudge Notification Centered Animation */
+@keyframes fade-in-center {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -40%) scale(0.95);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.animate-fade-in-center {
+  animation: fade-in-center 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Nudge Notification Top Centered Animation */
+@keyframes fade-in-top-center {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.animate-fade-in-top-center {
+  animation: fade-in-top-center 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

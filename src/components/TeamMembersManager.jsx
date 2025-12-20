@@ -735,7 +735,8 @@ const TeamMembersManager = () => {
 
                   const nudge = document.createElement('div');
                   nudge.id = 'test-nudge-toast';
-                  nudge.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-white border border-blue-100 rounded-xl shadow-xl p-4 z-[9999] animate-fade-in flex items-start gap-4 max-w-sm pointer-events-auto cursor-pointer hover:bg-gray-50 transition-colors w-full md:w-auto min-w-[320px]';
+                  // Centered Horizontally, Top positioned
+                  nudge.className = 'fixed top-4 left-1/2 bg-white border border-blue-100 rounded-xl shadow-xl p-4 z-[9999] animate-fade-in-top-center flex items-start gap-4 max-w-sm pointer-events-auto cursor-pointer hover:bg-gray-50 transition-colors w-full md:w-auto min-w-[320px]';
                   nudge.innerHTML = `
                     <div class="p-2 bg-blue-50 rounded-full text-blue-600 flex-shrink-0">
                        👋
@@ -751,6 +752,7 @@ const TeamMembersManager = () => {
                   nudge.onclick = () => {
                     nudge.style.opacity = '0';
                     nudge.style.transform = 'translate(-50%, -20px)';
+                    nudge.style.transition = 'all 0.3s ease';
                     setTimeout(() => nudge.remove(), 300);
                   };
 
@@ -761,6 +763,7 @@ const TeamMembersManager = () => {
                     if (document.body.contains(nudge)) {
                       nudge.style.opacity = '0';
                       nudge.style.transform = 'translate(-50%, -20px)';
+                      nudge.style.transition = 'all 0.3s ease';
                       setTimeout(() => nudge.remove(), 300);
                     }
                   }, 5000);
