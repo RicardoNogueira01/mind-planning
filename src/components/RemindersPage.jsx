@@ -75,6 +75,7 @@ const RemindersPage = () => {
         time: '',
         priority: 'medium'
     });
+    const [showPopupNotification, setShowPopupNotification] = useState(null);
 
     // Check for reminders that need notifications
     useEffect(() => {
@@ -102,6 +103,10 @@ const RemindersPage = () => {
     }, [reminders]);
 
     const showNotification = (reminder) => {
+        // Show in-app popup
+        setShowPopupNotification(reminder);
+
+        // Also show browser notification if permitted
         if ('Notification' in window && Notification.permission === 'granted') {
             new Notification('Reminder Alert! 🔔', {
                 body: `${reminder.title}\n${reminder.description}`,
@@ -109,6 +114,18 @@ const RemindersPage = () => {
                 tag: `reminder-${reminder.id}`
             });
         }
+    };
+
+    // Test function to preview popup
+    const triggerTestPopup = () => {
+        setShowPopupNotification({
+            id: 'test',
+            title: 'Test Reminder',
+            description: 'This is what your reminder popup will look like when it\'s time!',
+            date: new Date().toISOString().split('T')[0],
+            time: new Date().toTimeString().slice(0, 5),
+            priority: 'high'
+        });
     };
 
     // Request notification permission on mount
@@ -239,13 +256,22 @@ const RemindersPage = () => {
                                 <p className="text-sm text-gray-500 mt-1">Manage your personal reminders and notifications</p>
                             </div>
                         </div>
-                        <button
-                            onClick={() => setShowAddModal(true)}
-                            className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2 text-sm font-medium"
-                        >
-                            <Plus size={16} />
-                            New Reminder
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={triggerTestPopup}
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 text-sm font-medium"
+                            >
+                                <Bell size={16} />
+                                Test Popup
+                            </button>
+                            <button
+                                onClick={() => setShowAddModal(true)}
+                                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors flex items-center gap-2 text-sm font-medium"
+                            >
+                                <Plus size={16} />
+                                New Reminder
+                            </button>
+                        </div>
                     </div>
                 </header>
 
@@ -334,10 +360,10 @@ const RemindersPage = () => {
                             <div
                                 key={reminder.id}
                                 className={`bg-white rounded-xl shadow-sm border transition-all ${reminder.completed
-                                        ? 'border-gray-200 opacity-60'
-                                        : isOverdue(reminder)
-                                            ? 'border-red-200 bg-red-50/30'
-                                            : 'border-gray-100 hover:shadow-md'
+                                    ? 'border-gray-200 opacity-60'
+                                    : isOverdue(reminder)
+                                        ? 'border-red-200 bg-red-50/30'
+                                        : 'border-gray-100 hover:shadow-md'
                                     }`}
                             >
                                 <div className="p-4">
@@ -346,8 +372,8 @@ const RemindersPage = () => {
                                         <button
                                             onClick={() => toggleComplete(reminder.id)}
                                             className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${reminder.completed
-                                                    ? 'bg-green-500 border-green-500'
-                                                    : 'border-gray-300 hover:border-green-500'
+                                                ? 'bg-green-500 border-green-500'
+                                                : 'border-gray-300 hover:border-green-500'
                                                 }`}
                                         >
                                             {reminder.completed && <Check size={14} className="text-white" />}
@@ -521,6 +547,99 @@ const RemindersPage = () => {
                     </div>
                 </div>
             )}
+
+            {/* In-App Popup Notification */}
+            {showPopupNotification && (
+                <div className="fixed inset-0 flex items-start justify-center pt-20 z-[100] pointer-events-none">
+                    <div className="pointer-events-auto animate-bounce-in">
+                        <div className={`bg-white rounded-2xl shadow-2xl border-2 max-w-md w-full mx-4 overflow-hidden ${showPopupNotification.priority === 'high'
+                                ? 'border-red-400'
+                                : showPopupNotification.priority === 'medium'
+                                    ? 'border-yellow-400'
+                                    : 'border-green-400'
+                            }`}>
+                            {/* Header with bell animation */}
+                            <div className={`px-6 py-4 flex items-center gap-4 ${showPopupNotification.priority === 'high'
+                                    ? 'bg-gradient-to-r from-red-500 to-red-600'
+                                    : showPopupNotification.priority === 'medium'
+                                        ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                                        : 'bg-gradient-to-r from-green-500 to-green-600'
+                                }`}>
+                                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
+                                    <Bell size={28} className="text-white animate-wiggle" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-white/80 text-sm font-medium">Reminder Alert!</p>
+                                    <h3 className="text-white font-bold text-lg">{showPopupNotification.title}</h3>
+                                </div>
+                                <button
+                                    onClick={() => setShowPopupNotification(null)}
+                                    className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                                >
+                                    <X size={20} className="text-white" />
+                                </button>
+                            </div>
+
+                            {/* Content */}
+                            <div className="p-6">
+                                <p className="text-gray-600 mb-4">{showPopupNotification.description}</p>
+
+                                <div className="flex items-center gap-4 text-sm text-gray-500 mb-6">
+                                    <div className="flex items-center gap-1.5">
+                                        <Calendar size={16} />
+                                        <span>{new Date(showPopupNotification.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <Clock size={16} />
+                                        <span>{showPopupNotification.time}</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => {
+                                            if (showPopupNotification.id !== 'test') {
+                                                toggleComplete(showPopupNotification.id);
+                                            }
+                                            setShowPopupNotification(null);
+                                        }}
+                                        className="flex-1 px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl transition-colors font-semibold flex items-center justify-center gap-2"
+                                    >
+                                        <Check size={18} />
+                                        Mark as Done
+                                    </button>
+                                    <button
+                                        onClick={() => setShowPopupNotification(null)}
+                                        className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors font-semibold"
+                                    >
+                                        Dismiss
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* CSS Animation Styles */}
+            <style jsx>{`
+                @keyframes bounce-in {
+                    0% { transform: scale(0.3) translateY(-100px); opacity: 0; }
+                    50% { transform: scale(1.05) translateY(0); opacity: 1; }
+                    70% { transform: scale(0.95); }
+                    100% { transform: scale(1); }
+                }
+                @keyframes wiggle {
+                    0%, 100% { transform: rotate(-10deg); }
+                    50% { transform: rotate(10deg); }
+                }
+                .animate-bounce-in {
+                    animation: bounce-in 0.5s ease-out;
+                }
+                .animate-wiggle {
+                    animation: wiggle 0.5s ease-in-out infinite;
+                }
+            `}</style>
         </div>
     );
 };

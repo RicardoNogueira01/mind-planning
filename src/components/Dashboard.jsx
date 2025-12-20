@@ -641,18 +641,18 @@ const Dashboard = () => {
               {/* Actions */}
               <div className="flex flex-col sm:flex-row gap-2">
                 <Link
-                  to="/settings/reminders"
+                  to="/reminders"
                   className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-md shadow-indigo-500/30"
                 >
-                  <Settings size={16} />
-                  Configure Rules
+                  <Bell size={16} />
+                  My Reminders
                 </Link>
                 <Link
-                  to="/upcoming-deadlines"
+                  to="/settings/reminders"
                   className="px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors"
                 >
-                  View All
-                  <ArrowRight size={16} />
+                  <Settings size={16} />
+                  Rules
                 </Link>
               </div>
             </div>

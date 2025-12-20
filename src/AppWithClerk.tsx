@@ -16,6 +16,7 @@ import ProfilePage from './components/ProfilePage';
 import EditProfilePage from './components/EditProfilePage';
 import SettingsPage from './components/SettingsPage';
 import CalendarPage from './components/CalendarPage';
+import RemindersPage from './components/RemindersPage';
 import ScrollToTop from './components/ScrollToTop';
 import { LanguageProvider } from './context/LanguageContext';
 import { AuthProvider } from './context/ClerkAuthContext';
@@ -197,27 +198,28 @@ function AppRoutes() {
 }
 
 function App() {
-  // If no Clerk key, show warning and allow app to work in demo mode
+  // If no Clerk key, allow app to work in demo mode
   if (!CLERK_PUBLISHABLE_KEY) {
     return (
       <LanguageProvider>
         <BrowserRouter>
           <ScrollToTop />
-          <div className="min-h-screen bg-yellow-50 p-4">
-            <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4">
-              <p className="text-yellow-700">
-                ⚠️ Authentication not configured. Add VITE_CLERK_PUBLISHABLE_KEY to .env.local
-              </p>
-            </div>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/mindmap/:mapId" element={<MindMapWrapper />} />
-              <Route path="/mindmaps" element={<MindMapManagerWrapper />} />
-              <Route path="/team-members" element={<TeamMembersManager />} />
-              <Route path="/team-hierarchy/:profession" element={<TeamHierarchy />} />
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-          </div>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/mindmap/:mapId" element={<MindMapWrapper />} />
+            <Route path="/mindmaps" element={<MindMapManagerWrapper />} />
+            <Route path="/team-members" element={<TeamMembersManager />} />
+            <Route path="/team-hierarchy/:profession" element={<TeamHierarchy />} />
+            <Route path="/completed-tasks" element={<RecentlyCompletedTasksManager />} />
+            <Route path="/upcoming-deadlines" element={<UpcomingDeadlinesManager />} />
+            <Route path="/my-leave" element={<LeaveRequestPage />} />
+            <Route path="/team-holidays" element={<TeamHolidaysPage />} />
+            <Route path="/profile/:memberId" element={<ProfilePage />} />
+            <Route path="/profile/:memberId/edit" element={<EditProfilePage />} />
+            <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/reminders" element={<RemindersPage />} />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
         </BrowserRouter>
       </LanguageProvider>
     );

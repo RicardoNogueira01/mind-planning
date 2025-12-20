@@ -173,7 +173,7 @@ export default function TemplateGallery({ show, onSelectTemplate, onClose, onSta
           <div className="text-sm text-gray-600">
             {selectedTemplate ? (
               <span className="flex items-center gap-2">
-                <span className="text-2xl">{selectedTemplate.icon}</span>
+                <span className="text-2xl">{selectedTemplate.thumbnail}</span>
                 <span>
                   <strong className="text-gray-900">{selectedTemplate.name}</strong>
                   <span className="text-gray-500"> selected</span>

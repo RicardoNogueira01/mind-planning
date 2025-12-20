@@ -95,3 +95,6 @@ export const isPast = (date) => {
 
     return targetDate < today;
 };
+
+// Alias for backwards compatibility - some components use this name
+export const getRelativeTime = formatRelativeTime;
