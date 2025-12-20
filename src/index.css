@@ -135,6 +135,14 @@ body.theme-new-year .bg-gray-50 {
   background-color: #111827 !important;
 }
 
+body.theme-new-year input,
+body.theme-new-year textarea,
+body.theme-new-year select {
+  background-color: #374151 !important;
+  color: #f3f4f6 !important;
+  border-color: #4b5563 !important;
+}
+
 /* --- Halloween Theme --- */
 body.theme-halloween,
 body.theme-halloween * {
@@ -158,6 +166,20 @@ body.theme-halloween .text-gray-900 {
 
 body.theme-halloween .text-gray-600 {
   color: #fdba74 !important;
+}
+
+body.theme-halloween .bg-white {
+  background-color: #431407 !important;
+  color: #fde047 !important;
+  border-color: #ea580c !important;
+}
+
+body.theme-halloween input,
+body.theme-halloween textarea,
+body.theme-halloween select {
+  background-color: #271a10 !important;
+  color: #fde047 !important;
+  border-color: #ea580c !important;
 }
 
 /* --- Thanksgiving Theme --- */
@@ -207,6 +229,14 @@ body.theme-black-friday .text-gray-700 {
 body.theme-black-friday .text-gray-600,
 body.theme-black-friday .text-gray-500 {
   color: #d4d4d4 !important;
+}
+
+body.theme-black-friday input,
+body.theme-black-friday textarea,
+body.theme-black-friday select {
+  background-color: #262626 !important;
+  color: white !important;
+  border-color: #404040 !important;
 }
 
 /* Helper Animation */
