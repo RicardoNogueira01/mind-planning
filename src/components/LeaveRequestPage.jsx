@@ -38,6 +38,12 @@ const mockLeaveTypes = [
     { id: 'lt2', code: 'SICK', name: 'Sick Leave', color: '#EF4444', icon: '🤒', defaultDays: 10 },
     { id: 'lt3', code: 'PERSONAL', name: 'Personal Day', color: '#8B5CF6', icon: '🏠', defaultDays: 3 },
     { id: 'lt4', code: 'BEREAVEMENT', name: 'Bereavement', color: '#6B7280', icon: '🕯️', defaultDays: 5 },
+    { id: 'lt5', code: 'MATERNITY', name: 'Maternity/Paternity', color: '#EC4899', icon: '👶', defaultDays: 90 },
+    { id: 'lt6', code: 'STUDY', name: 'Study Leave', color: '#0EA5E9', icon: '📚', defaultDays: 5 },
+    { id: 'lt7', code: 'MOVING', name: 'Moving Day', color: '#F97316', icon: '📦', defaultDays: 2 },
+    { id: 'lt8', code: 'MEDICAL', name: 'Medical Appointment', color: '#14B8A6', icon: '🏥', defaultDays: 5 },
+    { id: 'lt9', code: 'JURY', name: 'Jury Duty', color: '#6366F1', icon: '⚖️', defaultDays: 10 },
+    { id: 'lt10', code: 'OTHER', name: 'Other', color: '#71717A', icon: '📝', defaultDays: 5 },
 ];
 
 // Mock data for balances
@@ -46,6 +52,12 @@ const mockBalances = [
     { leaveTypeId: 'lt2', leaveType: mockLeaveTypes[1], totalDays: 10, usedDays: 2, pendingDays: 0, carriedOver: 0, adjustments: 0 },
     { leaveTypeId: 'lt3', leaveType: mockLeaveTypes[2], totalDays: 3, usedDays: 1, pendingDays: 0, carriedOver: 0, adjustments: 0 },
     { leaveTypeId: 'lt4', leaveType: mockLeaveTypes[3], totalDays: 5, usedDays: 0, pendingDays: 0, carriedOver: 0, adjustments: 0 },
+    { leaveTypeId: 'lt5', leaveType: mockLeaveTypes[4], totalDays: 90, usedDays: 0, pendingDays: 0, carriedOver: 0, adjustments: 0 },
+    { leaveTypeId: 'lt6', leaveType: mockLeaveTypes[5], totalDays: 5, usedDays: 0, pendingDays: 0, carriedOver: 0, adjustments: 0 },
+    { leaveTypeId: 'lt7', leaveType: mockLeaveTypes[6], totalDays: 2, usedDays: 0, pendingDays: 0, carriedOver: 0, adjustments: 0 },
+    { leaveTypeId: 'lt8', leaveType: mockLeaveTypes[7], totalDays: 5, usedDays: 1, pendingDays: 0, carriedOver: 0, adjustments: 0 },
+    { leaveTypeId: 'lt9', leaveType: mockLeaveTypes[8], totalDays: 10, usedDays: 0, pendingDays: 0, carriedOver: 0, adjustments: 0 },
+    { leaveTypeId: 'lt10', leaveType: mockLeaveTypes[9], totalDays: 5, usedDays: 0, pendingDays: 0, carriedOver: 0, adjustments: 0 },
 ];
 
 // Mock data for requests
@@ -102,6 +114,7 @@ export default function LeaveRequestPage() {
         startDate: '',
         endDate: '',
         reason: '',
+        otherLeaveDescription: '',
         isHalfDayStart: false,
         isHalfDayEnd: false
     });
@@ -157,6 +170,7 @@ export default function LeaveRequestPage() {
                 startDate: '',
                 endDate: '',
                 reason: '',
+                otherLeaveDescription: '',
                 isHalfDayStart: false,
                 isHalfDayEnd: false
             });
@@ -446,7 +460,7 @@ export default function LeaveRequestPage() {
                     {/* New Request Modal */}
                     {showNewRequestModal && (
                         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                            <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                            <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
                                 {/* Header */}
                                 <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
                                     <div>
@@ -468,7 +482,7 @@ export default function LeaveRequestPage() {
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
                                             Leave Type <span className="text-red-500">*</span>
                                         </label>
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                             {mockLeaveTypes.map(type => {
                                                 const balance = balances.find(b => b.leaveTypeId === type.id);
                                                 const available = balance ? getAvailableDays(balance) : 0;
@@ -478,17 +492,17 @@ export default function LeaveRequestPage() {
                                                     <button
                                                         key={type.id}
                                                         type="button"
-                                                        onClick={() => setNewRequest({ ...newRequest, leaveTypeId: type.id })}
-                                                        className={`p-4 rounded-xl border-2 text-left transition-all ${isSelected
+                                                        onClick={() => setNewRequest({ ...newRequest, leaveTypeId: type.id, otherLeaveDescription: type.code !== 'OTHER' ? '' : newRequest.otherLeaveDescription })}
+                                                        className={`p-3 rounded-xl border-2 text-left transition-all ${isSelected
                                                             ? 'border-teal-500 bg-teal-50'
                                                             : 'border-gray-200 hover:border-gray-300'
                                                             }`}
                                                     >
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="text-2xl">{type.icon}</span>
-                                                            <div>
-                                                                <p className="font-medium text-gray-900">{type.name}</p>
-                                                                <p className="text-sm text-gray-500">{available} days available</p>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xl">{type.icon}</span>
+                                                            <div className="min-w-0">
+                                                                <p className="font-medium text-gray-900 text-sm truncate">{type.name}</p>
+                                                                <p className="text-xs text-gray-500">{available} days</p>
                                                             </div>
                                                         </div>
                                                     </button>
@@ -496,6 +510,22 @@ export default function LeaveRequestPage() {
                                             })}
                                         </div>
                                     </div>
+
+                                    {/* Other Leave Type Custom Input */}
+                                    {newRequest.leaveTypeId === 'lt10' && (
+                                        <div className="mt-4">
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Please describe the type of leave <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={newRequest.otherLeaveDescription}
+                                                onChange={(e) => setNewRequest({ ...newRequest, otherLeaveDescription: e.target.value })}
+                                                placeholder="E.g., Religious observance, Family event, etc."
+                                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
+                                            />
+                                        </div>
+                                    )}
 
                                     {/* Date Range */}
                                     <div className="grid grid-cols-2 gap-4">
@@ -508,7 +538,7 @@ export default function LeaveRequestPage() {
                                                 value={newRequest.startDate}
                                                 onChange={(e) => setNewRequest({ ...newRequest, startDate: e.target.value })}
                                                 min={new Date().toISOString().split('T')[0]}
-                                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                                             />
                                         </div>
                                         <div>
@@ -520,7 +550,7 @@ export default function LeaveRequestPage() {
                                                 value={newRequest.endDate}
                                                 onChange={(e) => setNewRequest({ ...newRequest, endDate: e.target.value })}
                                                 min={newRequest.startDate || new Date().toISOString().split('T')[0]}
-                                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                                             />
                                         </div>
                                     </div>
@@ -573,7 +603,7 @@ export default function LeaveRequestPage() {
                                             onChange={(e) => setNewRequest({ ...newRequest, reason: e.target.value })}
                                             placeholder="Add any notes or reason for your request..."
                                             rows={3}
-                                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900 placeholder-gray-400"
                                         />
                                     </div>
                                 </div>
@@ -608,8 +638,8 @@ export default function LeaveRequestPage() {
                         </div>
                     )}
                 </main>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
 

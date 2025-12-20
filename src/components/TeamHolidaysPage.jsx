@@ -11,7 +11,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import TopBar from './shared/TopBar';
 import {
     Calendar,
     Clock,
@@ -232,29 +233,22 @@ export default function TeamHolidaysPage() {
     const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
     return (
-        <div className="min-h-screen bg-gray-50" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-            {/* Header */}
-            <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-                <div className="px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
+        <div className="min-h-screen bg-[#FAFAFA]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+            <TopBar showSearch={false} />
+
+            <div className="p-4 md:p-8">
+                {/* Header */}
+                <header className="mb-8">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <button
-                                onClick={() => navigate(-1)}
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                                <ArrowLeft size={20} className="text-gray-600" />
-                            </button>
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                                    <Users className="text-white" size={20} />
-                                </div>
-                                <div>
-                                    <h1 className="text-xl font-bold text-gray-900">Team Holidays</h1>
-                                    <p className="text-sm text-gray-500">Manage team leave requests</p>
-                                </div>
+                            <Link to="/" className="p-2 hover:bg-white rounded-xl transition-colors shadow-sm border border-gray-100">
+                                <ArrowLeft size={20} className="text-gray-700" strokeWidth={2} />
+                            </Link>
+                            <div>
+                                <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>Team Holidays</h1>
+                                <p className="text-sm text-gray-500 mt-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>Manage team leave requests</p>
                             </div>
                         </div>
-
                         {pendingRequests.length > 0 && selectedRequests.size > 0 && (
                             <button
                                 onClick={handleBatchApprove}
@@ -270,389 +264,389 @@ export default function TeamHolidaysPage() {
                             </button>
                         )}
                     </div>
-                </div>
-            </header>
+                </header>
 
-            <main className="px-4 md:px-8 py-8">
-                {/* Quick Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                                <Clock size={24} className="text-amber-600" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500">Pending Requests</p>
-                                <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                                <AlertCircle size={24} className="text-red-600" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500">Out Today</p>
-                                <p className="text-2xl font-bold text-gray-900">{stats.outToday}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                                <CalendarDays size={24} className="text-blue-600" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500">Out This Week</p>
-                                <p className="text-2xl font-bold text-gray-900">{stats.outThisWeek}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Who's Out Today */}
-                {mockOutToday.length > 0 && (
-                    <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-                        <div className="flex items-center gap-2 mb-3">
-                            <AlertCircle size={18} className="text-red-600" />
-                            <span className="font-semibold text-red-800">Out Today</span>
-                        </div>
-                        <div className="flex flex-wrap gap-3">
-                            {mockOutToday.map((item, idx) => (
-                                <div key={idx} className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 shadow-sm">
-                                    <div
-                                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
-                                        style={{ backgroundColor: item.user.color }}
-                                    >
-                                        {item.user.initials}
-                                    </div>
-                                    <div>
-                                        <p className="font-medium text-gray-900 text-sm">{item.user.name}</p>
-                                        <p className="text-xs text-gray-500">{item.leaveType.icon} {item.leaveType.name}</p>
-                                    </div>
+                <main>
+                    {/* Quick Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                                    <Clock size={24} className="text-amber-600" />
                                 </div>
-                            ))}
+                                <div>
+                                    <p className="text-sm text-gray-500">Pending Requests</p>
+                                    <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                                    <AlertCircle size={24} className="text-red-600" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Out Today</p>
+                                    <p className="text-2xl font-bold text-gray-900">{stats.outToday}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                                    <CalendarDays size={24} className="text-blue-600" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Out This Week</p>
+                                    <p className="text-2xl font-bold text-gray-900">{stats.outThisWeek}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                )}
 
-                {/* Tabs */}
-                <div className="flex gap-2 mb-6 bg-white p-1 rounded-xl shadow-sm border border-gray-100 w-fit">
-                    {[
-                        { id: 'pending', label: 'Pending Requests', icon: Clock, count: stats.pending },
-                        { id: 'calendar', label: 'Team Calendar', icon: CalendarDays },
-                    ].map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${activeTab === tab.id
-                                ? 'bg-indigo-600 text-white shadow-sm'
-                                : 'text-gray-600 hover:bg-gray-100'
-                                }`}
-                        >
-                            <tab.icon size={18} />
-                            {tab.label}
-                            {tab.count > 0 && (
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeTab === tab.id ? 'bg-white/20' : 'bg-amber-100 text-amber-700'
-                                    }`}>
-                                    {tab.count}
-                                </span>
-                            )}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Pending Requests Tab */}
-                {activeTab === 'pending' && (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                        {/* Search and Filters */}
-                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-                            <div className="flex flex-col md:flex-row gap-3">
-                                {/* Search */}
-                                <div className="flex-1 relative">
-                                    <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search by employee name..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
-                                    />
-                                </div>
-
-                                {/* Leave Type Filter */}
-                                <select
-                                    value={filterLeaveType}
-                                    onChange={(e) => setFilterLeaveType(e.target.value)}
-                                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-900"
-                                >
-                                    <option value="all">All Leave Types</option>
-                                    <option value="Annual Leave">Annual Leave</option>
-                                    <option value="Sick Leave">Sick Leave</option>
-                                    <option value="Personal Day">Personal Day</option>
-                                    <option value="Bereavement">Bereavement</option>
-                                </select>
-
-                                {/* Sort By */}
-                                <select
-                                    value={sortBy}
-                                    onChange={(e) => setSortBy(e.target.value)}
-                                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-900"
-                                >
-                                    <option value="date">Sort by Date</option>
-                                    <option value="days">Sort by Days</option>
-                                </select>
+                    {/* Who's Out Today */}
+                    {mockOutToday.length > 0 && (
+                        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+                            <div className="flex items-center gap-2 mb-3">
+                                <AlertCircle size={18} className="text-red-600" />
+                                <span className="font-semibold text-red-800">Out Today</span>
                             </div>
-
-                            {/* Results count */}
-                            {(searchTerm || filterLeaveType !== 'all') && (
-                                <p className="text-sm text-gray-600 mt-3">
-                                    Showing {filteredRequests.length} of {pendingRequests.length} requests
-                                </p>
-                            )}
-                        </div>
-
-                        {filteredRequests.length === 0 ? (
-                            <div className="text-center py-16">
-                                {pendingRequests.length === 0 ? (
-                                    <>
-                                        <div className="w-16 h-16 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                                            <CheckCircle size={32} className="text-emerald-600" />
+                            <div className="flex flex-wrap gap-3">
+                                {mockOutToday.map((item, idx) => (
+                                    <div key={idx} className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 shadow-sm">
+                                        <div
+                                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+                                            style={{ backgroundColor: item.user.color }}
+                                        >
+                                            {item.user.initials}
                                         </div>
-                                        <h3 className="text-lg font-semibold text-gray-900 mb-2">All caught up!</h3>
-                                        <p className="text-gray-500">No pending leave requests to review</p>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                                            <Search size={32} className="text-gray-400" />
+                                        <div>
+                                            <p className="font-medium text-gray-900 text-sm">{item.user.name}</p>
+                                            <p className="text-xs text-gray-500">{item.leaveType.icon} {item.leaveType.name}</p>
                                         </div>
-                                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No results found</h3>
-                                        <p className="text-gray-500">Try adjusting your search or filters</p>
-                                    </>
-                                )}
-                            </div>
-                        ) : (
-                            <>
-                                <div className="px-6 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-                                    <label className="flex items-center gap-3 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedRequests.size === filteredRequests.length && filteredRequests.length > 0}
-                                            onChange={toggleSelectAll}
-                                            className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
-                                        />
-                                        <span className="text-sm text-gray-600">
-                                            {selectedRequests.size === 0
-                                                ? 'Select all'
-                                                : `${selectedRequests.size} selected`}
-                                        </span>
-                                    </label>
-                                </div>
-
-                                <div className="divide-y divide-gray-100">
-                                    {filteredRequests.map(request => (
-                                        <div key={request.id} className="p-5 hover:bg-gray-50 transition-colors">
-                                            <div className="flex items-start gap-4">
-                                                {/* Checkbox */}
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedRequests.has(request.id)}
-                                                    onChange={(e) => {
-                                                        const next = new Set(selectedRequests);
-                                                        if (e.target.checked) {
-                                                            next.add(request.id);
-                                                        } else {
-                                                            next.delete(request.id);
-                                                        }
-                                                        setSelectedRequests(next);
-                                                    }}
-                                                    className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 mt-1"
-                                                />
-
-                                                {/* User Avatar */}
-                                                <div
-                                                    className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0"
-                                                    style={{ backgroundColor: request.user.color }}
-                                                >
-                                                    {request.user.initials}
-                                                </div>
-
-                                                {/* Request Details */}
-                                                <div className="flex-1">
-                                                    <div className="flex items-start justify-between">
-                                                        <div>
-                                                            <h4 className="font-semibold text-gray-900">{request.user.name}</h4>
-                                                            <div className="flex items-center gap-2 mt-1">
-                                                                <span className="text-xl">{request.leaveType.icon}</span>
-                                                                <span className="text-sm text-gray-600">{request.leaveType.name}</span>
-                                                            </div>
-                                                        </div>
-                                                        <p className="text-xs text-gray-400">
-                                                            Submitted {new Date(request.createdAt).toLocaleDateString()}
-                                                        </p>
-                                                    </div>
-
-                                                    <div className="mt-3 flex items-center gap-4 text-sm text-gray-600">
-                                                        <div className="flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded-lg">
-                                                            <CalendarDays size={16} />
-                                                            <span>
-                                                                {new Date(request.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                                                                {request.startDate !== request.endDate && (
-                                                                    <> → {new Date(request.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</>
-                                                                )}
-                                                            </span>
-                                                        </div>
-                                                        <span className="font-medium text-indigo-600">{request.totalDays} {request.totalDays === 1 ? 'day' : 'days'}</span>
-                                                    </div>
-
-                                                    {request.reason && (
-                                                        <p className="mt-3 text-sm text-gray-600 italic bg-gray-50 px-3 py-2 rounded-lg">
-                                                            "{request.reason}"
-                                                        </p>
-                                                    )}
-                                                </div>
-
-                                                {/* Actions */}
-                                                <div className="flex items-center gap-2 flex-shrink-0">
-                                                    <button
-                                                        onClick={() => handleApprove(request.id)}
-                                                        disabled={loading === request.id}
-                                                        className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2 font-medium disabled:opacity-50"
-                                                    >
-                                                        {loading === request.id ? (
-                                                            <Loader2 size={16} className="animate-spin" />
-                                                        ) : (
-                                                            <Check size={16} />
-                                                        )}
-                                                        Approve
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setShowRejectModal(request.id)}
-                                                        disabled={loading === request.id}
-                                                        className="px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-2 font-medium disabled:opacity-50"
-                                                    >
-                                                        <X size={16} />
-                                                        Reject
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </>
-                        )}
-                    </div>
-                )}
-
-                {/* Team Calendar Tab */}
-                {activeTab === 'calendar' && (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                        {/* Calendar Header */}
-                        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <button
-                                    onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
-                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                                >
-                                    <ChevronLeft size={20} className="text-gray-600" />
-                                </button>
-                                <h3 className="text-lg font-semibold text-gray-900 min-w-[150px] text-center">
-                                    {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-                                </h3>
-                                <button
-                                    onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
-                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                                >
-                                    <ChevronRight size={20} className="text-gray-600" />
-                                </button>
-                            </div>
-
-                            <button
-                                onClick={() => setCurrentMonth(new Date())}
-                                className="px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors font-medium"
-                            >
-                                Today
-                            </button>
-                        </div>
-
-                        {/* Calendar Grid */}
-                        <div className="p-4">
-                            {/* Day Headers */}
-                            <div className="grid grid-cols-7 gap-1 mb-2">
-                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                    <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
-                                        {day}
                                     </div>
                                 ))}
                             </div>
-
-                            {/* Calendar Days */}
-                            <div className="grid grid-cols-7 gap-1">
-                                {calendarDays.map((dayInfo, idx) => {
-                                    const events = getEventsForDate(dayInfo.date);
-                                    const isToday = dayInfo.date.toDateString() === new Date().toDateString();
-                                    const isWeekend = dayInfo.date.getDay() === 0 || dayInfo.date.getDay() === 6;
-
-                                    return (
-                                        <div
-                                            key={idx}
-                                            className={`min-h-[80px] p-1 border rounded-lg ${dayInfo.isCurrentMonth
-                                                ? isWeekend ? 'bg-gray-50' : 'bg-white'
-                                                : 'bg-gray-100'
-                                                } ${isToday ? 'border-indigo-500 border-2' : 'border-gray-200'}`}
-                                        >
-                                            <div className={`text-sm font-medium mb-1 ${dayInfo.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
-                                                } ${isToday ? 'text-indigo-600' : ''}`}>
-                                                {dayInfo.date.getDate()}
-                                            </div>
-                                            <div className="space-y-1">
-                                                {events.slice(0, 2).map((event, eventIdx) => (
-                                                    <div
-                                                        key={eventIdx}
-                                                        className={`text-xs px-1.5 py-0.5 rounded truncate ${event.type === 'pending'
-                                                            ? 'border-2 border-dashed bg-white'
-                                                            : ''
-                                                            }`}
-                                                        style={{
-                                                            backgroundColor: event.type === 'pending' ? 'transparent' : `${event.color}20`,
-                                                            borderColor: event.type === 'pending' ? event.color : 'transparent',
-                                                            color: event.color
-                                                        }}
-                                                        title={`${event.userName} - ${event.leaveType}`}
-                                                    >
-                                                        {event.userName.split(' ')[0]}
-                                                    </div>
-                                                ))}
-                                                {events.length > 2 && (
-                                                    <div className="text-xs text-gray-500 px-1">
-                                                        +{events.length - 2} more
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
                         </div>
+                    )}
 
-                        {/* Calendar Legend */}
-                        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center gap-6">
-                            <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 bg-blue-100 rounded"></div>
-                                <span className="text-sm text-gray-600">Approved</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 border-2 border-dashed border-blue-500 rounded"></div>
-                                <span className="text-sm text-gray-600">Pending</span>
-                            </div>
-                        </div>
+                    {/* Tabs */}
+                    <div className="flex gap-2 mb-6 bg-white p-1 rounded-xl shadow-sm border border-gray-100 w-fit">
+                        {[
+                            { id: 'pending', label: 'Pending Requests', icon: Clock, count: stats.pending },
+                            { id: 'calendar', label: 'Team Calendar', icon: CalendarDays },
+                        ].map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${activeTab === tab.id
+                                    ? 'bg-black text-white shadow-sm'
+                                    : 'text-gray-600 hover:bg-gray-100'
+                                    }`}
+                            >
+                                <tab.icon size={18} />
+                                {tab.label}
+                                {tab.count > 0 && (
+                                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeTab === tab.id ? 'bg-white/20' : 'bg-amber-100 text-amber-700'
+                                        }`}>
+                                        {tab.count}
+                                    </span>
+                                )}
+                            </button>
+                        ))}
                     </div>
-                )}
-            </main>
+
+                    {/* Pending Requests Tab */}
+                    {activeTab === 'pending' && (
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                            {/* Search and Filters */}
+                            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                                <div className="flex flex-col md:flex-row gap-3">
+                                    {/* Search */}
+                                    <div className="flex-1 relative">
+                                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search by employee name..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
+                                        />
+                                    </div>
+
+                                    {/* Leave Type Filter */}
+                                    <select
+                                        value={filterLeaveType}
+                                        onChange={(e) => setFilterLeaveType(e.target.value)}
+                                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-900"
+                                    >
+                                        <option value="all">All Leave Types</option>
+                                        <option value="Annual Leave">Annual Leave</option>
+                                        <option value="Sick Leave">Sick Leave</option>
+                                        <option value="Personal Day">Personal Day</option>
+                                        <option value="Bereavement">Bereavement</option>
+                                    </select>
+
+                                    {/* Sort By */}
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value)}
+                                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-900"
+                                    >
+                                        <option value="date">Sort by Date</option>
+                                        <option value="days">Sort by Days</option>
+                                    </select>
+                                </div>
+
+                                {/* Results count */}
+                                {(searchTerm || filterLeaveType !== 'all') && (
+                                    <p className="text-sm text-gray-600 mt-3">
+                                        Showing {filteredRequests.length} of {pendingRequests.length} requests
+                                    </p>
+                                )}
+                            </div>
+
+                            {filteredRequests.length === 0 ? (
+                                <div className="text-center py-16">
+                                    {pendingRequests.length === 0 ? (
+                                        <>
+                                            <div className="w-16 h-16 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                                                <CheckCircle size={32} className="text-emerald-600" />
+                                            </div>
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">All caught up!</h3>
+                                            <p className="text-gray-500">No pending leave requests to review</p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                                                <Search size={32} className="text-gray-400" />
+                                            </div>
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">No results found</h3>
+                                            <p className="text-gray-500">Try adjusting your search or filters</p>
+                                        </>
+                                    )}
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="px-6 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                                        <label className="flex items-center gap-3 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedRequests.size === filteredRequests.length && filteredRequests.length > 0}
+                                                onChange={toggleSelectAll}
+                                                className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                                            />
+                                            <span className="text-sm text-gray-600">
+                                                {selectedRequests.size === 0
+                                                    ? 'Select all'
+                                                    : `${selectedRequests.size} selected`}
+                                            </span>
+                                        </label>
+                                    </div>
+
+                                    <div className="divide-y divide-gray-100">
+                                        {filteredRequests.map(request => (
+                                            <div key={request.id} className="p-5 hover:bg-gray-50 transition-colors">
+                                                <div className="flex items-start gap-4">
+                                                    {/* Checkbox */}
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedRequests.has(request.id)}
+                                                        onChange={(e) => {
+                                                            const next = new Set(selectedRequests);
+                                                            if (e.target.checked) {
+                                                                next.add(request.id);
+                                                            } else {
+                                                                next.delete(request.id);
+                                                            }
+                                                            setSelectedRequests(next);
+                                                        }}
+                                                        className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 mt-1"
+                                                    />
+
+                                                    {/* User Avatar */}
+                                                    <div
+                                                        className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0"
+                                                        style={{ backgroundColor: request.user.color }}
+                                                    >
+                                                        {request.user.initials}
+                                                    </div>
+
+                                                    {/* Request Details */}
+                                                    <div className="flex-1">
+                                                        <div className="flex items-start justify-between">
+                                                            <div>
+                                                                <h4 className="font-semibold text-gray-900">{request.user.name}</h4>
+                                                                <div className="flex items-center gap-2 mt-1">
+                                                                    <span className="text-xl">{request.leaveType.icon}</span>
+                                                                    <span className="text-sm text-gray-600">{request.leaveType.name}</span>
+                                                                </div>
+                                                            </div>
+                                                            <p className="text-xs text-gray-400">
+                                                                Submitted {new Date(request.createdAt).toLocaleDateString()}
+                                                            </p>
+                                                        </div>
+
+                                                        <div className="mt-3 flex items-center gap-4 text-sm text-gray-600">
+                                                            <div className="flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded-lg">
+                                                                <CalendarDays size={16} />
+                                                                <span>
+                                                                    {new Date(request.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                                                                    {request.startDate !== request.endDate && (
+                                                                        <> → {new Date(request.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</>
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                            <span className="font-medium text-gray-900">{request.totalDays} {request.totalDays === 1 ? 'day' : 'days'}</span>
+                                                        </div>
+
+                                                        {request.reason && (
+                                                            <p className="mt-3 text-sm text-gray-600 italic bg-gray-50 px-3 py-2 rounded-lg">
+                                                                "{request.reason}"
+                                                            </p>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Actions */}
+                                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                                        <button
+                                                            onClick={() => handleApprove(request.id)}
+                                                            disabled={loading === request.id}
+                                                            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2 font-medium disabled:opacity-50"
+                                                        >
+                                                            {loading === request.id ? (
+                                                                <Loader2 size={16} className="animate-spin" />
+                                                            ) : (
+                                                                <Check size={16} />
+                                                            )}
+                                                            Approve
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setShowRejectModal(request.id)}
+                                                            disabled={loading === request.id}
+                                                            className="px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-2 font-medium disabled:opacity-50"
+                                                        >
+                                                            <X size={16} />
+                                                            Reject
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Team Calendar Tab */}
+                    {activeTab === 'calendar' && (
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                            {/* Calendar Header */}
+                            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <button
+                                        onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
+                                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                    >
+                                        <ChevronLeft size={20} className="text-gray-600" />
+                                    </button>
+                                    <h3 className="text-lg font-semibold text-gray-900 min-w-[150px] text-center">
+                                        {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                                    </h3>
+                                    <button
+                                        onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
+                                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                    >
+                                        <ChevronRight size={20} className="text-gray-600" />
+                                    </button>
+                                </div>
+
+                                <button
+                                    onClick={() => setCurrentMonth(new Date())}
+                                    className="px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium"
+                                >
+                                    Today
+                                </button>
+                            </div>
+
+                            {/* Calendar Grid */}
+                            <div className="p-4">
+                                {/* Day Headers */}
+                                <div className="grid grid-cols-7 gap-1 mb-2">
+                                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                        <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
+                                            {day}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Calendar Days */}
+                                <div className="grid grid-cols-7 gap-1">
+                                    {calendarDays.map((dayInfo, idx) => {
+                                        const events = getEventsForDate(dayInfo.date);
+                                        const isToday = dayInfo.date.toDateString() === new Date().toDateString();
+                                        const isWeekend = dayInfo.date.getDay() === 0 || dayInfo.date.getDay() === 6;
+
+                                        return (
+                                            <div
+                                                key={idx}
+                                                className={`min-h-[80px] p-1 border rounded-lg ${dayInfo.isCurrentMonth
+                                                    ? isWeekend ? 'bg-gray-50' : 'bg-white'
+                                                    : 'bg-gray-100'
+                                                    } ${isToday ? 'border-black border-2' : 'border-gray-200'}`}
+                                            >
+                                                <div className={`text-sm font-medium mb-1 ${dayInfo.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
+                                                    } ${isToday ? 'text-gray-900 font-bold' : ''}`}>
+                                                    {dayInfo.date.getDate()}
+                                                </div>
+                                                <div className="space-y-1">
+                                                    {events.slice(0, 2).map((event, eventIdx) => (
+                                                        <div
+                                                            key={eventIdx}
+                                                            className={`text-xs px-1.5 py-0.5 rounded truncate ${event.type === 'pending'
+                                                                ? 'border-2 border-dashed bg-white'
+                                                                : ''
+                                                                }`}
+                                                            style={{
+                                                                backgroundColor: event.type === 'pending' ? 'transparent' : `${event.color}20`,
+                                                                borderColor: event.type === 'pending' ? event.color : 'transparent',
+                                                                color: event.color
+                                                            }}
+                                                            title={`${event.userName} - ${event.leaveType}`}
+                                                        >
+                                                            {event.userName.split(' ')[0]}
+                                                        </div>
+                                                    ))}
+                                                    {events.length > 2 && (
+                                                        <div className="text-xs text-gray-500 px-1">
+                                                            +{events.length - 2} more
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Calendar Legend */}
+                            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center gap-6">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 bg-blue-100 rounded"></div>
+                                    <span className="text-sm text-gray-600">Approved</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 border-2 border-dashed border-blue-500 rounded"></div>
+                                    <span className="text-sm text-gray-600">Pending</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </main>
+            </div>
 
             {/* Reject Modal */}
             {showRejectModal && (
