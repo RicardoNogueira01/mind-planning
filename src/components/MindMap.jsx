@@ -24,6 +24,8 @@ import NodeToolbarConnectionButton from './mindmap/NodeToolbarConnectionButton';
 import NodeToolbarSettingsToggle from './mindmap/NodeToolbarSettingsToggle';
 import NodeToolbarBackgroundColor from './mindmap/NodeToolbarBackgroundColor';
 import NodeToolbarFontColor from './mindmap/NodeToolbarFontColor';
+import NodeToolbarFontFamily from './mindmap/NodeToolbarFontFamily';
+import NodeToolbarFontSize from './mindmap/NodeToolbarFontSize';
 import EmojiPicker from './popups/EmojiPicker';
 import NotesPopup from './popups/NotesPopup';
 import TagsPopup from './popups/TagsPopup';
@@ -2777,6 +2779,30 @@ export default function MindMap({ mapId, onBack }) {
                                   togglePopup(node.id, 'fontColor');
                                 }}
                                 onClose={() => togglePopup(node.id, 'fontColor')}
+                              />
+
+                              {/* Font Family Picker */}
+                              <NodeToolbarFontFamily
+                                isOpen={isPopupOpen(node.id, 'fontFamily')}
+                                currentFont={node.fontFamily}
+                                onToggle={() => togglePopup(node.id, 'fontFamily')}
+                                onSelect={(font) => {
+                                  setNodes(nodes.map(n => n.id === node.id ? { ...n, fontFamily: font } : n));
+                                  togglePopup(node.id, 'fontFamily');
+                                }}
+                                onClose={() => togglePopup(node.id, 'fontFamily')}
+                              />
+
+                              {/* Font Size Picker */}
+                              <NodeToolbarFontSize
+                                isOpen={isPopupOpen(node.id, 'fontSize')}
+                                currentSize={node.fontSize}
+                                onToggle={() => togglePopup(node.id, 'fontSize')}
+                                onSelect={(size) => {
+                                  setNodes(nodes.map(n => n.id === node.id ? { ...n, fontSize: size } : n));
+                                  togglePopup(node.id, 'fontSize');
+                                }}
+                                onClose={() => togglePopup(node.id, 'fontSize')}
                               />
                             </>
                           )}

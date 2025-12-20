@@ -130,12 +130,8 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
   const getStatusDisplay = () => {
     switch (node.status) {
       case 'completed':
-        return {
-          color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-          dotColor: 'bg-emerald-500',
-          icon: '✓',
-          label: 'Completed'
-        };
+        return null; // Handled by floating badge
+
       case 'in-progress':
         return {
           color: 'bg-blue-50 text-blue-700 border-blue-200',
@@ -230,8 +226,8 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
     >
       {/* Parent indicator badge */}
       {isParentOfSelected && (
-        <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-20">
-          <div className="bg-purple-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md">
+        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20">
+          <div className="bg-purple-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full shadow-md">
             Parent
           </div>
         </div>
@@ -239,15 +235,26 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
 
       {/* Child indicator badge */}
       {isChildOfSelected && (
-        <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-20">
-          <div className="bg-amber-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-md">
+        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20">
+          <div className="bg-amber-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full shadow-md">
             Child
           </div>
         </div>
       )}
 
+      {/* Completed indicator badge - Floating checkmark */}
+      {node.completed && (
+        <div className="absolute -top-3 -right-3 z-30">
+          <div className="bg-green-500 text-white w-6 h-6 rounded-full shadow-lg flex items-center justify-center border-2 border-white">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+        </div>
+      )}
+
       {/* Overdue indicator badge - Pulsing animation for attention */}
-      {isTaskOverdue && !isParentOfSelected && !isChildOfSelected && (
+      {isTaskOverdue && !isParentOfSelected && !isChildOfSelected && !node.completed && (
         <div className="absolute -top-3 -right-3 z-30">
           <div
             className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center gap-1"
@@ -282,21 +289,21 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
       )}
       <button
         type="button"
-        className={`w-full px-3 py-2.5 border text-left transition-all duration-200 hover:shadow-md`}
+        className={`w-full px-3 py-2.5 border text-left transition-all duration-200 hover:shadow-md ${node.completed ? 'border-green-500 bg-green-50/30' : ''}`}
         onClick={(e) => {
           e.stopPropagation();
           onSelect?.(node.id, e);
         }}
         style={{
-          backgroundColor: node.bgColor || themeStyles.defaultBg,
+          backgroundColor: node.completed ? '#f0fdf4' : (node.bgColor || themeStyles.defaultBg),
           color: node.fontColor || themeStyles.defaultText,
           minHeight: '56px',
-          fontFamily: themeStyles.fontFamily,
-          fontSize: themeStyles.fontSize,
+          fontFamily: node.fontFamily || themeStyles.fontFamily,
+          fontSize: node.fontSize || themeStyles.fontSize,
           fontWeight: themeStyles.fontWeight,
           borderRadius: themeStyles.borderRadius,
-          borderWidth: themeStyles.borderWidth,
-          borderColor: selected ? themeStyles.selectedRing : themeStyles.borderColor,
+          borderWidth: node.completed ? '2px' : themeStyles.borderWidth,
+          borderColor: selected ? themeStyles.selectedRing : (node.completed ? '#22c55e' : themeStyles.borderColor),
           boxShadow: themeStyles.shadow,
         }}
         onDoubleClick={handleDoubleClick}

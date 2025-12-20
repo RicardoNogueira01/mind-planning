@@ -202,8 +202,20 @@ export function useNodeOperations(
   }, [nodes, setNodes]);
 
   const toggleNodeComplete = useCallback((id: string) => {
-    setNodes(nodes.map(n => n.id === id ? { ...n, completed: !n.completed } : n));
-  }, [nodes, setNodes]);
+    // Determine the new state based on the current node
+    const targetNode = nodes.find(n => n.id === id);
+    if (!targetNode) return;
+
+    const newCompletedState = !targetNode.completed;
+
+    // Get all descendants
+    const descendants = getDescendantNodeIds(connections, id);
+    const affectedIds = new Set([id, ...descendants]);
+
+    setNodes(prev => prev.map(n =>
+      affectedIds.has(n.id) ? { ...n, completed: newCompletedState } : n
+    ));
+  }, [nodes, connections, setNodes]);
 
   const updateNode = useCallback((id: string, patch: Partial<Node> | ((node: Node) => Node)) => {
     setNodes(prev => prev.map(n => {

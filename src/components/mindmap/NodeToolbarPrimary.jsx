@@ -37,24 +37,29 @@ export default function NodeToolbarPrimary({
         </svg>
       </button>
 
-      {/* Auto-arrange Children Button - Only visible if node has children */}
-      {hasChildren && (
-        <button
-          className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors duration-200"
-          onClick={(e) => { e.stopPropagation(); onAutoArrangeChildren?.(node.id); }}
-          title="Auto-arrange children in a neat column"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="6" height="6" rx="1"></rect>
-            <path d="M9 6h6"></path>
-            <rect x="15" y="3" width="6" height="6" rx="1"></rect>
-            <path d="M9 12h6"></path>
-            <rect x="15" y="9" width="6" height="6" rx="1"></rect>
-            <path d="M9 18h6"></path>
-            <rect x="15" y="15" width="6" height="6" rx="1"></rect>
-          </svg>
-        </button>
-      )}
+      {/* Auto-arrange Children Button - Always visible, disabled if no children */}
+      <button
+        className={`p-2 rounded-lg transition-colors duration-200 ${hasChildren
+            ? 'text-blue-600 hover:bg-blue-50'
+            : 'text-gray-300 cursor-not-allowed opacity-50'
+          }`}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (hasChildren) onAutoArrangeChildren?.(node.id);
+        }}
+        disabled={!hasChildren}
+        title={hasChildren ? "Auto-arrange children in a neat column" : "No children to arrange"}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="6" height="6" rx="1"></rect>
+          <path d="M9 6h6"></path>
+          <rect x="15" y="3" width="6" height="6" rx="1"></rect>
+          <path d="M9 12h6"></path>
+          <rect x="15" y="9" width="6" height="6" rx="1"></rect>
+          <path d="M9 18h6"></path>
+          <rect x="15" y="15" width="6" height="6" rx="1"></rect>
+        </svg>
+      </button>
 
       {/* Delete Node Button - Always visible */}
       <button

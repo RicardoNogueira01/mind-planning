@@ -33,9 +33,9 @@ const NodeToolbarFontColor = ({
         title={title}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="4 7 4 4 20 4 20 7"></polyline>
-          <line x1="9" y1="20" x2="15" y2="20"></line>
-          <line x1="12" y1="4" x2="12" y2="20"></line>
+          <path d="M4 19 L12 4 L20 19"></path>
+          <line x1="8" y1="14" x2="16" y2="14"></line>
+          <line x1="2" y1="22" x2="22" y2="22" stroke={currentColor || 'currentColor'} strokeWidth="3"></line>
         </svg>
       </button>
 
