@@ -189,20 +189,23 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
           ? 'ring-2 ring-amber-400/70'
           : '';
 
-  // Calculate dynamic width based on content
+  // Calculate dynamic width based on content - use editText when editing
   const calculateNodeWidth = () => {
     const baseWidth = 120; // Minimum width
-    const maxWidth = 300; // Maximum width (current fixed width)
+    const maxWidth = 300; // Maximum width
     const charWidth = 8; // Approximate pixels per character
     const padding = 32; // Horizontal padding
 
-    const textWidth = (node.text || 'New Task').length * charWidth + padding;
+    // Use editText when editing, otherwise use node.text
+    const displayText = isEditing ? editText : (node.text || 'New Task');
+    const textWidth = displayText.length * charWidth + padding;
     const emojiWidth = node.emoji ? 40 : 0; // Space for emoji
 
     const calculatedWidth = Math.min(maxWidth, Math.max(baseWidth, textWidth + emojiWidth));
     return calculatedWidth;
   };
 
+  // Recalculate width (changes when editText updates during editing)
   const nodeWidth = calculateNodeWidth();
   const halfWidth = nodeWidth / 2;
 
@@ -315,7 +318,9 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
             style={{
               color: 'inherit',
               minHeight: '24px',
-              lineHeight: '1.5'
+              lineHeight: '1.5',
+              wordBreak: 'break-word',
+              overflowWrap: 'anywhere'
             }}
             value={editText}
             onChange={(e) => {
@@ -381,7 +386,14 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
                   {node.emoji}
                 </span>
               )}
-              <div className="text-center font-medium whitespace-pre-wrap break-words leading-snug" style={{ color: 'inherit' }}>
+              <div
+                className="text-center font-medium whitespace-pre-wrap leading-snug"
+                style={{
+                  color: 'inherit',
+                  wordBreak: 'break-word',
+                  overflowWrap: 'anywhere'
+                }}
+              >
                 {node.text || 'New Task'}
               </div>
             </div>
