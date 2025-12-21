@@ -236,7 +236,7 @@ export function useDragging(
     setInitialPositions({});
 
     // Return info about what was being dragged for the caller to handle
-    return { wasDraggingNode, draggedNodeId };
+    return { wasDraggingNode, draggedNodeId, hasMoved };
   }, [draggingNodeId, nodes, pushCollidingNodes, setNodes, initialPositions]);
 
   return {

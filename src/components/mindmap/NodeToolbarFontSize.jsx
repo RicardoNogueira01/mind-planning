@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
+import { Type } from 'lucide-react';
 
 const SIZES = [
     { label: 'Small', value: '12px' },
@@ -39,12 +40,7 @@ const NodeToolbarFontSize = ({
                 }}
                 title={title}
             >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 12v8"></path>
-                    <path d="M4 12h16"></path>
-                    <path d="M20 12v8"></path>
-                    <path d="M12 4v16"></path>
-                </svg>
+                <Type size={18} strokeWidth={2.5} />
             </button>
 
             {isOpen && createPortal(

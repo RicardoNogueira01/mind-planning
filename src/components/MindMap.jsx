@@ -83,6 +83,26 @@ import { useNodeSelection } from '../hooks/useNodeSelection';
 // Utils
 import { getNodeProgress, formatVisitorTime } from '../utils/nodeUtils';
 
+const NodeToolbarWrapper = ({ isMobile, children }) => {
+  if (isMobile) {
+    return createPortal(
+      <div className="fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] pb-8 pt-2 rounded-t-2xl animate-slide-up">
+        <div className="mx-auto w-12 h-1.5 bg-gray-300 rounded-full mb-4"></div>
+        <div className="px-6 flex items-center justify-around w-full">
+          {children}
+        </div>
+      </div>,
+      document.body
+    );
+  }
+
+  return (
+    <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-full z-20" style={{ top: '-16px' }}>
+      {children}
+    </div>
+  );
+};
+
 export default function MindMap({ mapId, onBack }) {
   // @ts-ignore
   const { currentTheme: globalTheme } = useTheme();
@@ -168,6 +188,7 @@ export default function MindMap({ mapId, onBack }) {
   const collaboratorBtnRefs = useRef({}); // Collaborator button refs
   const [showCollaboratorDialog, setShowCollaboratorDialog] = useState(false);
   const [collaboratorNodeId, setCollaboratorNodeId] = useState(null); // Track which node the collaborator dialog is for
+  const wasJustMovedRef = useRef(false); // Track if a node was just moved to prevent click-to-select logic
   const [collaborators] = useState([
     { id: 'jd', initials: 'JD', name: 'John Doe', color: '#3B82F6' },
     { id: 'ak', initials: 'AK', name: 'Alex Kim', color: '#10B981' },
@@ -620,6 +641,17 @@ export default function MindMap({ mapId, onBack }) {
   }, [nodeOps, smoothPanToNode]);
 
   const toggleSelectNode = (id, event) => {
+    // If we just finished a drag operation (movement), ignore this click event
+    // This prevents clearing the selection after dragging multiple nodes
+    if (wasJustMovedRef.current) {
+      wasJustMovedRef.current = false;
+      // If we dragged a node that wasn't selected, select it now (single select behavior)
+      if (!selectedNodes.includes(id)) {
+        selection.selectSingleNode(id);
+      }
+      return;
+    }
+
     // If in the middle of creating a connection, connect to the clicked node
     if (connectionFrom && connectionFrom !== id) {
       const exists = connections.some(c => (c.from === connectionFrom && c.to === id) || (c.from === id && c.to === connectionFrom));
@@ -1991,6 +2023,22 @@ export default function MindMap({ mapId, onBack }) {
     }
   };
 
+  // Handle BATCH node updates (apply to all selected nodes if target is selected)
+  const handleBatchNodeUpdate = (targetNodeId, updates) => {
+    setNodes(prevNodes => prevNodes.map(n => {
+      const isTargetSelected = selectedNodes.includes(targetNodeId);
+      // If target is selected, apply to ALL selected nodes
+      if (isTargetSelected && selectedNodes.includes(n.id)) {
+        return { ...n, ...updates };
+      }
+      // If target is NOT selected (or we are checking a non-selected node), update specific target only
+      if (n.id === targetNodeId) {
+        return { ...n, ...updates };
+      }
+      return n;
+    }));
+  };
+
   // Get current theme config
   const activeTheme = getTheme(currentTheme);
 
@@ -2014,7 +2062,13 @@ export default function MindMap({ mapId, onBack }) {
 
           // Check if in collaborator or multi-select mode
           if (mode === 'cursor' && (selectionType === 'collaborator' || selectionType === 'multi')) {
-            startSelection(e);
+            // If clicking a node, start dragging regardless of mode
+            if (clickedNode) {
+              dragging.startPanning(e);
+            } else {
+              // Otherwise (canvas click), start box selection
+              startSelection(e);
+            }
           } else {
             dragging.startPanning(e);
           }
@@ -2029,6 +2083,12 @@ export default function MindMap({ mapId, onBack }) {
         onMouseUp={() => {
           stopSelection();
           const dragInfo = dragging.stopPanning();
+
+          if (dragInfo && dragInfo.hasMoved) {
+            wasJustMovedRef.current = true;
+            // Clear the flag after a short delay to ensure usage in onClick handler which fires after MouseUp
+            setTimeout(() => { wasJustMovedRef.current = false; }, 100);
+          }
 
           // Check if node was dragged and should join a group
           if (dragInfo && dragInfo.wasDraggingNode && dragInfo.draggedNodeId) {
@@ -2689,12 +2749,13 @@ export default function MindMap({ mapId, onBack }) {
 
                     {/* Per-node toolbar overlay - Only visible when exactly ONE node is selected */}
                     {selectedNodes.length === 1 && selectedNodes.includes(node.id) && (
-                      <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-full z-20" style={{ top: '-16px' }}>
-                        <div className="enhanced-node-toolbar bg-white shadow-lg border border-gray-100 rounded-2xl p-2 lg:flex lg:items-center lg:gap-0.5 grid grid-cols-4 gap-1 max-w-[90vw] lg:max-w-none">
+                      <NodeToolbarWrapper isMobile={isMobileOrTablet}>
+                        <div className={`enhanced-node-toolbar ${isMobileOrTablet ? 'w-full flex items-center justify-between gap-4' : 'bg-white shadow-lg border border-gray-100 rounded-2xl p-2 grid grid-cols-4 gap-1 max-w-[90vw] lg:max-w-none lg:flex lg:items-center lg:gap-0.5'}`}>
                           {/* PRIMARY GROUP - always visible */}
-                          <div className="col-span-4 lg:col-span-auto flex items-center gap-0.5 justify-center lg:justify-start">
+                          <div className={isMobileOrTablet ? "flex-1 w-full" : "col-span-4 lg:col-span-auto flex items-center gap-0.5 justify-center lg:justify-start"}>
                             <NodeToolbarPrimary
                               node={node}
+                              isMobile={isMobileOrTablet}
                               isToolbarExpanded={isNodeToolbarExpanded(node.id)}
                               onToggleComplete={onToggleComplete}
                               onAddChild={onAddChild}
@@ -2706,16 +2767,18 @@ export default function MindMap({ mapId, onBack }) {
                             />
 
                             {/* Connection button for connectors */}
-                            <NodeToolbarConnectionButton
-                              nodeId={node.id}
-                              isActive={connectionFrom === node.id}
-                              onStart={startConnection}
-                              onCancel={cancelConnection}
-                            />
+                            {!isMobileOrTablet && (
+                              <NodeToolbarConnectionButton
+                                nodeId={node.id}
+                                isActive={connectionFrom === node.id}
+                                onStart={startConnection}
+                                onCancel={cancelConnection}
+                              />
+                            )}
                           </div>
 
                           {/* Visual group when expanded - Desktop only */}
-                          {isNodeToolbarExpanded(node.id) && (
+                          {isNodeToolbarExpanded(node.id) && !isMobileOrTablet && (
                             <div className="hidden lg:block w-px h-6 mx-1 bg-gray-200"></div>
                           )}
 
@@ -2765,7 +2828,7 @@ export default function MindMap({ mapId, onBack }) {
                                 notes={node.notes}
                                 attachments={node.attachments}
                                 collaborators={collaborators}
-                                onChange={(value) => setNodes(nodes.map(n => n.id === node.id ? { ...n, notes: value } : n))}
+                                onChange={(value) => handleBatchNodeUpdate(node.id, { notes: value })}
                                 onClose={() => togglePopup(node.id, 'notes')}
                               />
 
@@ -2808,9 +2871,23 @@ export default function MindMap({ mapId, onBack }) {
                                 anchorRef={tagBtnRefs.current[node.id] ? { current: tagBtnRefs.current[node.id] } : null}
                                 tags={node.tags}
                                 showTags={node.showTags}
-                                onToggleShowTags={(checked) => setNodes(nodes.map(n => n.id === node.id ? { ...n, showTags: checked } : n))}
-                                onAddTag={(tag) => setNodes(nodes.map(n => n.id === node.id ? { ...n, tags: [...(n.tags || []), tag] } : n))}
-                                onRemoveTag={(tag) => setNodes(nodes.map(n => n.id === node.id ? { ...n, tags: (n.tags || []).filter(t => t !== tag) } : n))}
+                                onToggleShowTags={(checked) => handleBatchNodeUpdate(node.id, { showTags: checked })}
+                                onAddTag={(tag) => setNodes(nodes.map(n => {
+                                  // For tags logic, we need to append. Batching complex objects is trickier.
+                                  // Let's support batch add:
+                                  if (selectedNodes.includes(node.id) && selectedNodes.includes(n.id)) {
+                                    return { ...n, tags: [...(n.tags || []), tag] };
+                                  }
+                                  if (n.id === node.id) return { ...n, tags: [...(n.tags || []), tag] };
+                                  return n;
+                                }))}
+                                onRemoveTag={(tag) => setNodes(nodes.map(n => {
+                                  if (selectedNodes.includes(node.id) && selectedNodes.includes(n.id)) {
+                                    return { ...n, tags: (n.tags || []).filter(t => t !== tag) };
+                                  }
+                                  if (n.id === node.id) return { ...n, tags: (n.tags || []).filter(t => t !== tag) };
+                                  return n;
+                                }))}
                                 onClose={() => togglePopup(node.id, 'tags')}
                               />
 
@@ -2820,7 +2897,7 @@ export default function MindMap({ mapId, onBack }) {
                                 currentColor={node.bgColor}
                                 onToggle={() => togglePopup(node.id, 'bgColor')}
                                 onSelect={(color) => {
-                                  setNodes(nodes.map(n => n.id === node.id ? { ...n, bgColor: color } : n));
+                                  handleBatchNodeUpdate(node.id, { bgColor: color });
                                   togglePopup(node.id, 'bgColor');
                                 }}
                                 onClose={() => togglePopup(node.id, 'bgColor')}
@@ -2832,7 +2909,7 @@ export default function MindMap({ mapId, onBack }) {
                                 currentColor={node.fontColor}
                                 onToggle={() => togglePopup(node.id, 'fontColor')}
                                 onSelect={(color) => {
-                                  setNodes(nodes.map(n => n.id === node.id ? { ...n, fontColor: color } : n));
+                                  handleBatchNodeUpdate(node.id, { fontColor: color });
                                   togglePopup(node.id, 'fontColor');
                                 }}
                                 onClose={() => togglePopup(node.id, 'fontColor')}
@@ -2844,7 +2921,7 @@ export default function MindMap({ mapId, onBack }) {
                                 currentFont={node.fontFamily}
                                 onToggle={() => togglePopup(node.id, 'fontFamily')}
                                 onSelect={(font) => {
-                                  setNodes(nodes.map(n => n.id === node.id ? { ...n, fontFamily: font } : n));
+                                  handleBatchNodeUpdate(node.id, { fontFamily: font });
                                   togglePopup(node.id, 'fontFamily');
                                 }}
                                 onClose={() => togglePopup(node.id, 'fontFamily')}
@@ -2856,7 +2933,7 @@ export default function MindMap({ mapId, onBack }) {
                                 currentSize={node.fontSize}
                                 onToggle={() => togglePopup(node.id, 'fontSize')}
                                 onSelect={(size) => {
-                                  setNodes(nodes.map(n => n.id === node.id ? { ...n, fontSize: size } : n));
+                                  handleBatchNodeUpdate(node.id, { fontSize: size });
                                   togglePopup(node.id, 'fontSize');
                                 }}
                                 onClose={() => togglePopup(node.id, 'fontSize')}
@@ -3026,13 +3103,15 @@ export default function MindMap({ mapId, onBack }) {
                             })()}
 
                             {/* Settings toggle - Always at the end before delete */}
-                            <NodeToolbarSettingsToggle
-                              isToolbarExpanded={isNodeToolbarExpanded(node.id)}
-                              onToggle={() => toggleNodeToolbar(node.id)}
-                            />
+                            {!isMobileOrTablet && (
+                              <NodeToolbarSettingsToggle
+                                isToolbarExpanded={isNodeToolbarExpanded(node.id)}
+                                onToggle={() => toggleNodeToolbar(node.id)}
+                              />
+                            )}
 
-                            {/* Delete button at the end - Always visible for non-root nodes */}
-                            {node.id !== 'root' && (
+                            {/* Delete button at the end - Always visible for non-root nodes - DESKTOP ONLY */}
+                            {node.id !== 'root' && !isMobileOrTablet && (
                               <button
                                 className="p-2 rounded-lg text-black hover:bg-gray-100 transition-colors duration-200"
                                 onClick={(e) => { e.stopPropagation(); setDeleteConfirmNodeId(node.id); }}
@@ -3048,7 +3127,7 @@ export default function MindMap({ mapId, onBack }) {
                             )}
                           </div>
                         </div>
-                      </div>
+                      </NodeToolbarWrapper>
                     )}
                   </NodeCard>
                 </React.Fragment>

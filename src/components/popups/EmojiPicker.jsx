@@ -90,6 +90,18 @@ export default function EmojiPicker({ show, anchorRef, onSelect, onClose }) {
 
   const categoryNames = Object.keys(EMOJI_CATEGORIES);
 
+  const CATEGORY_ICONS = {
+    'Smileys': '😀',
+    'Gestures': '👌',
+    'People': '🧑',
+    'Animals': '🐶',
+    'Food': '🍎',
+    'Activities': '⚽',
+    'Travel': '🚗',
+    'Objects': '💡',
+    'Symbols': '❤️'
+  };
+
   return createPortal(
     <NodePopup
       position={{ left, top }}
@@ -99,17 +111,18 @@ export default function EmojiPicker({ show, anchorRef, onSelect, onClose }) {
       title="Select Emoji"
     >
       {/* Category Tabs */}
-      <div className="flex gap-1 mb-3 overflow-x-auto pb-2 border-b border-gray-100">
+      <div className="flex gap-2 mb-3 overflow-x-auto pb-2 border-b border-gray-100 justify-between px-2">
         {categoryNames.map(category => (
           <button
             key={category}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${activeCategory === category
-                ? 'bg-blue-100 text-blue-700'
-                : 'text-gray-600 hover:bg-gray-100'
+            className={`p-2 text-xl rounded-lg whitespace-nowrap transition-all ${activeCategory === category
+              ? 'bg-blue-100 scale-110'
+              : 'hover:bg-gray-100 hover:scale-110 opacity-70 hover:opacity-100'
               }`}
             onClick={() => setActiveCategory(category)}
+            title={category}
           >
-            {category}
+            {CATEGORY_ICONS[category] || category}
           </button>
         ))}
       </div>
