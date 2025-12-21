@@ -117,77 +117,47 @@ export function useNodeOperations(
 
     const children = nodeList.filter(n => childIds.includes(n.id));
 
-    // Determine layout direction from first child
-    const firstChild = children[0];
-    const dx = firstChild.x - parent.x;
-    const dy = firstChild.y - parent.y;
-    const isHorizontal = Math.abs(dx) > Math.abs(dy);
-
-    const totalChildren = children.length;
     const SPACING = NODE_HEIGHT + 15; // Spacing between children
 
-    if (isHorizontal) {
-      // Children are LEFT or RIGHT of parent
-      // Split into Left and Right groups
-      const rightChildren = children.filter(c => c.x > parent.x);
-      const leftChildren = children.filter(c => c.x < parent.x);
+    // Determine layout: Split children into LEFT and RIGHT of parent
+    // This is the primary layout pattern for mind maps
+    const rightChildren = children.filter(c => c.x >= parent.x);
+    const leftChildren = children.filter(c => c.x < parent.x);
 
-      // Helper to rebalance a single vertical stack
-      const rebalanceStack = (stackNodes: Node[]) => {
-        if (stackNodes.length === 0) return [];
-        // Sort top-to-bottom
-        const sorted = [...stackNodes].sort((a, b) => a.y - b.y);
+    // Helper to rebalance a single vertical stack (children on one side)
+    const rebalanceStack = (stackNodes: Node[], isRight: boolean) => {
+      if (stackNodes.length === 0) return [];
 
-        // Center around parent Y
-        const totalHeight = (stackNodes.length - 1) * SPACING;
-        const startY = parent.y - (totalHeight / 2);
+      // Sort top-to-bottom by current Y position
+      const sorted = [...stackNodes].sort((a, b) => a.y - b.y);
 
-        // Use average X of the stack to keep alignment
-        const avgX = stackNodes.reduce((sum, n) => sum + n.x, 0) / stackNodes.length;
+      // Center the stack around parent Y
+      const totalHeight = (stackNodes.length - 1) * SPACING;
+      const startY = parent.y - (totalHeight / 2);
 
-        return sorted.map((child, index) => ({
-          ...child,
-          x: avgX,
-          y: startY + (index * SPACING)
-        }));
-      };
+      // Keep consistent X position (average of the group, or use the preferred side position)
+      const avgX = stackNodes.reduce((sum, n) => sum + n.x, 0) / stackNodes.length;
 
-      const rebalancedRight = rebalanceStack(rightChildren);
-      const rebalancedLeft = rebalanceStack(leftChildren);
-
-      // Merge rebalanced children back
-      const rebalancedMap = new Map();
-      [...rebalancedRight, ...rebalancedLeft].forEach(n => rebalancedMap.set(n.id, n));
-
-      return nodeList.map(node => {
-        if (rebalancedMap.has(node.id)) {
-          return rebalancedMap.get(node.id);
-        }
-        return node;
-      });
-
-    } else {
-      // Children are ABOVE or BELOW parent
-      // Sort children by their current X position (left to right)
-      const sortedChildren = [...children].sort((a, b) => a.x - b.x);
-
-      // Keep same Y (up or down side), redistribute X positions evenly
-      // Center the group around parent's X
-      const totalWidth = (totalChildren - 1) * SPACING;
-      const startX = parent.x - (totalWidth / 2);
-
-      const rebalancedChildren = sortedChildren.map((child, index) => ({
+      return sorted.map((child, index) => ({
         ...child,
-        x: startX + (index * SPACING),
-        y: firstChild.y // Keep same Y position as first child
+        x: avgX,
+        y: startY + (index * SPACING)
       }));
+    };
 
-      // Merge rebalanced children back
-      return nodeList.map(node => {
-        const rebalanced = rebalancedChildren.find(c => c.id === node.id);
-        return rebalanced || node;
-      });
-    }
+    const rebalancedRight = rebalanceStack(rightChildren, true);
+    const rebalancedLeft = rebalanceStack(leftChildren, false);
+
+    // Merge rebalanced children back
+    const rebalancedMap = new Map();
+    [...rebalancedRight, ...rebalancedLeft].forEach(n => rebalancedMap.set(n.id, n));
+
+    return nodeList.map(node => {
+      if (rebalancedMap.has(node.id)) {
+        return rebalancedMap.get(node.id);
+      }
+      return node;
+    });
   }, [NODE_HEIGHT]);
 
   const deleteNodes = useCallback((ids: string[]) => {

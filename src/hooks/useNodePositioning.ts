@@ -170,10 +170,6 @@ export function useNodePositioning(nodes: Node[], connections: Connection[] = []
     else {
       // For Grandchildren, we stack them vertically.
       // Direction typically follows the Parent's direction from Root.
-      // We can determine direction by looking at Parent relative to GrandParent.
-      // But simply: If Parent is to the Left of GrandParent, we stack Left. if Right, Right.
-
-      // Find Grandparent to determine side
       const parentConn = connections.find(c => c.to === parentId);
       let direction = 1; // Default Right
 
