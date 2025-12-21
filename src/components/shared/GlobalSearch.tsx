@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Search, 
-  X, 
-  Clock, 
-  FileText, 
-  Users, 
+import {
+  Search,
+  X,
+  Clock,
+  FileText,
+  Users,
   FolderOpen,
   Map,
   Scale,
@@ -13,9 +13,9 @@ import {
   ArrowRight,
   CheckSquare
 } from 'lucide-react';
-import { 
-  globalSearch, 
-  saveRecentSearch, 
+import {
+  globalSearch,
+  saveRecentSearch,
   getRecentSearches,
   clearRecentSearches
 } from '../../services/searchService';
@@ -44,10 +44,10 @@ interface GlobalSearchProps {
   onResultClick?: (result: SearchResult) => void;
 }
 
-export function GlobalSearch({ 
-  placeholder = 'Search tasks, projects, people...', 
+export function GlobalSearch({
+  placeholder = 'Search tasks, projects, people...',
   className = '',
-  onResultClick 
+  onResultClick
 }: GlobalSearchProps) {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
@@ -57,7 +57,7 @@ export function GlobalSearch({
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [activeFilter, setActiveFilter] = useState<SearchResult['type'] | 'all'>('all');
-  
+
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const debouncedQuery = useDebounce(query, 300);
@@ -79,24 +79,19 @@ export function GlobalSearch({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Perform search when debounced query changes
+  // Perform search when debounced query changes or filter changes
   useEffect(() => {
     const performSearch = async () => {
-      if (!debouncedQuery.trim()) {
-        setResults([]);
-        setIsLoading(false);
-        return;
-      }
-
       setIsLoading(true);
       try {
         const token = localStorage.getItem('auth_token') || undefined;
+        // Allow empty query to fetch default/recent items
         const response = await globalSearch({
           query: debouncedQuery,
           types: activeFilter === 'all' ? undefined : [activeFilter],
           limit: 10,
         }, token);
-        
+
         setResults(response.results);
       } catch (error) {
         console.error('Search error:', error);
@@ -111,11 +106,11 @@ export function GlobalSearch({
 
   // Handle result click
   const handleResultClick = useCallback((result: SearchResult) => {
-    saveRecentSearch(query);
+    if (query) saveRecentSearch(query);
     setRecentSearches(getRecentSearches());
     setIsOpen(false);
     setQuery('');
-    
+
     if (onResultClick) {
       onResultClick(result);
     } else {
@@ -127,7 +122,7 @@ export function GlobalSearch({
   // Handle keyboard navigation
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     const totalItems = results.length + (query ? 0 : recentSearches.length);
-    
+
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
@@ -238,32 +233,29 @@ export function GlobalSearch({
       {/* Dropdown */}
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50 max-h-[480px] overflow-y-auto">
-          {/* Filter Tabs */}
-          {query && (
-            <div className="flex items-center gap-1 px-3 py-2 border-b border-gray-100 overflow-x-auto">
-              {filterTypes.map(filter => {
-                const Icon = filter.icon;
-                const isActive = activeFilter === filter.value;
-                return (
-                  <button
-                    key={filter.value}
-                    onClick={() => setActiveFilter(filter.value)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
-                      isActive 
-                        ? 'bg-blue-100 text-blue-700' 
-                        : 'text-gray-600 hover:bg-gray-100'
+          {/* Filter Tabs - Always Visible */}
+          <div className="flex items-center gap-1 px-3 py-2 border-b border-gray-100 overflow-x-auto">
+            {filterTypes.map(filter => {
+              const Icon = filter.icon;
+              const isActive = activeFilter === filter.value;
+              return (
+                <button
+                  key={filter.value}
+                  onClick={() => setActiveFilter(filter.value)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${isActive
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-600 hover:bg-gray-100'
                     }`}
-                  >
-                    <Icon size={14} />
-                    {filter.label}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+                >
+                  <Icon size={14} />
+                  {filter.label}
+                </button>
+              );
+            })}
+          </div>
 
-          {/* Recent Searches (when no query) */}
-          {!query && recentSearches.length > 0 && (
+          {/* Recent Searches (when no query and no results) */}
+          {!query && results.length === 0 && recentSearches.length > 0 && (
             <div className="p-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold text-gray-500 uppercase">Recent Searches</span>
@@ -278,9 +270,8 @@ export function GlobalSearch({
                 <button
                   key={search}
                   onClick={() => handleRecentClick(search)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                    selectedIndex === index ? 'bg-blue-50' : 'hover:bg-gray-50'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${selectedIndex === index ? 'bg-blue-50' : 'hover:bg-gray-50'
+                    }`}
                 >
                   <Clock size={16} className="text-gray-400" />
                   <span className="text-sm text-gray-700">{search}</span>
@@ -289,8 +280,8 @@ export function GlobalSearch({
             </div>
           )}
 
-          {/* No query, no recent */}
-          {!query && recentSearches.length === 0 && (
+          {/* No query, no recent, no results */}
+          {!query && results.length === 0 && recentSearches.length === 0 && !isLoading && (
             <div className="p-6 text-center">
               <Search size={32} className="mx-auto text-gray-300 mb-2" />
               <p className="text-sm text-gray-500">Start typing to search...</p>
@@ -299,7 +290,7 @@ export function GlobalSearch({
           )}
 
           {/* Search Results */}
-          {query && results.length > 0 && (
+          {results.length > 0 && (
             <div className="p-2">
               {results.map((result, index) => {
                 const Icon = getResultIcon(result.type);
@@ -308,9 +299,8 @@ export function GlobalSearch({
                   <button
                     key={`${result.type}-${result.id}`}
                     onClick={() => handleResultClick(result)}
-                    className={`w-full flex items-start gap-3 p-3 rounded-lg transition-colors text-left ${
-                      selectedIndex === index ? 'bg-blue-50' : 'hover:bg-gray-50'
-                    }`}
+                    className={`w-full flex items-start gap-3 p-3 rounded-lg transition-colors text-left ${selectedIndex === index ? 'bg-blue-50' : 'hover:bg-gray-50'
+                      }`}
                   >
                     <div className={`p-2 rounded-lg ${colorClass}`}>
                       <Icon size={16} />
@@ -381,7 +371,7 @@ interface MobileSearchButtonProps {
 
 export function MobileSearchButton({ onClick }: MobileSearchButtonProps) {
   return (
-    <button 
+    <button
       onClick={onClick}
       title="Search"
       className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -399,7 +389,7 @@ interface MobileSearchOverlayProps {
 
 export function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProps) {
   const navigate = useNavigate();
-  
+
   if (!isOpen) return null;
 
   const handleResultClick = (result: SearchResult) => {
@@ -419,9 +409,9 @@ export function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProp
           >
             <X size={20} className="text-gray-600" />
           </button>
-          <GlobalSearch 
-            className="flex-1" 
-            placeholder="Search..." 
+          <GlobalSearch
+            className="flex-1"
+            placeholder="Search..."
             onResultClick={handleResultClick}
           />
         </div>

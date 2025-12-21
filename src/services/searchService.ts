@@ -47,22 +47,22 @@ export async function globalSearch(
   token?: string
 ): Promise<SearchResponse> {
   const startTime = Date.now();
-  
+
   try {
     const params = new URLSearchParams({
       q: options.query,
       limit: String(options.limit || 20),
       offset: String(options.offset || 0),
     });
-    
+
     if (options.types?.length) {
       params.set('types', options.types.join(','));
     }
-    
+
     if (options.projectIds?.length) {
       params.set('projectIds', options.projectIds.join(','));
     }
-    
+
     if (options.includeArchived) {
       params.set('includeArchived', 'true');
     }
@@ -81,7 +81,7 @@ export async function globalSearch(
         took: Date.now() - startTime,
       };
     }
-    
+
     throw new Error('Search failed');
   } catch {
     console.warn('API not available, using mock search');
@@ -183,26 +183,21 @@ function mockSearch(options: GlobalSearchOptions, startTime: number): SearchResp
   const limit = options.limit || 20;
   const offset = options.offset || 0;
   const types = options.types || ['task', 'project', 'mindmap', 'user', 'decision'];
-  
-  if (!query) {
-    return {
-      results: [],
-      total: 0,
-      hasMore: false,
-      took: Date.now() - startTime,
-    };
-  }
+
+  // Note: We proceeded even if query is empty to show default/all items
 
   const results: SearchResult[] = [];
 
   // Search tasks
   if (types.includes('task')) {
     mockData.tasks.forEach(task => {
-      const titleMatch = task.title.toLowerCase().includes(query);
-      const descMatch = task.description?.toLowerCase().includes(query);
-      const projectMatch = task.projectName?.toLowerCase().includes(query);
-      
-      if (titleMatch || descMatch || projectMatch) {
+      // If query is empty, match everything. Otherwise check includes.
+      const match = !query ||
+        task.title.toLowerCase().includes(query) ||
+        task.description?.toLowerCase().includes(query) ||
+        task.projectName?.toLowerCase().includes(query);
+
+      if (match) {
         results.push({
           type: 'task',
           id: task.id,
@@ -210,7 +205,7 @@ function mockSearch(options: GlobalSearchOptions, startTime: number): SearchResp
           subtitle: task.projectName ? `Project: ${task.projectName}` : undefined,
           description: task.description,
           url: `/mindmap?task=${task.id}`,
-          score: titleMatch ? 1.0 : 0.7,
+          score: !query ? 1.0 : (task.title.toLowerCase().includes(query) ? 1.0 : 0.7),
           highlights: highlightMatches(task.title, query),
           canView: true,
           canEdit: true,
@@ -222,10 +217,11 @@ function mockSearch(options: GlobalSearchOptions, startTime: number): SearchResp
   // Search projects
   if (types.includes('project')) {
     mockData.projects.forEach(project => {
-      const nameMatch = project.name.toLowerCase().includes(query);
-      const descMatch = project.description?.toLowerCase().includes(query);
-      
-      if (nameMatch || descMatch) {
+      const match = !query ||
+        project.name.toLowerCase().includes(query) ||
+        project.description?.toLowerCase().includes(query);
+
+      if (match) {
         results.push({
           type: 'project',
           id: project.id,
@@ -233,7 +229,7 @@ function mockSearch(options: GlobalSearchOptions, startTime: number): SearchResp
           subtitle: `${project.memberCount} members • ${project.status}`,
           description: project.description,
           url: `/project/${project.id}`,
-          score: nameMatch ? 1.0 : 0.7,
+          score: !query ? 1.0 : (project.name.toLowerCase().includes(query) ? 1.0 : 0.7),
           highlights: highlightMatches(project.name, query),
           canView: true,
           canEdit: true,
@@ -245,10 +241,11 @@ function mockSearch(options: GlobalSearchOptions, startTime: number): SearchResp
   // Search mindmaps
   if (types.includes('mindmap')) {
     mockData.mindmaps.forEach(mindmap => {
-      const titleMatch = mindmap.title.toLowerCase().includes(query);
-      const descMatch = mindmap.description?.toLowerCase().includes(query);
-      
-      if (titleMatch || descMatch) {
+      const match = !query ||
+        mindmap.title.toLowerCase().includes(query) ||
+        mindmap.description?.toLowerCase().includes(query);
+
+      if (match) {
         results.push({
           type: 'mindmap',
           id: mindmap.id,
@@ -256,7 +253,7 @@ function mockSearch(options: GlobalSearchOptions, startTime: number): SearchResp
           subtitle: `${mindmap.nodeCount} nodes${mindmap.projectName ? ` • ${mindmap.projectName}` : ''}`,
           description: mindmap.description,
           url: `/mindmap/${mindmap.id}`,
-          score: titleMatch ? 1.0 : 0.7,
+          score: !query ? 1.0 : (mindmap.title.toLowerCase().includes(query) ? 1.0 : 0.7),
           highlights: highlightMatches(mindmap.title, query),
           canView: true,
           canEdit: true,
@@ -268,11 +265,12 @@ function mockSearch(options: GlobalSearchOptions, startTime: number): SearchResp
   // Search users
   if (types.includes('user')) {
     mockData.users.forEach(user => {
-      const nameMatch = user.name.toLowerCase().includes(query);
-      const emailMatch = user.email.toLowerCase().includes(query);
-      const deptMatch = user.department?.toLowerCase().includes(query);
-      
-      if (nameMatch || emailMatch || deptMatch) {
+      const match = !query ||
+        user.name.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query) ||
+        user.department?.toLowerCase().includes(query);
+
+      if (match) {
         results.push({
           type: 'user',
           id: user.id,
@@ -280,7 +278,7 @@ function mockSearch(options: GlobalSearchOptions, startTime: number): SearchResp
           subtitle: `${user.role} • ${user.department || 'No department'}`,
           description: user.email,
           url: `/team-members?user=${user.id}`,
-          score: nameMatch ? 1.0 : (emailMatch ? 0.8 : 0.6),
+          score: !query ? 1.0 : (user.name.toLowerCase().includes(query) ? 1.0 : 0.8),
           highlights: highlightMatches(user.name, query),
           canView: true,
           canEdit: false,
@@ -292,10 +290,11 @@ function mockSearch(options: GlobalSearchOptions, startTime: number): SearchResp
   // Search decisions
   if (types.includes('decision')) {
     mockData.decisions.forEach(decision => {
-      const titleMatch = decision.title.toLowerCase().includes(query);
-      const descMatch = decision.description.toLowerCase().includes(query);
-      
-      if (titleMatch || descMatch) {
+      const match = !query ||
+        decision.title.toLowerCase().includes(query) ||
+        decision.description.toLowerCase().includes(query);
+
+      if (match) {
         results.push({
           type: 'decision',
           id: decision.id,
@@ -303,7 +302,7 @@ function mockSearch(options: GlobalSearchOptions, startTime: number): SearchResp
           subtitle: `${decision.category} • ${decision.status}`,
           description: decision.description,
           url: `/decisions?id=${decision.id}`,
-          score: titleMatch ? 1.0 : 0.7,
+          score: !query ? 1.0 : (decision.title.toLowerCase().includes(query) ? 1.0 : 0.7),
           highlights: highlightMatches(decision.title, query),
           canView: true,
           canEdit: true,
@@ -331,13 +330,15 @@ function mockSearch(options: GlobalSearchOptions, startTime: number): SearchResp
  * Highlight matching parts of text
  */
 function highlightMatches(text: string, query: string): string[] {
+  if (!query) return [text];
+
   const highlights: string[] = [];
   const lowerText = text.toLowerCase();
   const lowerQuery = query.toLowerCase();
-  
+
   let startIndex = 0;
   let index = lowerText.indexOf(lowerQuery, startIndex);
-  
+
   while (index !== -1) {
     // Add text before match
     if (index > startIndex) {
@@ -348,12 +349,12 @@ function highlightMatches(text: string, query: string): string[] {
     startIndex = index + query.length;
     index = lowerText.indexOf(lowerQuery, startIndex);
   }
-  
+
   // Add remaining text
   if (startIndex < text.length) {
     highlights.push(text.substring(startIndex));
   }
-  
+
   return highlights.length > 0 ? highlights : [text];
 }
 
@@ -384,7 +385,7 @@ export async function getSearchSuggestions(
     if (response.ok) {
       return await response.json();
     }
-    
+
     throw new Error('Failed to get suggestions');
   } catch {
     // Mock suggestions for development
@@ -398,7 +399,7 @@ export async function getSearchSuggestions(
 function getMockSuggestions(query: string): SearchSuggestion[] {
   const suggestions: SearchSuggestion[] = [];
   const lowerQuery = query.toLowerCase();
-  
+
   // Recent searches (would come from localStorage in real implementation)
   const recentSearches = [
     'website design',
@@ -406,7 +407,7 @@ function getMockSuggestions(query: string): SearchSuggestion[] {
     'sprint planning',
     'John Doe',
   ];
-  
+
   recentSearches.forEach(search => {
     if (search.toLowerCase().includes(lowerQuery)) {
       suggestions.push({
@@ -416,7 +417,7 @@ function getMockSuggestions(query: string): SearchSuggestion[] {
       });
     }
   });
-  
+
   // Suggested based on data
   const allSearchableText = [
     ...mockData.tasks.map(t => t.title),
@@ -424,7 +425,7 @@ function getMockSuggestions(query: string): SearchSuggestion[] {
     ...mockData.mindmaps.map(m => m.title),
     ...mockData.users.map(u => u.name),
   ];
-  
+
   allSearchableText.forEach(text => {
     if (text.toLowerCase().includes(lowerQuery) && !suggestions.find(s => s.text === text)) {
       suggestions.push({
@@ -434,7 +435,7 @@ function getMockSuggestions(query: string): SearchSuggestion[] {
       });
     }
   });
-  
+
   return suggestions.slice(0, 8);
 }
 
@@ -450,11 +451,11 @@ const MAX_RECENT_SEARCHES = 10;
  */
 export function saveRecentSearch(query: string): void {
   if (!query.trim()) return;
-  
+
   const recent = getRecentSearches();
   const filtered = recent.filter(r => r !== query);
   filtered.unshift(query);
-  
+
   localStorage.setItem(
     RECENT_SEARCHES_KEY,
     JSON.stringify(filtered.slice(0, MAX_RECENT_SEARCHES))
@@ -507,7 +508,7 @@ export async function advancedSearch(
   token?: string
 ): Promise<SearchResponse> {
   const startTime = Date.now();
-  
+
   try {
     const response = await fetch(`${API_BASE}/search/advanced`, {
       method: 'POST',
@@ -525,7 +526,7 @@ export async function advancedSearch(
         took: Date.now() - startTime,
       };
     }
-    
+
     throw new Error('Advanced search failed');
   } catch {
     // Mock advanced search for development
