@@ -252,15 +252,18 @@ export default function ConnectionsSvg({
         // Determine dominant direction
         const diffX = toCenterX - fromCenterX;
         const diffY = toCenterY - fromCenterY;
-        const parentWidth = fromPos.right - fromPos.left;
 
-        // Prioritize Horizontal: if child is clearly to the side (outside parent width), use Left/Right
-        // Only use Top/Bottom if child is strictly above/below (within parent width projection)
+        // Use aspect ratio to determine sector.
+        // We favor Horizontal (Left/Right) to support Lists, so we use a steep angle threshold (slope 2.0).
+        // If |dy| < 2.0 * |dx|, it's mostly horizontal (list-like). 
+        // If |dy| > 2.0 * |dx|, it's mostly vertical (star/tree top/bottom).
+        // This allows using Top/Bottom exits for clear vertical nodes, while keeping Lists on the sides.
+        const isHorizontal = Math.abs(diffY) < 2.0 * Math.abs(diffX);
+
         let direction;
-        if (Math.abs(diffX) > parentWidth * 0.6) {
+        if (isHorizontal) {
           direction = diffX > 0 ? 'right' : 'left';
         } else {
-          // Strictly vertical alignment
           direction = diffY > 0 ? 'bottom' : 'top';
         }
 
@@ -273,9 +276,9 @@ export default function ConnectionsSvg({
           const sibDx = sibToCx - fromCenterX;
           const sibDy = sibToCy - fromCenterY;
 
+          const sibIsHorizontal = Math.abs(sibDy) < 2.0 * Math.abs(sibDx);
           let sibDirection;
-          // Use same logic as main direction determination to promote consistent grouping
-          if (Math.abs(sibDx) > parentWidth * 0.6) {
+          if (sibIsHorizontal) {
             sibDirection = sibDx > 0 ? 'right' : 'left';
           } else {
             sibDirection = sibDy > 0 ? 'bottom' : 'top';

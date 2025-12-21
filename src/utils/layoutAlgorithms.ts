@@ -28,6 +28,64 @@ export interface LayoutResult {
 }
 
 /**
+ * Helper: Estimate dimensions of a node based on its content
+ * This is crucial for collision avoidance with dynamic text sizes
+ */
+function estimateDimensions(node: Node): { width: number; height: number } {
+  const text = node.text || '';
+  const MAX_WIDTH = 300;
+  const MIN_WIDTH = 120;
+
+  // Approximate styling matches NodeCard
+  const PADDING_X = 32; // 16px each side
+  const CHAR_WIDTH = 8; // Avg char width for Inter 14px
+
+  // Width Calc
+  const estimatedTextWidth = text.length * CHAR_WIDTH;
+  let width = Math.max(MIN_WIDTH, estimatedTextWidth + PADDING_X);
+  width = Math.min(MAX_WIDTH, width);
+
+  // Height Calc
+  // Determine how many lines the text will wrap into
+  const contentWidth = width - PADDING_X;
+  // Conservative chars per line (using slightly wider avg char for safety: 9px)
+  const charsPerLine = Math.floor(contentWidth / 9);
+
+  const rawLines = text.split('\n');
+  let totalLines = 0;
+
+  rawLines.forEach(line => {
+    // Empty line counts as 1
+    if (line.length === 0) {
+      totalLines += 1;
+    } else {
+      totalLines += Math.ceil(line.length / charsPerLine);
+    }
+  });
+
+  // Minimum 1 line
+  totalLines = Math.max(1, totalLines);
+
+  // NodeCard caps at 10 rows for initial render usually, 
+  // but we should allow full height for perfect collision avoidance
+
+  const LINE_HEIGHT = 24; // Safer line height estimate (vs 20)
+  const PADDING_Y = 32; // Top/Bottom padding
+
+  // Add space for metadata (Emoji, Date, Collaborators)
+  // We check properties that might exist on the node object
+  const hasEmoji = (node as any).emoji; // Assuming emoji prop existence
+  const hasMeta = (node as any).dueDate || (node as any).collaborators?.length > 0;
+
+  let height = (totalLines * LINE_HEIGHT) + PADDING_Y;
+
+  if (hasEmoji) height += 30;
+  if (hasMeta) height += 24;
+
+  return { width, height };
+}
+
+/**
  * Main entry point for applying layouts
  */
 export function applyLayout(
@@ -211,9 +269,6 @@ function applyTreeLayout(
   spacing: number,
   direction: 'vertical' | 'horizontal'
 ): Node[] {
-  const NODE_WIDTH = 300;  // Match actual dynamic node width
-  const NODE_HEIGHT = 60;  // Minimal height for tight clustering
-
   // Spacing configuration
   const HORIZONTAL_GAP = 5;   // Ultra-tight gap between siblings (almost touching)
   const VERTICAL_GAP = 60;    // Gap between parent and children levels (reduced for cozier feel)
@@ -242,149 +297,152 @@ function applyTreeLayout(
    * Calculate the total width needed for a subtree (in pixels)
    * This accounts for all descendants and their spacing
    */
-  function getSubtreeWidth(nodeId: string): number {
+  function getSubtreeSize(nodeId: string): { width: number; height: number } {
+    const node = nodes.find(n => n.id === nodeId);
+    const dims = node ? estimateDimensions(node) : { width: 300, height: 60 };
+
     const children = childrenMap.get(nodeId) || [];
 
     if (children.length === 0) {
       // Leaf node - just needs space for itself
-      return direction === 'horizontal' ? NODE_WIDTH : NODE_HEIGHT;
+      return dims;
     }
 
-    // Sum of all children subtree widths + gaps between them
-    const childrenTotalWidth = children.reduce((sum, childId) => {
-      return sum + getSubtreeWidth(childId);
-    }, 0);
+    // Sum of all children subtree dimensions + gaps
+    let childrenTotalSize = 0;
 
-    const gapsWidth = (children.length - 1) * (direction === 'horizontal' ? HORIZONTAL_GAP : HORIZONTAL_GAP);
+    if (direction === 'horizontal') {
+      // Horizontal: widths add up, height is max height
+      childrenTotalSize = children.reduce((sum, childId) => {
+        return sum + getSubtreeSize(childId).width;
+      }, 0);
+      const gaps = (children.length - 1) * HORIZONTAL_GAP;
+      return {
+        width: Math.max(dims.width, childrenTotalSize + gaps),
+        height: dims.height // Height isn't fully recursive for size calc in Horizontal tree, usually level-based
+        // Actually for Org Chart, standard layout makes rows. Y is uniform per depth.
+      };
+    } else {
+      // Vertical: heights add up, width is max width
+      childrenTotalSize = children.reduce((sum, childId) => {
+        return sum + getSubtreeSize(childId).height;
+      }, 0);
+      const gaps = (children.length - 1) * HORIZONTAL_GAP; // Re-using horizontal gap variable for sibling gap
+      return {
+        width: dims.width, // Width is per-column
+        height: Math.max(dims.height, childrenTotalSize + gaps)
+      };
+    }
+  }
 
-    // The subtree width is at least as wide as this node, or the sum of children + gaps
-    const nodeSize = direction === 'horizontal' ? NODE_WIDTH : NODE_HEIGHT;
-    return Math.max(nodeSize, childrenTotalWidth + gapsWidth);
+  // Simplified size fetcher for main logic
+  function getSubtreeMainAxis(nodeId: string): number {
+    const size = getSubtreeSize(nodeId);
+    return direction === 'horizontal' ? size.width : size.height;
   }
 
   /**
    * Position a node and all its descendants
-   * Returns the actual width used by this subtree
+   * Returns the actual size used by this subtree in the main flow axis
    */
-  function positionNode(nodeId: string, depth: number, startX: number): number {
+  function positionNode(nodeId: string, depth: number, startPos: number): number {
     const children = childrenMap.get(nodeId) || [];
-    const subtreeWidth = getSubtreeWidth(nodeId);
+    const subtreeMain = getSubtreeMainAxis(nodeId);
+
+    const node = nodes.find(n => n.id === nodeId);
+    const dims = node ? estimateDimensions(node) : { width: 300, height: 60 };
 
     if (direction === 'horizontal') {
-      // Org-chart: Y increases with depth, X spreads horizontally
-      const levelY = depth * (NODE_HEIGHT + VERTICAL_GAP);
+      // Org-chart: Y increases with depth (Level), X spreads
+      const levelY = depth * (60 + VERTICAL_GAP); // Fixed level height for simplicity in org chart, or could track max height of level
 
       if (children.length === 0) {
-        // Leaf node - center in its allocated space
         positioned.set(nodeId, {
-          x: startX + subtreeWidth / 2,
+          x: startPos + subtreeMain / 2,
           y: levelY
         });
-        return subtreeWidth;
+        return subtreeMain;
       }
 
       // Position children first
-      let currentX = startX;
+      let currentX = startPos;
       const childCenters: number[] = [];
 
       children.forEach(childId => {
-        const childWidth = getSubtreeWidth(childId);
+        const childSize = getSubtreeMainAxis(childId);
         positionNode(childId, depth + 1, currentX);
 
-        // Track the center position of each child
         const childPos = positioned.get(childId);
-        if (childPos) {
-          childCenters.push(childPos.x);
-        }
+        if (childPos) childCenters.push(childPos.x);
 
-        currentX += childWidth + HORIZONTAL_GAP;
+        currentX += childSize + HORIZONTAL_GAP;
       });
 
-      // Position parent centered above its children
-      const firstChildCenter = childCenters[0];
-      const lastChildCenter = childCenters[childCenters.length - 1];
-      const parentX = (firstChildCenter + lastChildCenter) / 2;
+      // Center parent
+      const parentX = (childCenters[0] + childCenters[childCenters.length - 1]) / 2;
+      positioned.set(nodeId, { x: parentX, y: levelY });
 
-      positioned.set(nodeId, {
-        x: parentX,
-        y: levelY
-      });
-
-      return subtreeWidth;
+      return subtreeMain;
 
     } else {
-      // Left-to-right: X increases with depth, Y spreads vertically
-      const levelX = depth * (NODE_WIDTH + VERTICAL_GAP);
+      // Left-to-right: X increases with depth (Level), Y spreads
+      const levelX = depth * (300 + VERTICAL_GAP);
 
       if (children.length === 0) {
-        // Leaf node - center in its allocated space
         positioned.set(nodeId, {
           x: levelX,
-          y: startX + subtreeWidth / 2
+          y: startPos + subtreeMain / 2
         });
-        return subtreeWidth;
+        return subtreeMain;
       }
 
       // Position children first
-      let currentY = startX;
+      let currentY = startPos;
       const childCenters: number[] = [];
 
       children.forEach(childId => {
-        const childWidth = getSubtreeWidth(childId);
+        const childSize = getSubtreeMainAxis(childId);
         positionNode(childId, depth + 1, currentY);
 
-        // Track the center position of each child
         const childPos = positioned.get(childId);
-        if (childPos) {
-          childCenters.push(childPos.y);
-        }
+        if (childPos) childCenters.push(childPos.y);
 
-        currentY += childWidth + HORIZONTAL_GAP;
+        currentY += childSize + HORIZONTAL_GAP;
       });
 
-      // Position parent centered to the left of its children
-      const firstChildCenter = childCenters[0];
-      const lastChildCenter = childCenters[childCenters.length - 1];
-      const parentY = (firstChildCenter + lastChildCenter) / 2;
+      // Center parent
+      const parentY = (childCenters[0] + childCenters[childCenters.length - 1]) / 2;
+      positioned.set(nodeId, { x: levelX, y: parentY });
 
-      positioned.set(nodeId, {
-        x: levelX,
-        y: parentY
-      });
-
-      return subtreeWidth;
+      return subtreeMain;
     }
   }
 
-  // Position each root tree
   let currentOffset = 0;
   roots.forEach(root => {
-    const width = positionNode(root.id, 0, currentOffset);
-    currentOffset += width + (direction === 'horizontal' ? HORIZONTAL_GAP * 2 : HORIZONTAL_GAP * 2);
+    const size = positionNode(root.id, 0, currentOffset);
+    currentOffset += size + 100; // Gap between trees
   });
 
-  // Apply positions to nodes
   return nodes.map(node => {
     const pos = positioned.get(node.id);
-    if (!pos) return node;
-    return { ...node, x: Math.round(pos.x), y: Math.round(pos.y) };
+    return pos ? { ...node, x: Math.round(pos.x), y: Math.round(pos.y) } : node;
   });
 }
 
 /**
  * Mind Map Layout (Balanced)
  * Root in center, children distributed Left and Right
+ * UPDATED: Uses dynamic node heights for collision avoidance
  */
 function applyMindMapLayout(
   nodes: Node[],
   connections: Connection[],
   spacing: number
 ): Node[] {
-  const NODE_WIDTH = 300;
-  const NODE_HEIGHT = 60;
   // Gap settings
-  const HORIZONTAL_GAP = 5; // Gap between siblings
-  const VERTICAL_GAP = 50;  // Gap between levels (Parent <-> Child)
+  const SIBLING_GAP = 15; // Vertical gap between siblings
+  const LEVEL_GAP = 50;   // Horizontal gap between levels
 
   // Build tree structure
   const childrenMap = new Map<string, string[]>();
@@ -401,75 +459,56 @@ function applyMindMapLayout(
 
   const positioned = new Map<string, { x: number; y: number }>();
 
-  // Helper to calculate subtree height (standard vertical tree logic)
+  // Helper to calculate subtree height with dynamic node sizes
   function getSubtreeHeight(nodeId: string): number {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return 60;
+
+    const dims = estimateDimensions(node);
+
     const children = childrenMap.get(nodeId) || [];
-    if (children.length === 0) return NODE_HEIGHT;
+    if (children.length === 0) return dims.height;
 
     const childrenTotalHeight = children.reduce((sum, childId) => sum + getSubtreeHeight(childId), 0);
-    const gapsHeight = (children.length - 1) * HORIZONTAL_GAP; // Vertical gap between siblings
-    return Math.max(NODE_HEIGHT, childrenTotalHeight + gapsHeight);
+    const gapsHeight = (children.length - 1) * SIBLING_GAP;
+
+    // The branch height is either the node's own height OR the height of all its children
+    // If the node is taller than its children combined, we need space for the node
+    // But usually in mind maps, the children stack is taller.
+
+    return Math.max(dims.height, childrenTotalHeight + gapsHeight);
   }
-
-  // Position a node and its children (Direction 1 = Right, -1 = Left)
-  function positionSubtree(nodeId: string, depth: number, startY: number, direction: number) {
-    const children = childrenMap.get(nodeId) || [];
-
-    // X position depends on depth and direction
-    // Depth 0 is root (already positioned). Depth 1 is first column.
-    // For Right side: X increases. For Left side: X decreases.
-    const levelX = direction * (depth * (NODE_WIDTH + VERTICAL_GAP));
-
-    // Note: If depth > 0, we add/subtract from RootX. But here we assume Root is 0,0 for now.
-    // Actually, positionSubtree is called for children. So depth starts at 1 relative to root?
-    // Let's pass absolute X? No, relative to root logic is cleaner.
-    // Let's simplify:
-
-    // We already passed 'levelX' logic above.
-
-    // Position self? No, parent calls positionSubtree for children.
-    // Let's refine: positionNode(nodeId, x, y, direction)
-  }
-
-  // Helper to estimate node width (mirrors NodeCard logic)
-  const estimateWidth = (n: Node) => {
-    const text = n.text || '';
-    const len = text.length;
-    // Base 120, max 300, ~8px per char + 40px padding
-    return Math.min(300, Math.max(120, len * 8 + 40));
-  };
 
   // Recursive placement function
   function placeNode(nodeId: string, x: number, globalStartY: number, direction: number): number {
-    // This function positions 'nodeId' at 'x' and centered vertically in its allocated space
-    // It returns the total height used.
-
     const children = childrenMap.get(nodeId) || [];
     const subtreeHeight = getSubtreeHeight(nodeId);
 
-    const parentNode = nodes.find(n => n.id === nodeId);
-    const parentWidth = parentNode ? estimateWidth(parentNode) : NODE_WIDTH;
+    const node = nodes.find(n => n.id === nodeId);
+    const dims = node ? estimateDimensions(node) : { width: 300, height: 60 };
 
-    // Position children first to find their centers
     if (children.length > 0) {
+      // Place children first
       let currentChildY = globalStartY;
       const childCentersY: number[] = [];
 
       children.forEach(childId => {
         const childNode = nodes.find(n => n.id === childId);
-        const childWidth = childNode ? estimateWidth(childNode) : NODE_WIDTH;
+        const childDims = childNode ? estimateDimensions(childNode) : { width: 300, height: 60 };
 
-        // Calculate dynamic offset
-        // ParentHalf + Gap + ChildHalf
-        const offset = (parentWidth / 2) + VERTICAL_GAP + (childWidth / 2); // VERTICAL_GAP is actually horizontal spacing here
+        // Calculate horizontal offset dynamically based on parent and child widths
+        // center-to-center distance = (ParentWidth/2) + GAP + (ChildWidth/2)
+        const offset = (dims.width / 2) + LEVEL_GAP + (childDims.width / 2);
 
-        const childHeight = getSubtreeHeight(childId);
+        const childSubtreeHeight = getSubtreeHeight(childId);
+
+        // Recurse
         placeNode(childId, x + direction * offset, currentChildY, direction);
 
         const childPos = positioned.get(childId);
         if (childPos) childCentersY.push(childPos.y);
 
-        currentChildY += childHeight + HORIZONTAL_GAP;
+        currentChildY += childSubtreeHeight + SIBLING_GAP;
       });
 
       // Center parent relative to children
@@ -478,6 +517,7 @@ function applyMindMapLayout(
       const parentY = (firstCenter + lastCenter) / 2;
 
       positioned.set(nodeId, { x, y: parentY });
+
     } else {
       // Leaf node: center in allocated vertical space
       positioned.set(nodeId, { x, y: globalStartY + subtreeHeight / 2 });
@@ -495,7 +535,7 @@ function applyMindMapLayout(
     const leftChildren: string[] = [];
     const rightChildren: string[] = [];
 
-    const rootWidth = estimateWidth(root);
+    const rootDims = estimateDimensions(root);
 
     // Balance children: Alternate
     children.forEach((childId, index) => {
@@ -504,9 +544,13 @@ function applyMindMapLayout(
       else leftChildren.push(childId);
     });
 
-    // Calculate space needed
-    const rightTotalHeight = rightChildren.reduce((sum, id) => sum + getSubtreeHeight(id), 0) + Math.max(0, rightChildren.length - 1) * HORIZONTAL_GAP;
-    const leftTotalHeight = leftChildren.reduce((sum, id) => sum + getSubtreeHeight(id), 0) + Math.max(0, leftChildren.length - 1) * HORIZONTAL_GAP;
+    const getStackHeight = (childIds: string[]) => {
+      return childIds.reduce((sum, id) => sum + getSubtreeHeight(id), 0) +
+        Math.max(0, childIds.length - 1) * SIBLING_GAP;
+    };
+
+    const rightTotalHeight = getStackHeight(rightChildren);
+    const leftTotalHeight = getStackHeight(leftChildren);
 
     // Position Root
     const rootX = 0;
@@ -514,31 +558,36 @@ function applyMindMapLayout(
     positioned.set(root.id, { x: rootX, y: rootY });
 
     // Layout Right Side
+    // Center the stack relative to rootY? Or start from top?
+    // "Mind Map" usually centers the whole right block vertically against the root.
+
     let currentY = rootY - rightTotalHeight / 2;
     rightChildren.forEach(childId => {
       const childNode = nodes.find(n => n.id === childId);
-      const childWidth = childNode ? estimateWidth(childNode) : NODE_WIDTH;
-      const offset = (rootWidth / 2) + VERTICAL_GAP + (childWidth / 2);
+      const childDims = childNode ? estimateDimensions(childNode) : { width: 300, height: 60 };
 
+      const offset = (rootDims.width / 2) + LEVEL_GAP + (childDims.width / 2);
       const h = getSubtreeHeight(childId);
+
       placeNode(childId, rootX + offset, currentY, 1);
-      currentY += h + HORIZONTAL_GAP;
+      currentY += h + SIBLING_GAP;
     });
 
     // Layout Left Side
     currentY = rootY - leftTotalHeight / 2;
     leftChildren.forEach(childId => {
       const childNode = nodes.find(n => n.id === childId);
-      const childWidth = childNode ? estimateWidth(childNode) : NODE_WIDTH;
-      const offset = (rootWidth / 2) + VERTICAL_GAP + (childWidth / 2);
+      const childDims = childNode ? estimateDimensions(childNode) : { width: 300, height: 60 };
 
+      const offset = (rootDims.width / 2) + LEVEL_GAP + (childDims.width / 2);
       const h = getSubtreeHeight(childId);
+
       placeNode(childId, rootX - offset, currentY, -1);
-      currentY += h + HORIZONTAL_GAP;
+      currentY += h + SIBLING_GAP;
     });
 
     // Offset for next root (if multiple roots)
-    currentRootY += Math.max(rightTotalHeight, leftTotalHeight, NODE_HEIGHT) + 200;
+    currentRootY += Math.max(rightTotalHeight, leftTotalHeight, rootDims.height) + 200;
   });
 
   return nodes.map(node => {
@@ -798,7 +847,8 @@ export function createLayoutAnimation(
   const nodeMap = new Map(oldNodes.map(n => [n.id, n]));
 
   return (progress: number) => {
-    const eased = easeInOutCubic(progress);
+    // Ease out cubic
+    const ease = 1 - Math.pow(1 - progress, 3);
 
     return newNodes.map(newNode => {
       const oldNode = nodeMap.get(newNode.id);
@@ -806,15 +856,9 @@ export function createLayoutAnimation(
 
       return {
         ...newNode,
-        x: oldNode.x + (newNode.x - oldNode.x) * eased,
-        y: oldNode.y + (newNode.y - oldNode.y) * eased
+        x: Math.round(oldNode.x + (newNode.x - oldNode.x) * ease),
+        y: Math.round(oldNode.y + (newNode.y - oldNode.y) * ease)
       };
     });
   };
-}
-
-function easeInOutCubic(t: number): number {
-  return t < 0.5
-    ? 4 * t * t * t
-    : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }

@@ -126,8 +126,8 @@ export function computeOrganicPath(
   if (direction) {
     isHorizontalLayout = direction === 'left' || direction === 'right';
   } else {
-    // Fallback: use dominant axis
-    isHorizontalLayout = Math.abs(dx) >= Math.abs(dy);
+    // Fallback: use dominant axis with slope bias
+    isHorizontalLayout = Math.abs(dy) < 2.0 * Math.abs(dx);
   }
 
   // ============================================
@@ -136,25 +136,45 @@ export function computeOrganicPath(
   // Entry: from the side facing the parent (natural flow)
   // ============================================
 
+  // Check for steep list items (Slope > 1.0) inside Horizontal Layout
+  // Use J-curve ("Waterfall") for these: Exit Top/Bottom -> Enter Side
+  const isSteep = isHorizontalLayout && Math.abs(dy) > Math.abs(dx);
+
   if (isHorizontalLayout) {
-    // Horizontal layout: exit from left/right edge, enter from facing side
-    const usableHeight = parentHeight * 0.9;
-    const edgeTop = fromCenterY - usableHeight / 2;
+    if (isSteep) {
+      // Steep List: Exit from Top/Bottom Center
+      if (dy > 0) {
+        start = { x: fromCenterX, y: fromRect.bottom };
+      } else {
+        start = { x: fromCenterX, y: fromRect.top };
+      }
 
-    let exitY: number;
-    if (totalChildren === 1) {
-      exitY = fromCenterY;
+      // Enter from facing side
+      if (isRight) {
+        end = { x: toRect.left, y: toCenterY };
+      } else {
+        end = { x: toRect.right, y: toCenterY };
+      }
     } else {
-      const step = usableHeight / (totalChildren - 1);
-      exitY = edgeTop + childIndex * step;
-    }
+      // Standard Horizontal layout: exit from left/right edge
+      const usableHeight = parentHeight * 0.9;
+      const edgeTop = fromCenterY - usableHeight / 2;
 
-    if (isRight) {
-      start = { x: fromRect.right, y: exitY };
-      end = { x: toRect.left, y: toCenterY };
-    } else {
-      start = { x: fromRect.left, y: exitY };
-      end = { x: toRect.right, y: toCenterY };
+      let exitY: number;
+      if (totalChildren === 1) {
+        exitY = fromCenterY;
+      } else {
+        const step = usableHeight / (totalChildren - 1);
+        exitY = edgeTop + childIndex * step;
+      }
+
+      if (isRight) {
+        start = { x: fromRect.right, y: exitY };
+        end = { x: toRect.left, y: toCenterY };
+      } else {
+        start = { x: fromRect.left, y: exitY };
+        end = { x: toRect.right, y: toCenterY };
+      }
     }
   } else {
     // Vertical layout: exit from top/bottom edge, enter from facing side
@@ -193,33 +213,44 @@ export function computeOrganicPath(
     // HORIZONTAL LAYOUT (children to left/right)
     // Use SMOOTH FLOWING CURVES that go outward first, staying in the child's lane
 
-    // Control points for smooth S-curve:
-    // c1: extends horizontally from start, staying at exit Y level
-    // c2: comes in horizontally to end, at destination Y level
-
-    const absHorizDist = Math.abs(horizontalDistance);
-
-    // How far outward the first control point extends (creates the flowing curve)
-    // Use 50-70% for a nice smooth curve
-    const outwardExtent = absHorizDist * 0.6;
-
-    // Entry curve tightness - how close to destination before curving in
-    const entryExtent = Math.min(absHorizDist * 0.3, 50);
-
     let c1x: number, c1y: number, c2x: number, c2y: number;
 
-    if (isRight) {
-      // Going RIGHT: curve flows right then arcs to destination
-      c1x = start.x + outwardExtent;
-      c1y = start.y; // Stay at exit Y level for smooth flow
-      c2x = end.x - entryExtent;
-      c2y = end.y;
+    if (isSteep) {
+      // STEEP WATERFALL (J-Curve)
+      // c1: Vertical projection from parent Top/Bottom
+      // c2: Horizontal projection from child Side
+
+      const vertDist = Math.abs(end.y - start.y);
+      const outwardExtent = vertDist * 0.5; // Go vertical for 50% of distance
+
+      c1x = start.x; // Vertical tangent
+      if (dy > 0) c1y = start.y + outwardExtent; // Down
+      else c1y = start.y - outwardExtent; // Up
+
+      const horizDist = Math.abs(end.x - start.x);
+      const entryExtent = Math.min(horizDist * 0.5, 80);
+
+      c2y = end.y; // Horizontal entry
+      if (isRight) c2x = end.x - entryExtent;
+      else c2x = end.x + entryExtent;
+
     } else {
-      // Going LEFT: curve flows left then arcs to destination
-      c1x = start.x - outwardExtent;
-      c1y = start.y;
-      c2x = end.x + entryExtent;
-      c2y = end.y;
+      // STANDARD S-CURVE (Side-to-Side)
+      const absHorizDist = Math.abs(horizontalDistance);
+      const outwardExtent = absHorizDist * 0.6;
+      const entryExtent = Math.min(absHorizDist * 0.3, 50);
+
+      if (isRight) {
+        c1x = start.x + outwardExtent;
+        c1y = start.y;
+        c2x = end.x - entryExtent;
+        c2y = end.y;
+      } else {
+        c1x = start.x - outwardExtent;
+        c1y = start.y;
+        c2x = end.x + entryExtent;
+        c2y = end.y;
+      }
     }
 
     // Smooth cubic bezier curve
