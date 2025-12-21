@@ -246,26 +246,40 @@ export default function ConnectionsSvg({
 
         const toCenterX = (toPos.left + toPos.right) / 2;
         const toCenterY = (toPos.top + toPos.bottom) / 2;
+        const fromCenterX = (fromPos.left + fromPos.right) / 2;
+        const fromCenterY = (fromPos.top + fromPos.bottom) / 2;
 
-        let direction = 'right';
-        if (toCenterX > fromPos.right) direction = 'right';
-        else if (toCenterX < fromPos.left) direction = 'left';
-        else if (toCenterY > fromPos.bottom) direction = 'bottom';
-        else if (toCenterY < fromPos.top) direction = 'top';
+        // Determine dominant direction
+        const diffX = toCenterX - fromCenterX;
+        const diffY = toCenterY - fromCenterY;
+        const parentWidth = fromPos.right - fromPos.left;
+
+        // Prioritize Horizontal: if child is clearly to the side (outside parent width), use Left/Right
+        // Only use Top/Bottom if child is strictly above/below (within parent width projection)
+        let direction;
+        if (Math.abs(diffX) > parentWidth * 0.6) {
+          direction = diffX > 0 ? 'right' : 'left';
+        } else {
+          // Strictly vertical alignment
+          direction = diffY > 0 ? 'bottom' : 'top';
+        }
 
         const siblingsInSameDirection = siblingsFromSameParent.filter(c => {
           const siblingToPos = getNodeRect(c.to);
           if (!siblingToPos) return false;
 
-          const siblingToCenterX = (siblingToPos.left + siblingToPos.right) / 2;
-          const siblingToCenterY = (siblingToPos.top + siblingToPos.bottom) / 2;
+          const sibToCx = (siblingToPos.left + siblingToPos.right) / 2;
+          const sibToCy = (siblingToPos.top + siblingToPos.bottom) / 2;
+          const sibDx = sibToCx - fromCenterX;
+          const sibDy = sibToCy - fromCenterY;
 
           let sibDirection;
-          if (siblingToCenterX > fromPos.right) sibDirection = 'right';
-          else if (siblingToCenterX < fromPos.left) sibDirection = 'left';
-          else if (siblingToCenterY > fromPos.bottom) sibDirection = 'bottom';
-          else if (siblingToCenterY < fromPos.top) sibDirection = 'top';
-          else sibDirection = 'right';
+          // Use same logic as main direction determination to promote consistent grouping
+          if (Math.abs(sibDx) > parentWidth * 0.6) {
+            sibDirection = sibDx > 0 ? 'right' : 'left';
+          } else {
+            sibDirection = sibDy > 0 ? 'bottom' : 'top';
+          }
 
           return sibDirection === direction;
         });
@@ -273,19 +287,28 @@ export default function ConnectionsSvg({
         const sortedSiblings = [...siblingsInSameDirection].sort((a, b) => {
           const aPos = getNodeRect(a.to);
           const bPos = getNodeRect(b.to);
-          const aPosY = aPos ? (aPos.top + aPos.bottom) / 2 : 0;
-          const bPosY = bPos ? (bPos.top + bPos.bottom) / 2 : 0;
-          return aPosY - bPosY;
+          if (!aPos || !bPos) return 0;
+
+          if (direction === 'left' || direction === 'right') {
+            // Sort by Y for left/right connections
+            const aCy = (aPos.top + aPos.bottom) / 2;
+            const bCy = (bPos.top + bPos.bottom) / 2;
+            return aCy - bCy;
+          } else {
+            // Sort by X for top/bottom connections
+            const aCx = (aPos.left + aPos.right) / 2;
+            const bCx = (bPos.left + bPos.right) / 2;
+            return aCx - bCx;
+          }
         });
 
         const childIndex = sortedSiblings.findIndex(c => c.id === conn.id);
         const totalChildren = sortedSiblings.length;
 
         let pathData, labelPoint, start, end;
-        const fromCenterX = (fromPos.left + fromPos.right) / 2;
-        const fromCenterY = (fromPos.top + fromPos.bottom) / 2;
-        const dx = Math.abs(((toPos.left + toPos.right) / 2) - fromCenterX);
-        const dy = Math.abs(((toPos.top + toPos.bottom) / 2) - fromCenterY);
+        // Use absolute values for orthogonal path logic consistency
+        const dx = Math.abs(diffX);
+        const dy = Math.abs(diffY);
 
         if (connectionStyle === 'orthogonal-h') {
           const result = computeOrthogonalPath(fromPos, toPos, 'horizontal');
@@ -306,7 +329,8 @@ export default function ConnectionsSvg({
           const result = computeOrganicPath(fromPos, toPos, {
             childIndex,
             totalChildren,
-            parentId: conn.from
+            parentId: conn.from,
+            direction
           });
           pathData = result.d;
           labelPoint = result.label;

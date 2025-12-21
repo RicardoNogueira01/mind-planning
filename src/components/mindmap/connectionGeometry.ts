@@ -91,6 +91,7 @@ export function computeOrganicPath(
     childIndex?: number;
     totalChildren?: number;
     parentId?: string;
+    direction?: 'left' | 'right' | 'top' | 'bottom';
   }
 ) {
   const fromCenterX = (fromRect.left + fromRect.right) / 2;
@@ -101,9 +102,12 @@ export function computeOrganicPath(
   const dx = toCenterX - fromCenterX;
   const dy = toCenterY - fromCenterY;
 
-  // Determine which side the child is on
-  const isRight = dx > 0;
-  const isBelow = dy > 0;
+  const direction = options?.direction;
+
+  // Determine which side the child is on relative to parent
+  // If direction is provided, respect it strictly
+  const isRight = direction ? direction === 'right' : dx > 0;
+  const isBelow = direction ? direction === 'bottom' : dy > 0;
 
   // Calculate the parent's edge dimensions
   const parentHeight = fromRect.bottom - fromRect.top;
@@ -116,18 +120,15 @@ export function computeOrganicPath(
   let start: { x: number; y: number };
   let end: { x: number; y: number };
 
-  // Determine primary direction based on where the child is
-  // Check if child is clearly outside parent's bounds in each direction
-  const childIsToTheRight = toCenterX > fromRect.right;
-  const childIsToTheLeft = toCenterX < fromRect.left;
-  const childIsBelow = toCenterY > fromRect.bottom;
-  const childIsAbove = toCenterY < fromRect.top;
+  // Determine layout direction based on direction option or dominant axis
+  let isHorizontalLayout: boolean;
 
-  // Determine layout direction:
-  // - If child is to left/right → use horizontal (even if also above/below)
-  //   This creates the nice fanning effect from left/right edges
-  // - Only use vertical layout if child is ONLY above/below (not to left/right)
-  const isHorizontalLayout = childIsToTheLeft || childIsToTheRight || Math.abs(dx) >= Math.abs(dy);
+  if (direction) {
+    isHorizontalLayout = direction === 'left' || direction === 'right';
+  } else {
+    // Fallback: use dominant axis
+    isHorizontalLayout = Math.abs(dx) >= Math.abs(dy);
+  }
 
   // ============================================
   // EXIT AND ENTRY POINT CALCULATION
