@@ -352,7 +352,7 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
                 )}
 
                 {/* Status Badge - Professional design with dot indicator */}
-                {statusDisplay && (
+                {statusDisplay && statusDisplay.label !== 'Completed' && (
                   <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold rounded-full border shadow-sm ${statusDisplay.color}`}>
                     {statusDisplay.icon ? (
                       <span className="text-xs">{statusDisplay.icon}</span>
@@ -364,7 +364,7 @@ const NodeCard = ({ node, selected, onSelect, onUpdateText, searchQuery, isMatch
                 )}
 
                 {/* Deadline Badge - Using the new enhanced component */}
-                {node.dueDate && (
+                {node.dueDate && !node.completed && node.status !== 'completed' && (
                   <DeadlineBadge
                     dueDate={node.dueDate}
                     status={node.status}
