@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { computeBezierPath, computeOrthogonalPath, computeBracketPaths } from './connectionGeometry';
+import { computeBezierPath, computeOrthogonalPath, computeBracketPaths, computeOrganicPath } from './connectionGeometry';
 
 /**
  * ConnectionsSvg: Enhanced presentational component that renders all connections as a single SVG.
@@ -300,8 +300,20 @@ export default function ConnectionsSvg({
           labelPoint = result.label;
           start = result.start;
           end = result.end;
+        } else if (connectionStyle === 'organic') {
+          // Organic style: smooth curves emanating from node edges
+          // Like the flowing mind map style in the reference image
+          const result = computeOrganicPath(fromPos, toPos, {
+            childIndex,
+            totalChildren,
+            parentId: conn.from
+          });
+          pathData = result.d;
+          labelPoint = result.label;
+          start = result.start;
+          end = result.end;
         } else {
-          // Default: smooth Bezier curves
+          // Default: smooth Bezier curves with spread
           // Note: using only available node rects for collision might not be perfect if nodePositions is empty,
           // but for dragging it's fine. We prioritize speed.
           const allNodeRects = nodes.map(n => getNodeRect(n.id)).filter(Boolean);
@@ -339,10 +351,11 @@ export default function ConnectionsSvg({
         ];
 
         let connectionColor;
-        if (connectionStyle === 'curved' || isOrthogonal) {
+        if (connectionStyle === 'curved' || connectionStyle === 'organic' || isOrthogonal) {
           if (toNode?.bgColor && toNode.bgColor !== '#ffffff' && toNode.bgColor !== '#f3f4f6') {
             connectionColor = toNode.bgColor;
-          } else if (connectionStyle === 'curved') {
+          } else if (connectionStyle === 'curved' || connectionStyle === 'organic') {
+            // Apply rainbow colors for curved and organic styles
             const colorIndex = childIndex % RAINBOW_COLORS.length;
             connectionColor = RAINBOW_COLORS[colorIndex];
           } else {
@@ -519,7 +532,7 @@ ConnectionsSvg.propTypes = {
   }),
   showArrows: PropTypes.bool,
   colorMode: PropTypes.oneOf(['default', 'parent', 'gradient']),
-  connectionStyle: PropTypes.oneOf(['curved', 'orthogonal-h', 'orthogonal-v', 'bracket']),
+  connectionStyle: PropTypes.oneOf(['curved', 'organic', 'orthogonal-h', 'orthogonal-v', 'bracket']),
   themeColors: PropTypes.shape({
     color: PropTypes.string,
     colorMode: PropTypes.string,

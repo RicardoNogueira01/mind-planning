@@ -68,6 +68,150 @@ function pathCollidesWithNodes(
 }
 
 /**
+ * Compute an organic flowing curved path between two rectangles
+ * Creates beautiful mind-map style curves that fan out from the parent
+ * 
+ * Features:
+ * - Lines exit from the CORRECT SIDE based on child position:
+ *   - Child on LEFT → exits from LEFT edge of parent
+ *   - Child on RIGHT → exits from RIGHT edge of parent
+ * - Exit point spreads along the edge based on child's Y position
+ * - Curves flow naturally with smooth bezier paths
+ * - Creates the professional, flowing look seen in modern mind map apps
+ * 
+ * @param fromRect - Parent node rectangle
+ * @param toRect - Child node rectangle
+ * @param options - Optional parameters (childIndex, totalChildren not used - we use actual positions)
+ * @returns Object with: d (SVG path), start point, end point, label position
+ */
+export function computeOrganicPath(
+  fromRect: Rect,
+  toRect: Rect,
+  options?: {
+    childIndex?: number;
+    totalChildren?: number;
+    parentId?: string;
+  }
+) {
+  const fromCenterX = (fromRect.left + fromRect.right) / 2;
+  const fromCenterY = (fromRect.top + fromRect.bottom) / 2;
+  const toCenterX = (toRect.left + toRect.right) / 2;
+  const toCenterY = (toRect.top + toRect.bottom) / 2;
+
+  const dx = toCenterX - fromCenterX;
+  const dy = toCenterY - fromCenterY;
+
+  // Determine which side the child is on (left/right/above/below)
+  const isRight = dx > 0;
+  const isLeft = dx < 0;
+  const isBelow = dy > 0;
+  const isAbove = dy < 0;
+
+  // Calculate the parent's edge dimensions
+  const parentHeight = fromRect.bottom - fromRect.top;
+  const parentWidth = fromRect.right - fromRect.left;
+
+  // Calculate where on the edge to exit based on child's relative position
+  // This creates natural spreading without needing to know about other children
+  let start: { x: number; y: number };
+  let end: { x: number; y: number };
+
+  // Clamp factor to keep exit points within 80% of the edge (10% padding each side)
+  const clampSpread = (offset: number, maxSize: number) => {
+    const maxOffset = maxSize * 0.4; // 40% from center max
+    return Math.max(-maxOffset, Math.min(maxOffset, offset));
+  };
+
+  // Determine primary direction based on where the child is
+  const isHorizontalLayout = Math.abs(dx) >= Math.abs(dy);
+
+  if (isHorizontalLayout) {
+    // Horizontal layout: child is primarily to the left or right
+    // Exit from the side edge (left or right) that the child is on
+
+    // Calculate vertical offset based on child's Y position relative to parent center
+    const yOffset = clampSpread(toCenterY - fromCenterY, parentHeight);
+
+    if (isRight) {
+      // Child is to the RIGHT → exit from RIGHT edge
+      start = { x: fromRect.right, y: fromCenterY + yOffset * 0.5 };
+      end = { x: toRect.left, y: toCenterY };
+    } else {
+      // Child is to the LEFT → exit from LEFT edge
+      start = { x: fromRect.left, y: fromCenterY + yOffset * 0.5 };
+      end = { x: toRect.right, y: toCenterY };
+    }
+  } else {
+    // Vertical layout: child is primarily above or below
+    // Exit from the top or bottom edge
+
+    // Calculate horizontal offset based on child's X position relative to parent center
+    const xOffset = clampSpread(toCenterX - fromCenterX, parentWidth);
+
+    if (isBelow) {
+      // Child is BELOW → exit from BOTTOM edge
+      start = { x: fromCenterX + xOffset * 0.5, y: fromRect.bottom };
+      end = { x: toCenterX, y: toRect.top };
+    } else {
+      // Child is ABOVE → exit from TOP edge
+      start = { x: fromCenterX + xOffset * 0.5, y: fromRect.top };
+      end = { x: toCenterX, y: toRect.bottom };
+    }
+  }
+
+  // Calculate curve control points for smooth organic flow
+  const horizontalDistance = end.x - start.x;
+  const verticalDistance = end.y - start.y;
+  const distance = Math.sqrt(horizontalDistance * horizontalDistance + verticalDistance * verticalDistance);
+
+  // Curve strength: longer distances get longer control arms
+  const curveStrength = Math.min(distance * 0.45, 100);
+
+  let c1x: number, c1y: number, c2x: number, c2y: number;
+
+  if (isHorizontalLayout) {
+    // Horizontal flow: control points extend horizontally first
+    if (isRight) {
+      c1x = start.x + curveStrength;
+      c1y = start.y + (verticalDistance * 0.15);
+      c2x = end.x - curveStrength * 0.5;
+      c2y = end.y;
+    } else {
+      c1x = start.x - curveStrength;
+      c1y = start.y + (verticalDistance * 0.15);
+      c2x = end.x + curveStrength * 0.5;
+      c2y = end.y;
+    }
+  } else {
+    // Vertical flow: control points extend vertically first
+    if (isBelow) {
+      c1x = start.x + (horizontalDistance * 0.15);
+      c1y = start.y + curveStrength;
+      c2x = end.x;
+      c2y = end.y - curveStrength * 0.5;
+    } else {
+      c1x = start.x + (horizontalDistance * 0.15);
+      c1y = start.y - curveStrength;
+      c2x = end.x;
+      c2y = end.y + curveStrength * 0.5;
+    }
+  }
+
+  // Construct SVG cubic bezier path
+  const d = `M ${start.x} ${start.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${end.x} ${end.y}`;
+
+  // Calculate label position at curve midpoint (bezier t=0.5)
+  const t = 0.5;
+  const mt = 1 - t;
+  const labelX = mt * mt * mt * start.x + 3 * mt * mt * t * c1x + 3 * mt * t * t * c2x + t * t * t * end.x;
+  const labelY = mt * mt * mt * start.y + 3 * mt * mt * t * c1y + 3 * mt * t * t * c2y + t * t * t * end.y;
+
+  const label = { x: labelX, y: labelY };
+
+  return { d, start, end, label };
+}
+
+/**
  * Compute an orthogonal (org-chart style) path between two rectangles
  * Creates bracket-style connections with smooth rounded corners
  * Corner radius adapts to distance - straighter lines when nodes are closer

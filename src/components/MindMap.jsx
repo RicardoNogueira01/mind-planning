@@ -485,10 +485,10 @@ export default function MindMap({ mapId, onBack }) {
   }, [canvasRef, viewMode]);
 
   // ============================================
-  // COLLABORATOR SELECTION MODE
+  // BOX SELECTION MODE (for collaborator and multi-select)
   // ============================================
   const startSelection = (e) => {
-    if (mode === 'cursor' && selectionType === 'collaborator') {
+    if (mode === 'cursor' && (selectionType === 'collaborator' || selectionType === 'multi')) {
       e.preventDefault(); // Prevent page scrolling or text selection
       setIsSelecting(true);
       const rect = canvasRef.current.getBoundingClientRect();
@@ -2464,7 +2464,7 @@ export default function MindMap({ mapId, onBack }) {
                 connectionStyle={
                   currentLayoutType === 'tree-horizontal' ? 'bracket' :
                     currentLayoutType === 'tree-vertical' ? 'bracket' :
-                      'curved'
+                      'organic'
                 }
                 themeColors={activeTheme.connections}
               />
