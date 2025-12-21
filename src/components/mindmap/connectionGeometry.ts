@@ -136,45 +136,52 @@ export function computeOrganicPath(
   // Entry: from the side facing the parent (natural flow)
   // ============================================
 
-  // Check for steep list items (Slope > 1.0) inside Horizontal Layout
-  // Use J-curve ("Waterfall") for these: Exit Top/Bottom -> Enter Side
-  const isSteep = isHorizontalLayout && Math.abs(dy) > Math.abs(dx);
-
   if (isHorizontalLayout) {
-    if (isSteep) {
-      // Steep List: Exit from Top/Bottom Center
-      if (dy > 0) {
-        start = { x: fromCenterX, y: fromRect.bottom };
-      } else {
-        start = { x: fromCenterX, y: fromRect.top };
-      }
+    // PERIMETER SPREADING LOGIC
+    // Map children along the perimeter: Top-Center -> Corner -> Side -> Corner -> Bottom-Center
+    // distinct segments allows for smooth wrapping around corners
 
-      // Enter from facing side
-      if (isRight) {
-        end = { x: toRect.left, y: toCenterY };
-      } else {
-        end = { x: toRect.right, y: toCenterY };
-      }
+    // Define total spread length (Half-Top + Height + Half-Bottom)
+    const perimeterLen = (parentWidth / 2) + parentHeight + (parentWidth / 2);
+
+    let currentDist: number;
+    if (totalChildren === 1) {
+      currentDist = perimeterLen / 2; // Center of side
     } else {
-      // Standard Horizontal layout: exit from left/right edge
-      const usableHeight = parentHeight * 0.9;
-      const edgeTop = fromCenterY - usableHeight / 2;
+      const step = perimeterLen / (totalChildren - 1);
+      currentDist = childIndex * step;
+    }
 
-      let exitY: number;
-      if (totalChildren === 1) {
-        exitY = fromCenterY;
+    // Map distance to coordinate
+    if (isRight) {
+      // Right side path: TopCenter(0) -> TopRight(W/2) -> BottomRight(W/2+H) -> BottomCenter(W+H)
+      if (currentDist < parentWidth / 2) {
+        // On Top Edge (moving right)
+        start = { x: fromCenterX + currentDist, y: fromRect.top };
+      } else if (currentDist < (parentWidth / 2) + parentHeight) {
+        // On Right Edge (moving down)
+        start = { x: fromRect.right, y: fromRect.top + (currentDist - parentWidth / 2) };
       } else {
-        const step = usableHeight / (totalChildren - 1);
-        exitY = edgeTop + childIndex * step;
+        // On Bottom Edge (moving left)
+        start = { x: fromRect.right - (currentDist - (parentWidth / 2 + parentHeight)), y: fromRect.bottom };
       }
 
-      if (isRight) {
-        start = { x: fromRect.right, y: exitY };
-        end = { x: toRect.left, y: toCenterY };
+      end = { x: toRect.left, y: toCenterY };
+
+    } else {
+      // Left side path: TopCenter(0) -> TopLeft(W/2) -> BottomLeft(W/2+H) -> BottomCenter(W+H)
+      if (currentDist < parentWidth / 2) {
+        // On Top Edge (moving left)
+        start = { x: fromCenterX - currentDist, y: fromRect.top };
+      } else if (currentDist < (parentWidth / 2) + parentHeight) {
+        // On Left Edge (moving down)
+        start = { x: fromRect.left, y: fromRect.top + (currentDist - parentWidth / 2) };
       } else {
-        start = { x: fromRect.left, y: exitY };
-        end = { x: toRect.right, y: toCenterY };
+        // On Bottom Edge (moving right)
+        start = { x: fromRect.left + (currentDist - (parentWidth / 2 + parentHeight)), y: fromRect.bottom };
       }
+
+      end = { x: toRect.right, y: toCenterY };
     }
   } else {
     // Vertical layout: exit from top/bottom edge, enter from facing side
@@ -215,27 +222,29 @@ export function computeOrganicPath(
 
     let c1x: number, c1y: number, c2x: number, c2y: number;
 
-    if (isSteep) {
-      // STEEP WATERFALL (J-Curve)
-      // c1: Vertical projection from parent Top/Bottom
-      // c2: Horizontal projection from child Side
+    // Detect exit edge based on start point
+    const isOnTopEdge = Math.abs(start.y - fromRect.top) < 1;
+    const isOnBottomEdge = Math.abs(start.y - fromRect.bottom) < 1;
+    const isVerticalExit = isOnTopEdge || isOnBottomEdge;
 
+    if (isVerticalExit) {
+      // WATERFALL / J-CURVE (Vertical Exit)
       const vertDist = Math.abs(end.y - start.y);
-      const outwardExtent = vertDist * 0.5; // Go vertical for 50% of distance
+      const outwardExtent = vertDist * 0.5;
 
-      c1x = start.x; // Vertical tangent
-      if (dy > 0) c1y = start.y + outwardExtent; // Down
+      c1x = start.x;
+      if (isOnBottomEdge) c1y = start.y + outwardExtent; // Down
       else c1y = start.y - outwardExtent; // Up
 
       const horizDist = Math.abs(end.x - start.x);
       const entryExtent = Math.min(horizDist * 0.5, 80);
 
-      c2y = end.y; // Horizontal entry
+      c2y = end.y;
       if (isRight) c2x = end.x - entryExtent;
       else c2x = end.x + entryExtent;
 
     } else {
-      // STANDARD S-CURVE (Side-to-Side)
+      // STANDARD S-CURVE (Side Exit)
       const absHorizDist = Math.abs(horizontalDistance);
       const outwardExtent = absHorizDist * 0.6;
       const entryExtent = Math.min(absHorizDist * 0.3, 50);
