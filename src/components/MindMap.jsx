@@ -429,7 +429,7 @@ export default function MindMap({ mapId, onBack }) {
     },
     onDelete: () => {
       if (selectedNodes.length > 0) {
-        setDeleteConfirmNodeId(selectedNodes[0]);
+        setDeleteConfirmNodeId(selectedNodes);
       }
     },
     onSelectAll: selection.selectAllNodes,
@@ -2363,71 +2363,77 @@ export default function MindMap({ mapId, onBack }) {
 
         {/* Connection Mode Banner */}
         {connectionFrom && (
-          <div
-            className="fixed top-16 md:top-20 left-1/2 transform -translate-x-1/2 z-50 px-3 md:px-6 py-2 md:py-3 bg-blue-500 text-white rounded-full shadow-xl shadow-blue-500/40 flex items-center gap-2 md:gap-3 max-w-[90vw] md:max-w-none"
-            style={{ animation: 'slideDown 0.3s ease-out' }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-            </svg>
-            <span className="font-medium text-xs md:text-sm">Tap another node to connect</span>
-            <button
-              onClick={cancelConnection}
-              className="ml-1 md:ml-2 p-1 hover:bg-blue-600 rounded-full transition-colors touch-manipulation flex-shrink-0"
-              title="Cancel (Esc)"
+          <div className="fixed inset-x-0 top-16 md:top-20 z-50 flex justify-center pointer-events-none">
+            <div
+              className="pointer-events-auto px-3 md:px-6 py-2 md:py-3 bg-blue-500 text-white rounded-full shadow-xl shadow-blue-500/40 flex items-center gap-2 md:gap-3 max-w-[90vw] md:max-w-none mx-2"
+              style={{ animation: 'slideDown 0.3s ease-out' }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 md:w-4 md:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
               </svg>
-            </button>
+              <span className="font-medium text-xs md:text-sm">Tap another node to connect</span>
+              <button
+                onClick={cancelConnection}
+                className="ml-1 md:ml-2 p-1 hover:bg-blue-600 rounded-full transition-colors touch-manipulation flex-shrink-0"
+                title="Cancel (Esc)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 md:w-4 md:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
           </div>
         )}
 
         {/* Collaborator Mode Banner */}
         {mode === 'cursor' && selectionType === 'collaborator' && (
-          <div
-            className="fixed top-16 md:top-20 left-1/2 transform -translate-x-1/2 z-50 px-3 md:px-6 py-2 md:py-3 bg-cyan-600 text-white rounded-lg shadow-xl shadow-cyan-600/40 flex items-center gap-2 md:gap-3 mx-2"
-            style={{ animation: 'slideDown 0.3s ease-out', maxWidth: '90vw' }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-            </svg>
-            <div className="flex flex-col gap-0.5 md:gap-1">
-              <span className="font-semibold text-xs md:text-sm">Collaborator Selection</span>
-              <span className="text-[10px] md:text-xs text-cyan-100 hidden sm:block">Drag to select nodes, then assign to a collaborator</span>
+          <div className="fixed inset-x-0 top-16 md:top-20 z-50 flex justify-center pointer-events-none">
+            <div
+              className="pointer-events-auto px-3 md:px-6 py-2 md:py-3 bg-cyan-600 text-white rounded-lg shadow-xl shadow-cyan-600/40 flex items-center gap-2 md:gap-3 mx-2"
+              style={{ animation: 'slideDown 0.3s ease-out', maxWidth: '90vw' }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              <div className="flex flex-col gap-0.5 md:gap-1">
+                <span className="font-semibold text-xs md:text-sm">Collaborator Selection</span>
+                <span className="text-[10px] md:text-xs text-cyan-100 hidden sm:block">Drag to select nodes, then assign to a collaborator</span>
+              </div>
             </div>
           </div>
         )}
 
         {/* Multi-Select Mode Banner */}
         {mode === 'cursor' && selectionType === 'multi' && (
-          <div
-            className="fixed top-16 md:top-20 left-1/2 transform -translate-x-1/2 z-50 px-3 md:px-6 py-2 md:py-3 bg-green-600 text-white rounded-lg shadow-xl shadow-green-600/40 flex items-center gap-2 md:gap-3 mx-2"
-            style={{ animation: 'slideDown 0.3s ease-out', maxWidth: '90vw' }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect width="18" height="18" x="3" y="3" rx="2" strokeDasharray="4 4"></rect>
-              <path d="m9 9 10 10"></path>
-            </svg>
-            <div className="flex flex-col gap-0.5 md:gap-1">
-              <span className="font-semibold text-xs md:text-sm">Multi-Select Mode</span>
-              <span className="text-[10px] md:text-xs text-green-100 hidden sm:block">Drag to select multiple nodes for bulk operations</span>
-            </div>
-            <button
-              onClick={() => setSelectionType('simple')}
-              className="ml-auto p-1 hover:bg-green-700 rounded-full transition-colors"
-              title="Exit Multi-Select Mode"
+          <div className="fixed inset-x-0 top-16 md:top-20 z-50 flex justify-center pointer-events-none">
+            <div
+              className="pointer-events-auto px-3 md:px-6 py-2 md:py-3 bg-green-600 text-white rounded-lg shadow-xl shadow-green-600/40 flex items-center gap-2 md:gap-3 mx-2"
+              style={{ animation: 'slideDown 0.3s ease-out', maxWidth: '90vw' }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 md:w-4 md:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2" strokeDasharray="4 4"></rect>
+                <path d="m9 9 10 10"></path>
               </svg>
-            </button>
+              <div className="flex flex-col gap-0.5 md:gap-1">
+                <span className="font-semibold text-xs md:text-sm">Multi-Select Mode</span>
+                <span className="text-[10px] md:text-xs text-green-100 hidden sm:block">Drag to select multiple nodes for bulk operations</span>
+              </div>
+              <button
+                onClick={() => setSelectionType('simple')}
+                className="ml-auto p-1 hover:bg-green-700 rounded-full transition-colors"
+                title="Exit Multi-Select Mode"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 md:w-4 md:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
           </div>
         )}
 
@@ -3288,15 +3294,23 @@ export default function MindMap({ mapId, onBack }) {
       <DeleteConfirmDialog
         show={!!deleteConfirmNodeId}
         onClose={() => setDeleteConfirmNodeId(null)}
+        isMultiSelect={Array.isArray(deleteConfirmNodeId)}
         nodeText={Array.isArray(deleteConfirmNodeId)
           ? `${deleteConfirmNodeId.length} selected nodes`
           : (deleteConfirmNodeId ? (nodes.find(n => n.id === deleteConfirmNodeId)?.text || 'this node') : 'this node')}
-        hasChildren={!Array.isArray(deleteConfirmNodeId) && deleteConfirmNodeId ? getDescendantNodeIds(connections, deleteConfirmNodeId).length > 0 : false}
-        childrenCount={!Array.isArray(deleteConfirmNodeId) && deleteConfirmNodeId ? getDescendantNodeIds(connections, deleteConfirmNodeId).length : 0}
-        descendantNodes={!Array.isArray(deleteConfirmNodeId) && deleteConfirmNodeId ? getDescendantNodeIds(connections, deleteConfirmNodeId).map(id => {
-          const node = nodes.find(n => n.id === id);
-          return { id, text: node?.text || `Node ${id}` };
-        }) : []}
+        // For multi-select, we treat all nodes as "descendants" for the list view, and hasChildren=true ensures dropdown shows
+        hasChildren={Array.isArray(deleteConfirmNodeId) ? true : (deleteConfirmNodeId ? getDescendantNodeIds(connections, deleteConfirmNodeId).length > 0 : false)}
+        childrenCount={Array.isArray(deleteConfirmNodeId) ? deleteConfirmNodeId.length : (deleteConfirmNodeId ? getDescendantNodeIds(connections, deleteConfirmNodeId).length : 0)}
+        descendantNodes={Array.isArray(deleteConfirmNodeId)
+          ? deleteConfirmNodeId.map(id => {
+            const node = nodes.find(n => n.id === id);
+            return { id, text: node?.text || `Node ${id}` };
+          })
+          : (deleteConfirmNodeId ? getDescendantNodeIds(connections, deleteConfirmNodeId).map(id => {
+            const node = nodes.find(n => n.id === id);
+            return { id, text: node?.text || `Node ${id}` };
+          }) : [])
+        }
         onConfirm={() => {
           // Handle deletion
           if (Array.isArray(deleteConfirmNodeId)) {

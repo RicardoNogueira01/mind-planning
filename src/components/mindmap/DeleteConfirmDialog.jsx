@@ -15,7 +15,8 @@ const DeleteConfirmDialog = ({
   hasChildren = false,
   childrenCount = 0,
   nodeText = 'this node',
-  descendantNodes = [] // Array of { id, text } for all descendants
+  descendantNodes = [], // Array of { id, text } for all descendants
+  isMultiSelect = false
 }) => {
   const [showDeleteAllDropdown, setShowDeleteAllDropdown] = useState(false);
 
@@ -37,6 +38,17 @@ const DeleteConfirmDialog = ({
     if (!hasChildren) return [];
 
     const list = [];
+
+    // For multi-select, show simpler implications
+    if (isMultiSelect) {
+      list.push({
+        icon: '🗑️',
+        type: 'danger',
+        title: `Delete ${childrenCount} nodes`,
+        description: 'These nodes and their connections will be permanently removed'
+      });
+      return list;
+    }
 
     // Connection changes
     list.push({
@@ -96,10 +108,13 @@ const DeleteConfirmDialog = ({
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-lg font-bold text-gray-900">
-                Delete Node?
+                {isMultiSelect ? 'Delete Selection?' : 'Delete Node?'}
               </h3>
               <p className="text-sm text-gray-600 mt-1">
-                Are you sure you want to delete "<span className="font-medium text-gray-800">{nodeText}</span>"?
+                {isMultiSelect
+                  ? `Are you sure you want to delete these ${childrenCount} nodes?`
+                  : <React.Fragment>Are you sure you want to delete "<span className="font-medium text-gray-800">{nodeText}</span>"?</React.Fragment>
+                }
               </p>
             </div>
           </div>
@@ -116,27 +131,27 @@ const DeleteConfirmDialog = ({
                 <div
                   key={index}
                   className={`flex items-start gap-3 p-3 rounded-lg border ${item.type === 'danger'
-                      ? 'bg-red-50 border-red-200'
-                      : item.type === 'warning'
-                        ? 'bg-amber-50 border-amber-200'
-                        : 'bg-blue-50 border-blue-200'
+                    ? 'bg-red-50 border-red-200'
+                    : item.type === 'warning'
+                      ? 'bg-amber-50 border-amber-200'
+                      : 'bg-blue-50 border-blue-200'
                     }`}
                 >
                   <span className="text-lg flex-shrink-0">{item.icon}</span>
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-medium ${item.type === 'danger'
-                        ? 'text-red-800'
-                        : item.type === 'warning'
-                          ? 'text-amber-800'
-                          : 'text-blue-800'
+                      ? 'text-red-800'
+                      : item.type === 'warning'
+                        ? 'text-amber-800'
+                        : 'text-blue-800'
                       }`}>
                       {item.title}
                     </p>
                     <p className={`text-xs mt-0.5 ${item.type === 'danger'
-                        ? 'text-red-600'
-                        : item.type === 'warning'
-                          ? 'text-amber-600'
-                          : 'text-blue-600'
+                      ? 'text-red-600'
+                      : item.type === 'warning'
+                        ? 'text-amber-600'
+                        : 'text-blue-600'
                       }`}>
                       {item.description}
                     </p>
@@ -165,6 +180,7 @@ const DeleteConfirmDialog = ({
                   className="px-4 py-2.5 text-sm font-semibold text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition-all duration-200 shadow-sm hover:shadow"
                   onClick={onConfirm}
                   title="Delete only this node, children will become orphaned"
+                  style={{ display: isMultiSelect ? 'none' : 'block' }}
                 >
                   <span className="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -186,7 +202,7 @@ const DeleteConfirmDialog = ({
                       <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
                       <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
                     </svg>
-                    Delete All ({childrenCount + 1})
+                    {isMultiSelect ? `Delete Items (${childrenCount})` : `Delete All (${childrenCount + 1})`}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="14"
@@ -208,27 +224,29 @@ const DeleteConfirmDialog = ({
                     <div className="absolute bottom-full right-0 mb-2 w-72 max-h-64 overflow-auto bg-white rounded-xl shadow-2xl border border-gray-200 z-10">
                       <div className="sticky top-0 px-4 py-3 border-b border-gray-100 bg-red-50">
                         <p className="text-xs font-bold text-red-700 uppercase tracking-wide">
-                          Nodes to be deleted ({childrenCount + 1})
+                          Nodes to be deleted({isMultiSelect ? childrenCount : childrenCount + 1})
                         </p>
                       </div>
                       <div className="p-2">
-                        {/* The main node */}
-                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200 mb-1">
-                          <span className="text-red-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            </svg>
-                          </span>
-                          <span className="text-sm font-medium text-red-800 truncate flex-1">
-                            {nodeText}
-                          </span>
-                          <span className="text-xs text-red-500 font-medium">Main</span>
-                        </div>
+                        {/* The main node - only show if NOT multi-select */}
+                        {!isMultiSelect && (
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200 mb-1">
+                            <span className="text-red-500">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                              </svg>
+                            </span>
+                            <span className="text-sm font-medium text-red-800 truncate flex-1">
+                              {nodeText}
+                            </span>
+                            <span className="text-xs text-red-500 font-medium">Main</span>
+                          </div>
+                        )}
 
-                        {/* Descendant nodes */}
+                        {/* Descendant nodes (or ALL nodes in multi-select) */}
                         {descendantNodes.length > 0 ? (
                           <div className="space-y-1 mt-2">
-                            <p className="px-2 text-xs text-gray-500 font-medium">Descendants:</p>
+                            <p className="px-2 text-xs text-gray-500 font-medium">{isMultiSelect ? 'Selected Nodes:' : 'Descendants:'}</p>
                             {descendantNodes.map((node, index) => (
                               <div
                                 key={node.id || index}
@@ -247,7 +265,7 @@ const DeleteConfirmDialog = ({
                           </div>
                         ) : childrenCount > 0 ? (
                           <p className="px-3 py-2 text-sm text-gray-500 italic">
-                            + {childrenCount} descendant node{childrenCount > 1 ? 's' : ''}
+                            + {childrenCount} {isMultiSelect ? 'node' : 'descendant node'}{childrenCount > 1 ? 's' : ''}
                           </p>
                         ) : null}
                       </div>
@@ -258,10 +276,10 @@ const DeleteConfirmDialog = ({
                           className="w-full px-4 py-2.5 text-sm font-bold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-all duration-200 shadow-sm"
                           onClick={() => {
                             setShowDeleteAllDropdown(false);
-                            onConfirmWithChildren();
+                            isMultiSelect ? onConfirm() : onConfirmWithChildren();
                           }}
                         >
-                          Confirm Delete All
+                          Confirm Delete {isMultiSelect ? 'Selection' : 'All'}
                         </button>
                       </div>
                     </div>
@@ -296,7 +314,8 @@ DeleteConfirmDialog.propTypes = {
   descendantNodes: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.string,
     text: PropTypes.string
-  }))
+  })),
+  isMultiSelect: PropTypes.bool
 };
 
 export default DeleteConfirmDialog;
