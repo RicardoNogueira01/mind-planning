@@ -43,6 +43,7 @@ export function useNodeOperations(
       startDate: defaultStartDate
     };
     setNodes([...nodes, newNode]);
+    return newNode;
   }, [findStackedPosition, isDarkMode, nodes, setNodes]);
 
   const addChildNode = useCallback((parentId: string) => {
@@ -101,6 +102,7 @@ export function useNodeOperations(
 
     setNodes(rebalancedNodes);
     setConnections(newConnections);
+    return child;
   }, [connections, findStackedChildPosition, isDarkMode, NODE_WIDTH, nodes, pushCollidingNodes, setConnections, setNodes]);
 
   // Improved rebalancing: maintains child order and spacing, aligns them properly

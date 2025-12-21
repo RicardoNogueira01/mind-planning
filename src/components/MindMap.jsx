@@ -444,9 +444,9 @@ export default function MindMap({ mapId, onBack }) {
     },
     onCreateNode: () => {
       if (selectedNodes.length === 1) {
-        nodeOps.addChildNode(selectedNodes[0]);
+        handleAddChildNode(selectedNodes[0]);
       } else {
-        nodeOps.addStandaloneNode();
+        handleAddStandaloneNode();
       }
     },
     onDetachNode: () => {
@@ -489,6 +489,9 @@ export default function MindMap({ mapId, onBack }) {
   // ============================================
   const startSelection = (e) => {
     if (mode === 'cursor' && (selectionType === 'collaborator' || selectionType === 'multi')) {
+      // Allow dragging nodes even in selection mode - if clicking a node, don't start box selection
+      if (e.target.closest('[data-node-id]')) return;
+
       e.preventDefault(); // Prevent page scrolling or text selection
       setIsSelecting(true);
       const rect = canvasRef.current.getBoundingClientRect();
@@ -565,6 +568,56 @@ export default function MindMap({ mapId, onBack }) {
   // ============================================
   // NODE OPERATIONS (via hooks)
   // ============================================
+
+  const smoothPanToNode = React.useCallback((node) => {
+    if (!node) return;
+
+    // Calculate target pan to center the node
+    // Screen Center = Pan + Node * Zoom
+    // Pan = Screen Center - Node * Zoom
+    const targetX = (window.innerWidth / 2) - (node.x * zoom);
+    const targetY = (window.innerHeight / 2) - (node.y * zoom);
+
+    // Animate
+    const startX = dragging.pan.x;
+    const startY = dragging.pan.y;
+    const deltaX = targetX - startX;
+    const deltaY = targetY - startY;
+
+    const startTime = performance.now();
+    const duration = 600; // ms
+
+    const animate = (time) => {
+      const elapsed = time - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Ease out cubic
+      const ease = 1 - Math.pow(1 - progress, 3);
+
+      const currentX = startX + (deltaX * ease);
+      const currentY = startY + (deltaY * ease);
+
+      dragging.setPan({ x: currentX, y: currentY });
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [dragging, zoom]);
+
+  // Wrapper for Add Standalone Node
+  const handleAddStandaloneNode = React.useCallback(() => {
+    const newNode = nodeOps.addStandaloneNode();
+    if (newNode) smoothPanToNode(newNode);
+  }, [nodeOps, smoothPanToNode]);
+
+  // Wrapper for Add Child Node
+  const handleAddChildNode = React.useCallback((parentId) => {
+    const newNode = nodeOps.addChildNode(parentId);
+    if (newNode) smoothPanToNode(newNode);
+  }, [nodeOps, smoothPanToNode]);
 
   const toggleSelectNode = (id, event) => {
     // If in the middle of creating a connection, connect to the clicked node
@@ -2207,9 +2260,7 @@ export default function MindMap({ mapId, onBack }) {
                             { type: 'force-directed', label: 'Force Directed', icon: '⚡', desc: 'Physics-based' },
                             { type: 'tree-vertical', label: 'Tree (Vertical)', icon: '🌲', desc: 'Top to bottom' },
                             { type: 'tree-horizontal', label: 'Tree (Horizontal)', icon: '🌳', desc: 'Left to right' },
-                            { type: 'radial', label: 'Radial', icon: '🎯', desc: 'Circular layers' },
-                            { type: 'circular', label: 'Circular', icon: '⭕', desc: 'Perfect circle' },
-                            { type: 'grid', label: 'Grid Snap', icon: '⚙️', desc: 'Align to grid' }
+                            { type: 'radial', label: 'Radial', icon: '🎯', desc: 'Circular layers' }
                           ].map(layout => (
                             <button
                               key={layout.type}
@@ -3063,7 +3114,7 @@ export default function MindMap({ mapId, onBack }) {
             <div className="flex flex-col gap-1 sm:gap-1.5">
               {/* Add Node */}
               <button
-                onClick={addStandaloneNode}
+                onClick={handleAddStandaloneNode}
                 className="p-1.5 sm:p-2 hover:bg-emerald-50 text-gray-700 hover:text-emerald-600 rounded-lg transition-all duration-200"
                 title="Add New Node"
               >
@@ -3075,7 +3126,7 @@ export default function MindMap({ mapId, onBack }) {
 
               {/* Delete Selected */}
               <button
-                onClick={() => selectedNodes.length > 0 && nodeOps.deleteNodes(selectedNodes)}
+                onClick={() => selectedNodes.length > 0 && setDeleteConfirmNodeId(selectedNodes)}
                 className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${selectedNodes.length > 0
                   ? 'text-gray-700 hover:bg-red-50 hover:text-red-600'
                   : 'text-gray-300 cursor-not-allowed'
@@ -3237,17 +3288,22 @@ export default function MindMap({ mapId, onBack }) {
       <DeleteConfirmDialog
         show={!!deleteConfirmNodeId}
         onClose={() => setDeleteConfirmNodeId(null)}
-        nodeText={deleteConfirmNodeId ? (nodes.find(n => n.id === deleteConfirmNodeId)?.text || 'this node') : 'this node'}
-        hasChildren={deleteConfirmNodeId ? getDescendantNodeIds(connections, deleteConfirmNodeId).length > 0 : false}
-        childrenCount={deleteConfirmNodeId ? getDescendantNodeIds(connections, deleteConfirmNodeId).length : 0}
-        descendantNodes={deleteConfirmNodeId ? getDescendantNodeIds(connections, deleteConfirmNodeId).map(id => {
+        nodeText={Array.isArray(deleteConfirmNodeId)
+          ? `${deleteConfirmNodeId.length} selected nodes`
+          : (deleteConfirmNodeId ? (nodes.find(n => n.id === deleteConfirmNodeId)?.text || 'this node') : 'this node')}
+        hasChildren={!Array.isArray(deleteConfirmNodeId) && deleteConfirmNodeId ? getDescendantNodeIds(connections, deleteConfirmNodeId).length > 0 : false}
+        childrenCount={!Array.isArray(deleteConfirmNodeId) && deleteConfirmNodeId ? getDescendantNodeIds(connections, deleteConfirmNodeId).length : 0}
+        descendantNodes={!Array.isArray(deleteConfirmNodeId) && deleteConfirmNodeId ? getDescendantNodeIds(connections, deleteConfirmNodeId).map(id => {
           const node = nodes.find(n => n.id === id);
           return { id, text: node?.text || `Node ${id}` };
         }) : []}
         onConfirm={() => {
-          // Delete only the node, keep children by removing connections
-          if (deleteConfirmNodeId) {
-            // Remove only connections where this node is involved
+          // Handle deletion
+          if (Array.isArray(deleteConfirmNodeId)) {
+            // Multi-delete (simple, no children check for now)
+            nodeOps.deleteNodes(deleteConfirmNodeId);
+          } else if (deleteConfirmNodeId) {
+            // Single delete - Remove only connections where this node is involved
             setConnections(connections.filter(c => c.from !== deleteConfirmNodeId && c.to !== deleteConfirmNodeId));
             // Delete the node
             nodeOps.deleteNodes([deleteConfirmNodeId]);
@@ -3255,8 +3311,8 @@ export default function MindMap({ mapId, onBack }) {
           setDeleteConfirmNodeId(null);
         }}
         onConfirmWithChildren={() => {
-          // Delete node and all its descendants
-          if (deleteConfirmNodeId) {
+          // Delete node and all its descendants (Single node mode only)
+          if (deleteConfirmNodeId && !Array.isArray(deleteConfirmNodeId)) {
             const descendants = getDescendantNodeIds(connections, deleteConfirmNodeId);
             const allToDelete = [deleteConfirmNodeId, ...descendants];
             nodeOps.deleteNodes(allToDelete);
