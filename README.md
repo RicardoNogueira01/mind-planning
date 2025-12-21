@@ -370,6 +370,8 @@ This project is private and not licensed for public use.
 - ✅ Improved node spacing and layout algorithms
 - ✅ Enhanced node theming with backgrounds, fonts, borders, shadows
 - ✅ Fixed task completion counter positioning
+- ✅ Fixed child node positioning: children now properly alternate left/right and stack vertically
+- ✅ Cleaned up documentation: removed 19 outdated completion reports
 - ✅ Multiple UI/UX improvements across all pages
 
 ### November 2025

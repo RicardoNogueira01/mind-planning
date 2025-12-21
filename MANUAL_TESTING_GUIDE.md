@@ -48,40 +48,43 @@ Node 4
 ## Test Case 2: Hierarchical Child Positioning
 
 ### Objective
-Verify that child nodes chain horizontally to the RIGHT of their parent.
+Verify that child nodes are positioned correctly, alternating LEFT and RIGHT of their parent with vertical stacking on each side.
 
 ### Steps
 1. Select the **"Central Idea"** node (click on it)
-2. With Central Idea selected, click **"Add Child"** button
+2. With Central Idea selected, click **"Add Child"** button (+)
 3. Observe where the child appears
-4. With the first child still visible, click **"Add Child"** again
+4. With the parent still selected, click **"Add Child"** again
 5. Observe where the second child appears
-6. Repeat step 4-5 two more times (total 4 child nodes)
+6. Repeat step 4-5 multiple times (add 4-6 child nodes)
 
 ### Expected Results ✅
-- First child appears **to the RIGHT** of Central Idea
-- Second child appears **to the RIGHT** of the first child
-- Third child appears **to the RIGHT** of the second child
-- Fourth child appears **to the RIGHT** of the third child
-- All children form a **horizontal chain** to the right
-- **25px margin** between consecutive children
-- Children positioned **below** the parent vertically (not at same height)
+- First child appears **to the RIGHT** of Central Idea (at same Y level)
+- Second child appears **to the LEFT** of Central Idea (at same Y level)
+- Additional children **alternate sides** (right, left, right, left...)
+- Children on the **same side** stack **vertically** (centered around parent's Y)
+- Proper spacing between parent and children (~200px horizontal gap)
+- Proper spacing between stacked children (~71px vertical gap)
 
 ### If Failed ❌
-- Children stack vertically below parent: Hierarchical positioning broken
-- Children appear randomly: Collision detection interfering
-- Wrong spacing: MARGIN constant needs adjustment
-- Children appear to left: Check positioning algorithm
+- All children appear in horizontal row ABOVE parent: Rebalancing bug
+- Children appear randomly scattered: Collision detection issue
+- Wrong spacing: Check OFFSET_DISTANCE and CHILD_SPACING constants
+- Children don't alternate sides: Check left/right balancing logic
 
 ### Screenshot Reference
 ```
-                          ┌─ Child 1 (25px margin)
-                          │
-Central Idea ─────────────┴─ Child 2 (25px margin)
-(with kids below)         │
-                          ├─ Child 3 (25px margin)
-                          │
-                          └─ Child 4
+                    ┌─ Child 2 (LEFT side)
+                    │
+                    ├─ Child 4 (LEFT side, stacked below)
+                    │
+Central Idea ───────┼───────┬─ Child 1 (RIGHT side)
+                    │       │
+                    │       ├─ Child 3 (RIGHT side, stacked below)
+                    │       │
+                    │       └─ Child 5 (RIGHT side, stacked below)
+                    │
+                    └─ Child 6 (LEFT side, stacked below)
 ```
 
 ---
