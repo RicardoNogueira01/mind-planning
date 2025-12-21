@@ -364,7 +364,7 @@ export default function ConnectionsSvg({
         } else {
           connectionColor = getConnectionColor(conn, fromNode);
         }
-        const strokeWidth = isHovered ? 2.5 : 2;
+        const strokeWidth = isHovered ? 3.5 : 3; // Thicker lines for better visibility
 
         return (
           <g key={conn.id}>

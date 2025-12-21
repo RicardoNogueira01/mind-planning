@@ -101,110 +101,165 @@ export function computeOrganicPath(
   const dx = toCenterX - fromCenterX;
   const dy = toCenterY - fromCenterY;
 
-  // Determine which side the child is on (left/right/above/below)
+  // Determine which side the child is on
   const isRight = dx > 0;
-  const isLeft = dx < 0;
   const isBelow = dy > 0;
-  const isAbove = dy < 0;
 
   // Calculate the parent's edge dimensions
   const parentHeight = fromRect.bottom - fromRect.top;
   const parentWidth = fromRect.right - fromRect.left;
 
-  // Calculate where on the edge to exit based on child's relative position
-  // This creates natural spreading without needing to know about other children
+  // Get child index info for spreading exit points
+  const childIndex = options?.childIndex ?? 0;
+  const totalChildren = options?.totalChildren ?? 1;
+
   let start: { x: number; y: number };
   let end: { x: number; y: number };
 
-  // Clamp factor to keep exit points within 80% of the edge (10% padding each side)
-  const clampSpread = (offset: number, maxSize: number) => {
-    const maxOffset = maxSize * 0.4; // 40% from center max
-    return Math.max(-maxOffset, Math.min(maxOffset, offset));
-  };
-
   // Determine primary direction based on where the child is
-  const isHorizontalLayout = Math.abs(dx) >= Math.abs(dy);
+  // Check if child is clearly outside parent's bounds in each direction
+  const childIsToTheRight = toCenterX > fromRect.right;
+  const childIsToTheLeft = toCenterX < fromRect.left;
+  const childIsBelow = toCenterY > fromRect.bottom;
+  const childIsAbove = toCenterY < fromRect.top;
+
+  // Determine layout direction:
+  // - If child is to left/right → use horizontal (even if also above/below)
+  //   This creates the nice fanning effect from left/right edges
+  // - Only use vertical layout if child is ONLY above/below (not to left/right)
+  const isHorizontalLayout = childIsToTheLeft || childIsToTheRight || Math.abs(dx) >= Math.abs(dy);
+
+  // ============================================
+  // EXIT AND ENTRY POINT CALCULATION
+  // Exit: spread along parent edge based on child index (creates fan effect)
+  // Entry: from the side facing the parent (natural flow)
+  // ============================================
 
   if (isHorizontalLayout) {
-    // Horizontal layout: child is primarily to the left or right
-    // Exit from the side edge (left or right) that the child is on
+    // Horizontal layout: exit from left/right edge, enter from facing side
+    const usableHeight = parentHeight * 0.9;
+    const edgeTop = fromCenterY - usableHeight / 2;
 
-    // Calculate vertical offset based on child's Y position relative to parent center
-    const yOffset = clampSpread(toCenterY - fromCenterY, parentHeight);
+    let exitY: number;
+    if (totalChildren === 1) {
+      exitY = fromCenterY;
+    } else {
+      const step = usableHeight / (totalChildren - 1);
+      exitY = edgeTop + childIndex * step;
+    }
 
     if (isRight) {
-      // Child is to the RIGHT → exit from RIGHT edge
-      start = { x: fromRect.right, y: fromCenterY + yOffset * 0.5 };
+      start = { x: fromRect.right, y: exitY };
       end = { x: toRect.left, y: toCenterY };
     } else {
-      // Child is to the LEFT → exit from LEFT edge
-      start = { x: fromRect.left, y: fromCenterY + yOffset * 0.5 };
+      start = { x: fromRect.left, y: exitY };
       end = { x: toRect.right, y: toCenterY };
     }
   } else {
-    // Vertical layout: child is primarily above or below
-    // Exit from the top or bottom edge
+    // Vertical layout: exit from top/bottom edge, enter from facing side
+    const usableWidth = parentWidth * 0.9;
+    const edgeLeft = fromCenterX - usableWidth / 2;
 
-    // Calculate horizontal offset based on child's X position relative to parent center
-    const xOffset = clampSpread(toCenterX - fromCenterX, parentWidth);
+    let exitX: number;
+    if (totalChildren === 1) {
+      exitX = fromCenterX;
+    } else {
+      const step = usableWidth / (totalChildren - 1);
+      exitX = edgeLeft + childIndex * step;
+    }
 
     if (isBelow) {
-      // Child is BELOW → exit from BOTTOM edge
-      start = { x: fromCenterX + xOffset * 0.5, y: fromRect.bottom };
+      start = { x: exitX, y: fromRect.bottom };
       end = { x: toCenterX, y: toRect.top };
     } else {
-      // Child is ABOVE → exit from TOP edge
-      start = { x: fromCenterX + xOffset * 0.5, y: fromRect.top };
+      start = { x: exitX, y: fromRect.top };
       end = { x: toCenterX, y: toRect.bottom };
     }
   }
 
-  // Calculate curve control points for smooth organic flow
+  // ============================================
+  // PATH CALCULATION - ORTHOGONAL WITH ROUNDED CORNER
+  // Go horizontal to the child's X position, then turn and go vertical
+  // This GUARANTEES no crossing through sibling nodes
+  // ============================================
+
   const horizontalDistance = end.x - start.x;
   const verticalDistance = end.y - start.y;
-  const distance = Math.sqrt(horizontalDistance * horizontalDistance + verticalDistance * verticalDistance);
 
-  // Curve strength: longer distances get longer control arms
-  const curveStrength = Math.min(distance * 0.45, 100);
-
-  let c1x: number, c1y: number, c2x: number, c2y: number;
+  let d: string;
 
   if (isHorizontalLayout) {
-    // Horizontal flow: control points extend horizontally first
+    // HORIZONTAL LAYOUT (children to left/right)
+    // Use SMOOTH FLOWING CURVES that go outward first, staying in the child's lane
+
+    // Control points for smooth S-curve:
+    // c1: extends horizontally from start, staying at exit Y level
+    // c2: comes in horizontally to end, at destination Y level
+
+    const absHorizDist = Math.abs(horizontalDistance);
+
+    // How far outward the first control point extends (creates the flowing curve)
+    // Use 50-70% for a nice smooth curve
+    const outwardExtent = absHorizDist * 0.6;
+
+    // Entry curve tightness - how close to destination before curving in
+    const entryExtent = Math.min(absHorizDist * 0.3, 50);
+
+    let c1x: number, c1y: number, c2x: number, c2y: number;
+
     if (isRight) {
-      c1x = start.x + curveStrength;
-      c1y = start.y + (verticalDistance * 0.15);
-      c2x = end.x - curveStrength * 0.5;
+      // Going RIGHT: curve flows right then arcs to destination
+      c1x = start.x + outwardExtent;
+      c1y = start.y; // Stay at exit Y level for smooth flow
+      c2x = end.x - entryExtent;
       c2y = end.y;
     } else {
-      c1x = start.x - curveStrength;
-      c1y = start.y + (verticalDistance * 0.15);
-      c2x = end.x + curveStrength * 0.5;
+      // Going LEFT: curve flows left then arcs to destination
+      c1x = start.x - outwardExtent;
+      c1y = start.y;
+      c2x = end.x + entryExtent;
       c2y = end.y;
     }
+
+    // Smooth cubic bezier curve
+    d = `M ${start.x} ${start.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${end.x} ${end.y}`;
+
   } else {
-    // Vertical flow: control points extend vertically first
+    // VERTICAL LAYOUT (children above/below)
+    const absVertDist = Math.abs(verticalDistance);
+    const outwardExtent = absVertDist * 0.6;
+    const entryExtent = Math.min(absVertDist * 0.3, 50);
+
+    let c1x: number, c1y: number, c2x: number, c2y: number;
+
     if (isBelow) {
-      c1x = start.x + (horizontalDistance * 0.15);
-      c1y = start.y + curveStrength;
+      c1x = start.x;
+      c1y = start.y + outwardExtent;
       c2x = end.x;
-      c2y = end.y - curveStrength * 0.5;
+      c2y = end.y - entryExtent;
     } else {
-      c1x = start.x + (horizontalDistance * 0.15);
-      c1y = start.y - curveStrength;
+      c1x = start.x;
+      c1y = start.y - outwardExtent;
       c2x = end.x;
-      c2y = end.y + curveStrength * 0.5;
+      c2y = end.y + entryExtent;
     }
+
+    d = `M ${start.x} ${start.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${end.x} ${end.y}`;
   }
 
-  // Construct SVG cubic bezier path
-  const d = `M ${start.x} ${start.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${end.x} ${end.y}`;
-
-  // Calculate label position at curve midpoint (bezier t=0.5)
-  const t = 0.5;
-  const mt = 1 - t;
-  const labelX = mt * mt * mt * start.x + 3 * mt * mt * t * c1x + 3 * mt * t * t * c2x + t * t * t * end.x;
-  const labelY = mt * mt * mt * start.y + 3 * mt * mt * t * c1y + 3 * mt * t * t * c2y + t * t * t * end.y;
+  // Calculate label position (at the middle of the straight segment)
+  let labelX: number, labelY: number;
+  if (isHorizontalLayout) {
+    const absHorizDist = Math.abs(horizontalDistance);
+    const horizontalExtent = absHorizDist * 0.4; // Label at 40% of the way
+    labelX = isRight ? start.x + horizontalExtent : start.x - horizontalExtent;
+    labelY = start.y;
+  } else {
+    const absVertDist = Math.abs(verticalDistance);
+    const verticalExtent = absVertDist * 0.4;
+    labelX = start.x;
+    labelY = isBelow ? start.y + verticalExtent : start.y - verticalExtent;
+  }
 
   const label = { x: labelX, y: labelY };
 
